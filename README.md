@@ -19,6 +19,8 @@ Frontend completo en Flutter para plataforma de almacenamiento turistico:
   - `docs\qr-pin-handoff-workflow.md`
 - Manual operativo backend:
   - `..\TravelBox_Peru_Backend\docs\operation-simulation-manual.md`
+- Mapa central de secretos (front + back):
+  - `..\VAULT_SECRETS_MAP.txt`
 
 ## Stack
 - Flutter 3.41.4 (via Puro)
@@ -74,7 +76,7 @@ APK debug validado:
 
 ### Con backend Java real (sin fallback mock)
 ```powershell
-& "C:\Users\GianLH\AppData\Local\Microsoft\WinGet\Packages\pingbird.Puro_Microsoft.Winget.Source_8wekyb3d8bbwe\puro.exe" -e stable flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8080/api/v1 --dart-define=USE_MOCK_FALLBACK=false
+& "C:\Users\GianLH\AppData\Local\Microsoft\WinGet\Packages\pingbird.Puro_Microsoft.Winget.Source_8wekyb3d8bbwe\puro.exe" -e stable flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8080/api/v1 --dart-define=USE_MOCK_FALLBACK=false --dart-define=FORCE_CASH_PAYMENTS_ONLY=true
 ```
 
 ### Con cliente Firebase (Google/Facebook)
@@ -82,6 +84,7 @@ APK debug validado:
 & "C:\Users\GianLH\AppData\Local\Microsoft\WinGet\Packages\pingbird.Puro_Microsoft.Winget.Source_8wekyb3d8bbwe\puro.exe" -e stable flutter run -d chrome `
   --dart-define=API_BASE_URL=http://localhost:8080/api/v1 `
   --dart-define=USE_MOCK_FALLBACK=false `
+  --dart-define=FORCE_CASH_PAYMENTS_ONLY=true `
   --dart-define=FIREBASE_API_KEY=<api-key> `
   --dart-define=FIREBASE_PROJECT_ID=<project-id> `
   --dart-define=FIREBASE_MESSAGING_SENDER_ID=<sender-id> `
@@ -89,13 +92,25 @@ APK debug validado:
   --dart-define=FIREBASE_WEB_APP_ID=<web-app-id> `
   --dart-define=FIREBASE_ANDROID_APP_ID=<android-app-id> `
   --dart-define=FIREBASE_IOS_APP_ID=<ios-app-id> `
-  --dart-define=FIREBASE_IOS_BUNDLE_ID=<ios-bundle-id>
+  --dart-define=FIREBASE_IOS_BUNDLE_ID=<ios-bundle-id> `
+  --dart-define=FIREBASE_GOOGLE_SERVER_CLIENT_ID=551019035202-3khgoibrmpf8qpets7up6rnond00a83e.apps.googleusercontent.com
 ```
 
 Opcional cuando actives Storage:
 ```powershell
 --dart-define=FIREBASE_STORAGE_BUCKET=<bucket.appspot.com> --dart-define=FIREBASE_STORAGE_UPLOADS_ENABLED=true
 ```
+
+Nota para login Google en Android:
+- `FIREBASE_GOOGLE_SERVER_CLIENT_ID` debe ser el OAuth Client ID de tipo `Web application` del mismo proyecto Firebase/Google Cloud.
+- Sin ese valor, Google login puede caer en fallback y no devolver `idToken` en Android.
+
+## Secretos para despliegue
+
+- Fuente central de variables y nombres de secreto: `..\VAULT_SECRETS_MAP.txt`
+- Para frontend, tomar desde ese mapa los `--dart-define` Firebase y `API_BASE_URL`.
+- Para backend en cloud, usar `APP_FIREBASE_SERVICE_ACCOUNT_JSON` (no ruta local de archivo).
+- Si cambias credenciales en el vault, actualiza el mapa y vuelve a compilar/desplegar.
 
 ## Pruebas y calidad
 ```powershell
@@ -136,6 +151,7 @@ Endpoints consumidos:
 - `GET /payments/cash/pending?page=0&size=20`
 - `POST /payments/cash/{paymentIntentId}/approve`
 - `POST /payments/cash/{paymentIntentId}/reject`
+- `POST /payments/{paymentIntentId}/refund`
 - `GET /notifications/my?page=0&size=20`
 - `GET /notifications/stream?afterId={id}&limit={n}`
 - `GET /notifications/events` (SSE en tiempo real)
@@ -176,8 +192,10 @@ Nota:
 - Cliente ahora entra por Firebase (`Google` o `Facebook`); el login por correo/contrasena queda para usuarios internos creados por admin.
 - Checkout cliente usa primero `POST /reservations/checkout`; si el pago falla, ya no queda una reserva registrada parcialmente.
 - Para `paymentMethod=counter|cash`, el frontend deja el pago en flujo `WAITING_OFFLINE_VALIDATION` y perfiles operativos (`OPERATOR`, `CITY_SUPERVISOR`, `ADMIN`) lo validan desde `Pagos en caja`.
+- Cancelacion: si el pago digital ya esta confirmado (`card`, `yape`, `plin`, `wallet`), el frontend dispara `refund` y luego backend cancela automaticamente la reserva.
 - El rol `SUPPORT` solo accede al modulo de incidencias y contacto con cliente.
 - La pantalla de solicitud logistica soporta tanto `DELIVERY` como `PICKUP`; `PICKUP` sirve para recoger equipaje del cliente y llevarlo al almacen.
+- Validaciones logisticas: `PICKUP` solo desde `CONFIRMED`, `DELIVERY` solo desde `STORED`/`READY_FOR_PICKUP`, y no se permite duplicar orden activa por tipo.
 - La app escucha SSE en web, Android, iOS y Windows para actualizar estados sin refresh manual, sin polling periodico y sin recargar la pantalla; si el canal se corta, el cliente intenta reconectarse automaticamente.
 - Las vistas conectadas al cursor de eventos incluyen reservas cliente, reservas admin/operador, pagos en caja, courier, tracking, QR/PIN e incidencias.
 - `Mis reservas` ya no mezcla reservas locales antiguas con las remotas cuando el backend responde; eso evita detalles `404` por ids viejos guardados en local.
@@ -198,6 +216,7 @@ Campos minimos recomendados en respuesta de almacen:
 
 ## Notas de operacion
 - `USE_MOCK_FALLBACK` esta en `false` por defecto. Solo activa mocks si lo defines manualmente en pruebas.
+- Para mostrar checkout solo en efectivo: `FORCE_CASH_PAYMENTS_ONLY=true`.
 - Credenciales demo operativas:
   - `admin@travelbox.pe / Admin123!`
   - `operator@travelbox.pe / Operator123!`
