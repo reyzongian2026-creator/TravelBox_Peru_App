@@ -5,10 +5,13 @@ import 'dart:io';
 import 'notification_live_events_client.dart';
 
 const _reconnectDelay = Duration(seconds: 3);
+// Si no recibimos NADA (ni latidos ni data) en 45s, asumimos que el socket murió
+const _idleTimeout = Duration(seconds: 45);
 
 class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
   HttpClient? _httpClient;
   StreamSubscription<String>? _subscription;
+  Timer? _idleWatchdog;
   int _connectionId = 0;
   bool _manuallyDisconnected = false;
   bool _reconnectScheduled = false;
@@ -55,10 +58,23 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
     _manuallyDisconnected = true;
     _reconnectScheduled = false;
     _connectionId += 1;
+    _idleWatchdog?.cancel();
+    _idleWatchdog = null;
     unawaited(_subscription?.cancel());
     _subscription = null;
     _httpClient?.close(force: true);
     _httpClient = null;
+  }
+
+  void _resetWatchdog(int connectionId) {
+    _idleWatchdog?.cancel();
+    _idleWatchdog = Timer(_idleTimeout, () {
+      if (connectionId == _connectionId && !_manuallyDisconnected) {
+        // El socket se quedó zombi (ej. cambio de red Wi-Fi a 4G).
+        // Forzamos el cierre para que se dispare el onError/onDone y se reconecte.
+        _httpClient?.close(force: true);
+      }
+    });
   }
 
   Future<void> _open({
@@ -93,68 +109,63 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
 
       String? eventName;
       var dataLines = <String>[];
+      _resetWatchdog(connectionId); // Iniciamos el watchdog
 
       _subscription = response
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .listen(
             (line) {
-              if (connectionId != _connectionId) {
-                return;
-              }
-              if (line.isEmpty) {
-                final hasData = dataLines.isNotEmpty;
-                final event = eventName ?? 'message';
-                if (hasData && (event == 'notification' || event == 'message')) {
-                  onNotification(
-                    NotificationLiveEvent(
-                      eventName: event,
-                      payload: _parsePayload(dataLines.join('\n')),
-                    ),
-                  );
-                }
-                eventName = null;
-                dataLines = <String>[];
-                return;
-              }
-              if (line.startsWith(':')) {
-                return;
-              }
-              if (line.startsWith('event:')) {
-                eventName = line.substring(6).trim();
-                return;
-              }
-              if (line.startsWith('data:')) {
-                dataLines.add(line.substring(5).trimLeft());
-              }
-            },
-            onError: (Object error, StackTrace stackTrace) {
-              if (connectionId != _connectionId) {
-                return;
-              }
-              if (onError != null) {
-                onError(error);
-              }
-              _scheduleReconnect(connectionId);
-            },
-            onDone: () {
-              if (connectionId != _connectionId) {
-                return;
-              }
-              if (onError != null) {
-                onError(StateError('notification_sse_closed'));
-              }
-              _scheduleReconnect(connectionId);
-            },
-            cancelOnError: true,
-          );
+          if (connectionId != _connectionId) return;
+
+          _resetWatchdog(connectionId); // Cada vez que entra data, reseteamos el watchdog
+
+          if (line.isEmpty) {
+            final hasData = dataLines.isNotEmpty;
+            final event = eventName ?? 'message';
+            if (hasData && (event == 'notification' || event == 'message')) {
+              onNotification(
+                NotificationLiveEvent(
+                  eventName: event,
+                  payload: _parsePayload(dataLines.join('\n')),
+                ),
+              );
+            }
+            eventName = null;
+            dataLines = <String>[];
+            return;
+          }
+
+          // Ignorar los comentarios SSE (ej. :keepalive)
+          if (line.startsWith(':')) {
+            return;
+          }
+          if (line.startsWith('event:')) {
+            eventName = line.substring(6).trim();
+            return;
+          }
+          if (line.startsWith('data:')) {
+            dataLines.add(line.substring(5).trimLeft());
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (connectionId != _connectionId) return;
+          _idleWatchdog?.cancel();
+          if (onError != null) onError(error);
+          _scheduleReconnect(connectionId);
+        },
+        onDone: () {
+          if (connectionId != _connectionId) return;
+          _idleWatchdog?.cancel();
+          if (onError != null) onError(StateError('notification_sse_closed'));
+          _scheduleReconnect(connectionId);
+        },
+        cancelOnError: true,
+      );
     } catch (error) {
-      if (connectionId != _connectionId) {
-        return;
-      }
-      if (onError != null) {
-        onError(error);
-      }
+      if (connectionId != _connectionId) return;
+      _idleWatchdog?.cancel();
+      if (onError != null) onError(error);
       _scheduleReconnect(connectionId);
     }
   }
@@ -213,7 +224,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
       }
       if (decoded is Map) {
         return decoded.map(
-          (key, value) => MapEntry(key.toString(), value),
+              (key, value) => MapEntry(key.toString(), value),
         );
       }
       return null;
