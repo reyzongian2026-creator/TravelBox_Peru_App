@@ -1,0 +1,245 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+import '../../../core/env/app_env.dart';
+import '../../../core/firebase/travelbox_firebase.dart';
+
+enum SocialAuthProvider { google, facebook }
+
+extension SocialAuthProviderX on SocialAuthProvider {
+  String get backendCode {
+    switch (this) {
+      case SocialAuthProvider.google:
+        return 'GOOGLE';
+      case SocialAuthProvider.facebook:
+        return 'FACEBOOK';
+    }
+  }
+
+  String get label {
+    switch (this) {
+      case SocialAuthProvider.google:
+        return 'Google';
+      case SocialAuthProvider.facebook:
+        return 'Facebook';
+    }
+  }
+}
+
+class FirebaseSocialSignInResult {
+  const FirebaseSocialSignInResult({
+    required this.idToken,
+    required this.provider,
+    this.displayName,
+    this.photoUrl,
+  });
+
+  final String idToken;
+  final SocialAuthProvider provider;
+  final String? displayName;
+  final String? photoUrl;
+}
+
+class FirebaseClientAuthService {
+  FirebaseClientAuthService({
+    FirebaseAuth? firebaseAuth,
+  }) : _firebaseAuth = firebaseAuth,
+       _googleSignIn = GoogleSignIn.instance;
+
+  FirebaseAuth? _firebaseAuth;
+  final GoogleSignIn _googleSignIn;
+  bool _googleInitialized = false;
+
+  bool get isConfigured => TravelBoxFirebase.isConfigured;
+
+  Future<FirebaseSocialSignInResult> signIn(SocialAuthProvider provider) async {
+    if (!isConfigured) {
+      throw UnsupportedError(
+        'Firebase no esta configurado aun. Falta cargar las llaves del proyecto.',
+      );
+    }
+    await TravelBoxFirebase.initializeIfConfigured();
+    switch (provider) {
+      case SocialAuthProvider.google:
+        return _signInWithGoogle();
+      case SocialAuthProvider.facebook:
+        if (!AppEnv.firebaseFacebookProviderEnabled) {
+          throw UnsupportedError(
+            'El acceso con Facebook esta deshabilitado en esta compilacion.',
+          );
+        }
+        return _signInWithFacebook();
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
+    if (_supportsMobileFacebookPlugin) {
+      try {
+        await FacebookAuth.instance.logOut();
+      } catch (_) {}
+    }
+    if (!isConfigured || Firebase.apps.isEmpty) {
+      return;
+    }
+    try {
+      await _auth.signOut();
+    } catch (_) {}
+  }
+
+  Future<FirebaseSocialSignInResult> _signInWithGoogle() async {
+    final firebaseAuth = _auth;
+    final userCredential = kIsWeb
+        ? await firebaseAuth.signInWithPopup(GoogleAuthProvider())
+        : await _signInWithGoogleOnMobile();
+    return _toResult(
+      userCredential,
+      provider: SocialAuthProvider.google,
+    );
+  }
+
+  Future<UserCredential> _signInWithGoogleOnMobile() async {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return _signInWithGoogleCredentialFlow();
+      case TargetPlatform.iOS:
+        return _signInWithGoogleCredentialFlow();
+      default:
+        throw UnsupportedError(
+          'Google Firebase solo esta habilitado en web, Android e iOS.',
+        );
+    }
+  }
+
+  Future<UserCredential> _signInWithGoogleCredentialFlow() async {
+    try {
+      await _initializeGoogleSignIn();
+      final account = await _googleSignIn.authenticate(
+        scopeHint: const ['email', 'profile'],
+      );
+      final auth = account.authentication;
+      if (auth.idToken == null || auth.idToken!.trim().isEmpty) {
+        throw UnsupportedError(
+          'Google no devolvio idToken. Configura FIREBASE_GOOGLE_SERVER_CLIENT_ID para Android.',
+        );
+      }
+      final credential = GoogleAuthProvider.credential(
+        idToken: auth.idToken,
+      );
+      return _auth.signInWithCredential(credential);
+    } on MissingPluginException {
+      throw UnsupportedError(
+        'Google Sign-In no esta disponible en este build/dispositivo.',
+      );
+    }
+  }
+
+  Future<FirebaseSocialSignInResult> _signInWithFacebook() async {
+    if (!kIsWeb && !_supportsMobileFacebookPlugin) {
+      throw UnsupportedError(
+        'Facebook Firebase solo esta habilitado en web, Android e iOS.',
+      );
+    }
+    final firebaseAuth = _auth;
+    final userCredential = kIsWeb
+        ? await firebaseAuth.signInWithPopup(FacebookAuthProvider())
+        : await _signInWithFacebookOnMobile();
+    return _toResult(
+      userCredential,
+      provider: SocialAuthProvider.facebook,
+    );
+  }
+
+  Future<UserCredential> _signInWithFacebookOnMobile() async {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      case TargetPlatform.iOS:
+        try {
+          final loginResult = await FacebookAuth.instance.login(
+            permissions: const ['email', 'public_profile'],
+          );
+          if (loginResult.status != LoginStatus.success ||
+              loginResult.accessToken == null) {
+            final reason =
+                loginResult.message?.trim().isNotEmpty == true
+                ? loginResult.message!.trim()
+                : 'No se pudo autenticar con Facebook.';
+            throw Exception(reason);
+          }
+          final credential = FacebookAuthProvider.credential(
+            loginResult.accessToken!.tokenString,
+          );
+          return _auth.signInWithCredential(credential);
+        } on MissingPluginException {
+          throw UnsupportedError(
+            'Facebook Sign-In no esta disponible en este build/dispositivo.',
+          );
+        }
+      default:
+        throw UnsupportedError(
+          'Facebook Firebase solo esta habilitado en web, Android e iOS.',
+        );
+    }
+  }
+
+  Future<FirebaseSocialSignInResult> _toResult(
+    UserCredential userCredential, {
+    required SocialAuthProvider provider,
+  }) async {
+    final user = userCredential.user;
+    final idToken = await user?.getIdToken(true);
+    if (idToken == null || idToken.trim().isEmpty) {
+      throw Exception('Firebase no devolvio un token valido.');
+    }
+    return FirebaseSocialSignInResult(
+      idToken: idToken,
+      provider: provider,
+      displayName: user?.displayName,
+      photoUrl: user?.photoURL,
+    );
+  }
+
+  Future<void> _initializeGoogleSignIn() async {
+    await _initializeGoogleSignInInternal(
+      serverClientId: AppEnv.firebaseGoogleServerClientId,
+    );
+  }
+
+  Future<void> _initializeGoogleSignInInternal({
+    required String serverClientId,
+  }) async {
+    if (_googleInitialized) {
+      return;
+    }
+    final normalizedClientId = serverClientId.trim();
+    await _googleSignIn.initialize(
+      serverClientId: normalizedClientId.isEmpty ? null : normalizedClientId,
+    );
+    _googleInitialized = true;
+  }
+
+  bool get _supportsMobileFacebookPlugin {
+    if (kIsWeb) {
+      return false;
+    }
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  FirebaseAuth get _auth {
+    final existing = _firebaseAuth;
+    if (existing != null) {
+      return existing;
+    }
+    final created = FirebaseAuth.instance;
+    _firebaseAuth = created;
+    return created;
+  }
+}
+

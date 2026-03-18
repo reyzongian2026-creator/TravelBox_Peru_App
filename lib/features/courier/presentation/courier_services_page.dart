@@ -1,0 +1,970 @@
+import 'package:flutter/material.dart';
+import '../../../core/l10n/app_localizations.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
+
+import '../../../core/network/api_client.dart';
+import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/state_views.dart';
+import '../../../shared/state/geo_route_provider.dart';
+import '../../../shared/utils/app_error_formatter.dart';
+import '../../reservation/presentation/reservation_providers.dart';
+
+class CourierServicesPage extends ConsumerStatefulWidget {
+  CourierServicesPage({super.key});
+
+  @override
+  ConsumerState<CourierServicesPage> createState() =>
+      _CourierServicesPageState();
+}
+
+class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
+  final _searchController = TextEditingController();
+  bool _loading = true;
+  bool _activeOnly = true;
+  String _query = '';
+  String? _error;
+  String? _busyOrderId;
+  List<CourierDeliveryItem> _availableItems = const [];
+  List<CourierDeliveryItem> _myItems = const [];
+  int _lastRealtimeCursor = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final realtimeCursor = ref.watch(reservationRealtimeEventCursorProvider);
+    if (_lastRealtimeCursor != realtimeCursor) {
+      final shouldReload = _lastRealtimeCursor >= 0;
+      _lastRealtimeCursor = realtimeCursor;
+      if (shouldReload) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) {
+            return;
+          }
+          _loadData();
+        });
+      }
+    }
+    return AppShellScaffold(
+      title: 'Servicios courier',
+      currentRoute: '/courier/services',
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() => _query = value.trim());
+                      _loadData();
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Buscar por codigo, cliente o ciudad',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TabBar(
+                          tabs: const [
+                            Tab(text: 'Disponibles'),
+                            Tab(text: 'Mis servicios'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      FilterChip(
+                        selected: _activeOnly,
+                        label: Text(context.l10n.t('solo_activos')),
+                        onSelected: (value) {
+                          setState(() => _activeOnly = value);
+                          _loadData();
+                        },
+                      ),
+                      SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: _loadData,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(context.l10n.t('recargar')),
+                      ),
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.go('/ops/qr-handoff'),
+                        icon: Icon(Icons.qr_code_scanner_outlined),
+                        label: Text(context.l10n.t('qrpin')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8),
+            Expanded(
+              child: _loading
+                  ? const LoadingStateView()
+                  : _error != null
+                  ? ErrorStateView(message: _error!, onRetry: _loadData)
+                  : TabBarView(
+                      children: [
+                        _buildList(
+                          context,
+                          items: _availableItems,
+                          emptyMessage:
+                              'No hay servicios libres para este filtro.',
+                          showClaimAction: true,
+                        ),
+                        _buildList(
+                          context,
+                          items: _myItems,
+                          emptyMessage:
+                              'No tienes servicios asignados en este momento.',
+                          showClaimAction: false,
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList(
+    BuildContext context, {
+    required List<CourierDeliveryItem> items,
+    required String emptyMessage,
+    required bool showClaimAction,
+  }) {
+    if (items.isEmpty) {
+      return EmptyStateView(message: emptyMessage);
+    }
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          final busy = _busyOrderId == item.deliveryOrderId;
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        item.reservationCode,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      Chip(
+                        label: Text(item.deliveryStatusLabel),
+                        side: BorderSide(color: item.statusColor),
+                      ),
+                      if (busy)
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${item.customerName} - ${item.cityName}\n${item.warehouseName}',
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Servicio: ${item.deliveryTypeLabel}'),
+                  Text(
+                    item.deliveryType.toUpperCase() == 'PICKUP'
+                        ? 'Punto de recojo: ${item.address}'
+                        : 'Destino: ${item.address}',
+                  ),
+                  Text('ETA actual: ${item.etaMinutes} min'),
+                  if (!showClaimAction)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Vehiculo: ${item.vehicleType} ${item.vehiclePlate}',
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (showClaimAction)
+                        FilledButton.icon(
+                          onPressed: busy ? null : () => _claimOrder(item),
+                          icon: const Icon(Icons.assignment_turned_in_outlined),
+                          label: Text(context.l10n.t('tomar_servicio')),
+                        ),
+                      if (!showClaimAction && item.canAdvanceToInTransit)
+                        FilledButton.tonalIcon(
+                          onPressed: busy
+                              ? null
+                              : () => _updateProgress(
+                                  item,
+                                  defaultStatus: 'IN_TRANSIT',
+                                ),
+                          icon: Icon(Icons.local_shipping_outlined),
+                          label: Text(context.l10n.t('salir_a_ruta')),
+                        ),
+                      if (!showClaimAction && item.canComplete)
+                        FilledButton.icon(
+                          onPressed: busy
+                              ? null
+                              : () => _updateProgress(
+                                  item,
+                                  defaultStatus: 'DELIVERED',
+                                ),
+                          icon: Icon(Icons.check_circle_outline),
+                          label: Text(
+                            item.deliveryType.toUpperCase() == 'PICKUP'
+                                ? 'Confirmar recojo'
+                                : 'Confirmar entrega',
+                          ),
+                        ),
+                      if (!showClaimAction && item.canOperate)
+                        OutlinedButton.icon(
+                          onPressed: busy
+                              ? null
+                              : () => _updateProgress(
+                                  item,
+                                  defaultStatus: item.deliveryStatus,
+                                ),
+                          icon: const Icon(Icons.edit_location_alt_outlined),
+                          label: Text(context.l10n.t('actualizar_tracking')),
+                        ),
+                      OutlinedButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () => context.go(
+                                '/courier/tracking/${item.reservationId}',
+                              ),
+                        icon: Icon(Icons.route_outlined),
+                        label: Text(context.l10n.t('ver_tracking')),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final dio = ref.read(dioProvider);
+      final responses = await Future.wait([
+        dio.get<List<dynamic>>(
+          '/delivery-orders',
+          queryParameters: {
+            'activeOnly': _activeOnly,
+            'query': _query,
+            'scope': 'available',
+          },
+        ),
+        dio.get<List<dynamic>>(
+          '/delivery-orders',
+          queryParameters: {
+            'activeOnly': _activeOnly,
+            'query': _query,
+            'scope': 'mine',
+          },
+        ),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _availableItems = (responses[0].data ?? const [])
+            .map(
+              (item) =>
+                  CourierDeliveryItem.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+        _myItems = (responses[1].data ?? const [])
+            .map(
+              (item) =>
+                  CourierDeliveryItem.fromJson(item as Map<String, dynamic>),
+            )
+            .toList();
+        _loading = false;
+        _error = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error =
+            'No se pudieron cargar servicios courier: ${AppErrorFormatter.readable(error)}';
+      });
+    }
+  }
+
+  Future<void> _claimOrder(CourierDeliveryItem item) async {
+    final claim = await showDialog<_CourierClaimPayload>(
+      context: context,
+      builder: (context) => _CourierClaimDialog(),
+    );
+    if (claim == null) return;
+    await _runBusy(item.deliveryOrderId, () async {
+      await ref
+          .read(dioProvider)
+          .post<Map<String, dynamic>>(
+            '/delivery-orders/${item.deliveryOrderId}/claim',
+            data: claim.toJson(),
+          );
+      await _loadData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tomaste el servicio ${item.reservationCode}.')),
+      );
+    });
+  }
+
+  Future<void> _updateProgress(
+    CourierDeliveryItem item, {
+    required String defaultStatus,
+  }) async {
+    final payload = await showDialog<_CourierProgressPayload>(
+      context: context,
+      builder: (context) =>
+          _CourierProgressDialog(item: item, defaultStatus: defaultStatus),
+    );
+    if (payload == null) return;
+    await _runBusy(item.deliveryOrderId, () async {
+      await ref
+          .read(dioProvider)
+          .patch<Map<String, dynamic>>(
+            '/delivery-orders/${item.deliveryOrderId}/progress',
+            data: payload.toJson(),
+          );
+      await _loadData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tracking actualizado para ${item.reservationCode}.'),
+        ),
+      );
+    });
+  }
+
+  Future<void> _runBusy(String orderId, Future<void> Function() action) async {
+    setState(() => _busyOrderId = orderId);
+    try {
+      await action();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppErrorFormatter.readable(error))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busyOrderId = null);
+      }
+    }
+  }
+}
+
+class CourierDeliveryItem {
+  const CourierDeliveryItem({
+    required this.deliveryOrderId,
+    required this.reservationId,
+    required this.reservationCode,
+    required this.deliveryType,
+    required this.deliveryStatus,
+    required this.warehouseName,
+    required this.cityName,
+    required this.customerName,
+    required this.address,
+    required this.vehicleType,
+    required this.vehiclePlate,
+    required this.etaMinutes,
+    required this.currentLatitude,
+    required this.currentLongitude,
+    required this.destinationLatitude,
+    required this.destinationLongitude,
+  });
+
+  final String deliveryOrderId;
+  final String reservationId;
+  final String reservationCode;
+  final String deliveryType;
+  final String deliveryStatus;
+  final String warehouseName;
+  final String cityName;
+  final String customerName;
+  final String address;
+  final String vehicleType;
+  final String vehiclePlate;
+  final int etaMinutes;
+  final double currentLatitude;
+  final double currentLongitude;
+  final double destinationLatitude;
+  final double destinationLongitude;
+
+  bool get canAdvanceToInTransit =>
+      deliveryStatus.toUpperCase() == 'ASSIGNED' ||
+      deliveryStatus.toUpperCase() == 'REQUESTED';
+
+  bool get canComplete => deliveryStatus.toUpperCase() == 'IN_TRANSIT';
+
+  bool get canOperate =>
+      deliveryStatus.toUpperCase() != 'DELIVERED' &&
+      deliveryStatus.toUpperCase() != 'CANCELLED';
+
+  String get deliveryStatusLabel {
+    switch (deliveryStatus.toUpperCase()) {
+      case 'REQUESTED':
+        return 'Solicitado';
+      case 'ASSIGNED':
+        return 'Asignado';
+      case 'IN_TRANSIT':
+        return 'En transito';
+      case 'DELIVERED':
+        return 'Entregado';
+      case 'CANCELLED':
+        return 'Cancelado';
+      default:
+        return deliveryStatus;
+    }
+  }
+
+  String get deliveryTypeLabel {
+    switch (deliveryType.toUpperCase()) {
+      case 'PICKUP':
+        return 'Recojo';
+      case 'DELIVERY':
+        return 'Entrega';
+      default:
+        return deliveryType;
+    }
+  }
+
+  Color get statusColor {
+    switch (deliveryStatus.toUpperCase()) {
+      case 'ASSIGNED':
+        return const Color(0xFF1D4ED8);
+      case 'IN_TRANSIT':
+        return const Color(0xFF0B8B8C);
+      case 'DELIVERED':
+        return const Color(0xFF168F64);
+      case 'CANCELLED':
+        return const Color(0xFFC43D3D);
+      default:
+        return const Color(0xFFF29F05);
+    }
+  }
+
+  factory CourierDeliveryItem.fromJson(Map<String, dynamic> json) {
+    return CourierDeliveryItem(
+      deliveryOrderId: json['deliveryOrderId']?.toString() ?? '',
+      reservationId: json['reservationId']?.toString() ?? '',
+      reservationCode: json['reservationCode']?.toString() ?? '-',
+      deliveryType: json['deliveryType']?.toString() ?? 'DELIVERY',
+      deliveryStatus: json['deliveryStatus']?.toString() ?? 'REQUESTED',
+      warehouseName: json['warehouseName']?.toString() ?? 'Sin almacen',
+      cityName: json['cityName']?.toString() ?? '-',
+      customerName: json['customerName']?.toString() ?? 'Cliente',
+      address: json['address']?.toString() ?? '-',
+      vehicleType: json['vehicleType']?.toString() ?? '-',
+      vehiclePlate: json['vehiclePlate']?.toString() ?? '-',
+      etaMinutes: (json['etaMinutes'] as num?)?.toInt() ?? 0,
+      currentLatitude: (json['currentLatitude'] as num?)?.toDouble() ?? 0,
+      currentLongitude: (json['currentLongitude'] as num?)?.toDouble() ?? 0,
+      destinationLatitude:
+          (json['destinationLatitude'] as num?)?.toDouble() ?? 0,
+      destinationLongitude:
+          (json['destinationLongitude'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+class _CourierClaimPayload {
+  const _CourierClaimPayload({
+    required this.vehicleType,
+    required this.vehiclePlate,
+  });
+
+  final String vehicleType;
+  final String vehiclePlate;
+
+  Map<String, dynamic> toJson() {
+    return {'vehicleType': vehicleType, 'vehiclePlate': vehiclePlate};
+  }
+}
+
+class _CourierClaimDialog extends StatefulWidget {
+  const _CourierClaimDialog();
+
+  @override
+  State<_CourierClaimDialog> createState() => _CourierClaimDialogState();
+}
+
+class _CourierClaimDialogState extends State<_CourierClaimDialog> {
+  final _vehicleTypeController = TextEditingController(text: 'MOTO');
+  final _vehiclePlateController = TextEditingController(text: 'TBX-001');
+
+  @override
+  void dispose() {
+    _vehicleTypeController.dispose();
+    _vehiclePlateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(context.l10n.t('tomar_servicio')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _vehicleTypeController,
+            decoration: InputDecoration(labelText: 'Tipo de vehiculo'),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _vehiclePlateController,
+            decoration: const InputDecoration(labelText: 'Placa o codigo'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.t('cancelar')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            _CourierClaimPayload(
+              vehicleType: _vehicleTypeController.text.trim(),
+              vehiclePlate: _vehiclePlateController.text.trim(),
+            ),
+          ),
+          child: Text(context.l10n.t('aceptar_servicio')),
+        ),
+      ],
+    );
+  }
+}
+
+class _CourierProgressPayload {
+  _CourierProgressPayload({
+    required this.status,
+    required this.latitude,
+    required this.longitude,
+    required this.etaMinutes,
+    required this.message,
+    required this.vehicleType,
+    required this.vehiclePlate,
+  });
+
+  final String status;
+  final double? latitude;
+  final double? longitude;
+  final int? etaMinutes;
+  final String message;
+  final String vehicleType;
+  final String vehiclePlate;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'latitude': latitude,
+      'longitude': longitude,
+      'etaMinutes': etaMinutes,
+      'message': message,
+      'vehicleType': vehicleType,
+      'vehiclePlate': vehiclePlate,
+    };
+  }
+}
+
+class _CourierProgressDialog extends ConsumerStatefulWidget {
+  const _CourierProgressDialog({
+    required this.item,
+    required this.defaultStatus,
+  });
+
+  final CourierDeliveryItem item;
+  final String defaultStatus;
+
+  @override
+  ConsumerState<_CourierProgressDialog> createState() =>
+      _CourierProgressDialogState();
+}
+
+class _CourierProgressDialogState
+    extends ConsumerState<_CourierProgressDialog> {
+  late String _status;
+  late final TextEditingController _latitudeController;
+  late final TextEditingController _longitudeController;
+  late final TextEditingController _etaController;
+  late final TextEditingController _messageController;
+  late final TextEditingController _vehicleTypeController;
+  late final TextEditingController _vehiclePlateController;
+  bool _gettingLocation = false;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.defaultStatus.toUpperCase();
+    _latitudeController = TextEditingController(
+      text: widget.item.currentLatitude.toStringAsFixed(6),
+    );
+    _longitudeController = TextEditingController(
+      text: widget.item.currentLongitude.toStringAsFixed(6),
+    );
+    _etaController = TextEditingController(text: '${widget.item.etaMinutes}');
+    _messageController = TextEditingController();
+    _vehicleTypeController = TextEditingController(
+      text: widget.item.vehicleType == '-' ? 'MOTO' : widget.item.vehicleType,
+    );
+    _vehiclePlateController = TextEditingController(
+      text: widget.item.vehiclePlate == '-' ? '' : widget.item.vehiclePlate,
+    );
+  }
+
+  @override
+  void dispose() {
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    _etaController.dispose();
+    _messageController.dispose();
+    _vehicleTypeController.dispose();
+    _vehiclePlateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final statuses = _statusOptions(widget.item.deliveryStatus);
+    final routeAsync = ref.watch(
+      geoRouteProvider(
+        GeoRouteRequest(
+          originLat: widget.item.currentLatitude,
+          originLng: widget.item.currentLongitude,
+          destinationLat: widget.item.destinationLatitude,
+          destinationLng: widget.item.destinationLongitude,
+        ),
+      ),
+    );
+    final route = routeAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => null,
+    );
+    final routePoints = routeAsync.maybeWhen(
+      data: (value) => value.points
+          .map((point) => LatLng(point.latitude, point.longitude))
+          .toList(),
+      orElse: () => <LatLng>[
+        LatLng(widget.item.currentLatitude, widget.item.currentLongitude),
+        LatLng(
+          widget.item.destinationLatitude,
+          widget.item.destinationLongitude,
+        ),
+      ],
+    );
+
+    return AlertDialog(
+      title: Text(context.l10n.t('actualizar_tracking')),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 220,
+                child: Card(
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(
+                        widget.item.currentLatitude,
+                        widget.item.currentLongitude,
+                      ),
+                      initialZoom: 13,
+                      initialCameraFit: CameraFit.bounds(
+                        bounds: LatLngBounds.fromPoints(routePoints),
+                        padding: const EdgeInsets.all(28),
+                        maxZoom: 16,
+                      ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'travelbox.peru.app',
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: routePoints,
+                            strokeWidth: 4,
+                            color: route?.fallbackUsed == true
+                                ? Color(0xFF3B82F6)
+                                : const Color(0xFF0B8B8C),
+                          ),
+                        ],
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(
+                              widget.item.currentLatitude,
+                              widget.item.currentLongitude,
+                            ),
+                            width: 44,
+                            height: 44,
+                            child: const Icon(
+                              Icons.local_shipping,
+                              color: Colors.red,
+                            ),
+                          ),
+                          Marker(
+                            point: LatLng(
+                              widget.item.destinationLatitude,
+                              widget.item.destinationLongitude,
+                            ),
+                            width: 44,
+                            height: 44,
+                            child: Icon(
+                              widget.item.deliveryType.toUpperCase() == 'PICKUP'
+                                  ? Icons.inventory_2_outlined
+                                  : Icons.flag,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  route == null
+                      ? 'Cargando ruta sugerida...'
+                      : 'Ruta ${route.fallbackUsed ? 'simulada' : route.provider.toUpperCase()} - ${(route.distanceMeters / 1000).toStringAsFixed(1)} km',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: statuses.contains(_status)
+                    ? _status
+                    : statuses.first,
+                decoration: const InputDecoration(labelText: 'Nuevo estado'),
+                items: statuses
+                    .map(
+                      (status) =>
+                          DropdownMenuItem(value: status, child: Text(status)),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _status = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _latitudeController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Latitud'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _longitudeController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Longitud'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.tonalIcon(
+                      onPressed: _gettingLocation ? null : _useBrowserLocation,
+                      icon: const Icon(Icons.my_location_outlined),
+                      label: Text(
+                        _gettingLocation ? 'Leyendo GPS...' : 'Usar mi GPS',
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        _latitudeController.text = widget.item.currentLatitude
+                            .toStringAsFixed(6);
+                        _longitudeController.text = widget.item.currentLongitude
+                            .toStringAsFixed(6);
+                      },
+                      icon: const Icon(Icons.restart_alt_outlined),
+                      label: Text(context.l10n.t('usar_ultimo_punto')),
+                    ),
+                  ],
+                ),
+              ),
+              if (_locationError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _locationError!,
+                    style: TextStyle(color: Color(0xFFC43D3D)),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _etaController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'ETA en minutos'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _vehicleTypeController,
+                decoration: const InputDecoration(
+                  labelText: 'Tipo de vehiculo',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _vehiclePlateController,
+                decoration: const InputDecoration(labelText: 'Placa o codigo'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _messageController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Mensaje operativo',
+                  hintText: 'Ej. Llegue al hotel / equipaje verificado',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.t('cancelar')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            _CourierProgressPayload(
+              status: _status,
+              latitude: double.tryParse(
+                _latitudeController.text.trim().replaceAll(',', '.'),
+              ),
+              longitude: double.tryParse(
+                _longitudeController.text.trim().replaceAll(',', '.'),
+              ),
+              etaMinutes: int.tryParse(_etaController.text.trim()),
+              message: _messageController.text.trim(),
+              vehicleType: _vehicleTypeController.text.trim(),
+              vehiclePlate: _vehiclePlateController.text.trim(),
+            ),
+          ),
+          child: Text(context.l10n.t('guardar_avance')),
+        ),
+      ],
+    );
+  }
+
+  List<String> _statusOptions(String currentStatus) {
+    switch (currentStatus.toUpperCase()) {
+      case 'REQUESTED':
+        return const ['ASSIGNED', 'CANCELLED'];
+      case 'ASSIGNED':
+        return const ['ASSIGNED', 'IN_TRANSIT', 'CANCELLED'];
+      case 'IN_TRANSIT':
+        return const ['IN_TRANSIT', 'DELIVERED', 'CANCELLED'];
+      default:
+        return [currentStatus.toUpperCase()];
+    }
+  }
+
+  Future<void> _useBrowserLocation() async {
+    setState(() {
+      _gettingLocation = true;
+      _locationError = null;
+    });
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationError = 'No se concedio permiso de ubicacion.';
+          _gettingLocation = false;
+        });
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _latitudeController.text = position.latitude.toStringAsFixed(6);
+        _longitudeController.text = position.longitude.toStringAsFixed(6);
+        _gettingLocation = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _locationError = AppErrorFormatter.readable(error);
+        _gettingLocation = false;
+      });
+    }
+  }
+}
+

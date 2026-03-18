@@ -1,0 +1,42 @@
+name: Frontend Smoke Live Backend
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - lib/**
+      - test/**
+      - pubspec.yaml
+      - pubspec.lock
+      - .github/workflows/frontend-smoke-live-backend.yml
+
+jobs:
+  smoke-live-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Run smoke test against live backend
+        if: ${{ secrets.SMOKE_API_BASE_URL != '' }}
+        run: |
+          flutter test test/live_backend_smoke_test.dart \
+            --dart-define=API_BASE_URL=${{ secrets.SMOKE_API_BASE_URL }} \
+            --dart-define=SMOKE_CLIENT_EMAIL=${{ secrets.SMOKE_CLIENT_EMAIL }} \
+            --dart-define=SMOKE_CLIENT_PASSWORD=${{ secrets.SMOKE_CLIENT_PASSWORD }}
+
+      - name: Skip smoke test if secrets are missing
+        if: ${{ secrets.SMOKE_API_BASE_URL == '' }}
+        run: |
+          echo "Skipping live smoke test."
+          echo "Set GitHub Secrets: SMOKE_API_BASE_URL, SMOKE_CLIENT_EMAIL, SMOKE_CLIENT_PASSWORD."
