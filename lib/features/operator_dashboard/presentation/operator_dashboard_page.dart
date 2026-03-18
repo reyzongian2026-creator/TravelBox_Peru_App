@@ -1,0 +1,320 @@
+import 'package:flutter/material.dart';
+import '../../../core/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/network/api_client.dart';
+import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/state_views.dart';
+import '../../../shared/models/reservation.dart';
+import '../../../shared/state/qr_handoff_controller.dart';
+import '../../../shared/widgets/operation_guide.dart';
+import '../../payments/presentation/cash_payments_page.dart';
+import '../../reservation/presentation/reservation_providers.dart';
+
+final opsPendingApprovalsProvider = FutureProvider<int>((ref) async {
+  ref.watch(reservationRealtimeEventCursorProvider);
+  final dio = ref.watch(dioProvider);
+  try {
+    final response = await dio.get<List<dynamic>>('/ops/qr-handoff/approvals');
+    final items = response.data ?? const <dynamic>[];
+    var pending = 0;
+    for (final item in items) {
+      if (item is Map<String, dynamic>) {
+        final status = item['status']?.toString().toUpperCase() ?? '';
+        if (status == 'PENDING') {
+          pending += 1;
+        }
+      }
+    }
+    return pending;
+  } catch (_) {
+    final state = ref.read(qrHandoffControllerProvider);
+    return state.approvalNotifications
+        .where((item) => item.status == OpsApprovalStatus.pending)
+        .length;
+  }
+});
+
+class OperatorDashboardPage extends ConsumerWidget {
+  OperatorDashboardPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pendingCash = ref.watch(cashPendingPaymentsProvider);
+    final reservations = ref.watch(adminReservationsProvider);
+    final pendingApprovals = ref.watch(opsPendingApprovalsProvider).valueOrNull ?? 0;
+
+    final reservationItems = reservations.valueOrNull ?? const <Reservation>[];
+    final activeReservations = reservationItems
+        .where(
+          (item) =>
+              item.status != ReservationStatus.cancelled &&
+              item.status != ReservationStatus.completed &&
+              item.status != ReservationStatus.expired,
+        )
+        .length;
+    final incidentReservations = reservationItems
+        .where((item) => item.status == ReservationStatus.incident)
+        .length;
+    final pendingCashCount = pendingCash.valueOrNull?.length ?? 0;
+    final operatorGuide = resolveOperationGuide('/operator/panel');
+
+    return AppShellScaffold(
+      title: 'Panel operativo',
+      currentRoute: '/operator/panel',
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(cashPendingPaymentsProvider);
+          ref.invalidate(adminReservationsProvider);
+          ref.invalidate(opsPendingApprovalsProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF14532D), Color(0xFF0B8B8C)],
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                'Atencion diaria: cobros en caja, control de reservas y seguimiento de incidencias.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (operatorGuide != null) ...[
+              OperationGuideSummaryCard(
+                guide: operatorGuide,
+                compact: true,
+              ),
+              const SizedBox(height: 12),
+            ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 600) {
+                  return Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _KpiCard(
+                              title: 'Cobros pendientes',
+                              value: '$pendingCashCount',
+                              colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _KpiCard(
+                              title: 'Reservas activas',
+                              value: '$activeReservations',
+                              colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _KpiCard(
+                          title: 'Incidencias',
+                          value: '$incidentReservations',
+                          colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _KpiCard(
+                        title: 'Cobros pendientes',
+                        value: '$pendingCashCount',
+                        colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _KpiCard(
+                        title: 'Reservas activas',
+                        value: '$activeReservations',
+                        colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _KpiCard(
+                        title: 'Incidencias',
+                        value: '$incidentReservations',
+                        colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.point_of_sale_outlined),
+                    title: Text(context.l10n.t('cobros_en_caja')),
+                    subtitle: Text(context.l10n.t('aprobar_o_rechazar_pagos_pendientes')),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () => context.go('/operator/cash-payments'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.assignment_outlined),
+                    title: Text(context.l10n.t('reservas_operativas')),
+                    subtitle: Text(
+                      'Busqueda por codigo, cambios de estado y trazabilidad',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go('/operator/reservations'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.warning_amber_outlined),
+                    title: Text(context.l10n.t('incidencias')),
+                    subtitle: Text(context.l10n.t('monitoreo_y_atencion_de_casos')),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () => context.go('/operator/incidents'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.route_outlined),
+                    title: Text(context.l10n.t('tracking_logistico')),
+                    subtitle: Text(context.l10n.t('seguimiento_de_deliveries_en_vivo')),
+                    trailing: Icon(Icons.chevron_right),
+                    onTap: () => context.go('/operator/tracking'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.qr_code_scanner_outlined),
+                    title: Text(context.l10n.t('qr_y_pin_operativo')),
+                    subtitle: Text(
+                      'Escanear reserva, etiquetar maleta y cerrar entrega con PIN',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.go('/ops/qr-handoff'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (pendingApprovals > 0)
+              Card(
+                color: const Color(0xFFFFF7E8),
+                child: ListTile(
+                  leading: const Icon(Icons.notifications_active_outlined),
+                  title: Text('$pendingApprovals aprobaciones pendientes'),
+                  subtitle: const Text(
+                    'Hay entregas de delivery esperando validacion de operador/admin.',
+                  ),
+                  trailing: FilledButton.tonal(
+                    onPressed: () => context.go('/ops/qr-handoff'),
+                    child: Text(context.l10n.t('revisar')),
+                  ),
+                ),
+              ),
+            if (pendingApprovals > 0) const SizedBox(height: 12),
+            pendingCash.when(
+              data: (items) {
+                if (items.isEmpty) {
+                  return const EmptyStateView(
+                    message: 'No hay cobros pendientes por validar.',
+                  );
+                }
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pendientes recientes',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        ...items
+                            .take(5)
+                            .map(
+                              (item) => ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(
+                                  'Intento #${item.paymentIntentId} - Reserva #${item.reservationId}',
+                                ),
+                                subtitle: Text(
+                                  '${item.userName} - S/${item.amount.toStringAsFixed(2)}',
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              loading: () => const LoadingStateView(),
+              error: (error, _) => ErrorStateView(
+                message: 'No se pudo cargar cobros pendientes: $error',
+                onRetry: () => ref.invalidate(cashPendingPaymentsProvider),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({
+    required this.title,
+    required this.value,
+    required this.colors,
+  });
+
+  final String title;
+  final String value;
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 110),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: colors),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

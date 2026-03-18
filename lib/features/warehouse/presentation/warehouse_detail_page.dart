@@ -1,0 +1,208 @@
+import 'package:flutter/material.dart';
+import '../../../core/l10n/app_localizations.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/state_views.dart';
+import '../../../shared/data/peru_tourism_catalog.dart';
+import '../../../shared/state/realtime_app_event_cursor_provider.dart';
+import '../../../shared/widgets/app_smart_image.dart';
+import '../../../shared/widgets/peru_flat_scene.dart';
+import '../../map_discovery/data/discovery_repository_impl.dart';
+
+final warehouseDetailProvider = FutureProvider.family((
+  Ref ref,
+  String warehouseId,
+) {
+  ref.watch(realtimeAppEventCursorProvider);
+  return ref.read(discoveryRepositoryProvider).getWarehouseById(warehouseId);
+});
+
+class WarehouseDetailPage extends ConsumerWidget {
+  WarehouseDetailPage({super.key, required this.warehouseId});
+
+  final String warehouseId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final warehouseAsync = ref.watch(warehouseDetailProvider(warehouseId));
+    return AppShellScaffold(
+      title: 'Detalle de sede',
+      currentRoute: '/discovery',
+      actions: [
+        IconButton(
+          tooltip: 'Volver',
+          onPressed: () => context.go('/discovery'),
+          icon: const Icon(Icons.arrow_back),
+        ),
+      ],
+      child: warehouseAsync.when(
+        data: (warehouse) {
+          if (warehouse == null) {
+            return EmptyStateView(
+              message: 'No encontramos este almacén.',
+              actionLabel: 'Volver',
+              onAction: () => context.go('/discovery'),
+            );
+          }
+
+          final isWideWeb = kIsWeb && MediaQuery.of(context).size.width >= 1000;
+          final content = ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                'Sede en ${warehouse.city}',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 10),
+              if (isWideWeb)
+                SizedBox(
+                  height: 320,
+                  child: AppSmartImage(
+                    source: warehouse.imageUrl,
+                    width: double.infinity,
+                    height: 320,
+                    borderRadius: BorderRadius.circular(16),
+                    fallback: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: PeruFlatScene(
+                        city: warehouse.city,
+                        height: 320,
+                        showLabel: true,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: AppSmartImage(
+                    source: warehouse.imageUrl,
+                    width: double.infinity,
+                    borderRadius: BorderRadius.circular(16),
+                    fallback: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: PeruFlatScene(
+                        city: warehouse.city,
+                        height: 200,
+                        showLabel: true,
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                warehouse.name,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 6),
+              Text('${warehouse.address}, ${warehouse.city}'),
+              const SizedBox(height: 14),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Horario: ${warehouse.openingHours}'),
+                      Text('Capacidad disponible: ${warehouse.availableSlots}'),
+                      Text(
+                        'Precio desde: S/${warehouse.priceFromPerHour.toStringAsFixed(2)}/hora',
+                      ),
+                      Text('Score: ${warehouse.score.toStringAsFixed(1)}'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: _TourismInfoBlock(city: warehouse.city),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Servicios extra',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: warehouse.extraServices
+                    .map((item) => Chip(label: Text(item)))
+                    .toList(),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => context.push('/reservation/new/$warehouseId'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 52),
+                ),
+                child: Text(context.l10n.t('reservar_ahora')),
+              ),
+            ],
+          );
+
+          if (!isWideWeb) {
+            return content;
+          }
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 980),
+              child: content,
+            ),
+          );
+        },
+        loading: () => const LoadingStateView(),
+        error: (error, _) => ErrorStateView(
+          message: 'No se pudo cargar el detalle: $error',
+          onRetry: () => ref.invalidate(warehouseDetailProvider(warehouseId)),
+        ),
+      ),
+    );
+  }
+}
+
+class _TourismInfoBlock extends StatelessWidget {
+  const _TourismInfoBlock({required this.city});
+
+  final String city;
+
+  @override
+  Widget build(BuildContext context) {
+    final tourism = PeruTourismCatalog.forCity(city);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Turismo destacado: ${tourism.heroLandmark}',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 6),
+        Text(tourism.shortDescription),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: tourism.highlights
+              .map((item) => Chip(label: Text(item)))
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
