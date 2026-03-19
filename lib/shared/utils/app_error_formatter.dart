@@ -56,6 +56,13 @@ class AppErrorFormatter {
         lowered.contains('identity provider configuration is not found')) {
       return 'El proveedor social aun no esta habilitado en Firebase Auth (Google/Facebook).';
     }
+    if (lowered.contains('firebase_auth/unauthorized-domain') ||
+        lowered.contains('unauthorized-domain')) {
+      return 'Este dominio no esta autorizado en Firebase Auth. Agrega tu dominio de Cloud Run en Authorized domains.';
+    }
+    if (lowered.contains('invalid scopes') && lowered.contains('email')) {
+      return 'Facebook rechazo el scope email para esta app. Ajusta permisos en Meta Developers o usa solo public_profile.';
+    }
     if (lowered.contains('firebase_auth/channel-error') &&
         lowered.contains('signinwithprovider')) {
       return 'El flujo social movil no esta listo para este proveedor. Actualiza la configuracion nativa.';
@@ -67,6 +74,10 @@ class AppErrorFormatter {
     if (lowered.contains('googlesigninexceptioncode.canceled') ||
         lowered.contains('account reauth failed')) {
       return 'El inicio con Google fue cancelado o la cuenta del emulador no pudo reautenticarse. Usa "Entrar como cliente demo" para continuar.';
+    }
+    if (lowered.contains('timeoutexception') &&
+        (lowered.contains('social') || lowered.contains('sesion'))) {
+      return 'El proveedor social tardo demasiado en responder. Intenta nuevamente.';
     }
     if (lowered.contains('core/no-app') ||
         lowered.contains('no firebase app') ||

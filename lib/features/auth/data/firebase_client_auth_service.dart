@@ -45,10 +45,9 @@ class FirebaseSocialSignInResult {
 }
 
 class FirebaseClientAuthService {
-  FirebaseClientAuthService({
-    FirebaseAuth? firebaseAuth,
-  }) : _firebaseAuth = firebaseAuth,
-       _googleSignIn = GoogleSignIn.instance;
+  FirebaseClientAuthService({FirebaseAuth? firebaseAuth})
+    : _firebaseAuth = firebaseAuth,
+      _googleSignIn = GoogleSignIn.instance;
 
   FirebaseAuth? _firebaseAuth;
   final GoogleSignIn _googleSignIn;
@@ -80,7 +79,7 @@ class FirebaseClientAuthService {
     try {
       await _googleSignIn.signOut();
     } catch (_) {}
-    if (_supportsMobileFacebookPlugin) {
+    if (_supportsFacebookPlugin) {
       try {
         await FacebookAuth.instance.logOut();
       } catch (_) {}
@@ -98,10 +97,7 @@ class FirebaseClientAuthService {
     final userCredential = kIsWeb
         ? await firebaseAuth.signInWithPopup(GoogleAuthProvider())
         : await _signInWithGoogleOnMobile();
-    return _toResult(
-      userCredential,
-      provider: SocialAuthProvider.google,
-    );
+    return _toResult(userCredential, provider: SocialAuthProvider.google);
   }
 
   Future<UserCredential> _signInWithGoogleOnMobile() async {
@@ -129,9 +125,7 @@ class FirebaseClientAuthService {
           'Google no devolvio idToken. Configura FIREBASE_GOOGLE_SERVER_CLIENT_ID para Android.',
         );
       }
-      final credential = GoogleAuthProvider.credential(
-        idToken: auth.idToken,
-      );
+      final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
       return _auth.signInWithCredential(credential);
     } on MissingPluginException {
       throw UnsupportedError(
@@ -141,51 +135,57 @@ class FirebaseClientAuthService {
   }
 
   Future<FirebaseSocialSignInResult> _signInWithFacebook() async {
-    if (!kIsWeb && !_supportsMobileFacebookPlugin) {
+    if (!_supportsFacebookPlugin) {
       throw UnsupportedError(
         'Facebook Firebase solo esta habilitado en web, Android e iOS.',
       );
     }
-    final firebaseAuth = _auth;
-    final userCredential = kIsWeb
-        ? await firebaseAuth.signInWithPopup(FacebookAuthProvider())
-        : await _signInWithFacebookOnMobile();
-    return _toResult(
-      userCredential,
-      provider: SocialAuthProvider.facebook,
-    );
+    final userCredential = await _signInWithFacebookWithFallbackScopes();
+    return _toResult(userCredential, provider: SocialAuthProvider.facebook);
   }
 
-  Future<UserCredential> _signInWithFacebookOnMobile() async {
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        try {
-          final loginResult = await FacebookAuth.instance.login(
-            permissions: const ['email', 'public_profile'],
-          );
-          if (loginResult.status != LoginStatus.success ||
-              loginResult.accessToken == null) {
-            final reason =
-                loginResult.message?.trim().isNotEmpty == true
-                ? loginResult.message!.trim()
-                : 'No se pudo autenticar con Facebook.';
-            throw Exception(reason);
-          }
-          final credential = FacebookAuthProvider.credential(
-            loginResult.accessToken!.tokenString,
-          );
-          return _auth.signInWithCredential(credential);
-        } on MissingPluginException {
-          throw UnsupportedError(
-            'Facebook Sign-In no esta disponible en este build/dispositivo.',
-          );
-        }
-      default:
-        throw UnsupportedError(
-          'Facebook Firebase solo esta habilitado en web, Android e iOS.',
-        );
+  Future<UserCredential> _signInWithFacebookWithFallbackScopes() async {
+    final primaryPermissions = kIsWeb
+        ? const <String>['email', 'public_profile']
+        : const <String>['email', 'public_profile'];
+    try {
+      return await _signInWithFacebookPermissions(primaryPermissions);
+    } catch (error) {
+      if (!_isFacebookInvalidEmailScope(error)) {
+        rethrow;
+      }
+      return _signInWithFacebookPermissions(const ['public_profile']);
     }
+  }
+
+  Future<UserCredential> _signInWithFacebookPermissions(
+    List<String> permissions,
+  ) async {
+    try {
+      final loginResult = await FacebookAuth.instance.login(
+        permissions: permissions,
+      );
+      if (loginResult.status != LoginStatus.success ||
+          loginResult.accessToken == null) {
+        final reason = loginResult.message?.trim().isNotEmpty == true
+            ? loginResult.message!.trim()
+            : 'No se pudo autenticar con Facebook.';
+        throw Exception(reason);
+      }
+      final credential = FacebookAuthProvider.credential(
+        loginResult.accessToken!.tokenString,
+      );
+      return _auth.signInWithCredential(credential);
+    } on MissingPluginException {
+      throw UnsupportedError(
+        'Facebook Sign-In no esta disponible en este build/dispositivo.',
+      );
+    }
+  }
+
+  bool _isFacebookInvalidEmailScope(Object error) {
+    final lowered = error.toString().toLowerCase();
+    return lowered.contains('invalid scopes') && lowered.contains('email');
   }
 
   Future<FirebaseSocialSignInResult> _toResult(
@@ -224,9 +224,9 @@ class FirebaseClientAuthService {
     _googleInitialized = true;
   }
 
-  bool get _supportsMobileFacebookPlugin {
+  bool get _supportsFacebookPlugin {
     if (kIsWeb) {
-      return false;
+      return true;
     }
     return defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS;
@@ -242,4 +242,3 @@ class FirebaseClientAuthService {
     return created;
   }
 }
-
