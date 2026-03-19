@@ -52,6 +52,7 @@ class FirebaseClientAuthService {
   FirebaseAuth? _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   bool _googleInitialized = false;
+  bool _facebookWebInitialized = false;
 
   bool get isConfigured => TravelBoxFirebase.isConfigured;
 
@@ -140,6 +141,7 @@ class FirebaseClientAuthService {
         'Facebook Firebase solo esta habilitado en web, Android e iOS.',
       );
     }
+    await _initializeFacebookWebIfNeeded();
     final userCredential = await _signInWithFacebookWithFallbackScopes();
     return _toResult(userCredential, provider: SocialAuthProvider.facebook);
   }
@@ -230,6 +232,28 @@ class FirebaseClientAuthService {
     }
     return defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  Future<void> _initializeFacebookWebIfNeeded() async {
+    if (!kIsWeb || _facebookWebInitialized) {
+      return;
+    }
+    final appId = AppEnv.firebaseFacebookAppId.trim();
+    if (appId.isEmpty) {
+      throw UnsupportedError(
+        'Falta FIREBASE_FACEBOOK_APP_ID para inicializar Facebook en web.',
+      );
+    }
+    final version = AppEnv.firebaseFacebookSdkVersion.trim().isEmpty
+        ? 'v22.0'
+        : AppEnv.firebaseFacebookSdkVersion.trim();
+    await FacebookAuth.instance.webAndDesktopInitialize(
+      appId: appId,
+      cookie: true,
+      xfbml: true,
+      version: version,
+    );
+    _facebookWebInitialized = true;
   }
 
   FirebaseAuth get _auth {

@@ -71,6 +71,9 @@ class AppErrorFormatter {
         lowered.contains('flutter_facebook_auth')) {
       return 'Facebook Sign-In no esta disponible en este build. Reinicia la app completa o valida la configuracion nativa.';
     }
+    if (lowered.contains('firebase_facebook_app_id')) {
+      return 'Falta FIREBASE_FACEBOOK_APP_ID en el build web. El login de Facebook no puede inicializarse.';
+    }
     if (lowered.contains('googlesigninexceptioncode.canceled') ||
         lowered.contains('account reauth failed')) {
       return 'El inicio con Google fue cancelado o no se pudo completar en este dispositivo. Intenta nuevamente.';

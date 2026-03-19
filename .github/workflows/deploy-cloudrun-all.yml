@@ -122,6 +122,8 @@ on:
         required: false
       FIREBASE_FACEBOOK_ENABLED:
         required: false
+      FIREBASE_FACEBOOK_APP_ID:
+        required: false
   workflow_dispatch:
     inputs:
       deploy_target:
@@ -397,7 +399,8 @@ jobs:
             @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
             @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
             @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
-            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false }
+            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false },
+            @{ secret = "tbx-auth-facebook-app-id"; env = "FIREBASE_FACEBOOK_APP_ID"; required = $false }
           )
 
           foreach ($item in $map) {
@@ -429,6 +432,7 @@ jobs:
           FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
           FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
           FIREBASE_FACEBOOK_ENABLED: ${{ secrets.FIREBASE_FACEBOOK_ENABLED }}
+          FIREBASE_FACEBOOK_APP_ID: ${{ secrets.FIREBASE_FACEBOOK_APP_ID }}
         run: |
           set -euo pipefail
           required=(AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_TENANT_ID FIREBASE_API_KEY FIREBASE_PROJECT_ID FIREBASE_MESSAGING_SENDER_ID)
@@ -453,6 +457,7 @@ jobs:
             echo "FIREBASE_IOS_APP_ID=${FIREBASE_IOS_APP_ID}"
             echo "FIREBASE_WEB_APP_ID=${FIREBASE_WEB_APP_ID}"
             echo "FIREBASE_FACEBOOK_ENABLED=${FIREBASE_FACEBOOK_ENABLED:-true}"
+            echo "FIREBASE_FACEBOOK_APP_ID=${FIREBASE_FACEBOOK_APP_ID}"
           } >> "${GITHUB_ENV}"
 
       - name: Deploy backend to Cloud Run
@@ -582,7 +587,8 @@ jobs:
             --dart-define=FIREBASE_ANDROID_APP_ID="${FIREBASE_ANDROID_APP_ID}" \
             --dart-define=FIREBASE_IOS_APP_ID="${FIREBASE_IOS_APP_ID}" \
             --dart-define=FIREBASE_WEB_APP_ID="${FIREBASE_WEB_APP_ID}" \
-            --dart-define=FIREBASE_FACEBOOK_ENABLED="${FIREBASE_FACEBOOK_ENABLED:-true}"
+            --dart-define=FIREBASE_FACEBOOK_ENABLED="${FIREBASE_FACEBOOK_ENABLED:-true}" \
+            --dart-define=FIREBASE_FACEBOOK_APP_ID="${FIREBASE_FACEBOOK_APP_ID}"
 
       - name: Deploy frontend to Cloud Run
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'frontend_only' }}

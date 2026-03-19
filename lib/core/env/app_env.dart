@@ -63,6 +63,14 @@ class AppEnv {
     'FIREBASE_FACEBOOK_ENABLED',
     defaultValue: true,
   );
+  static const firebaseFacebookAppId = String.fromEnvironment(
+    'FIREBASE_FACEBOOK_APP_ID',
+    defaultValue: '',
+  );
+  static const firebaseFacebookSdkVersion = String.fromEnvironment(
+    'FIREBASE_FACEBOOK_SDK_VERSION',
+    defaultValue: 'v22.0',
+  );
   static const firebaseStorageUploadsEnabled = bool.fromEnvironment(
     'FIREBASE_STORAGE_UPLOADS_ENABLED',
     defaultValue: false,
