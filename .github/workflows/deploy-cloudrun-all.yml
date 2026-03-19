@@ -270,8 +270,6 @@ jobs:
       FORCE_CASH_PAYMENTS_ONLY: ${{ inputs.force_cash_payments_only }}
       API_BASE_URL_OVERRIDE: ${{ inputs.api_base_url_override }}
       DRY_RUN: ${{ inputs.dry_run }}
-      GCP_WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-      GCP_WIF_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
     steps:
       - name: Checkout frontend repo
@@ -286,15 +284,50 @@ jobs:
           path: TravelBox_Peru_Backend
           token: ${{ secrets.CROSS_REPO_PAT != '' && secrets.CROSS_REPO_PAT || github.token }}
 
+      - name: Select GCP auth method
+        id: gcp_auth
+        shell: bash
+        env:
+          GCP_WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          GCP_WIF_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          set -euo pipefail
+          has_wif="false"
+          has_key="false"
+
+          if [[ -n "${GCP_WIF_PROVIDER}" && -n "${GCP_WIF_SERVICE_ACCOUNT}" ]]; then
+            has_wif="true"
+          fi
+          if [[ -n "${GCP_SERVICE_ACCOUNT_KEY}" ]]; then
+            has_key="true"
+          fi
+
+          if [[ "${has_wif}" == "true" ]]; then
+            echo "auth_method=wif" >> "${GITHUB_OUTPUT}"
+            if [[ "${has_key}" == "true" ]]; then
+              echo "Both WIF and Service Account Key are configured; prioritizing WIF."
+            fi
+            exit 0
+          fi
+
+          if [[ "${has_key}" == "true" ]]; then
+            echo "auth_method=key" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          echo "::error::Missing GCP auth configuration. Set either (GCP_WORKLOAD_IDENTITY_PROVIDER + GCP_SERVICE_ACCOUNT) OR GCP_SERVICE_ACCOUNT_KEY in GitHub Actions secrets."
+          exit 1
+
       - name: Authenticate to Google Cloud (Workload Identity)
-        if: ${{ env.GCP_WIF_PROVIDER != '' && env.GCP_WIF_SERVICE_ACCOUNT != '' }}
+        if: ${{ steps.gcp_auth.outputs.auth_method == 'wif' }}
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
-          service_account: ${{ env.GCP_WIF_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Authenticate to Google Cloud (Service Account Key)
-        if: ${{ env.GCP_WIF_PROVIDER == '' || env.GCP_WIF_SERVICE_ACCOUNT == '' }}
+        if: ${{ steps.gcp_auth.outputs.auth_method == 'key' }}
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
