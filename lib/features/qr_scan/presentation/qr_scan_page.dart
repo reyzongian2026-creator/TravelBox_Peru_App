@@ -9,7 +9,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/state/session_controller.dart';
 
 class QrScanPage extends ConsumerStatefulWidget {
-  QrScanPage({super.key, this.currentRoute = '/qr-scan'});
+  const QrScanPage({super.key, this.currentRoute = '/qr-scan'});
 
   final String currentRoute;
 
@@ -94,7 +94,7 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
             _handleScanResult(code);
           },
           fit: BoxFit.cover,
-          errorBuilder: (_, error, child) {
+          errorBuilder: (_, error) {
             return Center(child: Text('No se pudo abrir la camara: $error'));
           },
         ),
