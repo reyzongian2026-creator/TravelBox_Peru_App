@@ -21,44 +21,43 @@ class AppEnv {
 
   static const firebaseApiKey = String.fromEnvironment(
     'FIREBASE_API_KEY',
-    defaultValue: 'AIzaSyB5pNZ6SEZjd_1UeUIQtfP4ewoGUZEX7k0',
+    defaultValue: '',
   );
   static const firebaseProjectId = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',
-    defaultValue: 'travelboxperu-f96ee',
+    defaultValue: '',
   );
   static const firebaseMessagingSenderId = String.fromEnvironment(
     'FIREBASE_MESSAGING_SENDER_ID',
-    defaultValue: '551019035202',
+    defaultValue: '',
   );
   static const firebaseStorageBucket = String.fromEnvironment(
     'FIREBASE_STORAGE_BUCKET',
-    defaultValue: 'travelboxperu-f96ee.firebasestorage.app',
+    defaultValue: '',
   );
   static const firebaseAuthDomain = String.fromEnvironment(
     'FIREBASE_AUTH_DOMAIN',
-    defaultValue: 'travelboxperu-f96ee.firebaseapp.com',
+    defaultValue: '',
   );
   static const firebaseIosBundleId = String.fromEnvironment(
     'FIREBASE_IOS_BUNDLE_ID',
-    defaultValue: 'com.travelbox.peru.travelboxPeruApp',
+    defaultValue: '',
   );
   static const firebaseAndroidAppId = String.fromEnvironment(
     'FIREBASE_ANDROID_APP_ID',
-    defaultValue: '1:551019035202:android:ee71d4f2cd48979b4b8bdb',
+    defaultValue: '',
   );
   static const firebaseIosAppId = String.fromEnvironment(
     'FIREBASE_IOS_APP_ID',
-    defaultValue: '1:551019035202:ios:fcbc25d62d6ca2814b8bdb',
+    defaultValue: '',
   );
   static const firebaseWebAppId = String.fromEnvironment(
     'FIREBASE_WEB_APP_ID',
-    defaultValue: '1:551019035202:web:b87e41122e2b79004b8bdb',
+    defaultValue: '',
   );
   static const firebaseGoogleServerClientId = String.fromEnvironment(
     'FIREBASE_GOOGLE_SERVER_CLIENT_ID',
-    defaultValue:
-        '551019035202-3khgoibrmpf8qpets7up6rnond00a83e.apps.googleusercontent.com',
+    defaultValue: '',
   );
   static const firebaseFacebookProviderEnabled = bool.fromEnvironment(
     'FIREBASE_FACEBOOK_ENABLED',
@@ -86,6 +85,11 @@ class AppEnv {
     if (useMockFallback) {
       throw StateError(
         'Configuracion insegura: USE_MOCK_FALLBACK=true en APP_ENV=prod.',
+      );
+    }
+    if (!hasFirebaseClientAuthConfig) {
+      throw StateError(
+        'Configuracion insegura: faltan FIREBASE_API_KEY/FIREBASE_PROJECT_ID/FIREBASE_MESSAGING_SENDER_ID en APP_ENV=prod.',
       );
     }
     final apiHost = Uri.tryParse(apiBaseUrl)?.host.trim().toLowerCase() ?? '';

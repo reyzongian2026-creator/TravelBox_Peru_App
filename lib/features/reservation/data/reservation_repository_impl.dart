@@ -6,10 +6,11 @@ import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/reservation_store.dart';
+import '../../../shared/utils/app_exception.dart';
 import '../domain/reservation_repository.dart';
 
 final reservationDraftProvider = StateProvider<ReservationDraft?>(
-      (ref) => null,
+  (ref) => null,
 );
 
 final reservationRepositoryProvider = Provider<ReservationRepository>((ref) {
@@ -18,8 +19,8 @@ final reservationRepositoryProvider = Provider<ReservationRepository>((ref) {
 
 class ReservationRepositoryImpl implements ReservationRepository {
   ReservationRepositoryImpl({required Dio dio, required Ref ref})
-      : _dio = dio,
-        _ref = ref;
+    : _dio = dio,
+      _ref = ref;
 
   final Dio _dio;
   final Ref _ref;
@@ -84,8 +85,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
           .read(reservationStoreProvider.notifier)
           .upsert(finalReservation);
       return finalReservation;
-    } catch (_) {
-      if (!AppEnv.useMockFallback) rethrow;
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       final now = DateTime.now();
       final reservation = Reservation(
         id: 'res-${now.millisecondsSinceEpoch}',
@@ -163,7 +169,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       if ((statusCode == 404 && isEndpointMissing) || statusCode == 405) {
         return null;
       }
-      rethrow;
+      throw AppException.fromDioError(error);
     }
   }
 
@@ -183,7 +189,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       final data = response.data ?? <String, dynamic>{};
       final hasAvailability =
           data['hasAvailability'] as bool? ??
-              ((data['availableInRange'] as num?)?.toInt() ?? 0) > 0;
+          ((data['availableInRange'] as num?)?.toInt() ?? 0) > 0;
       if (!hasAvailability) {
         throw StateError(
           'No hay disponibilidad para el rango horario seleccionado.',
@@ -194,7 +200,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       if (statusCode == 404 || statusCode == 405) {
         return;
       }
-      rethrow;
+      throw AppException.fromDioError(error);
     }
   }
 
@@ -224,9 +230,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
       final checkoutData = checkoutResponse.data ?? <String, dynamic>{};
       final paymentIntentId =
           checkoutData['paymentIntentId']?.toString() ??
-              checkoutData['id']?.toString() ??
-              checkoutData['intentId']?.toString() ??
-              checkoutData['paymentId']?.toString();
+          checkoutData['id']?.toString() ??
+          checkoutData['intentId']?.toString() ??
+          checkoutData['paymentId']?.toString();
 
       if (_isOfflinePaymentMethod(paymentMethod)) {
         return;
@@ -238,7 +244,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
       return;
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode ?? 0;
-      if (statusCode != 404 && statusCode != 405) rethrow;
+      if (statusCode != 404 && statusCode != 405) {
+        throw AppException.fromDioError(error);
+      }
     }
 
     // Fallback para contratos antiguos: intents + confirm.
@@ -249,9 +257,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
     final intentData = paymentIntent.data ?? <String, dynamic>{};
     final intentId =
         intentData['id']?.toString() ??
-            intentData['paymentIntentId']?.toString() ??
-            intentData['intentId']?.toString() ??
-            intentData['paymentId']?.toString();
+        intentData['paymentIntentId']?.toString() ??
+        intentData['intentId']?.toString() ??
+        intentData['paymentId']?.toString();
 
     await _dio.post<Map<String, dynamic>>(
       '/payments/confirm',
@@ -276,8 +284,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
     final data = response.data ?? <String, dynamic>{};
     final paymentStatus =
         data['paymentStatus']?.toString().toUpperCase() ??
-            data['status']?.toString().toUpperCase() ??
-            '';
+        data['status']?.toString().toUpperCase() ??
+        '';
     if (paymentStatus == 'FAILED' || paymentStatus == 'REJECTED') {
       throw StateError('El pago fue rechazado por la pasarela.');
     }
@@ -301,15 +309,20 @@ class ReservationRepositoryImpl implements ReservationRepository {
         final reservations = _extractList(response.data)
             .map(
               (item) =>
-              _mapReservation(item as Map<String, dynamic>, userId: userId),
-        )
+                  _mapReservation(item as Map<String, dynamic>, userId: userId),
+            )
             .toList();
         await _ref
             .read(reservationStoreProvider.notifier)
             .replaceForUser(userId, reservations);
         return reservations;
-      } catch (_) {
-        if (!AppEnv.useMockFallback) rethrow;
+      } catch (error) {
+        if (!AppEnv.useMockFallback) {
+          if (error is DioException) {
+            throw AppException.fromDioError(error);
+          }
+          throw AppException.fromError(error);
+        }
         final local = _ref.read(reservationStoreProvider);
         return local
             .where((reservation) => reservation.userId == userId)
@@ -320,8 +333,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }
 
   Future<List<Reservation>> _loadUserReservationsPageByPage(
-      String userId,
-      ) async {
+    String userId,
+  ) async {
     final merged = <String, Reservation>{};
     var page = 0;
     var hasNext = true;
@@ -334,8 +347,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
       final pageItems = _extractList(response.data)
           .map(
             (item) =>
-            _mapReservation(item as Map<String, dynamic>, userId: userId),
-      )
+                _mapReservation(item as Map<String, dynamic>, userId: userId),
+          )
           .toList();
       for (final item in pageItems) {
         merged[item.id] = item;
@@ -374,26 +387,31 @@ class ReservationRepositoryImpl implements ReservationRepository {
       return _extractList(
         response.data,
       ).map((item) => _mapReservation(item as Map<String, dynamic>)).toList();
-    } catch (_) {
+    } catch (primaryError) {
       try {
         final response = await _dio.get<dynamic>('/reservations');
         return _extractList(response.data)
             .map((item) => _mapReservation(item as Map<String, dynamic>))
             .where(
               (item) =>
-          (status == null || item.status == status) &&
-              _matchesReservationQuery(item, normalizedQuery),
-        )
+                  (status == null || item.status == status) &&
+                  _matchesReservationQuery(item, normalizedQuery),
+            )
             .toList();
       } catch (_) {}
-      if (!AppEnv.useMockFallback) rethrow;
+      if (!AppEnv.useMockFallback) {
+        if (primaryError is DioException) {
+          throw AppException.fromDioError(primaryError);
+        }
+        throw AppException.fromError(primaryError);
+      }
       return _ref
           .read(reservationStoreProvider)
           .where(
             (item) =>
-        (status == null || item.status == status) &&
-            _matchesReservationQuery(item, normalizedQuery),
-      )
+                (status == null || item.status == status) &&
+                _matchesReservationQuery(item, normalizedQuery),
+          )
           .toList();
     }
   }
@@ -414,8 +432,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
       );
       await _ref.read(reservationStoreProvider.notifier).upsert(reservation);
       return reservation;
-    } catch (_) {
-      if (!AppEnv.useMockFallback) rethrow;
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       return _ref
           .read(reservationStoreProvider.notifier)
           .findById(reservationId);
@@ -444,8 +467,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
         status: status,
         message: message,
       );
-    } catch (_) {
-      if (!AppEnv.useMockFallback) rethrow;
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       return _updateLocalStatus(
         reservationId: reservationId,
         status: status,
@@ -464,7 +492,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
       throw const FormatException('reservationId no numerico para backend');
     }
     final normalizedReason = _truncate(
-      reason.trim().isEmpty ? 'Cancelacion solicitada desde app.' : reason.trim(),
+      reason.trim().isEmpty
+          ? 'Cancelacion solicitada desde app.'
+          : reason.trim(),
       240,
     );
 
@@ -478,7 +508,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode ?? 0;
       if (statusCode != 404 && statusCode != 405) {
-        rethrow;
+        throw AppException.fromDioError(error);
       }
     }
 
@@ -490,7 +520,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
         ?.toString()
         .trim()
         .toUpperCase();
-    final paymentIntentId = paymentStatusPayload?['paymentIntentId']?.toString();
+    final paymentIntentId = paymentStatusPayload?['paymentIntentId']
+        ?.toString();
     final requiresRefund =
         paymentStatus == 'CONFIRMED' && _isDigitalPaymentMethod(paymentMethod);
 
@@ -539,39 +570,54 @@ class ReservationRepositoryImpl implements ReservationRepository {
       throw const FormatException('reservationId no numerico para backend');
     }
     final normalizedType = type.trim().toUpperCase();
-    final requestData = <String, dynamic>{
-      'reservationId': parsedReservationId,
-      'type': normalizedType,
-      'address': _truncate(address.trim(), 220),
-      'zone': _truncate((zone ?? '').trim(), 120),
-      'latitude': latitude,
-      'longitude': longitude,
-    }..removeWhere((_, value) => value == null);
-    await _dio.post(
-      '/delivery-orders',
-      data: requestData,
-    );
+    try {
+      final requestData = <String, dynamic>{
+        'reservationId': parsedReservationId,
+        'type': normalizedType,
+        'address': _truncate(address.trim(), 220),
+        'zone': _truncate((zone ?? '').trim(), 120),
+        'latitude': latitude,
+        'longitude': longitude,
+      }..removeWhere((_, value) => value == null);
+      await _dio.post('/delivery-orders', data: requestData);
 
-    final refreshed = await getReservationById(reservationId);
-    if (refreshed != null) {
-      return;
-    }
+      final refreshed = await getReservationById(reservationId);
+      if (refreshed != null) {
+        return;
+      }
 
-    if (!AppEnv.useMockFallback) {
-      return;
+      if (!AppEnv.useMockFallback) {
+        return;
+      }
+      final fallbackStatus = normalizedType == 'PICKUP'
+          ? ReservationStatus.checkinPending
+          : ReservationStatus.outForDelivery;
+      _updateLocalStatus(
+        reservationId: reservationId,
+        status: fallbackStatus,
+        message: message?.trim().isNotEmpty == true
+            ? message!.trim()
+            : normalizedType == 'PICKUP'
+            ? 'Recojo solicitado hacia almacen.'
+            : 'Delivery solicitado hacia destino.',
+      );
+    } on DioException catch (error) {
+      if (!AppEnv.useMockFallback) {
+        throw AppException.fromDioError(error);
+      }
+      final fallbackStatus = normalizedType == 'PICKUP'
+          ? ReservationStatus.checkinPending
+          : ReservationStatus.outForDelivery;
+      _updateLocalStatus(
+        reservationId: reservationId,
+        status: fallbackStatus,
+        message: message?.trim().isNotEmpty == true
+            ? message!.trim()
+            : normalizedType == 'PICKUP'
+            ? 'Recojo solicitado hacia almacen.'
+            : 'Delivery solicitado hacia destino.',
+      );
     }
-    final fallbackStatus = normalizedType == 'PICKUP'
-        ? ReservationStatus.checkinPending
-        : ReservationStatus.outForDelivery;
-    _updateLocalStatus(
-      reservationId: reservationId,
-      status: fallbackStatus,
-      message: message?.trim().isNotEmpty == true
-          ? message!.trim()
-          : normalizedType == 'PICKUP'
-          ? 'Recojo solicitado hacia almacen.'
-          : 'Delivery solicitado hacia destino.',
-    );
   }
 
   Future<void> _callBackendStatusTransition({
@@ -638,24 +684,24 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }
 
   Reservation _mapReservation(
-      Map<String, dynamic> source, {
-        String? userId,
-        ReservationDraft? fallbackDraft,
-        String? fallbackReservationId,
-      }) {
+    Map<String, dynamic> source, {
+    String? userId,
+    ReservationDraft? fallbackDraft,
+    String? fallbackReservationId,
+  }) {
     final json = Map<String, dynamic>.from(source);
     json['id'] = json['id']?.toString() ?? fallbackReservationId ?? '';
     json['userId'] = json['userId']?.toString() ?? userId ?? '';
     json['bagCount'] =
         json['bagCount'] ??
-            json['estimatedItems'] ??
-            fallbackDraft?.bagCount ??
-            1;
+        json['estimatedItems'] ??
+        fallbackDraft?.bagCount ??
+        1;
     json['totalPrice'] =
         json['totalPrice'] ??
-            json['total'] ??
-            fallbackDraft?.estimatePrice() ??
-            0;
+        json['total'] ??
+        fallbackDraft?.estimatePrice() ??
+        0;
 
     if (json['warehouse'] == null) {
       json['warehouse'] = _buildWarehousePayload(
@@ -673,66 +719,66 @@ class ReservationRepositoryImpl implements ReservationRepository {
     if (json['code'] == null || json['code'].toString().isEmpty) {
       json['code'] =
           json['qrCode']?.toString() ??
-              'TBX-${json['id']?.toString() ?? DateTime.now().millisecond}';
+          'TBX-${json['id']?.toString() ?? DateTime.now().millisecond}';
     }
 
     return Reservation.fromJson(json);
   }
 
   Map<String, dynamic> _buildWarehousePayload(
-      Map<String, dynamic> reservationJson, {
-        ReservationDraft? fallbackDraft,
-      }) {
+    Map<String, dynamic> reservationJson, {
+    ReservationDraft? fallbackDraft,
+  }) {
     final fallbackWarehouse = fallbackDraft?.warehouse;
     return <String, dynamic>{
       'id':
-      reservationJson['warehouseId'] ??
+          reservationJson['warehouseId'] ??
           fallbackWarehouse?.id ??
           reservationJson['warehouse']?['id'],
       'name':
-      reservationJson['warehouseName'] ??
+          reservationJson['warehouseName'] ??
           fallbackWarehouse?.name ??
           'Almacen',
       'address':
-      reservationJson['warehouseAddress'] ??
+          reservationJson['warehouseAddress'] ??
           fallbackWarehouse?.address ??
           'Direccion pendiente',
       'city':
-      reservationJson['cityName'] ??
+          reservationJson['cityName'] ??
           fallbackWarehouse?.city ??
           reservationJson['city'] ??
           '',
       'district':
-      reservationJson['zoneName'] ??
+          reservationJson['zoneName'] ??
           fallbackWarehouse?.district ??
           reservationJson['district'] ??
           '',
       'latitude':
-      reservationJson['lat'] ??
+          reservationJson['lat'] ??
           reservationJson['latitude'] ??
           fallbackWarehouse?.latitude ??
           0,
       'longitude':
-      reservationJson['lng'] ??
+          reservationJson['lng'] ??
           reservationJson['longitude'] ??
           fallbackWarehouse?.longitude ??
           0,
       'openingHours':
-      reservationJson['openingHours'] ??
+          reservationJson['openingHours'] ??
           fallbackWarehouse?.openingHours ??
           '08:00 - 22:00',
       'priceFromPerHour':
-      reservationJson['priceFromPerHour'] ??
+          reservationJson['priceFromPerHour'] ??
           fallbackWarehouse?.priceFromPerHour ??
           4.5,
       'score': reservationJson['score'] ?? fallbackWarehouse?.score ?? 0,
       'availableSlots':
-      reservationJson['availableInRange'] ??
+          reservationJson['availableInRange'] ??
           reservationJson['available'] ??
           fallbackWarehouse?.availableSlots ??
           0,
       'extraServices':
-      reservationJson['extraServices'] ??
+          reservationJson['extraServices'] ??
           fallbackWarehouse?.extraServices ??
           <String>[],
     };

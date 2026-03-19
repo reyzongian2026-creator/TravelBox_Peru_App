@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
+import 'package:dio/dio.dart' show FormData, MultipartFile;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http_parser/http_parser.dart';
@@ -9,6 +9,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../reservation/presentation/reservation_providers.dart';
@@ -457,23 +458,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   }
 
   String _errorMessage(Object error) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        final details = data['details'];
-        final message = data['message']?.toString().trim();
-        if (details is List && details.isNotEmpty) {
-          return details.map((item) => item.toString()).join(' | ');
-        }
-        if (message != null && message.isNotEmpty) {
-          return message;
-        }
-      }
-      if (error.message != null && error.message!.trim().isNotEmpty) {
-        return error.message!.trim();
-      }
-    }
-    return error.toString();
+    return AppErrorFormatter.readable(error);
   }
 
   void _showSnackBar(String message) {

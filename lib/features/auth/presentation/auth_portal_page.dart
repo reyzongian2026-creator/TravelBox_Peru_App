@@ -19,7 +19,7 @@ enum AuthPortalMode { login, register }
 enum _AccessMode { client, internal }
 
 class AuthPortalPage extends ConsumerStatefulWidget {
-  AuthPortalPage({super.key, this.initialMode = AuthPortalMode.login});
+  const AuthPortalPage({super.key, this.initialMode = AuthPortalMode.login});
   final AuthPortalMode initialMode;
 
   @override

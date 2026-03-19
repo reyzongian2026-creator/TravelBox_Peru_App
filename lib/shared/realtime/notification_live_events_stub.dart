@@ -11,6 +11,7 @@ class _UnsupportedNotificationLiveEventsClient
     required String accessToken,
     required void Function(NotificationLiveEvent event) onNotification,
     void Function(Object error)? onError,
+    int? lastEventId,
   }) {}
 
   @override

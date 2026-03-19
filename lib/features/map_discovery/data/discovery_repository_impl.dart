@@ -6,6 +6,7 @@ import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/warehouse.dart';
 import '../../../shared/services/demo_data.dart';
+import '../../../shared/utils/app_exception.dart';
 import '../domain/discovery_repository.dart';
 
 final discoveryRepositoryProvider = Provider<DiscoveryRepository>((ref) {
@@ -51,8 +52,13 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
         );
       }
       return items;
-    } catch (_) {
-      if (!AppEnv.useMockFallback) rethrow;
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       final q = (query ?? '').trim().toLowerCase();
       final items = q.isEmpty
           ? [...DemoData.warehouses]
@@ -100,7 +106,9 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
       );
     } on DioException catch (error) {
       final status = error.response?.statusCode ?? 0;
-      if (status != 404 && status != 405) rethrow;
+      if (status != 404 && status != 405) {
+        throw AppException.fromDioError(error);
+      }
       return _dio.get<List<dynamic>>(
         '/geo/warehouses/search',
         queryParameters: {
@@ -120,10 +128,14 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
       final data = response.data;
       if (data == null) return null;
       return Warehouse.fromJson(data);
-    } catch (_) {
-      if (!AppEnv.useMockFallback) rethrow;
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       return DemoData.findWarehouse(warehouseId);
     }
   }
 }
-

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import 'app_exception.dart';
+
 class AppErrorFormatter {
   const AppErrorFormatter._();
 
@@ -9,6 +11,11 @@ class AppErrorFormatter {
     Object error, {
     String fallback = 'Ocurrio un error inesperado.',
   }) {
+    if (error is AppException) {
+      final message = error.message.trim();
+      return message.isEmpty ? fallback : message;
+    }
+
     if (error is DioException) {
       final response = error.response;
       final statusCode = response?.statusCode;
@@ -78,13 +85,12 @@ class AppErrorFormatter {
       return rawData;
     }
     if (rawData is Map) {
-      return rawData.map(
-        (key, value) => MapEntry(key.toString(), value),
-      );
+      return rawData.map((key, value) => MapEntry(key.toString(), value));
     }
     if (rawData is String) {
       final trimmed = rawData.trim();
-      if (trimmed.isEmpty || (!trimmed.startsWith('{') && !trimmed.startsWith('['))) {
+      if (trimmed.isEmpty ||
+          (!trimmed.startsWith('{') && !trimmed.startsWith('['))) {
         return null;
       }
       try {
@@ -93,9 +99,7 @@ class AppErrorFormatter {
           return parsed;
         }
         if (parsed is Map) {
-          return parsed.map(
-            (key, value) => MapEntry(key.toString(), value),
-          );
+          return parsed.map((key, value) => MapEntry(key.toString(), value));
         }
       } catch (_) {
         return null;

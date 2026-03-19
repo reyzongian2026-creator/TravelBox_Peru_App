@@ -31,7 +31,6 @@ class AppShellScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final session = ref.watch(sessionControllerProvider);
-    final themeMode = ref.watch(themeModeControllerProvider);
     final notificationsState = ref.watch(notificationCenterControllerProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final compactTopBar = screenWidth < 390;

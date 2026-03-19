@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,23 +26,24 @@ const _cursorAffectingEventTags = {
   'ops',
 };
 
-final notificationCenterControllerProvider = StateNotifierProvider<
-  NotificationCenterController,
-  NotificationCenterState
->((ref) {
-  final controller = NotificationCenterController(
-    dio: ref.read(dioProvider),
-    prefs: ref.read(sharedPreferencesProvider),
-  );
+final notificationCenterControllerProvider =
+    StateNotifierProvider<
+      NotificationCenterController,
+      NotificationCenterState
+    >((ref) {
+      final controller = NotificationCenterController(
+        dio: ref.read(dioProvider),
+        prefs: ref.read(sharedPreferencesProvider),
+      );
 
-  ref.listen<SessionState>(sessionControllerProvider, (_, next) {
-    controller.onSessionChanged(next);
-  });
-  ref.onDispose(controller.dispose);
+      ref.listen<SessionState>(sessionControllerProvider, (_, next) {
+        controller.onSessionChanged(next);
+      });
+      ref.onDispose(controller.dispose);
 
-  controller.onSessionChanged(ref.read(sessionControllerProvider));
-  return controller;
-});
+      controller.onSessionChanged(ref.read(sessionControllerProvider));
+      return controller;
+    });
 
 class NotificationCenterState {
   const NotificationCenterState({
@@ -94,13 +96,17 @@ class NotificationCenterState {
   }
 }
 
-class NotificationCenterController extends StateNotifier<NotificationCenterState> {
+class NotificationCenterController
+    extends StateNotifier<NotificationCenterState>
+    with WidgetsBindingObserver {
   NotificationCenterController({
     required Dio dio,
     required SharedPreferences prefs,
   }) : _dio = dio,
        _prefs = prefs,
-       super(NotificationCenterState.initial());
+       super(NotificationCenterState.initial()) {
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   final Dio _dio;
   final SharedPreferences _prefs;
@@ -109,6 +115,8 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
   final Set<String> _announcedIds = <String>{};
 
   bool _isFetching = false;
+  bool _isAppForeground = true;
+  bool _liveEventsConnected = false;
   bool _seededFromServer = false;
   String? _activeUserId;
   String? _activeAccessToken;
@@ -117,7 +125,8 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
   @override
   void dispose() {
     _refreshDebounceTimer?.cancel();
-    _liveEventsClient.disconnect();
+    _disconnectLiveEvents();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -125,7 +134,7 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
     final userId = session.user?.id;
     if (!session.isAuthenticated || userId == null || userId.isEmpty) {
       _refreshDebounceTimer?.cancel();
-      _liveEventsClient.disconnect();
+      _disconnectLiveEvents();
       _activeUserId = null;
       _activeAccessToken = null;
       _seededFromServer = false;
@@ -142,27 +151,72 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
       unawaited(_restoreSeenIdsForActiveUser());
     }
 
-    _ensureLiveEventsSubscription(session.accessToken);
+    if (!_isAppForeground) {
+      _activeAccessToken = session.accessToken?.trim();
+      return;
+    }
+
+    _ensureLiveEventsSubscription(
+      session.accessToken,
+      lastEventId: state.cursor,
+    );
     unawaited(refreshNow(showLoading: state.items.isEmpty));
   }
 
-  void _ensureLiveEventsSubscription(String? accessTokenRaw) {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final shouldPause =
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached;
+    if (shouldPause) {
+      _isAppForeground = false;
+      _refreshDebounceTimer?.cancel();
+      _disconnectLiveEvents();
+      return;
+    }
+
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+
+    _isAppForeground = true;
+    _ensureLiveEventsSubscription(
+      _activeAccessToken,
+      lastEventId: this.state.cursor,
+      forceReconnect: true,
+    );
+    unawaited(refreshNow());
+  }
+
+  void _ensureLiveEventsSubscription(
+    String? accessTokenRaw, {
+    int? lastEventId,
+    bool forceReconnect = false,
+  }) {
     if (!_liveEventsClient.isSupported) {
       return;
     }
     final accessToken = accessTokenRaw?.trim();
     if (accessToken == null || accessToken.isEmpty) {
       _activeAccessToken = null;
-      _liveEventsClient.disconnect();
+      _disconnectLiveEvents();
       return;
     }
-    if (_activeAccessToken == accessToken) {
-      return;
-    }
+    final shouldReconnect =
+        forceReconnect ||
+        !_liveEventsConnected ||
+        _activeAccessToken != accessToken;
     _activeAccessToken = accessToken;
+    if (!shouldReconnect) {
+      return;
+    }
+    _liveEventsConnected = true;
     _liveEventsClient.connect(
       apiBaseUrl: AppEnv.apiBaseUrl,
       accessToken: accessToken,
+      lastEventId: lastEventId ?? state.cursor,
       onNotification: (event) {
         _handleLiveEvent(event);
       },
@@ -254,6 +308,9 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
   }
 
   void _scheduleRefreshDebounced() {
+    if (!_isAppForeground) {
+      return;
+    }
     _refreshDebounceTimer?.cancel();
     _refreshDebounceTimer = Timer(_liveRefreshDebounceWindow, () {
       _refreshDebounceTimer = null;
@@ -262,6 +319,7 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
   }
 
   Future<void> refreshNow({bool showLoading = false}) async {
+    if (!_isAppForeground) return;
     if (_isFetching) return;
     if (_activeUserId == null || _activeUserId!.isEmpty) return;
 
@@ -299,7 +357,9 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
   }
 
   Future<void> _refreshByStream() async {
-    final snapshot = await _fetchStream(afterId: _seededFromServer ? state.cursor : null);
+    final snapshot = await _fetchStream(
+      afterId: _seededFromServer ? state.cursor : null,
+    );
     final incoming = snapshot.items;
     final visibleIncoming = incoming.where(_isVisibleNotification).toList();
     if (!_seededFromServer) {
@@ -437,10 +497,7 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
   }
 
   void markAllSeen() {
-    final seen = {
-      ...state.seenIds,
-      ...state.items.map((item) => item.id),
-    };
+    final seen = {...state.seenIds, ...state.items.map((item) => item.id)};
     state = state.copyWith(seenIds: seen);
     unawaited(_persistSeenIds(seen));
   }
@@ -538,6 +595,11 @@ class NotificationCenterController extends StateNotifier<NotificationCenterState
         .take(_seenIdsMax)
         .toList();
     await _prefs.setStringList(key, trimmed);
+  }
+
+  void _disconnectLiveEvents() {
+    _liveEventsConnected = false;
+    _liveEventsClient.disconnect();
   }
 }
 

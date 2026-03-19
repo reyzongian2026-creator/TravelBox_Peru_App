@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/env/app_env.dart';
 import '../models/app_user.dart';
+import 'session_token_storage.dart';
 
 const _sessionKey = 'travelbox.session.v2';
 const _onboardingCompletedUsersKey = 'travelbox.onboarding.completed.users.v1';
@@ -18,10 +19,15 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('SharedPreferences provider no inicializado.');
 });
 
+final sessionTokenStorageProvider = Provider<SessionTokenStorage>((ref) {
+  throw UnimplementedError('SessionTokenStorage provider no inicializado.');
+});
+
 final sessionControllerProvider =
     StateNotifierProvider<SessionController, SessionState>((ref) {
       final prefs = ref.watch(sharedPreferencesProvider);
-      return SessionController(prefs);
+      final tokenStorage = ref.watch(sessionTokenStorageProvider);
+      return SessionController(prefs, tokenStorage);
     });
 
 class SessionState {
@@ -104,8 +110,6 @@ class SessionState {
     return {
       'locale': locale.languageCode,
       'user': user?.toJson(),
-      'accessToken': accessToken,
-      'refreshToken': refreshToken,
       'pendingVerificationCode': pendingVerificationCode,
       'onboardingCompleted': onboardingCompleted,
     };
@@ -126,25 +130,59 @@ class SessionState {
 }
 
 class SessionController extends StateNotifier<SessionState> {
-  SessionController(this._prefs)
+  SessionController(this._prefs, this._tokenStorage)
     : _onboardingCompletedUsers = _loadOnboardingCompletedUsers(_prefs),
       super(SessionState.initial()) {
     _restore();
   }
 
   final SharedPreferences _prefs;
+  final SessionTokenStorage _tokenStorage;
   final Set<String> _onboardingCompletedUsers;
 
   Future<void> _restore() async {
     final raw = _prefs.getString(_sessionKey);
     if (raw == null) {
+      await _tokenStorage.clearTokens();
       return;
     }
     try {
       final json = jsonDecode(raw) as Map<String, dynamic>;
-      final restoredState = SessionState.fromJson(json);
+      final restoredStateFromPrefs = SessionState.fromJson(json);
+      final secureAccessToken = await _tokenStorage.readAccessToken();
+      final secureRefreshToken = await _tokenStorage.readRefreshToken();
+
+      final restoredState = restoredStateFromPrefs.copyWith(
+        accessToken:
+            _firstNonEmptyToken(
+              secureAccessToken,
+              restoredStateFromPrefs.accessToken,
+            ) ??
+            '',
+        refreshToken: _firstNonEmptyToken(
+          secureRefreshToken,
+          restoredStateFromPrefs.refreshToken,
+        ),
+      );
+
+      final missingSecureAccess = secureAccessToken?.trim().isEmpty ?? true;
+      final missingSecureRefresh = secureRefreshToken?.trim().isEmpty ?? true;
+      final requiresTokenMigration =
+          (missingSecureAccess &&
+              _hasUsableAccessToken(restoredStateFromPrefs.accessToken)) ||
+          (missingSecureRefresh &&
+              (restoredStateFromPrefs.refreshToken?.trim().isNotEmpty ??
+                  false));
+      if (requiresTokenMigration) {
+        await _tokenStorage.writeTokens(
+          accessToken: restoredStateFromPrefs.accessToken,
+          refreshToken: restoredStateFromPrefs.refreshToken,
+        );
+      }
+
       if (!_hasUsableAccessToken(restoredState.accessToken)) {
         await _prefs.remove(_sessionKey);
+        await _tokenStorage.clearTokens();
         return;
       }
       var normalizedState = _normalizeRoleFromAccessToken(restoredState)
@@ -162,17 +200,23 @@ class SessionController extends StateNotifier<SessionState> {
         );
       }
       state = normalizedState;
-      if (normalizedState.user?.role != restoredState.user?.role ||
+      if (requiresTokenMigration ||
+          normalizedState.user?.role != restoredState.user?.role ||
           backendOnboardingCompleted != null) {
         await _persist();
       }
     } catch (_) {
       await _prefs.remove(_sessionKey);
+      await _tokenStorage.clearTokens();
     }
   }
 
-  Future<void> _persist() {
-    return _prefs.setString(_sessionKey, jsonEncode(state.toJson()));
+  Future<void> _persist() async {
+    await _prefs.setString(_sessionKey, jsonEncode(state.toJson()));
+    await _tokenStorage.writeTokens(
+      accessToken: state.accessToken,
+      refreshToken: state.refreshToken,
+    );
   }
 
   Future<void> setLocale(Locale locale) async {
@@ -459,6 +503,18 @@ class SessionController extends StateNotifier<SessionState> {
         .map((value) => value.trim())
         .where((value) => value.isNotEmpty)
         .toSet();
+  }
+
+  String? _firstNonEmptyToken(String? primary, String? fallback) {
+    final normalizedPrimary = primary?.trim();
+    if (normalizedPrimary != null && normalizedPrimary.isNotEmpty) {
+      return normalizedPrimary;
+    }
+    final normalizedFallback = fallback?.trim();
+    if (normalizedFallback != null && normalizedFallback.isNotEmpty) {
+      return normalizedFallback;
+    }
+    return null;
   }
 }
 

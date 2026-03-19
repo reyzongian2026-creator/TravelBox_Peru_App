@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import '../../../core/constants/payment_constants.dart';
 import '../../../core/env/app_env.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../data/reservation_repository_impl.dart';
 import 'reservation_providers.dart';
 
@@ -276,19 +276,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   }
 
   String _errorMessage(Object error) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        final backendMessage = data['message']?.toString();
-        if (backendMessage != null && backendMessage.trim().isNotEmpty) {
-          return backendMessage.trim();
-        }
-      }
-      if (error.message != null && error.message!.trim().isNotEmpty) {
-        return error.message!.trim();
-      }
-    }
-    return error.toString();
+    return AppErrorFormatter.readable(error);
   }
 
   bool _isOfflinePaymentMethod(String method) {

@@ -144,7 +144,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingPage(),
+        builder: (context, state) => OnboardingPage(),
       ),
       GoRoute(
         path: '/auth',
@@ -154,22 +154,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               : AuthPortalMode.login,
         ),
       ),
-      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(path: '/login', builder: (context, state) => LoginPage()),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterPage(),
+        builder: (context, state) => RegisterPage(),
       ),
       GoRoute(
         path: '/password-reset',
-        builder: (context, state) => const PasswordResetPage(),
+        builder: (context, state) => PasswordResetPage(),
       ),
       GoRoute(
         path: '/verify-email',
-        builder: (context, state) => const VerifyEmailPage(),
+        builder: (context, state) => VerifyEmailPage(),
       ),
       GoRoute(
         path: '/discovery',
-        builder: (context, state) => const HomeDiscoveryPage(),
+        builder: (context, state) => HomeDiscoveryPage(),
       ),
       GoRoute(
         path: '/warehouse/:warehouseId',
@@ -197,7 +197,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/reservations',
-        builder: (context, state) => const MyReservationsPage(),
+        builder: (context, state) => MyReservationsPage(),
       ),
       GoRoute(
         path: '/reservation/:reservationId',
@@ -230,7 +230,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/tracking',
-        builder: (context, state) => const DeliveryMonitorPage(
+        builder: (context, state) => DeliveryMonitorPage(
           title: 'Tracking logistico',
           currentRoute: '/admin/tracking',
         ),
@@ -252,19 +252,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) => const ProfilePage(),
+        builder: (context, state) => ProfilePage(),
       ),
       GoRoute(
         path: '/profile/edit',
-        builder: (context, state) => const EditProfilePage(),
+        builder: (context, state) => EditProfilePage(),
       ),
       GoRoute(
         path: '/profile/complete',
-        builder: (context, state) => const EditProfilePage(forceComplete: true),
+        builder: (context, state) => EditProfilePage(forceComplete: true),
       ),
       GoRoute(
         path: '/notifications',
-        builder: (context, state) => const NotificationsPage(),
+        builder: (context, state) => NotificationsPage(),
       ),
       GoRoute(
         path: '/ops/qr-handoff',
@@ -274,71 +274,71 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/qr-scan',
-        builder: (context, state) => const QrScanPage(),
+        builder: (context, state) => QrScanPage(),
       ),
       GoRoute(
         path: '/admin/dashboard',
-        builder: (context, state) => const AdminDashboardPage(),
+        builder: (context, state) => AdminDashboardPage(),
       ),
       GoRoute(
         path: '/admin/cash-payments',
-        builder: (context, state) => const CashPaymentsPage(),
+        builder: (context, state) => CashPaymentsPage(),
       ),
       GoRoute(
         path: '/admin/warehouses',
-        builder: (context, state) => const AdminWarehousesPage(),
+        builder: (context, state) => AdminWarehousesPage(),
       ),
       GoRoute(
         path: '/admin/reservations',
-        builder: (context, state) => const AdminReservationsPage(),
+        builder: (context, state) => AdminReservationsPage(),
       ),
       GoRoute(
         path: '/admin/incidents',
-        builder: (context, state) => const AdminIncidentsPage(),
+        builder: (context, state) => AdminIncidentsPage(),
       ),
       GoRoute(
         path: '/admin/payments-history',
-        builder: (context, state) => const AdminPaymentsHistoryPage(),
+        builder: (context, state) => AdminPaymentsHistoryPage(),
       ),
       GoRoute(
         path: '/admin/users',
-        builder: (context, state) => const AdminUsersPage(),
+        builder: (context, state) => AdminUsersPage(),
       ),
       GoRoute(
         path: '/operator/panel',
-        builder: (context, state) => const OperatorDashboardPage(),
+        builder: (context, state) => OperatorDashboardPage(),
       ),
       GoRoute(
         path: '/operator/cash-payments',
-        builder: (context, state) => const CashPaymentsPage(
+        builder: (context, state) => CashPaymentsPage(
           title: 'Cobros en caja',
           currentRoute: '/operator/cash-payments',
         ),
       ),
       GoRoute(
         path: '/operator/reservations',
-        builder: (context, state) => const AdminReservationsPage(
+        builder: (context, state) => AdminReservationsPage(
           title: 'Reservas operativas',
           currentRoute: '/operator/reservations',
         ),
       ),
       GoRoute(
         path: '/operator/incidents',
-        builder: (context, state) => const AdminIncidentsPage(
+        builder: (context, state) => AdminIncidentsPage(
           title: 'Incidencias operativas',
           currentRoute: '/operator/incidents',
         ),
       ),
       GoRoute(
         path: '/support/incidents',
-        builder: (context, state) => const AdminIncidentsPage(
+        builder: (context, state) => AdminIncidentsPage(
           title: 'Incidencias de soporte',
           currentRoute: '/support/incidents',
         ),
       ),
       GoRoute(
         path: '/operator/tracking',
-        builder: (context, state) => const DeliveryMonitorPage(
+        builder: (context, state) => DeliveryMonitorPage(
           title: 'Tracking logistico',
           currentRoute: '/operator/tracking',
         ),
@@ -354,11 +354,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/courier/panel',
-        builder: (context, state) => const CourierDashboardPage(),
+        builder: (context, state) => CourierDashboardPage(),
       ),
       GoRoute(
         path: '/courier/services',
-        builder: (context, state) => const CourierServicesPage(),
+        builder: (context, state) => CourierServicesPage(),
       ),
       GoRoute(
         path: '/courier/tracking/:reservationId',

@@ -17,14 +17,21 @@ class _WebNotificationLiveEventsClient implements NotificationLiveEventsClient {
     required String accessToken,
     required void Function(NotificationLiveEvent event) onNotification,
     void Function(Object error)? onError,
+    int? lastEventId,
   }) {
     if (accessToken.trim().isEmpty) {
       return;
     }
 
     disconnect();
-    final url =
-        '${_normalizeBaseUrl(apiBaseUrl)}/notifications/events?accessToken=${Uri.encodeQueryComponent(accessToken)}';
+    final normalizedBase = _normalizeBaseUrl(apiBaseUrl);
+    final query = StringBuffer(
+      'accessToken=${Uri.encodeQueryComponent(accessToken)}',
+    );
+    if (lastEventId != null && lastEventId > 0) {
+      query.write('&lastEventId=$lastEventId');
+    }
+    final url = '$normalizedBase/notifications/events?$query';
     final source = html.EventSource(url);
     source.addEventListener('notification', (event) {
       if (event is html.MessageEvent) {
@@ -79,9 +86,7 @@ class _WebNotificationLiveEventsClient implements NotificationLiveEventsClient {
         return decoded;
       }
       if (decoded is Map) {
-        return decoded.map(
-          (key, value) => MapEntry(key.toString(), value),
-        );
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
       }
       return null;
     } catch (_) {

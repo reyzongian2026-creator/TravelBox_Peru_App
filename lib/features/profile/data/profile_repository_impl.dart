@@ -6,6 +6,7 @@ import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/app_exception.dart';
 import '../../incidents/data/selected_evidence_image.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepositoryImpl>((ref) {
@@ -32,12 +33,15 @@ class ProfileRepositoryImpl {
       final response = await _dio.get<Map<String, dynamic>>('/profile/me');
       final data = response.data ?? <String, dynamic>{};
       return _mergeWithCurrentUser(AppUser.fromJson(data));
-    } catch (_) {
+    } catch (error) {
       final currentUser = _ref.read(sessionControllerProvider).user;
       if (currentUser != null && AppEnv.useMockFallback) {
         return currentUser;
       }
-      rethrow;
+      if (error is DioException) {
+        throw AppException.fromDioError(error);
+      }
+      throw AppException.fromError(error);
     }
   }
 
@@ -54,10 +58,20 @@ class ProfileRepositoryImpl {
         user: _mergeWithCurrentUser(AppUser.fromJson(data)),
         verificationCodePreview: data['verificationCodePreview']?.toString(),
       );
-    } catch (_) {
-      if (!AppEnv.useMockFallback) rethrow;
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       final currentUser = _ref.read(sessionControllerProvider).user;
-      if (currentUser == null) rethrow;
+      if (currentUser == null) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
       final updatedUser = currentUser.copyWith(
         firstName: payload['firstName']?.toString() ?? currentUser.firstName,
         lastName: payload['lastName']?.toString() ?? currentUser.lastName,
@@ -109,18 +123,22 @@ class ProfileRepositoryImpl {
   Future<AppUser> uploadProfilePhoto({
     required SelectedEvidenceImage image,
   }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/profile/me/photo',
-      data: FormData.fromMap({
-        'file': MultipartFile.fromBytes(
-          image.bytes,
-          filename: image.filename,
-          contentType: MediaType.parse(image.mimeType),
-        ),
-      }),
-    );
-    final data = response.data ?? <String, dynamic>{};
-    return _mergeWithCurrentUser(AppUser.fromJson(data));
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/profile/me/photo',
+        data: FormData.fromMap({
+          'file': MultipartFile.fromBytes(
+            image.bytes,
+            filename: image.filename,
+            contentType: MediaType.parse(image.mimeType),
+          ),
+        }),
+      );
+      final data = response.data ?? <String, dynamic>{};
+      return _mergeWithCurrentUser(AppUser.fromJson(data));
+    } on DioException catch (error) {
+      throw AppException.fromDioError(error);
+    }
   }
 
   AppUser _mergeWithCurrentUser(AppUser incoming) {
@@ -160,4 +178,3 @@ class ProfileRepositoryImpl {
     );
   }
 }
-

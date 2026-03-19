@@ -6,16 +6,21 @@ import 'app.dart';
 import 'core/env/app_env.dart';
 import 'core/firebase/travelbox_firebase.dart';
 import 'shared/state/session_controller.dart';
+import 'shared/state/session_token_storage.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppEnv.validateProductionSafetyOrThrow();
   await TravelBoxFirebase.initializeIfConfigured();
   final prefs = await SharedPreferences.getInstance();
+  final tokenStorage = SecureSessionTokenStorage();
 
   runApp(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        sessionTokenStorageProvider.overrideWithValue(tokenStorage),
+      ],
       child: const TravelBoxApp(),
     ),
   );

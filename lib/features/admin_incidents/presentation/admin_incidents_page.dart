@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/file_exporter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
@@ -417,19 +417,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
   }
 
   String _errorMessage(Object error) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        final message = data['message']?.toString();
-        if (message != null && message.trim().isNotEmpty) {
-          return message.trim();
-        }
-      }
-      if (error.message != null && error.message!.trim().isNotEmpty) {
-        return error.message!.trim();
-      }
-    }
-    return error.toString();
+    return AppErrorFormatter.readable(error);
   }
 
   String _trackingRoute(String reservationId) {

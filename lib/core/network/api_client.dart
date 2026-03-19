@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
+import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/app_user.dart';
 import '../../shared/state/session_controller.dart';
 import '../env/app_env.dart';
 
-// Variable global para evitar múltiples refresh en paralelo
+const _retryableStatusCodes = <int>{502, 503, 504};
+
 bool _isRefreshing = false;
 
 final dioProvider = Provider<Dio>((ref) {
@@ -19,7 +21,31 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
-  // Usamos QueuedInterceptorsWrapper para pausar otras llamadas si se está refrescando el token
+  dio.interceptors.add(
+    RetryInterceptor(
+      dio: dio,
+      retries: 3,
+      retryDelays: const [
+        Duration(seconds: 1),
+        Duration(seconds: 2),
+        Duration(seconds: 3),
+      ],
+      retryEvaluator: (error, _) {
+        final request = error.requestOptions;
+        if (_shouldSkipRetry(request)) {
+          return false;
+        }
+        final statusCode = error.response?.statusCode;
+        final transientStatus =
+            statusCode != null && _retryableStatusCodes.contains(statusCode);
+        final socketExceptionLike =
+            error.type == DioExceptionType.connectionError &&
+            error.error?.toString().contains('SocketException') == true;
+        return socketExceptionLike || transientStatus;
+      },
+    ),
+  );
+
   dio.interceptors.add(
     QueuedInterceptorsWrapper(
       onRequest: (options, handler) {
@@ -28,7 +54,7 @@ final dioProvider = Provider<Dio>((ref) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         options.headers['X-Correlation-Id'] ??=
-        'flutter-${DateTime.now().microsecondsSinceEpoch}';
+            'flutter-${DateTime.now().microsecondsSinceEpoch}';
         handler.next(options);
       },
       onError: (error, handler) async {
@@ -54,9 +80,9 @@ final dioProvider = Provider<Dio>((ref) {
                 );
                 final refreshResponse = await refreshDio
                     .post<Map<String, dynamic>>(
-                  '/auth/refresh',
-                  data: {'refreshToken': refreshToken},
-                );
+                      '/auth/refresh',
+                      data: {'refreshToken': refreshToken},
+                    );
                 final refreshData = refreshResponse.data ?? <String, dynamic>{};
                 final newAccessToken =
                     refreshData['accessToken']?.toString() ?? '';
@@ -71,10 +97,10 @@ final dioProvider = Provider<Dio>((ref) {
                   await ref
                       .read(sessionControllerProvider.notifier)
                       .signIn(
-                    user: refreshedUser,
-                    accessToken: newAccessToken,
-                    refreshToken: newRefreshToken,
-                  );
+                        user: refreshedUser,
+                        accessToken: newAccessToken,
+                        refreshToken: newRefreshToken,
+                      );
 
                   request.headers['Authorization'] = 'Bearer $newAccessToken';
                   request.extra['__retried'] = true;
@@ -86,7 +112,7 @@ final dioProvider = Provider<Dio>((ref) {
                 }
               }
             } catch (_) {
-              // Si falla el refresh, el bloque finally lo libera y forzará el logout
+              // no-op: if refresh fails, logout is handled below.
             } finally {
               _isRefreshing = false;
             }
@@ -108,6 +134,17 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
+bool _shouldSkipRetry(RequestOptions request) {
+  final path = request.path.toLowerCase();
+  if (path.startsWith('/auth/')) {
+    return true;
+  }
+  if (request.data is FormData) {
+    return true;
+  }
+  return false;
+}
+
 AppUser _resolveUserFromRefresh({
   required AppUser currentUser,
   required Map<String, dynamic> refreshData,
@@ -117,22 +154,25 @@ AppUser _resolveUserFromRefresh({
     nestedUser is Map<String, dynamic>
         ? nestedUser
         : {
-      'id': refreshData['userId'] ?? refreshData['id'] ?? currentUser.id,
-      'name': refreshData['fullName'] ?? refreshData['name'] ?? currentUser.name,
-      'email': refreshData['email'] ?? currentUser.email,
-      'role': refreshData['role'],
-      'roles': refreshData['roles'],
-      'phone': refreshData['phone'] ?? currentUser.phone,
-      'nationality':
-      refreshData['nationality'] ?? currentUser.nationality,
-      'preferredLanguage':
-      refreshData['preferredLanguage'] ??
-          currentUser.preferredLanguage,
-      'emailVerified':
-      refreshData['emailVerified'] ?? currentUser.emailVerified,
-      'profileCompleted':
-      refreshData['profileCompleted'] ?? currentUser.profileCompleted,
-    },
+            'id': refreshData['userId'] ?? refreshData['id'] ?? currentUser.id,
+            'name':
+                refreshData['fullName'] ??
+                refreshData['name'] ??
+                currentUser.name,
+            'email': refreshData['email'] ?? currentUser.email,
+            'role': refreshData['role'],
+            'roles': refreshData['roles'],
+            'phone': refreshData['phone'] ?? currentUser.phone,
+            'nationality':
+                refreshData['nationality'] ?? currentUser.nationality,
+            'preferredLanguage':
+                refreshData['preferredLanguage'] ??
+                currentUser.preferredLanguage,
+            'emailVerified':
+                refreshData['emailVerified'] ?? currentUser.emailVerified,
+            'profileCompleted':
+                refreshData['profileCompleted'] ?? currentUser.profileCompleted,
+          },
   );
 
   if (mapped.id.isEmpty || mapped.email.isEmpty || mapped.name.isEmpty) {

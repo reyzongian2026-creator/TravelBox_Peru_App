@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/app_user.dart';
+import '../../../shared/utils/app_exception.dart';
 import 'firebase_client_auth_service.dart';
 import '../domain/auth_repository.dart';
 
@@ -39,11 +40,15 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return _mapSession(response.data ?? <String, dynamic>{});
     } on DioException catch (error) {
-      if (!_canUseMockFallbackForError(error)) rethrow;
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
       _warnMockFallback('login', error);
       return _mockSession(email: email);
     } catch (error) {
-      if (!_allowStrictMockFallback) rethrow;
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
       _warnMockFallback('login', error);
       return _mockSession(email: email);
     }
@@ -87,7 +92,9 @@ class AuthRepositoryImpl implements AuthRepository {
           'El backend actual no expone registro publico. Usa credenciales demo o habilita /auth/register.',
         );
       }
-      if (!_canUseMockFallbackForError(error)) rethrow;
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
       _warnMockFallback('register', error);
       return _mockSession(
         email: email,
@@ -101,7 +108,9 @@ class AuthRepositoryImpl implements AuthRepository {
         verificationCodePreview: '123456',
       );
     } catch (error) {
-      if (!_allowStrictMockFallback) rethrow;
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
       _warnMockFallback('register', error);
       return _mockSession(
         email: email,
@@ -127,7 +136,9 @@ class AuthRepositoryImpl implements AuthRepository {
       'FACEBOOK' => SocialAuthProvider.facebook,
       _ => throw UnsupportedError('Proveedor social no soportado: $provider'),
     };
-    final socialResult = await _firebaseClientAuthService.signIn(socialProvider);
+    final socialResult = await _firebaseClientAuthService.signIn(
+      socialProvider,
+    );
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/firebase/social',
@@ -142,27 +153,43 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
       return _mapSession(response.data ?? <String, dynamic>{});
-    } catch (_) {
+    } catch (error) {
       await _firebaseClientAuthService.signOut();
-      rethrow;
+      if (error is DioException) {
+        throw AppException.fromDioError(error);
+      }
+      throw AppException.fromError(error);
     }
   }
 
   @override
   Future<AuthSession> refresh({required String refreshToken}) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/refresh',
-      data: {'refreshToken': refreshToken},
-    );
-    return _mapSession(response.data ?? <String, dynamic>{});
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+      return _mapSession(response.data ?? <String, dynamic>{});
+    } on DioException catch (error) {
+      throw AppException.fromDioError(error);
+    }
   }
 
   @override
   Future<void> logout({required String refreshToken}) async {
+    DioException? dioError;
     try {
-      await _dio.post<void>('/auth/logout', data: {'refreshToken': refreshToken});
+      await _dio.post<void>(
+        '/auth/logout',
+        data: {'refreshToken': refreshToken},
+      );
+    } on DioException catch (error) {
+      dioError = error;
     } finally {
       await _firebaseClientAuthService.signOut();
+    }
+    if (dioError != null) {
+      throw AppException.fromDioError(dioError);
     }
   }
 
@@ -186,14 +213,18 @@ class AuthRepositoryImpl implements AuthRepository {
         verificationCodePreview: data['verificationCodePreview']?.toString(),
       );
     } on DioException catch (error) {
-      if (!_canUseMockFallbackForError(error)) rethrow;
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
       _warnMockFallback('verifyEmail', error);
       return const EmailVerificationResult(
         emailVerified: true,
         message: 'Correo verificado en modo mock.',
       );
     } catch (error) {
-      if (!_allowStrictMockFallback) rethrow;
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
       _warnMockFallback('verifyEmail', error);
       return const EmailVerificationResult(
         emailVerified: true,
@@ -211,12 +242,13 @@ class AuthRepositoryImpl implements AuthRepository {
       final data = response.data ?? <String, dynamic>{};
       return EmailVerificationResult(
         emailVerified: data['emailVerified'] as bool? ?? false,
-        message:
-            data['message']?.toString() ?? 'Se envio un nuevo codigo.',
+        message: data['message']?.toString() ?? 'Se envio un nuevo codigo.',
         verificationCodePreview: data['verificationCodePreview']?.toString(),
       );
     } on DioException catch (error) {
-      if (!_canUseMockFallbackForError(error)) rethrow;
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
       _warnMockFallback('resendVerification', error);
       return const EmailVerificationResult(
         emailVerified: false,
@@ -224,7 +256,9 @@ class AuthRepositoryImpl implements AuthRepository {
         verificationCodePreview: '123456',
       );
     } catch (error) {
-      if (!_allowStrictMockFallback) rethrow;
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
       _warnMockFallback('resendVerification', error);
       return const EmailVerificationResult(
         emailVerified: false,
@@ -252,14 +286,18 @@ class AuthRepositoryImpl implements AuthRepository {
         expiresAtIso: data['expiresAt']?.toString(),
       );
     } on DioException catch (error) {
-      if (!_canUseMockFallbackForError(error)) rethrow;
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
       _warnMockFallback('requestPasswordReset', error);
       return const PasswordResetResult(
         message: 'Codigo de recuperacion generado en modo mock.',
         resetCodePreview: '123456',
       );
     } catch (error) {
-      if (!_allowStrictMockFallback) rethrow;
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
       _warnMockFallback('requestPasswordReset', error);
       return const PasswordResetResult(
         message: 'Codigo de recuperacion generado en modo mock.',
@@ -292,13 +330,17 @@ class AuthRepositoryImpl implements AuthRepository {
             'Contrasena actualizada correctamente.',
       );
     } on DioException catch (error) {
-      if (!_canUseMockFallbackForError(error)) rethrow;
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
       _warnMockFallback('confirmPasswordReset', error);
       return const PasswordResetResult(
         message: 'Contrasena actualizada en modo mock.',
       );
     } catch (error) {
-      if (!_allowStrictMockFallback) rethrow;
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
       _warnMockFallback('confirmPasswordReset', error);
       return const PasswordResetResult(
         message: 'Contrasena actualizada en modo mock.',
@@ -449,4 +491,3 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 }
-

@@ -17,6 +17,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
   bool _reconnectScheduled = false;
   String? _apiBaseUrl;
   String? _accessToken;
+  int? _lastEventId;
   void Function(NotificationLiveEvent event)? _onNotification;
   void Function(Object error)? _onError;
 
@@ -29,6 +30,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
     required String accessToken,
     required void Function(NotificationLiveEvent event) onNotification,
     void Function(Object error)? onError,
+    int? lastEventId,
   }) {
     final normalizedToken = accessToken.trim();
     if (normalizedToken.isEmpty) {
@@ -39,6 +41,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
     _manuallyDisconnected = false;
     _apiBaseUrl = apiBaseUrl;
     _accessToken = normalizedToken;
+    _lastEventId = lastEventId;
     _onNotification = onNotification;
     _onError = onError;
     final currentConnectionId = ++_connectionId;
@@ -49,6 +52,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
         accessToken: normalizedToken,
         onNotification: onNotification,
         onError: onError,
+        lastEventId: lastEventId,
       ),
     );
   }
@@ -58,6 +62,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
     _manuallyDisconnected = true;
     _reconnectScheduled = false;
     _connectionId += 1;
+    _lastEventId = null;
     _idleWatchdog?.cancel();
     _idleWatchdog = null;
     unawaited(_subscription?.cancel());
@@ -83,6 +88,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
     required String accessToken,
     required void Function(NotificationLiveEvent event) onNotification,
     void Function(Object error)? onError,
+    int? lastEventId,
   }) async {
     final client = HttpClient();
     _httpClient = client;
@@ -90,9 +96,14 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
 
     try {
       final baseUrl = _normalizeBaseUrl(apiBaseUrl);
-      final uri = Uri.parse(
-        '$baseUrl/notifications/events?accessToken=${Uri.encodeQueryComponent(accessToken)}',
+      final query = StringBuffer(
+        'accessToken=${Uri.encodeQueryComponent(accessToken)}',
       );
+      final normalizedLastEventId = lastEventId ?? _lastEventId;
+      if (normalizedLastEventId != null && normalizedLastEventId > 0) {
+        query.write('&lastEventId=$normalizedLastEventId');
+      }
+      final uri = Uri.parse('$baseUrl/notifications/events?$query');
       final request = await client.getUrl(uri);
       request.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
@@ -116,52 +127,57 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
           .transform(const LineSplitter())
           .listen(
             (line) {
-          if (connectionId != _connectionId) return;
+              if (connectionId != _connectionId) return;
 
-          _resetWatchdog(connectionId); // Cada vez que entra data, reseteamos el watchdog
+              _resetWatchdog(
+                connectionId,
+              ); // Cada vez que entra data, reseteamos el watchdog
 
-          if (line.isEmpty) {
-            final hasData = dataLines.isNotEmpty;
-            final event = eventName ?? 'message';
-            if (hasData && (event == 'notification' || event == 'message')) {
-              onNotification(
-                NotificationLiveEvent(
-                  eventName: event,
-                  payload: _parsePayload(dataLines.join('\n')),
-                ),
-              );
-            }
-            eventName = null;
-            dataLines = <String>[];
-            return;
-          }
+              if (line.isEmpty) {
+                final hasData = dataLines.isNotEmpty;
+                final event = eventName ?? 'message';
+                if (hasData &&
+                    (event == 'notification' || event == 'message')) {
+                  onNotification(
+                    NotificationLiveEvent(
+                      eventName: event,
+                      payload: _parsePayload(dataLines.join('\n')),
+                    ),
+                  );
+                }
+                eventName = null;
+                dataLines = <String>[];
+                return;
+              }
 
-          // Ignorar los comentarios SSE (ej. :keepalive)
-          if (line.startsWith(':')) {
-            return;
-          }
-          if (line.startsWith('event:')) {
-            eventName = line.substring(6).trim();
-            return;
-          }
-          if (line.startsWith('data:')) {
-            dataLines.add(line.substring(5).trimLeft());
-          }
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          if (connectionId != _connectionId) return;
-          _idleWatchdog?.cancel();
-          if (onError != null) onError(error);
-          _scheduleReconnect(connectionId);
-        },
-        onDone: () {
-          if (connectionId != _connectionId) return;
-          _idleWatchdog?.cancel();
-          if (onError != null) onError(StateError('notification_sse_closed'));
-          _scheduleReconnect(connectionId);
-        },
-        cancelOnError: true,
-      );
+              // Ignorar los comentarios SSE (ej. :keepalive)
+              if (line.startsWith(':')) {
+                return;
+              }
+              if (line.startsWith('event:')) {
+                eventName = line.substring(6).trim();
+                return;
+              }
+              if (line.startsWith('data:')) {
+                dataLines.add(line.substring(5).trimLeft());
+              }
+            },
+            onError: (Object error, StackTrace stackTrace) {
+              if (connectionId != _connectionId) return;
+              _idleWatchdog?.cancel();
+              if (onError != null) onError(error);
+              _scheduleReconnect(connectionId);
+            },
+            onDone: () {
+              if (connectionId != _connectionId) return;
+              _idleWatchdog?.cancel();
+              if (onError != null) {
+                onError(StateError('notification_sse_closed'));
+              }
+              _scheduleReconnect(connectionId);
+            },
+            cancelOnError: true,
+          );
     } catch (error) {
       if (connectionId != _connectionId) return;
       _idleWatchdog?.cancel();
@@ -176,6 +192,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
     }
     final apiBaseUrl = _apiBaseUrl;
     final accessToken = _accessToken;
+    final lastEventId = _lastEventId;
     final onNotification = _onNotification;
     if (apiBaseUrl == null ||
         accessToken == null ||
@@ -198,6 +215,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
             accessToken: accessToken,
             onNotification: onNotification,
             onError: _onError,
+            lastEventId: lastEventId,
           ),
         );
       }),
@@ -223,9 +241,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
         return decoded;
       }
       if (decoded is Map) {
-        return decoded.map(
-              (key, value) => MapEntry(key.toString(), value),
-        );
+        return decoded.map((key, value) => MapEntry(key.toString(), value));
       }
       return null;
     } catch (_) {
