@@ -651,7 +651,10 @@ class _SettingsComboMenu extends ConsumerWidget {
           value: 'theme',
           child: Row(
             children: [
-              Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 18),
+              Icon(
+                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(isDark ? l10n.t('light_mode') : l10n.t('dark_mode')),
             ],
@@ -664,7 +667,9 @@ class _SettingsComboMenu extends ConsumerWidget {
             child: Row(
               children: [
                 Icon(
-                  currentLocaleCode == entry.key ? Icons.check_circle : Icons.language,
+                  currentLocaleCode == entry.key
+                      ? Icons.check_circle
+                      : Icons.language,
                   size: 18,
                 ),
                 const SizedBox(width: 8),
@@ -684,7 +689,7 @@ class _SidebarBrandIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'TravelBox Peru',
+      message: 'TravelBox',
       child: Container(
         width: 44,
         height: 44,

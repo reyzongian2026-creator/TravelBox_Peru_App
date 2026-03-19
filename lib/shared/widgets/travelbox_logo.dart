@@ -31,10 +31,9 @@ class TravelBoxLogo extends StatelessWidget {
             compact && hasBoundedWidth && maxWidth < 118;
         final hideSubtitleByWidth =
             compact && hasBoundedWidth && maxWidth < 220;
-        final shortWordmark = compact && hasBoundedWidth && maxWidth < 186;
         final resolvedShowWordmark = showWordmark && !hideWordmarkByWidth;
         final resolvedShowSubtitle = showSubtitle && !hideSubtitleByWidth;
-        final brandTitle = shortWordmark ? 'TravelBox' : 'TravelBox Peru';
+        const brandTitle = 'TravelBox';
 
         return Row(
           mainAxisSize: hasBoundedWidth ? MainAxisSize.max : MainAxisSize.min,

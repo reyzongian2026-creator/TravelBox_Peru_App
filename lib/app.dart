@@ -19,7 +19,7 @@ class TravelBoxApp extends ConsumerWidget {
     final effectiveLocale = session.locale;
 
     return MaterialApp.router(
-      title: 'TravelBox Peru',
+      title: 'TravelBox',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,7 +72,9 @@ class ProfilePage extends ConsumerWidget {
               color: const Color(0xFFF6F1E8),
               child: ListTile(
                 leading: Icon(Icons.admin_panel_settings_outlined),
-                title: Text(context.l10n.t('perfil_administrado_por_travelbox')),
+                title: Text(
+                  context.l10n.t('perfil_administrado_por_travelbox'),
+                ),
                 subtitle: Text(
                   'Los usuarios internos solo pueden ser editados por un administrador desde la plataforma.',
                 ),
@@ -163,17 +167,18 @@ class ProfilePage extends ConsumerWidget {
           SizedBox(height: 24),
           FilledButton.tonal(
             onPressed: () async {
-              final refreshToken = session.refreshToken;
-              if (refreshToken != null && refreshToken.isNotEmpty) {
-                try {
-                  await ref
-                      .read(authRepositoryProvider)
-                      .logout(refreshToken: refreshToken);
-                } catch (_) {}
-              }
+              final refreshToken = session.refreshToken?.trim();
               await ref.read(sessionControllerProvider.notifier).signOut();
               if (!context.mounted) return;
               context.go('/login');
+              if (refreshToken != null && refreshToken.isNotEmpty) {
+                unawaited(
+                  ref
+                      .read(authRepositoryProvider)
+                      .logout(refreshToken: refreshToken)
+                      .catchError((_) {}),
+                );
+              }
             },
             child: Text(context.l10n.t('cerrar_sesin')),
           ),
@@ -194,4 +199,3 @@ class _ProfileRow extends StatelessWidget {
     return ListTile(title: Text(label), subtitle: Text(value));
   }
 }
-
