@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/api_client.dart';
 import '../models/reservation.dart';
-import '../utils/internal_message_translator.dart';
 
 enum QrHandoffStage {
   draft,
@@ -280,98 +279,43 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     required String customerLanguage,
     String? scannedValue,
   }) async {
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/ops/qr-handoff/scan',
-        data: {
-          'scannedValue': (scannedValue?.trim().isNotEmpty == true)
-              ? scannedValue!.trim()
-              : reservation.code,
-          'customerLanguage': customerLanguage,
-        },
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      final current = ensureCase(reservation, customerLanguage: customerLanguage);
-      return _upsertCase(
-        current.copyWith(
-          stage: QrHandoffStage.qrValidated,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/scan',
+      data: {
+        'scannedValue': (scannedValue?.trim().isNotEmpty == true)
+            ? scannedValue!.trim()
+            : reservation.code,
+        'customerLanguage': customerLanguage,
+      },
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<QrHandoffCase> tagLuggage({
     required Reservation reservation,
     required int bagUnits,
   }) async {
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/ops/qr-handoff/reservations/${reservation.id}/tag',
-        data: {'bagUnits': bagUnits.clamp(1, 20)},
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      final current = ensureCase(reservation);
-      final tagId = current.bagTagId ?? _generateTagId(reservation.code);
-      return _upsertCase(
-        current.copyWith(
-          bagTagId: tagId,
-          bagTagQrPayload: _buildBagQrPayload(
-            reservationCode: reservation.code,
-            bagTagId: tagId,
-          ),
-          bagUnits: bagUnits.clamp(1, 20),
-          stage: QrHandoffStage.bagTagged,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/${reservation.id}/tag',
+      data: {'bagUnits': bagUnits.clamp(1, 20)},
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<QrHandoffCase> markStoredAtWarehouse(String reservationId) async {
-    final existing = state.casesByReservationId[reservationId];
-    if (existing == null) {
-      throw StateError('Caso QR no encontrado para reserva $reservationId');
-    }
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/ops/qr-handoff/reservations/$reservationId/store',
-        data: const {},
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      return _upsertCase(
-        existing.copyWith(
-          stage: QrHandoffStage.storedAtWarehouse,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/$reservationId/store',
+      data: const {},
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<QrHandoffCase> markReadyForPickup(String reservationId) async {
-    final existing = state.casesByReservationId[reservationId];
-    if (existing == null) {
-      throw StateError('Caso QR no encontrado para reserva $reservationId');
-    }
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/ops/qr-handoff/reservations/$reservationId/ready-for-pickup',
-        data: const {},
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      final pin = existing.pickupPin ?? _generatePin();
-      return _upsertCase(
-        existing.copyWith(
-          pickupPin: pin,
-          stage: QrHandoffStage.readyForPickup,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/$reservationId/ready-for-pickup',
+      data: const {},
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<QrHandoffCase> regeneratePickupPin(String reservationId) async {
@@ -382,10 +326,6 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     required String reservationId,
     required String typedPin,
   }) async {
-    final existing = state.casesByReservationId[reservationId];
-    if (existing == null) {
-      return false;
-    }
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/ops/qr-handoff/reservations/$reservationId/pickup/confirm',
@@ -393,17 +333,11 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
       );
       _consumeBackendCase(response.data ?? const <String, dynamic>{});
       return true;
-    } catch (_) {
-      if ((existing.pickupPin ?? '').trim() != typedPin.trim()) {
+    } on DioException catch (error) {
+      if (_isKnownApiCode(error, {'PIN_INVALID'})) {
         return false;
       }
-      _upsertCase(
-        existing.copyWith(
-          stage: QrHandoffStage.pickupPinValidated,
-          updatedAt: DateTime.now(),
-        ),
-      );
-      return true;
+      rethrow;
     }
   }
 
@@ -411,50 +345,22 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     required String reservationId,
     required bool value,
   }) async {
-    final existing = state.casesByReservationId[reservationId];
-    if (existing == null) {
-      throw StateError('Caso QR no encontrado para reserva $reservationId');
-    }
-    try {
-      final response = await _dio.patch<Map<String, dynamic>>(
-        '/ops/qr-handoff/reservations/$reservationId/delivery/identity',
-        data: {'value': value},
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      return _upsertCase(
-        existing.copyWith(
-          identityValidated: value,
-          stage: value ? QrHandoffStage.deliveryIdentityValidated : existing.stage,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/$reservationId/delivery/identity',
+      data: {'value': value},
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<QrHandoffCase> setDeliveryLuggageMatched({
     required String reservationId,
     required bool value,
   }) async {
-    final existing = state.casesByReservationId[reservationId];
-    if (existing == null) {
-      throw StateError('Caso QR no encontrado para reserva $reservationId');
-    }
-    try {
-      final response = await _dio.patch<Map<String, dynamic>>(
-        '/ops/qr-handoff/reservations/$reservationId/delivery/luggage',
-        data: {'value': value},
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      return _upsertCase(
-        existing.copyWith(
-          luggageMatched: value,
-          stage: value ? QrHandoffStage.deliveryLuggageValidated : existing.stage,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/$reservationId/delivery/luggage',
+      data: {'value': value},
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<OpsApprovalNotification> requestOperatorApproval({
@@ -464,68 +370,33 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     required String messageForCustomerInSpanish,
     required String customerLanguage,
   }) async {
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/ops/qr-handoff/reservations/$reservationId/delivery/request-approval',
-        data: {
-          'messageForOperator': messageForOperator,
-          'messageForCustomerSpanish': messageForCustomerInSpanish,
-          'customerLanguage': customerLanguage,
-        },
-      );
-      final caseItem = _consumeBackendCase(response.data ?? const <String, dynamic>{});
-      final pending = state.approvalNotifications
-          .firstWhere(
-            (item) =>
-                item.reservationId == reservationId &&
-                item.status == OpsApprovalStatus.pending,
-            orElse: () => OpsApprovalNotification(
-              id: 'ops-${DateTime.now().microsecondsSinceEpoch}',
-              reservationId: reservationId,
-              reservationCode: reservationCode,
-              createdAt: DateTime.now(),
-              messageForOperator: messageForOperator,
-              messageForCustomer: messageForCustomerInSpanish,
-              messageForCustomerTranslated:
-                  caseItem.latestMessageTranslated ?? messageForCustomerInSpanish,
-              status: OpsApprovalStatus.pending,
-            ),
-          );
-      return pending;
-    } catch (_) {
-      final caseItem = state.casesByReservationId[reservationId];
-      if (caseItem == null) {
-        throw StateError('Caso QR no encontrado para reserva $reservationId');
-      }
-      final translated = translateAdminMessage(
-        messageInSpanish: messageForCustomerInSpanish,
-        targetLanguage: customerLanguage,
-      );
-      final notification = OpsApprovalNotification(
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/$reservationId/delivery/request-approval',
+      data: {
+        'messageForOperator': messageForOperator,
+        'messageForCustomerSpanish': messageForCustomerInSpanish,
+        'customerLanguage': customerLanguage,
+      },
+    );
+    final caseItem = _consumeBackendCase(
+      response.data ?? const <String, dynamic>{},
+    );
+    return state.approvalNotifications.firstWhere(
+      (item) =>
+          item.reservationId == reservationId &&
+          item.status == OpsApprovalStatus.pending,
+      orElse: () => OpsApprovalNotification(
         id: 'ops-${DateTime.now().microsecondsSinceEpoch}',
         reservationId: reservationId,
         reservationCode: reservationCode,
         createdAt: DateTime.now(),
         messageForOperator: messageForOperator,
         messageForCustomer: messageForCustomerInSpanish,
-        messageForCustomerTranslated: translated,
+        messageForCustomerTranslated:
+            caseItem.latestMessageTranslated ?? messageForCustomerInSpanish,
         status: OpsApprovalStatus.pending,
-      );
-      state = state.copyWith(
-        approvalNotifications: [notification, ...state.approvalNotifications],
-      );
-      _upsertCase(
-        caseItem.copyWith(
-          operatorApprovalRequested: true,
-          operatorApprovalGranted: false,
-          stage: QrHandoffStage.deliveryApprovalPending,
-          latestMessageForCustomer: messageForCustomerInSpanish,
-          latestMessageTranslated: translated,
-          updatedAt: DateTime.now(),
-        ),
-      );
-      return notification;
-    }
+      ),
+    );
   }
 
   Future<QrHandoffCase> approveOperatorHandoff({
@@ -542,50 +413,19 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     if (notification == null) {
       throw StateError('Notificacion no encontrada: $notificationId');
     }
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/ops/qr-handoff/approvals/${notification.id}/approve',
-        data: {
-          if (specificPin?.trim().isNotEmpty == true) 'pin': specificPin!.trim(),
-        },
-      );
-      return _consumeBackendCase(response.data ?? const <String, dynamic>{});
-    } catch (_) {
-      final caseItem = state.casesByReservationId[notification.reservationId];
-      if (caseItem == null) {
-        throw StateError('Caso QR no encontrado para reserva ${notification.reservationId}');
-      }
-      final pin = (specificPin?.trim().isNotEmpty == true)
-          ? specificPin!.trim()
-          : _generatePin();
-      state = state.copyWith(
-        approvalNotifications: state.approvalNotifications.map((item) {
-          if (item.id != notificationId || item.status != OpsApprovalStatus.pending) {
-            return item;
-          }
-          return item.copyWith(status: OpsApprovalStatus.approved);
-        }).toList(),
-      );
-      return _upsertCase(
-        caseItem.copyWith(
-          pickupPin: pin,
-          operatorApprovalRequested: true,
-          operatorApprovalGranted: true,
-          stage: QrHandoffStage.deliveryApprovalGranted,
-          updatedAt: DateTime.now(),
-        ),
-      );
-    }
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/approvals/${notification.id}/approve',
+      data: {
+        if (specificPin?.trim().isNotEmpty == true) 'pin': specificPin!.trim(),
+      },
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
   Future<bool> completeDeliveryWithPin({
     required String reservationId,
     required String typedPin,
   }) async {
-    final caseItem = state.casesByReservationId[reservationId];
-    if (caseItem == null) {
-      return false;
-    }
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/ops/qr-handoff/reservations/$reservationId/delivery/complete',
@@ -593,28 +433,22 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
       );
       _consumeBackendCase(response.data ?? const <String, dynamic>{});
       return true;
-    } catch (_) {
-      final pinMatches = (caseItem.pickupPin ?? '').trim() == typedPin.trim();
-      final checksPassed =
-          caseItem.identityValidated &&
-          caseItem.luggageMatched &&
-          caseItem.operatorApprovalGranted;
-      if (!pinMatches || !checksPassed) {
+    } on DioException catch (error) {
+      if (_isKnownApiCode(error, {
+        'PIN_INVALID',
+        'DELIVERY_VALIDATION_REQUIRED',
+      })) {
         return false;
       }
-      _upsertCase(
-        caseItem.copyWith(
-          stage: QrHandoffStage.deliveryCompleted,
-          updatedAt: DateTime.now(),
-        ),
-      );
-      return true;
+      rethrow;
     }
   }
 
   Future<void> refreshApprovals() async {
     try {
-      final response = await _dio.get<List<dynamic>>('/ops/qr-handoff/approvals');
+      final response = await _dio.get<List<dynamic>>(
+        '/ops/qr-handoff/approvals',
+      );
       final items = response.data ?? const <dynamic>[];
       final parsed = items
           .whereType<Map<String, dynamic>>()
@@ -685,16 +519,14 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
       bagUnits: (raw['bagUnits'] as num?)?.toInt() ?? existing?.bagUnits ?? 1,
       bagTagId: raw['bagTagId']?.toString(),
       bagTagQrPayload: raw['bagTagQrPayload']?.toString(),
-      pickupPin:
-          raw['pickupPinPreview']?.toString().isNotEmpty == true
-              ? raw['pickupPinPreview']?.toString()
-              : existing?.pickupPin,
+      pickupPin: raw['pickupPinPreview']?.toString().isNotEmpty == true
+          ? raw['pickupPinPreview']?.toString()
+          : existing?.pickupPin,
       identityValidated: raw['identityValidated'] as bool? ?? false,
       luggageMatched: raw['luggageMatched'] as bool? ?? false,
       operatorApprovalRequested:
           raw['operatorApprovalRequested'] as bool? ?? false,
-      operatorApprovalGranted:
-          raw['operatorApprovalGranted'] as bool? ?? false,
+      operatorApprovalGranted: raw['operatorApprovalGranted'] as bool? ?? false,
       latestMessageForCustomer: raw['latestMessageForCustomer']?.toString(),
       latestMessageTranslated: raw['latestMessageTranslated']?.toString(),
       createdAt: existing?.createdAt ?? now,
@@ -706,7 +538,8 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
   }
 
   OpsApprovalNotification _mapApproval(Map<String, dynamic> raw) {
-    final id = raw['id']?.toString() ?? 'ops-${DateTime.now().microsecondsSinceEpoch}';
+    final id =
+        raw['id']?.toString() ?? 'ops-${DateTime.now().microsecondsSinceEpoch}';
     return OpsApprovalNotification(
       id: id,
       reservationId: raw['reservationId']?.toString() ?? '',
@@ -770,28 +603,19 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     return value;
   }
 
-  String _generateTagId(String reservationCode) {
-    final clean = reservationCode.replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
-    final suffix = clean.length >= 6
-        ? clean.substring(clean.length - 6)
-        : clean;
-    final stamp = DateTime.now().millisecondsSinceEpoch.toString();
-    return 'BAG-$suffix-${stamp.substring(stamp.length - 4)}'.toUpperCase();
-  }
-
-  String _generatePin() {
-    final raw = DateTime.now().microsecondsSinceEpoch % 1000000;
-    return raw.toString().padLeft(6, '0');
+  bool _isKnownApiCode(DioException error, Set<String> expectedCodes) {
+    final data = error.response?.data;
+    if (data is! Map<String, dynamic>) {
+      return false;
+    }
+    final code = data['code']?.toString().trim().toUpperCase();
+    if (code == null || code.isEmpty) {
+      return false;
+    }
+    return expectedCodes.contains(code);
   }
 
   String _buildCustomerQrPayload(String reservationCode) {
     return 'TRAVELBOX|RESERVATION|$reservationCode';
-  }
-
-  String _buildBagQrPayload({
-    required String reservationCode,
-    required String bagTagId,
-  }) {
-    return 'TRAVELBOX|BAG|$bagTagId|RES|$reservationCode';
   }
 }

@@ -89,8 +89,8 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     });
 
     return AuthSplitScaffold(
-      heroLabel: 'TravelBox Peru',
-      heroTitle: 'TRAVELBOX PERU',
+      heroLabel: 'TravelBox',
+      heroTitle: 'TRAVELBOX',
       heroSubtitle:
           'Guarda tu equipaje de forma segura en aeropuerto y ciudad, mientras disfrutas tu viaje.',
       showGuardianBear: false,
@@ -355,7 +355,7 @@ class _AuthPanel extends StatelessWidget {
                 ],
               ),
               child: const Text(
-                'TRAVEL BOX PERU',
+                'TRAVELBOX',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
@@ -559,4 +559,3 @@ class _SocialGhostButton extends StatelessWidget {
     );
   }
 }
-

@@ -82,7 +82,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     });
 
     return AuthSplitScaffold(
-      heroLabel: 'TravelBox Peru',
+      heroLabel: 'TravelBox',
       heroTitle: 'CREA TU CUENTA',
       heroSubtitle:
           'Configura tu perfil y empieza a reservar almacenamiento seguro en segundos.',
@@ -115,7 +115,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ],
                   ),
                   child: const Text(
-                    'TRAVEL BOX PERU',
+                    'TRAVELBOX',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
@@ -190,16 +190,34 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 value: _nationality,
                 hint: l10n.t('nationality'),
                 items: [
-                  DropdownMenuItem(value: 'Peru', child: Text(context.l10n.t('peru'))),
+                  DropdownMenuItem(
+                    value: 'Peru',
+                    child: Text(context.l10n.t('peru')),
+                  ),
                   DropdownMenuItem(
                     value: 'Argentina',
                     child: Text(context.l10n.t('argentina')),
                   ),
-                  DropdownMenuItem(value: 'Chile', child: Text(context.l10n.t('chile'))),
-                  DropdownMenuItem(value: 'Colombia', child: Text(context.l10n.t('colombia'))),
-                  DropdownMenuItem(value: 'Mexico', child: Text(context.l10n.t('mexico'))),
-                  DropdownMenuItem(value: 'USA', child: Text(context.l10n.t('usa'))),
-                  DropdownMenuItem(value: 'Other', child: Text(context.l10n.t('otra'))),
+                  DropdownMenuItem(
+                    value: 'Chile',
+                    child: Text(context.l10n.t('chile')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Colombia',
+                    child: Text(context.l10n.t('colombia')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Mexico',
+                    child: Text(context.l10n.t('mexico')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'USA',
+                    child: Text(context.l10n.t('usa')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Other',
+                    child: Text(context.l10n.t('otra')),
+                  ),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -211,12 +229,30 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 value: _preferredLanguage,
                 hint: l10n.t('app_language'),
                 items: [
-                  DropdownMenuItem(value: 'es', child: Text(context.l10n.t('espanol'))),
-                  DropdownMenuItem(value: 'en', child: Text(context.l10n.t('english'))),
-                  DropdownMenuItem(value: 'pt', child: Text(context.l10n.t('portugues'))),
-                  DropdownMenuItem(value: 'fr', child: Text(context.l10n.t('francais'))),
-                  DropdownMenuItem(value: 'de', child: Text(context.l10n.t('deutsch'))),
-                  DropdownMenuItem(value: 'it', child: Text(context.l10n.t('italiano'))),
+                  DropdownMenuItem(
+                    value: 'es',
+                    child: Text(context.l10n.t('espanol')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'en',
+                    child: Text(context.l10n.t('english')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'pt',
+                    child: Text(context.l10n.t('portugues')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'fr',
+                    child: Text(context.l10n.t('francais')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'de',
+                    child: Text(context.l10n.t('deutsch')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'it',
+                    child: Text(context.l10n.t('italiano')),
+                  ),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -384,4 +420,3 @@ class _AcceptTermsLabel extends StatelessWidget {
     return Text(context.l10n.t('accept_terms'));
   }
 }
-

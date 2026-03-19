@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/delivery_tracking.dart';
@@ -39,7 +38,6 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
   bool _loading = true;
   String? _error;
   bool _deliveryMissing = false;
-  int _mockTick = 0;
   int _lastRealtimeCursor = -1;
 
   @override
@@ -92,7 +90,9 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             return Center(child: Text(_error!));
           }
           if (_tracking == null) {
-            return Center(child: Text(context.l10n.t('tracking_no_disponible')));
+            return Center(
+              child: Text(context.l10n.t('tracking_no_disponible')),
+            );
           }
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -188,7 +188,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                 attributions: [
                   TextSourceAttribution(
                     route.fallbackUsed
-                        ? 'Ruta simulada'
+                        ? 'Ruta estimada'
                         : 'Ruta vial ${route.provider.toUpperCase()}',
                   ),
                 ],
@@ -219,9 +219,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
           ListTile(
             leading: const Icon(Icons.route_outlined),
             title: Text('Estado: ${_statusLabel(tracking.status)}'),
-            subtitle: Text(
-              'ETA: ${tracking.etaMinutes} min\n$etaNote',
-            ),
+            subtitle: Text('ETA: ${tracking.etaMinutes} min\n$etaNote'),
             trailing: IconButton(
               onPressed: _loadTracking,
               icon: const Icon(Icons.refresh),
@@ -330,113 +328,22 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
         });
         return;
       }
-      if (!AppEnv.useMockFallback) {
-        if (!mounted) return;
-        setState(() {
-          _error = 'No se pudo cargar tracking.';
-          _loading = false;
-          _deliveryMissing = false;
-        });
-        return;
-      }
       if (!mounted) return;
       setState(() {
-        _mockTick = (_mockTick + 1).clamp(0, 3);
-        _tracking = _mockTracking(_mockTick);
-        _loading = false;
-        _error = null;
+        _error = 'No se pudo cargar tracking.';
+        _tracking = null;
         _deliveryMissing = false;
+        _loading = false;
       });
     } catch (_) {
-      if (!AppEnv.useMockFallback) {
-        if (!mounted) return;
-        setState(() {
-          _error = 'No se pudo cargar tracking.';
-          _loading = false;
-        });
-        return;
-      }
       if (!mounted) return;
       setState(() {
-        _mockTick = (_mockTick + 1).clamp(0, 3);
-        _tracking = _mockTracking(_mockTick);
-        _loading = false;
-        _error = null;
+        _error = 'No se pudo cargar tracking.';
+        _tracking = null;
         _deliveryMissing = false;
+        _loading = false;
       });
     }
-  }
-
-  DeliveryTrackingModel _mockTracking(int tick) {
-    const origin = LatLng(-12.122, -77.031);
-    const destination = LatLng(-12.11, -77.02);
-    final curvedRoute = _buildCurvedMockRoute(origin, destination);
-    final current = curvedRoute[_routeIndexForTick(tick, curvedRoute.length)];
-    final statuses = ['REQUESTED', 'ASSIGNED', 'IN_TRANSIT', 'DELIVERED'];
-    final status = statuses[tick];
-    final events = List.generate(tick + 1, (index) {
-      final point = curvedRoute[_routeIndexForTick(index, curvedRoute.length)];
-      return DeliveryTrackingEventModel(
-        sequence: index,
-        status: statuses[index],
-        latitude: point.latitude,
-        longitude: point.longitude,
-        etaMinutes: index == 3 ? 0 : 15 - (index * 5),
-        message: 'Evento $index en modo mock.',
-        createdAt: DateTime.now().subtract(Duration(minutes: 10 - (index * 2))),
-      );
-    });
-
-    return DeliveryTrackingModel(
-      deliveryOrderId: 'mock-order-${widget.reservationId}',
-      reservationId: widget.reservationId,
-      status: status,
-      driverName: 'Unidad mock TravelBox',
-      driverPhone: '+51999888777',
-      vehicleType: 'MOTO',
-      vehiclePlate: 'TBX-100',
-      currentLatitude: current.latitude,
-      currentLongitude: current.longitude,
-      destinationLatitude: destination.latitude,
-      destinationLongitude: destination.longitude,
-      etaMinutes: tick == 3 ? 0 : 15 - (tick * 5),
-      trackingMode: 'mock-local',
-      reconnectSuggested: tick != 3,
-      lastUpdatedAt: DateTime.now(),
-      events: events,
-    );
-  }
-
-  List<LatLng> _buildCurvedMockRoute(LatLng origin, LatLng destination) {
-    final deltaLat = destination.latitude - origin.latitude;
-    final deltaLng = destination.longitude - origin.longitude;
-    final control = LatLng(
-      ((origin.latitude + destination.latitude) / 2) + (-deltaLng * 0.22),
-      ((origin.longitude + destination.longitude) / 2) + (deltaLat * 0.22),
-    );
-    return List.generate(11, (step) {
-      final t = step / 10;
-      final inverse = 1 - t;
-      return LatLng(
-        (inverse * inverse * origin.latitude) +
-            (2 * inverse * t * control.latitude) +
-            (t * t * destination.latitude),
-        (inverse * inverse * origin.longitude) +
-            (2 * inverse * t * control.longitude) +
-            (t * t * destination.longitude),
-      );
-    });
-  }
-
-  int _routeIndexForTick(int tick, int totalPoints) {
-    final progress = switch (tick) {
-      0 => 0.15,
-      1 => 0.45,
-      2 => 0.78,
-      _ => 1.0,
-    };
-    final lastIndex = totalPoints - 1;
-    return (lastIndex * progress).round().clamp(0, lastIndex);
   }
 
   String _statusLabel(String raw) {
@@ -621,4 +528,3 @@ class _MissingDeliveryState extends StatelessWidget {
     );
   }
 }
-

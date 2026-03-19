@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http_parser/http_parser.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_back_button.dart';
@@ -12,6 +13,7 @@ import '../../../shared/models/reservation.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/widgets/app_smart_image.dart';
+import '../../incidents/data/evidence_picker.dart';
 import '../data/reservation_repository_impl.dart';
 import 'reservation_providers.dart';
 
@@ -77,17 +79,24 @@ class ReservationDetailPage extends ConsumerWidget {
             final session = ref.watch(sessionControllerProvider);
             final canOperate = session.canAccessAdmin;
             final operational = reservation.operationalDetail;
+            final canUploadClientHandoffPhoto = _canUploadClientHandoffPhoto(
+              reservation: reservation,
+              session: session,
+            );
             final bagTagId = operational?.bagTagId;
-            final pickupPinText = _pickupPinText(operational, session);
+            final pickupPinText = _pickupPinText(operational);
             final qrSource = _reservationQrSource(reservation);
             final showTrackingAction = _shouldShowTrackingAction(reservation);
             final paymentStatus = ref.watch(
               reservationPaymentStatusProvider(reservationId),
             );
             final paymentSnapshot = paymentStatus.asData?.value;
-            final requiresRefundForCancel =
-                _requiresRefundForCancellation(paymentSnapshot);
-            final canCancelReservation = _canCancelReservation(reservation.status);
+            final requiresRefundForCancel = _requiresRefundForCancellation(
+              paymentSnapshot,
+            );
+            final canCancelReservation = _canCancelReservation(
+              reservation.status,
+            );
             final content = ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -137,6 +146,26 @@ class ReservationDetailPage extends ConsumerWidget {
                     (operational.canViewLuggagePhotos ||
                         operational.luggagePhotosLocked))
                   const SizedBox(height: 12),
+                if (canUploadClientHandoffPhoto)
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.add_a_photo_outlined),
+                      title: const Text('Foto inicial del equipaje'),
+                      subtitle: const Text(
+                        'Sube la foto de como entregas tu maleta antes del ingreso al almacen.',
+                      ),
+                      trailing: FilledButton.tonalIcon(
+                        onPressed: () => _uploadClientHandoffPhoto(
+                          context: context,
+                          ref: ref,
+                          reservation: reservation,
+                        ),
+                        icon: const Icon(Icons.upload_outlined),
+                        label: const Text('Subir'),
+                      ),
+                    ),
+                  ),
+                if (canUploadClientHandoffPhoto) const SizedBox(height: 12),
                 paymentStatus.when(
                   data: (payment) {
                     if (payment == null) return const SizedBox.shrink();
@@ -162,7 +191,9 @@ class ReservationDetailPage extends ConsumerWidget {
                           Card(
                             child: ListTile(
                               leading: Icon(Icons.info_outline),
-                              title: Text(context.l10n.t('pago_pendiente_de_aprobacion')),
+                              title: Text(
+                                context.l10n.t('pago_pendiente_de_aprobacion'),
+                              ),
                               subtitle: Text(
                                 'El QR de check-in aun no debe usarse. Primero se debe validar el cobro en caja desde el panel del operador.',
                               ),
@@ -192,7 +223,10 @@ class ReservationDetailPage extends ConsumerWidget {
                   ],
                 ),
                 SizedBox(height: 12),
-                Text(context.l10n.t('timeline'), style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  context.l10n.t('timeline'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 SizedBox(height: 8),
                 ...reservation.timeline.map(
                   (event) => _TimelineTile(event: event),
@@ -202,33 +236,22 @@ class ReservationDetailPage extends ConsumerWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    if (canOperate &&
-                        reservation.status == ReservationStatus.confirmed)
-                      FilledButton.tonal(
-                        onPressed: () {
-                          _changeStatus(
-                            context: context,
-                            ref: ref,
-                            status: ReservationStatus.stored,
-                            message: 'Objeto recibido y almacenado.',
-                          );
-                        },
-                        child: Text(context.l10n.t('simulate_checkin')),
-                      ),
                     if (reservation.status == ReservationStatus.stored ||
                         reservation.status == ReservationStatus.readyForPickup)
                       if (reservation.dropoffRequested)
-                      FilledButton.tonal(
-                        onPressed: () => context.push('/delivery/$reservationId'),
-                        child: Text(context.l10n.t('request_delivery')),
-                      ),
+                        FilledButton.tonal(
+                          onPressed: () =>
+                              context.push('/delivery/$reservationId'),
+                          child: Text(context.l10n.t('request_delivery')),
+                        ),
                     if (reservation.status == ReservationStatus.confirmed)
                       if (reservation.pickupRequested)
-                      FilledButton.tonal(
-                        onPressed: () =>
-                            context.push('/delivery/$reservationId?type=PICKUP'),
-                        child: Text(context.l10n.t('request_pickup')),
-                      ),
+                        FilledButton.tonal(
+                          onPressed: () => context.push(
+                            '/delivery/$reservationId?type=PICKUP',
+                          ),
+                          child: Text(context.l10n.t('request_pickup')),
+                        ),
                     if (canCancelReservation)
                       FilledButton.tonalIcon(
                         onPressed: () => _cancelOrRefundReservation(
@@ -246,41 +269,18 @@ class ReservationDetailPage extends ConsumerWidget {
                       ),
                     if (showTrackingAction)
                       FilledButton.tonal(
-                        onPressed: () => context.push('/tracking/$reservationId'),
+                        onPressed: () =>
+                            context.push('/tracking/$reservationId'),
                         child: Text(_trackingActionLabel(reservation)),
-                      ),
-                    if (canOperate &&
-                        reservation.status == ReservationStatus.stored)
-                      FilledButton.tonal(
-                        onPressed: () {
-                          _changeStatus(
-                            context: context,
-                            ref: ref,
-                            status: ReservationStatus.readyForPickup,
-                            message: 'Reserva lista para recojo en punto.',
-                          );
-                        },
-                        child: Text(context.l10n.t('ready_pickup')),
-                      ),
-                    if (canOperate &&
-                        reservation.status == ReservationStatus.readyForPickup)
-                      FilledButton(
-                        onPressed: () {
-                          _changeStatus(
-                            context: context,
-                            ref: ref,
-                            status: ReservationStatus.completed,
-                            message: 'Reserva cerrada y entregada.',
-                          );
-                        },
-                        child: Text(context.l10n.t('finish_reservation')),
                       ),
                     OutlinedButton(
                       onPressed: () => context.push(
                         '/incidents?reservationId=$reservationId',
                       ),
                       child: Text(
-                        canOperate ? 'Reportar incidencia' : 'Contactar soporte',
+                        canOperate
+                            ? 'Reportar incidencia'
+                            : 'Contactar soporte',
                       ),
                     ),
                   ],
@@ -304,42 +304,107 @@ class ReservationDetailPage extends ConsumerWidget {
           loading: () => const LoadingStateView(),
           error: (error, _) => ErrorStateView(
             message: 'No se pudo cargar la reserva: $error',
-            onRetry: () => ref.invalidate(reservationByIdProvider(reservationId)),
+            onRetry: () =>
+                ref.invalidate(reservationByIdProvider(reservationId)),
           ),
         ),
       ),
     );
   }
 
-  Future<void> _changeStatus({
+  bool _canUploadClientHandoffPhoto({
+    required Reservation reservation,
+    required SessionState session,
+  }) {
+    final userId = session.user?.id;
+    if (userId == null || userId != reservation.userId) {
+      return false;
+    }
+    if (!reservation.pickupRequested) {
+      return false;
+    }
+    return reservation.status == ReservationStatus.confirmed ||
+        reservation.status == ReservationStatus.checkinPending;
+  }
+
+  Future<void> _uploadClientHandoffPhoto({
     required BuildContext context,
     required WidgetRef ref,
-    required ReservationStatus status,
-    required String message,
+    required Reservation reservation,
   }) async {
-    try {
-      await ref
-          .read(reservationRepositoryProvider)
-          .updateStatus(
-            reservationId: reservationId,
-            status: status,
-            message: message,
-          );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo actualizar estado: $error')),
-      );
+    final selected = await pickEvidenceImage();
+    if (selected == null || !context.mounted) {
       return;
     }
-    ref.invalidate(reservationByIdProvider(reservationId));
-    ref.invalidate(myReservationsProvider);
-    ref.invalidate(adminReservationsProvider);
-    ref.invalidate(adminReservationListProvider);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Estado actualizado a ${status.label}')),
+
+    final progress = ValueNotifier<double>(0);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Subiendo evidencia'),
+          content: ValueListenableBuilder<double>(
+            valueListenable: progress,
+            builder: (context, value, child) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(value: value <= 0 ? null : value),
+                const SizedBox(height: 10),
+                Text(
+                  value <= 0
+                      ? 'Preparando archivo...'
+                      : 'Progreso ${(value * 100).toStringAsFixed(0)}%',
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
+
+    try {
+      await ref
+          .read(dioProvider)
+          .post<Map<String, dynamic>>(
+            '/inventory/evidences/upload',
+            data: FormData.fromMap({
+              'reservationId': reservation.id,
+              'type': 'CLIENT_HANDOFF_PHOTO',
+              'observation': 'Foto inicial tomada por cliente.',
+              'file': MultipartFile.fromBytes(
+                selected.bytes,
+                filename: selected.filename,
+                contentType: MediaType.parse(selected.mimeType),
+              ),
+            }),
+            onSendProgress: (sent, total) {
+              if (total <= 0) {
+                return;
+              }
+              progress.value = (sent / total).clamp(0, 1);
+            },
+          );
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+      ref.invalidate(reservationByIdProvider(reservationId));
+      ref.invalidate(myReservationsProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto inicial subida correctamente.')),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo subir la foto: $error')),
+        );
+      }
+    } finally {
+      progress.dispose();
+    }
   }
 
   Future<void> _cancelOrRefundReservation({
@@ -361,11 +426,7 @@ class ReservationDetailPage extends ConsumerWidget {
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'No se pudo completar la cancelacion: $error',
-          ),
-        ),
+        SnackBar(content: Text('No se pudo completar la cancelacion: $error')),
       );
       return;
     }
@@ -399,16 +460,15 @@ class _TimelineTile extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(backgroundColor: event.status.color),
         title: Text(event.status.label),
-        subtitle: Text('${event.message}\n${PeruTime.formatDateTime(event.timestamp)}'),
+        subtitle: Text(
+          '${event.message}\n${PeruTime.formatDateTime(event.timestamp)}',
+        ),
       ),
     );
   }
 }
 
-String _pickupPinText(
-  ReservationOperationalDetail? operational,
-  SessionState session,
-) {
+String _pickupPinText(ReservationOperationalDetail? operational) {
   if (operational == null) {
     return 'Pendiente de generacion o ya validado';
   }
@@ -417,9 +477,9 @@ String _pickupPinText(
     return visiblePin;
   }
   if (operational.pickupPinGenerated) {
-    return session.isCourier
-        ? 'Protegido para operador/cliente'
-        : 'Generado, pendiente de consulta segura';
+    return operational.pickupPinVisible
+        ? 'Generado, pendiente de consulta segura'
+        : 'Protegido por permisos de rol';
   }
   return 'Pendiente de generacion o ya validado';
 }
@@ -468,7 +528,9 @@ class _OperationalDetailCard extends StatelessWidget {
                   ),
                 ),
                 if (operational.luggagePhotosLocked)
-                  Chip(label: Text(context.l10n.t('registro_de_almacen_cerrado'))),
+                  Chip(
+                    label: Text(context.l10n.t('registro_de_almacen_cerrado')),
+                  ),
               ],
             ),
             const SizedBox(height: 10),
@@ -490,17 +552,15 @@ class _OperationalDetailCard extends StatelessWidget {
 }
 
 class _ReservationQrCard extends StatelessWidget {
-  const _ReservationQrCard({
-    required this.source,
-    required this.reservation,
-  });
+  const _ReservationQrCard({required this.source, required this.reservation});
 
   final String source;
   final Reservation reservation;
 
   @override
   Widget build(BuildContext context) {
-    final paymentPending = reservation.status == ReservationStatus.pendingPayment;
+    final paymentPending =
+        reservation.status == ReservationStatus.pendingPayment;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -568,7 +628,7 @@ class _WarehouseLuggageSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Fotos registradas al momento de dejar el equipaje. Este bloque ya no admite correcciones posteriores.',
+              'Incluye foto inicial del cliente y fotos del ingreso a almacen para validar estado de entrega y recepcion.',
             ),
             const SizedBox(height: 12),
             if (!operational.canViewLuggagePhotos)
@@ -586,9 +646,7 @@ class _WarehouseLuggageSection extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: photos
-                    .map(
-                      (photo) => _LuggagePhotoCard(photo: photo),
-                    )
+                    .map((photo) => _LuggagePhotoCard(photo: photo))
                     .toList(),
               ),
           ],
@@ -621,10 +679,15 @@ class _LuggagePhotoCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Bulto ${photo.bagUnitIndex}',
+            _photoTitle(photo),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _photoSourceLabel(photo.type),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
           if (photo.capturedByName?.trim().isNotEmpty == true)
             Text(
@@ -635,6 +698,29 @@ class _LuggagePhotoCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _photoTitle(ReservationLuggagePhoto photo) {
+  final bagUnitIndex = photo.bagUnitIndex;
+  if (bagUnitIndex != null && bagUnitIndex > 0) {
+    return 'Bulto $bagUnitIndex';
+  }
+  final normalizedType = photo.type.trim().toUpperCase();
+  if (normalizedType == 'CLIENT_HANDOFF_PHOTO') {
+    return 'Foto inicial del cliente';
+  }
+  return 'Foto de equipaje';
+}
+
+String _photoSourceLabel(String rawType) {
+  final normalized = rawType.trim().toUpperCase();
+  if (normalized == 'CLIENT_HANDOFF_PHOTO') {
+    return 'Origen: cliente';
+  }
+  if (normalized == 'CHECKIN_BAG_PHOTO') {
+    return 'Origen: ingreso a almacen';
+  }
+  return 'Origen: evidencia operativa';
 }
 
 String? _reservationQrSource(Reservation reservation) {
@@ -765,5 +851,3 @@ String _operationalStageLabel(
       return 'Reserva en borrador';
   }
 }
-
-

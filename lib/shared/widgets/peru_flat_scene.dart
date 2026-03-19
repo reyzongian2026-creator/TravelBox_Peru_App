@@ -60,7 +60,7 @@ class PeruFlatScene extends StatelessWidget {
                 child: Container(
                   height: constraints.maxHeight * 0.24,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC5E2CE),
+                    color: const Color(0xFFD7E5F0),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -72,7 +72,7 @@ class PeruFlatScene extends StatelessWidget {
                 child: Container(
                   height: constraints.maxHeight * 0.22,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB5D9C0),
+                    color: const Color(0xFFC8DCEE),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -84,7 +84,7 @@ class PeruFlatScene extends StatelessWidget {
                 child: Container(
                   height: constraints.maxHeight * 0.26,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE6F0F3),
+                    color: const Color(0xFFE8EFF5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -146,7 +146,7 @@ class _RouteProgressStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final markerSize = compact ? 8.0 : 10.0;
-    final stripHeight = compact ? 16.0 : 20.0;
+    final stripHeight = compact ? 14.0 : 18.0;
 
     return SizedBox(
       height: stripHeight,
@@ -164,7 +164,7 @@ class _RouteProgressStrip extends StatelessWidget {
                 child: Container(
                   height: compact ? 3 : 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF73BFA6),
+                    color: const Color(0xFF90AEC5),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -177,7 +177,7 @@ class _RouteProgressStrip extends StatelessWidget {
                     width: markerSize,
                     height: markerSize,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF0F7A80),
+                      color: Color(0xFF3D7EA6),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -189,9 +189,9 @@ class _RouteProgressStrip extends StatelessWidget {
                   bottom: 0,
                   child: Row(
                     children: const [
-                      Icon(Icons.person, color: Color(0xFF0F7A80), size: 14),
+                      Icon(Icons.person, color: Color(0xFF3D7EA6), size: 14),
                       SizedBox(width: 1),
-                      Icon(Icons.luggage, color: Color(0xFF0F7A80), size: 13),
+                      Icon(Icons.luggage, color: Color(0xFF3D7EA6), size: 13),
                     ],
                   ),
                 ),

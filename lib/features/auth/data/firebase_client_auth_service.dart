@@ -172,6 +172,13 @@ class FirebaseClientAuthService {
         final reason = loginResult.message?.trim().isNotEmpty == true
             ? loginResult.message!.trim()
             : 'No se pudo autenticar con Facebook.';
+        if (_looksLikeFacebookAppInactive(reason)) {
+          throw UnsupportedError(
+            'Facebook Login bloqueado: la app esta en modo desarrollo/inactiva '
+            'o faltan dominios/redirect URI. Activa la app en Meta for Developers '
+            'y agrega el dominio web de produccion.',
+          );
+        }
         throw Exception(reason);
       }
       final credential = FacebookAuthProvider.credential(
@@ -188,6 +195,14 @@ class FirebaseClientAuthService {
   bool _isFacebookInvalidEmailScope(Object error) {
     final lowered = error.toString().toLowerCase();
     return lowered.contains('invalid scopes') && lowered.contains('email');
+  }
+
+  bool _looksLikeFacebookAppInactive(String message) {
+    final lowered = message.toLowerCase();
+    return lowered.contains('app not active') ||
+        lowered.contains('application is not active') ||
+        lowered.contains('app is not active') ||
+        lowered.contains('app isn\'t active');
   }
 
   Future<FirebaseSocialSignInResult> _toResult(

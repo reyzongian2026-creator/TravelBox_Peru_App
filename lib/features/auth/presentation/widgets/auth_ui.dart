@@ -99,7 +99,7 @@ class AuthSplitScaffold extends StatelessWidget {
     required this.formChild,
     required this.heroTitle,
     required this.heroSubtitle,
-    this.heroLabel = 'TravelBox Peru',
+    this.heroLabel = 'TravelBox',
     this.showGuardianBear = true,
     this.showCompactHero = true,
     this.heroAnimation = 'idle',
@@ -590,4 +590,3 @@ class _AuthHeroPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

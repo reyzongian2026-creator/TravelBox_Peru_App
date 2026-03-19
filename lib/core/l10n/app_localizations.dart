@@ -30,7 +30,7 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _translations = {
     'es': {
-      'app_name': 'TravelBox Peru',
+      'app_name': 'TravelBox',
       'login': 'Iniciar sesion',
       'register': 'Crear cuenta',
       'email': 'Correo',
@@ -66,7 +66,7 @@ class AppLocalizations {
       'view': 'Ver',
       'login_title': 'Iniciar sesion',
       'login_description':
-          'Accede a tu cuenta de TravelBox Peru para continuar tu viaje.',
+          'Accede a tu cuenta de TravelBox para continuar tu viaje.',
       'mode_client': 'Cliente',
       'mode_internal': 'Personal interno',
       'access_client': 'Acceso cliente',
@@ -374,7 +374,7 @@ class AppLocalizations {
       'reservar_ahora': 'Reservar ahora',
 },
     'en': {
-      'app_name': 'TravelBox Peru',
+      'app_name': 'TravelBox',
       'login': 'Login',
       'register': 'Create account',
       'email': 'Email',
@@ -409,7 +409,7 @@ class AppLocalizations {
       'translator': 'Translator',
       'view': 'View',
       'login_title': 'Sign in',
-      'login_description': 'Access your TravelBox Peru account to continue.',
+      'login_description': 'Access your TravelBox account to continue.',
       'mode_client': 'Client',
       'mode_internal': 'Internal staff',
       'access_client': 'Client access',
@@ -717,7 +717,7 @@ class AppLocalizations {
       'reservar_ahora': 'Reservar ahora (EN)',
 },
     'de': {
-      'app_name': 'TravelBox Peru',
+      'app_name': 'TravelBox',
       'login': 'Anmelden',
       'register': 'Konto erstellen',
       'email': 'E-Mail',
@@ -753,7 +753,7 @@ class AppLocalizations {
       'view': 'Ansehen',
       'login_title': 'Anmelden',
       'login_description':
-          'Melden Sie sich bei TravelBox Peru an, um fortzufahren.',
+          'Melden Sie sich bei TravelBox an, um fortzufahren.',
       'mode_client': 'Kunde',
       'mode_internal': 'Internes Personal',
       'access_client': 'Kundenzugang',
@@ -1062,7 +1062,7 @@ class AppLocalizations {
       'reservar_ahora': 'Reservar ahora (DE)',
 },
     'fr': {
-      'app_name': 'TravelBox Peru',
+      'app_name': 'TravelBox',
       'login': 'Connexion',
       'register': 'Creer un compte',
       'email': 'E-mail',
@@ -1098,7 +1098,7 @@ class AppLocalizations {
       'view': 'Voir',
       'login_title': 'Connexion',
       'login_description':
-          'Connectez-vous a TravelBox Peru pour continuer votre voyage.',
+          'Connectez-vous a TravelBox pour continuer votre voyage.',
       'mode_client': 'Client',
       'mode_internal': 'Equipe interne',
       'access_client': 'Acces client',
@@ -1406,7 +1406,7 @@ class AppLocalizations {
       'reservar_ahora': 'Reservar ahora (FR)',
 },
     'it': {
-      'app_name': 'TravelBox Peru',
+      'app_name': 'TravelBox',
       'login': 'Accedi',
       'register': 'Crea account',
       'email': 'Email',
@@ -1442,7 +1442,7 @@ class AppLocalizations {
       'view': 'Vedi',
       'login_title': 'Accedi',
       'login_description':
-          'Accedi al tuo account TravelBox Peru per continuare.',
+          'Accedi al tuo account TravelBox per continuare.',
       'mode_client': 'Cliente',
       'mode_internal': 'Personale interno',
       'access_client': 'Accesso cliente',
@@ -1750,7 +1750,7 @@ class AppLocalizations {
       'reservar_ahora': 'Reservar ahora (IT)',
 },
     'pt': {
-      'app_name': 'TravelBox Peru',
+      'app_name': 'TravelBox',
       'login': 'Entrar',
       'register': 'Criar conta',
       'email': 'Email',
@@ -1785,7 +1785,7 @@ class AppLocalizations {
       'translator': 'Tradutor',
       'view': 'Ver',
       'login_title': 'Entrar',
-      'login_description': 'Acesse sua conta TravelBox Peru para continuar.',
+      'login_description': 'Acesse sua conta TravelBox para continuar.',
       'mode_client': 'Cliente',
       'mode_internal': 'Equipe interna',
       'access_client': 'Acesso cliente',

@@ -128,6 +128,7 @@ class ReservationTimelineEvent {
 class ReservationLuggagePhoto {
   const ReservationLuggagePhoto({
     required this.id,
+    required this.type,
     required this.bagUnitIndex,
     required this.imageUrl,
     required this.capturedAt,
@@ -136,7 +137,8 @@ class ReservationLuggagePhoto {
   });
 
   final String id;
-  final int bagUnitIndex;
+  final String type;
+  final int? bagUnitIndex;
   final String imageUrl;
   final DateTime capturedAt;
   final String? capturedByUserId;
@@ -145,6 +147,7 @@ class ReservationLuggagePhoto {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'type': type,
       'bagUnitIndex': bagUnitIndex,
       'imageUrl': imageUrl,
       'capturedAt': capturedAt.toIso8601String(),
@@ -156,7 +159,8 @@ class ReservationLuggagePhoto {
   factory ReservationLuggagePhoto.fromJson(Map<String, dynamic> json) {
     return ReservationLuggagePhoto(
       id: json['id']?.toString() ?? '',
-      bagUnitIndex: (json['bagUnitIndex'] as num?)?.toInt() ?? 0,
+      type: json['type']?.toString() ?? 'CHECKIN_BAG_PHOTO',
+      bagUnitIndex: (json['bagUnitIndex'] as num?)?.toInt(),
       imageUrl: json['imageUrl']?.toString() ?? '',
       capturedAt:
           DateTime.tryParse(json['capturedAt']?.toString() ?? '') ??
@@ -232,8 +236,7 @@ class ReservationOperationalDetail {
       luggagePhotosLocked: json['luggagePhotosLocked'] as bool? ?? false,
       expectedLuggagePhotos:
           (json['expectedLuggagePhotos'] as num?)?.toInt() ?? 0,
-      storedLuggagePhotos:
-          (json['storedLuggagePhotos'] as num?)?.toInt() ?? 0,
+      storedLuggagePhotos: (json['storedLuggagePhotos'] as num?)?.toInt() ?? 0,
       checkinAt: DateTime.tryParse(json['checkinAt']?.toString() ?? ''),
       lastCheckoutAt: DateTime.tryParse(
         json['lastCheckoutAt']?.toString() ?? '',
@@ -389,12 +392,11 @@ class Reservation {
       extraInsurance: json['extraInsurance'] as bool? ?? false,
       qrImageUrl: json['qrImageUrl']?.toString(),
       qrDataUrl: json['qrImageDataUrl']?.toString(),
-      operationalDetail:
-          json['operationalDetail'] is Map<String, dynamic>
-              ? ReservationOperationalDetail.fromJson(
-                  json['operationalDetail'] as Map<String, dynamic>,
-                )
-              : null,
+      operationalDetail: json['operationalDetail'] is Map<String, dynamic>
+          ? ReservationOperationalDetail.fromJson(
+              json['operationalDetail'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 }

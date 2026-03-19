@@ -85,6 +85,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   int _bagUnits = 1;
   String? _selectedReservationId;
   bool _processing = false;
+  double? _storeUploadProgress;
   int _lastRealtimeCursor = -1;
   String? _pendingAutoScanValue;
   bool _autoScanScheduled = false;
@@ -422,6 +423,14 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
               ),
             ],
           ),
+          if (_storeUploadProgress != null) ...[
+            const SizedBox(height: 10),
+            LinearProgressIndicator(value: _storeUploadProgress),
+            const SizedBox(height: 6),
+            Text(
+              'Subiendo fotos: ${((_storeUploadProgress ?? 0) * 100).toStringAsFixed(0)}%',
+            ),
+          ],
         ],
       ],
     );
@@ -836,6 +845,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     }
 
     await _runAction(() async {
+      setState(() {
+        _storeUploadProgress = 0;
+      });
       final response = await ref
           .read(dioProvider)
           .post<Map<String, dynamic>>(
@@ -852,6 +864,14 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                   )
                   .toList(),
             }),
+            onSendProgress: (sent, total) {
+              if (!mounted || total <= 0) {
+                return;
+              }
+              setState(() {
+                _storeUploadProgress = (sent / total).clamp(0, 1);
+              });
+            },
           );
       final payload = response.data ?? const <String, dynamic>{};
       if (payload.isNotEmpty) {
@@ -865,6 +885,11 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       ref.invalidate(adminReservationsProvider);
       ref.invalidate(adminReservationListProvider);
       _showMessage('Reserva ${reservation.code} registrada en almacén.');
+      if (mounted) {
+        setState(() {
+          _storeUploadProgress = null;
+        });
+      }
     });
   }
 
@@ -945,14 +970,6 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                 'Courier solicita aprobación para entrega final de ${reservation.code}.',
             messageForCustomerInSpanish: translation.messageInSpanish,
             customerLanguage: caseItem.customerLanguage,
-          );
-      await ref
-          .read(reservationRepositoryProvider)
-          .updateStatus(
-            reservationId: reservation.id,
-            status: ReservationStatus.outForDelivery,
-            message:
-                'Solicitud de aprobación enviada al operador. Mensaje cliente: ${translation.messageForCustomerLanguage}',
           );
       ref.invalidate(opsReservationsProvider);
       _showMessage(
@@ -1115,7 +1132,10 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       _showMessage('No se pudo completar la accion: $readable');
     } finally {
       if (mounted) {
-        setState(() => _processing = false);
+        setState(() {
+          _processing = false;
+          _storeUploadProgress = null;
+        });
       }
     }
   }
@@ -1376,4 +1396,3 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
     }
   }
 }
-
