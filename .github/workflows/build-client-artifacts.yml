@@ -101,7 +101,7 @@ jobs:
           }
           $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
           if ([string]::IsNullOrWhiteSpace($fbEnabled)) {
-            $fbEnabled = "false"
+            $fbEnabled = "true"
           }
           "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" >> $env:GITHUB_ENV
 
@@ -223,7 +223,7 @@ jobs:
           }
           $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
           if ([string]::IsNullOrWhiteSpace($fbEnabled)) {
-            $fbEnabled = "false"
+            $fbEnabled = "true"
           }
           "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" >> $env:GITHUB_ENV
 
@@ -352,7 +352,7 @@ jobs:
           }
           $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
           if ([string]::IsNullOrWhiteSpace($fbEnabled)) {
-            $fbEnabled = "false"
+            $fbEnabled = "true"
           }
           "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" >> $env:GITHUB_ENV
 
