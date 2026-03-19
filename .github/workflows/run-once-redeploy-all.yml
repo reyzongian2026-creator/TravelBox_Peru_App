@@ -1,0 +1,54 @@
+name: Run Once - Redeploy Full + Build Clients
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/run-once-redeploy-all.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: run-once-redeploy-all-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-full:
+    uses: ./.github/workflows/deploy-cloudrun-all.yml
+    with:
+      deploy_target: full
+      secrets_mode: keyvault
+      project_id: travelboxperudb
+      region: us-central1
+      frontend_service_name: travelbox-frontend-prod
+      backend_service_name: travelbox-backend-prod
+      backend_repository: reyzongian2026-creator/TravelBox_Peru_Backend
+      backend_ref: main
+      azure_keyvault_name: kvtravelboxpe
+      backend_vpc_connector: travelbox-run-connector
+      backend_vpc_egress: all-traffic
+      backend_timeout_seconds: "600"
+      backend_memory: 1Gi
+      backend_cpu: "1"
+      backend_concurrency: "40"
+      backend_min_instances: "0"
+      backend_max_instances: "12"
+      force_cash_payments_only: "false"
+      dry_run: "false"
+    secrets: inherit
+
+  build-clients:
+    needs: deploy-full
+    uses: ./.github/workflows/build-client-artifacts.yml
+    with:
+      target: all
+      secrets_mode: keyvault
+      azure_keyvault_name: kvtravelboxpe
+      app_env: prod
+      api_base_url: https://travelbox-backend-prod-otpbbcgoeq-uc.a.run.app/api/v1
+      force_cash_payments_only: "false"
+    secrets: inherit
