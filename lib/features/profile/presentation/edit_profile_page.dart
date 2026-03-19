@@ -95,7 +95,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       text: user?.emergencyContactName ?? '',
     );
     _emergencyPhoneController = TextEditingController(
-      text: user?.emergencyContactPhone ?? '',
+      text: extractLocalNumber(
+        country: _dialingCountry,
+        rawPhone: user?.emergencyContactPhone ?? '',
+      ),
     );
     _currentPasswordController = TextEditingController();
     _initialEmail = user?.email ?? '';
@@ -317,8 +320,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     'Te quedan ${user.documentChangeRemaining} cambios para este campo.',
               ),
               items: [
-                DropdownMenuItem(value: 'DNI', child: Text(context.l10n.t('dni'))),
-                DropdownMenuItem(value: 'PASSPORT', child: Text(context.l10n.t('pasaporte'))),
+                DropdownMenuItem(
+                  value: 'DNI',
+                  child: Text(context.l10n.t('dni')),
+                ),
+                DropdownMenuItem(
+                  value: 'PASSPORT',
+                  child: Text(context.l10n.t('pasaporte')),
+                ),
                 DropdownMenuItem(
                   value: 'FOREIGNER_CARD',
                   child: Text(context.l10n.t('carne_de_extranjeria')),
@@ -331,7 +340,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   value: 'DRIVER_LICENSE',
                   child: Text(context.l10n.t('licencia_de_conducir')),
                 ),
-                DropdownMenuItem(value: 'OTHER', child: Text(context.l10n.t('otro_valido'))),
+                DropdownMenuItem(
+                  value: 'OTHER',
+                  child: Text(context.l10n.t('otro_valido')),
+                ),
               ],
               onChanged: (value) {
                 if (value != null) setState(() => _documentType = value);
@@ -367,16 +379,23 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _emergencyPhoneController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Telefono de emergencia',
+                hintText: _dialingCountry.phoneHint,
               ),
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
-              validator: (value) => FormValidators.phone(
-                value,
-                required: false,
-                label: 'un telefono de emergencia valido',
-              ),
+              validator: (value) {
+                final rawValue = value?.trim() ?? '';
+                if (rawValue.isEmpty) {
+                  return null;
+                }
+                return validateInternationalPhone(
+                  country: _dialingCountry,
+                  localNumber: rawValue,
+                  label: 'un telefono de emergencia valido',
+                );
+              },
             ),
             if (_requiresLocalPasswordReauth) ...[
               const SizedBox(height: 12),
@@ -517,7 +536,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       if (_emergencyNameController.text.trim().isNotEmpty)
         'emergencyContactName': _emergencyNameController.text.trim(),
       if (_emergencyPhoneController.text.trim().isNotEmpty)
-        'emergencyContactPhone': _emergencyPhoneController.text.trim(),
+        'emergencyContactPhone': normalizeInternationalPhone(
+          country: _dialingCountry,
+          localNumber: _emergencyPhoneController.text,
+        ),
     };
     if (_requiresSensitiveReauth &&
         _requiresLocalPasswordReauth &&
@@ -585,10 +607,7 @@ class _ProfilePhotoCard extends StatelessWidget {
                   height: 72,
                   child: ClipOval(
                     child: selectedPhoto != null
-                        ? Image.memory(
-                            selectedPhoto!.bytes,
-                            fit: BoxFit.cover,
-                          )
+                        ? Image.memory(selectedPhoto!.bytes, fit: BoxFit.cover)
                         : AppSmartImage(
                             source: currentPhotoPath,
                             fit: BoxFit.cover,
@@ -711,4 +730,3 @@ class _RemainingChip extends StatelessWidget {
     );
   }
 }
-

@@ -61,7 +61,7 @@ class AppEnv {
   );
   static const firebaseFacebookProviderEnabled = bool.fromEnvironment(
     'FIREBASE_FACEBOOK_ENABLED',
-    defaultValue: false,
+    defaultValue: true,
   );
   static const firebaseStorageUploadsEnabled = bool.fromEnvironment(
     'FIREBASE_STORAGE_UPLOADS_ENABLED',

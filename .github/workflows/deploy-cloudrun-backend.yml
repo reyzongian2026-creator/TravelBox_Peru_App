@@ -26,6 +26,11 @@ on:
         required: true
         default: travelbox-backend-prod
         type: string
+      frontend_service_name:
+        description: "Servicio frontend Cloud Run (para links en correos)"
+        required: true
+        default: travelbox-frontend-prod
+        type: string
       backend_repository:
         description: "Repo backend (owner/name)"
         required: true
@@ -113,6 +118,7 @@ jobs:
       secrets_mode: ${{ inputs.secrets_mode }}
       project_id: ${{ inputs.project_id }}
       region: ${{ inputs.region }}
+      frontend_service_name: ${{ inputs.frontend_service_name }}
       backend_service_name: ${{ inputs.backend_service_name }}
       backend_repository: ${{ inputs.backend_repository }}
       backend_ref: ${{ inputs.backend_ref }}
@@ -128,4 +134,3 @@ jobs:
       force_cash_payments_only: ${{ inputs.force_cash_payments_only }}
       dry_run: ${{ inputs.dry_run }}
     secrets: inherit
-

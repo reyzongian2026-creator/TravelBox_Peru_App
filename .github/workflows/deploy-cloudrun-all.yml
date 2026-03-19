@@ -452,7 +452,7 @@ jobs:
             echo "FIREBASE_ANDROID_APP_ID=${FIREBASE_ANDROID_APP_ID}"
             echo "FIREBASE_IOS_APP_ID=${FIREBASE_IOS_APP_ID}"
             echo "FIREBASE_WEB_APP_ID=${FIREBASE_WEB_APP_ID}"
-            echo "FIREBASE_FACEBOOK_ENABLED=${FIREBASE_FACEBOOK_ENABLED:-false}"
+            echo "FIREBASE_FACEBOOK_ENABLED=${FIREBASE_FACEBOOK_ENABLED:-true}"
           } >> "${GITHUB_ENV}"
 
       - name: Deploy backend to Cloud Run
@@ -460,6 +460,25 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+
+          function Get-ServiceUrl([string]$serviceName) {
+            if ([string]::IsNullOrWhiteSpace($serviceName)) {
+              return ""
+            }
+            $resolved = gcloud run services describe $serviceName `
+              --platform managed `
+              --region "${env:REGION}" `
+              --project "${env:PROJECT_ID}" `
+              --format "value(status.url)" 2>$null
+            if ($LASTEXITCODE -ne 0) {
+              return ""
+            }
+            return "$resolved".Trim()
+          }
+
+          $frontendUrl = Get-ServiceUrl "${env:FRONTEND_SERVICE_NAME}"
+          $backendPublicUrl = Get-ServiceUrl "${env:BACKEND_SERVICE_NAME}"
+
           $backendEnvFile = Join-Path $PWD "backend-env.generated.yaml"
           $lines = @(
             "SPRING_PROFILES_ACTIVE: prod",
@@ -484,6 +503,12 @@ jobs:
             "AZURE_CLIENT_SECRET: `"${env:AZURE_CLIENT_SECRET}`"",
             "AZURE_TENANT_ID: `"${env:AZURE_TENANT_ID}`""
           )
+          if (-not [string]::IsNullOrWhiteSpace($frontendUrl)) {
+            $lines += "APP_FRONTEND_BASE_URL: `"$frontendUrl`""
+          }
+          if (-not [string]::IsNullOrWhiteSpace($backendPublicUrl)) {
+            $lines += "APP_PUBLIC_BASE_URL: `"$backendPublicUrl`""
+          }
           Set-Content -Path $backendEnvFile -Value ($lines -join [Environment]::NewLine) -Encoding UTF8
 
           $args = @(
@@ -557,7 +582,7 @@ jobs:
             --dart-define=FIREBASE_ANDROID_APP_ID="${FIREBASE_ANDROID_APP_ID}" \
             --dart-define=FIREBASE_IOS_APP_ID="${FIREBASE_IOS_APP_ID}" \
             --dart-define=FIREBASE_WEB_APP_ID="${FIREBASE_WEB_APP_ID}" \
-            --dart-define=FIREBASE_FACEBOOK_ENABLED="${FIREBASE_FACEBOOK_ENABLED:-false}"
+            --dart-define=FIREBASE_FACEBOOK_ENABLED="${FIREBASE_FACEBOOK_ENABLED:-true}"
 
       - name: Deploy frontend to Cloud Run
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'frontend_only' }}

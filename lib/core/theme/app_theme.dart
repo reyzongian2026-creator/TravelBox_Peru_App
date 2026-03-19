@@ -16,11 +16,7 @@ class AppTheme {
     );
     final baseText = GoogleFonts.montserratTextTheme();
 
-    return _themeFrom(
-      scheme: scheme,
-      textTheme: baseText,
-      isDark: false,
-    );
+    return _themeFrom(scheme: scheme, textTheme: baseText, isDark: false);
   }
 
   static ThemeData get darkTheme {
@@ -37,11 +33,7 @@ class AppTheme {
       ThemeData(brightness: Brightness.dark).textTheme,
     );
 
-    return _themeFrom(
-      scheme: scheme,
-      textTheme: baseText,
-      isDark: true,
-    );
+    return _themeFrom(scheme: scheme, textTheme: baseText, isDark: true);
   }
 
   static ThemeData _themeFrom({
@@ -51,7 +43,9 @@ class AppTheme {
   }) {
     final surface = isDark ? const Color(0xFF0F172A) : Colors.white;
     final fieldFill = isDark ? const Color(0xFF111827) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF334155) : TravelBoxBrand.border;
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : TravelBoxBrand.border;
     final scaffold = isDark ? const Color(0xFF0B1220) : TravelBoxBrand.surface;
 
     return ThemeData(
@@ -75,7 +69,9 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           letterSpacing: -0.1,
         ),
-        titleMedium: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        titleMedium: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
         bodyMedium: textTheme.bodyMedium?.copyWith(
           height: 1.35,
           color: scheme.onSurfaceVariant,
@@ -115,8 +111,9 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         side: BorderSide(color: borderColor),
         backgroundColor: surface,
-        selectedColor:
-            isDark ? const Color(0xFF273449) : const Color(0xFFE8ECFF),
+        selectedColor: isDark
+            ? const Color(0xFF273449)
+            : const Color(0xFFE8ECFF),
         labelStyle: TextStyle(
           color: scheme.onSurface,
           fontWeight: FontWeight.w600,
@@ -138,7 +135,7 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: scheme.primary,
           foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(0, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -147,7 +144,7 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 48),
+          minimumSize: const Size(0, 48),
           side: BorderSide(color: borderColor),
           foregroundColor: scheme.onSurface,
           shape: RoundedRectangleBorder(
@@ -158,8 +155,9 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor:
-            isDark ? const Color(0xFF1E293B) : const Color(0xFFE6EBFF),
+        indicatorColor: isDark
+            ? const Color(0xFF1E293B)
+            : const Color(0xFFE6EBFF),
         elevation: 0,
         labelTextStyle: const WidgetStatePropertyAll(
           TextStyle(fontWeight: FontWeight.w600),
@@ -167,8 +165,9 @@ class AppTheme {
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: Colors.transparent,
-        indicatorColor:
-            isDark ? const Color(0xFF1E293B) : const Color(0xFFE6EBFF),
+        indicatorColor: isDark
+            ? const Color(0xFF1E293B)
+            : const Color(0xFFE6EBFF),
         selectedIconTheme: IconThemeData(color: scheme.primary),
         selectedLabelTextStyle: TextStyle(
           color: scheme.primary,

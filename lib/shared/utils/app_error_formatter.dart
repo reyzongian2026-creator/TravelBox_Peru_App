@@ -73,7 +73,7 @@ class AppErrorFormatter {
     }
     if (lowered.contains('googlesigninexceptioncode.canceled') ||
         lowered.contains('account reauth failed')) {
-      return 'El inicio con Google fue cancelado o la cuenta del emulador no pudo reautenticarse. Usa "Entrar como cliente demo" para continuar.';
+      return 'El inicio con Google fue cancelado o no se pudo completar en este dispositivo. Intenta nuevamente.';
     }
     if (lowered.contains('timeoutexception') &&
         (lowered.contains('social') || lowered.contains('sesion'))) {

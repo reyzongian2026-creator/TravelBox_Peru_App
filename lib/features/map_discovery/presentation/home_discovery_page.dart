@@ -528,6 +528,20 @@ class _CityCarouselCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBackground = selected
+        ? (isDark ? const Color(0xFF173B49) : const Color(0xFFEAF7FB))
+        : (isDark ? const Color(0xFF111827) : Colors.white);
+    final borderColor = selected
+        ? const Color(0xFF0B8B8C)
+        : (isDark ? const Color(0xFF334155) : const Color(0xFFD9E8EF));
+    final titleColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF17212F);
+    final subtitleColor = isDark
+        ? const Color(0xFFCBD5E1)
+        : const Color(0xFF4B6476);
+
     return SizedBox(
       width: 206,
       child: InkWell(
@@ -537,14 +551,9 @@ class _CityCarouselCard extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFEAF7FB) : Colors.white,
+            color: cardBackground,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFF0B8B8C)
-                  : const Color(0xFFD9E8EF),
-              width: selected ? 1.6 : 1,
-            ),
+            border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,15 +562,18 @@ class _CityCarouselCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 item.city,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: titleColor,
+                ),
               ),
               Text(
                 item.heroLandmark,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: subtitleColor),
               ),
             ],
           ),
@@ -755,19 +767,37 @@ class _NearestWarehouseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark
+        ? const Color(0xFFF8FAFC)
+        : const Color(0xFF0F172A);
+    final subtitleColor = isDark
+        ? const Color(0xFFD1D9E6)
+        : const Color(0xFF334155);
     final tourism = PeruTourismCatalog.forCity(info.warehouse.city);
     return Card(
-      color: const Color(0xFFE8F7F5),
+      color: isDark ? const Color(0xFF15363A) : const Color(0xFFE8F7F5),
       child: ListTile(
         leading: const Icon(Icons.near_me_outlined, color: Color(0xFF0B8B8C)),
-        title: Text(context.l10n.t('almacen_mas_cercano')),
+        title: Text(
+          context.l10n.t('almacen_mas_cercano'),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
+        ),
         subtitle: Text(
           '${info.warehouse.name}\nA ${info.distanceKm.toStringAsFixed(2)} km de tu ubicacion\nTurismo cercano: ${tourism.heroLandmark}',
+          style: TextStyle(color: subtitleColor),
         ),
         isThreeLine: true,
-        trailing: FilledButton.tonal(
-          onPressed: () => context.push('/warehouse/${info.warehouse.id}'),
-          child: Text(context.l10n.t('ver')),
+        trailing: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 92, maxWidth: 124),
+          child: FilledButton.tonal(
+            onPressed: () => context.push('/warehouse/${info.warehouse.id}'),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: Text(context.l10n.t('ver')),
+          ),
         ),
       ),
     );
@@ -775,10 +805,7 @@ class _NearestWarehouseCard extends StatelessWidget {
 }
 
 class _NearestWarehouseInfo {
-  _NearestWarehouseInfo({
-    required this.warehouse,
-    required this.distanceKm,
-  });
+  _NearestWarehouseInfo({required this.warehouse, required this.distanceKm});
 
   final Warehouse warehouse;
   final double distanceKm;
@@ -954,4 +981,3 @@ class _WarehouseCard extends StatelessWidget {
     );
   }
 }
-
