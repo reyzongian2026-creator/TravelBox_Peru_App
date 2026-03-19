@@ -1,0 +1,137 @@
+name: Deploy Cloud Run Full (Back + Front)
+
+on:
+  workflow_dispatch:
+    inputs:
+      secrets_mode:
+        description: "Origen de secretos"
+        required: true
+        default: keyvault
+        type: choice
+        options:
+          - keyvault
+          - env
+      project_id:
+        description: "GCP Project ID"
+        required: true
+        default: travelboxperudb
+        type: string
+      region:
+        description: "Region Cloud Run"
+        required: true
+        default: us-central1
+        type: string
+      frontend_service_name:
+        description: "Servicio frontend Cloud Run"
+        required: true
+        default: travelbox-frontend-prod
+        type: string
+      backend_service_name:
+        description: "Servicio backend Cloud Run"
+        required: true
+        default: travelbox-backend-prod
+        type: string
+      backend_repository:
+        description: "Repo backend (owner/name)"
+        required: true
+        default: reyzongian2026-creator/TravelBox_Peru_Backend
+        type: string
+      backend_ref:
+        description: "Branch/tag backend"
+        required: true
+        default: main
+        type: string
+      azure_keyvault_name:
+        description: "Azure Key Vault (si mode=keyvault)"
+        required: true
+        default: kvtravelboxpe
+        type: string
+      backend_vpc_connector:
+        description: "VPC connector backend (vacio para omitir)"
+        required: false
+        default: travelbox-run-connector
+        type: string
+      backend_vpc_egress:
+        description: "VPC egress backend"
+        required: true
+        default: all-traffic
+        type: choice
+        options:
+          - all-traffic
+          - private-ranges-only
+      backend_timeout_seconds:
+        description: "Timeout backend (seg)"
+        required: true
+        default: "600"
+        type: string
+      backend_memory:
+        description: "Memoria backend"
+        required: true
+        default: 1Gi
+        type: string
+      backend_cpu:
+        description: "CPU backend"
+        required: true
+        default: "1"
+        type: string
+      backend_concurrency:
+        description: "Concurrencia backend"
+        required: true
+        default: "40"
+        type: string
+      backend_min_instances:
+        description: "Min instances backend"
+        required: true
+        default: "0"
+        type: string
+      backend_max_instances:
+        description: "Max instances backend"
+        required: true
+        default: "12"
+        type: string
+      force_cash_payments_only:
+        description: "FORCE_CASH_PAYMENTS_ONLY"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      dry_run:
+        description: "Solo imprime comandos (no despliega)"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-full:
+    uses: ./.github/workflows/deploy-cloudrun-all.yml
+    with:
+      deploy_target: full
+      secrets_mode: ${{ inputs.secrets_mode }}
+      project_id: ${{ inputs.project_id }}
+      region: ${{ inputs.region }}
+      frontend_service_name: ${{ inputs.frontend_service_name }}
+      backend_service_name: ${{ inputs.backend_service_name }}
+      backend_repository: ${{ inputs.backend_repository }}
+      backend_ref: ${{ inputs.backend_ref }}
+      azure_keyvault_name: ${{ inputs.azure_keyvault_name }}
+      backend_vpc_connector: ${{ inputs.backend_vpc_connector }}
+      backend_vpc_egress: ${{ inputs.backend_vpc_egress }}
+      backend_timeout_seconds: ${{ inputs.backend_timeout_seconds }}
+      backend_memory: ${{ inputs.backend_memory }}
+      backend_cpu: ${{ inputs.backend_cpu }}
+      backend_concurrency: ${{ inputs.backend_concurrency }}
+      backend_min_instances: ${{ inputs.backend_min_instances }}
+      backend_max_instances: ${{ inputs.backend_max_instances }}
+      force_cash_payments_only: ${{ inputs.force_cash_payments_only }}
+      dry_run: ${{ inputs.dry_run }}
+    secrets: inherit
+

@@ -1,6 +1,127 @@
 name: Deploy Cloud Run (All Types)
 
 on:
+  workflow_call:
+    inputs:
+      deploy_target:
+        required: false
+        type: string
+        default: full
+      secrets_mode:
+        required: false
+        type: string
+        default: keyvault
+      project_id:
+        required: false
+        type: string
+        default: travelboxperudb
+      region:
+        required: false
+        type: string
+        default: us-central1
+      frontend_service_name:
+        required: false
+        type: string
+        default: travelbox-frontend-prod
+      backend_service_name:
+        required: false
+        type: string
+        default: travelbox-backend-prod
+      backend_repository:
+        required: false
+        type: string
+        default: reyzongian2026-creator/TravelBox_Peru_Backend
+      backend_ref:
+        required: false
+        type: string
+        default: main
+      azure_keyvault_name:
+        required: false
+        type: string
+        default: kvtravelboxpe
+      backend_vpc_connector:
+        required: false
+        type: string
+        default: travelbox-run-connector
+      backend_vpc_egress:
+        required: false
+        type: string
+        default: all-traffic
+      backend_timeout_seconds:
+        required: false
+        type: string
+        default: "600"
+      backend_memory:
+        required: false
+        type: string
+        default: 1Gi
+      backend_cpu:
+        required: false
+        type: string
+        default: "1"
+      backend_concurrency:
+        required: false
+        type: string
+        default: "40"
+      backend_min_instances:
+        required: false
+        type: string
+        default: "0"
+      backend_max_instances:
+        required: false
+        type: string
+        default: "12"
+      force_cash_payments_only:
+        required: false
+        type: string
+        default: "false"
+      api_base_url_override:
+        required: false
+        type: string
+        default: ""
+      dry_run:
+        required: false
+        type: string
+        default: "false"
+    secrets:
+      GCP_WORKLOAD_IDENTITY_PROVIDER:
+        required: false
+      GCP_SERVICE_ACCOUNT:
+        required: false
+      GCP_SERVICE_ACCOUNT_KEY:
+        required: false
+      CROSS_REPO_PAT:
+        required: false
+      AZURE_CREDENTIALS_JSON:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_CLIENT_SECRET:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      FIREBASE_API_KEY:
+        required: false
+      FIREBASE_PROJECT_ID:
+        required: false
+      FIREBASE_MESSAGING_SENDER_ID:
+        required: false
+      FIREBASE_STORAGE_BUCKET:
+        required: false
+      FIREBASE_AUTH_DOMAIN:
+        required: false
+      FIREBASE_GOOGLE_SERVER_CLIENT_ID:
+        required: false
+      FIREBASE_IOS_BUNDLE_ID:
+        required: false
+      FIREBASE_ANDROID_APP_ID:
+        required: false
+      FIREBASE_IOS_APP_ID:
+        required: false
+      FIREBASE_WEB_APP_ID:
+        required: false
+      FIREBASE_FACEBOOK_ENABLED:
+        required: false
   workflow_dispatch:
     inputs:
       deploy_target:
