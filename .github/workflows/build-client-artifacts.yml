@@ -1,0 +1,440 @@
+name: Build Client Artifacts (Android/iOS/Windows)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Plataforma a compilar"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+          - windows
+      secrets_mode:
+        description: "Origen de secretos para FIREBASE_*"
+        required: true
+        default: keyvault
+        type: choice
+        options:
+          - keyvault
+          - env
+      azure_keyvault_name:
+        description: "Azure Key Vault (si mode=keyvault)"
+        required: true
+        default: kvtravelboxpe
+        type: string
+      app_env:
+        description: "APP_ENV para build"
+        required: true
+        default: prod
+        type: string
+      api_base_url:
+        description: "API_BASE_URL para la app"
+        required: true
+        default: https://travelbox-backend-prod-otpbbcgoeq-uc.a.run.app/api/v1
+        type: string
+      force_cash_payments_only:
+        description: "FORCE_CASH_PAYMENTS_ONLY"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-android:
+    if: ${{ inputs.target == 'all' || inputs.target == 'android' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Login Azure (keyvault mode)
+        if: ${{ inputs.secrets_mode == 'keyvault' }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
+
+      - name: Load FIREBASE_* from Azure Key Vault
+        if: ${{ inputs.secrets_mode == 'keyvault' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $vault = "${{ inputs.azure_keyvault_name }}"
+          $map = @(
+            @{ secret = "tbx-app-firebase-api-key"; env = "FIREBASE_API_KEY"; required = $true },
+            @{ secret = "tbx-app-firebase-project-id"; env = "FIREBASE_PROJECT_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-messaging-sender-id"; env = "FIREBASE_MESSAGING_SENDER_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-storage-bucket"; env = "FIREBASE_STORAGE_BUCKET"; required = $false },
+            @{ secret = "tbx-app-firebase-auth-domain"; env = "FIREBASE_AUTH_DOMAIN"; required = $false },
+            @{ secret = "tbx-app-google-server-client-id"; env = "FIREBASE_GOOGLE_SERVER_CLIENT_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-bundle-id"; env = "FIREBASE_IOS_BUNDLE_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false }
+          )
+
+          foreach ($item in $map) {
+            $value = az keyvault secret show --vault-name $vault --name $item.secret --query value -o tsv 2>$null
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($value)) {
+              if ($item.required) {
+                throw "Falta secret requerido en Key Vault: $($item.secret)"
+              }
+              continue
+            }
+            "$($item.env)=$value" >> $env:GITHUB_ENV
+          }
+          $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
+          if ([string]::IsNullOrWhiteSpace($fbEnabled)) {
+            $fbEnabled = "false"
+          }
+          "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" >> $env:GITHUB_ENV
+
+      - name: Load FIREBASE_* from GitHub secrets (env mode)
+        if: ${{ inputs.secrets_mode == 'env' }}
+        shell: pwsh
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_GOOGLE_SERVER_CLIENT_ID: ${{ secrets.FIREBASE_GOOGLE_SERVER_CLIENT_ID }}
+          FIREBASE_IOS_BUNDLE_ID: ${{ secrets.FIREBASE_IOS_BUNDLE_ID }}
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+          FIREBASE_FACEBOOK_ENABLED: ${{ secrets.FIREBASE_FACEBOOK_ENABLED }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $required = @("FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID")
+          foreach ($key in $required) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$key").Value)) {
+              throw "Missing required GitHub secret: $key"
+            }
+          }
+          $all = @(
+            "FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID",
+            "FIREBASE_STORAGE_BUCKET","FIREBASE_AUTH_DOMAIN","FIREBASE_GOOGLE_SERVER_CLIENT_ID",
+            "FIREBASE_IOS_BUNDLE_ID","FIREBASE_ANDROID_APP_ID","FIREBASE_IOS_APP_ID",
+            "FIREBASE_WEB_APP_ID","FIREBASE_FACEBOOK_ENABLED"
+          )
+          foreach ($key in $all) {
+            $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
+            if ($null -eq $value) { $value = "" }
+            "$key=$value" >> $env:GITHUB_ENV
+          }
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build Android APK (release)
+        shell: pwsh
+        run: |
+          $defines = @(
+            "--dart-define=APP_ENV=${{ inputs.app_env }}",
+            "--dart-define=USE_MOCK_FALLBACK=false",
+            "--dart-define=API_BASE_URL=${{ inputs.api_base_url }}",
+            "--dart-define=FORCE_CASH_PAYMENTS_ONLY=${{ inputs.force_cash_payments_only }}",
+            "--dart-define=FIREBASE_API_KEY=$env:FIREBASE_API_KEY",
+            "--dart-define=FIREBASE_PROJECT_ID=$env:FIREBASE_PROJECT_ID",
+            "--dart-define=FIREBASE_MESSAGING_SENDER_ID=$env:FIREBASE_MESSAGING_SENDER_ID",
+            "--dart-define=FIREBASE_STORAGE_BUCKET=$env:FIREBASE_STORAGE_BUCKET",
+            "--dart-define=FIREBASE_AUTH_DOMAIN=$env:FIREBASE_AUTH_DOMAIN",
+            "--dart-define=FIREBASE_GOOGLE_SERVER_CLIENT_ID=$env:FIREBASE_GOOGLE_SERVER_CLIENT_ID",
+            "--dart-define=FIREBASE_IOS_BUNDLE_ID=$env:FIREBASE_IOS_BUNDLE_ID",
+            "--dart-define=FIREBASE_ANDROID_APP_ID=$env:FIREBASE_ANDROID_APP_ID",
+            "--dart-define=FIREBASE_IOS_APP_ID=$env:FIREBASE_IOS_APP_ID",
+            "--dart-define=FIREBASE_WEB_APP_ID=$env:FIREBASE_WEB_APP_ID",
+            "--dart-define=FIREBASE_FACEBOOK_ENABLED=$env:FIREBASE_FACEBOOK_ENABLED"
+          )
+          flutter build apk --release $defines
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: travelbox-android-apk-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  build-ios:
+    if: ${{ inputs.target == 'all' || inputs.target == 'ios' }}
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Login Azure (keyvault mode)
+        if: ${{ inputs.secrets_mode == 'keyvault' }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
+
+      - name: Load FIREBASE_* from Azure Key Vault
+        if: ${{ inputs.secrets_mode == 'keyvault' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $vault = "${{ inputs.azure_keyvault_name }}"
+          $map = @(
+            @{ secret = "tbx-app-firebase-api-key"; env = "FIREBASE_API_KEY"; required = $true },
+            @{ secret = "tbx-app-firebase-project-id"; env = "FIREBASE_PROJECT_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-messaging-sender-id"; env = "FIREBASE_MESSAGING_SENDER_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-storage-bucket"; env = "FIREBASE_STORAGE_BUCKET"; required = $false },
+            @{ secret = "tbx-app-firebase-auth-domain"; env = "FIREBASE_AUTH_DOMAIN"; required = $false },
+            @{ secret = "tbx-app-google-server-client-id"; env = "FIREBASE_GOOGLE_SERVER_CLIENT_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-bundle-id"; env = "FIREBASE_IOS_BUNDLE_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false }
+          )
+
+          foreach ($item in $map) {
+            $value = az keyvault secret show --vault-name $vault --name $item.secret --query value -o tsv 2>$null
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($value)) {
+              if ($item.required) {
+                throw "Falta secret requerido en Key Vault: $($item.secret)"
+              }
+              continue
+            }
+            "$($item.env)=$value" >> $env:GITHUB_ENV
+          }
+          $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
+          if ([string]::IsNullOrWhiteSpace($fbEnabled)) {
+            $fbEnabled = "false"
+          }
+          "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" >> $env:GITHUB_ENV
+
+      - name: Load FIREBASE_* from GitHub secrets (env mode)
+        if: ${{ inputs.secrets_mode == 'env' }}
+        shell: pwsh
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_GOOGLE_SERVER_CLIENT_ID: ${{ secrets.FIREBASE_GOOGLE_SERVER_CLIENT_ID }}
+          FIREBASE_IOS_BUNDLE_ID: ${{ secrets.FIREBASE_IOS_BUNDLE_ID }}
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+          FIREBASE_FACEBOOK_ENABLED: ${{ secrets.FIREBASE_FACEBOOK_ENABLED }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $required = @("FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID")
+          foreach ($key in $required) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$key").Value)) {
+              throw "Missing required GitHub secret: $key"
+            }
+          }
+          $all = @(
+            "FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID",
+            "FIREBASE_STORAGE_BUCKET","FIREBASE_AUTH_DOMAIN","FIREBASE_GOOGLE_SERVER_CLIENT_ID",
+            "FIREBASE_IOS_BUNDLE_ID","FIREBASE_ANDROID_APP_ID","FIREBASE_IOS_APP_ID",
+            "FIREBASE_WEB_APP_ID","FIREBASE_FACEBOOK_ENABLED"
+          )
+          foreach ($key in $all) {
+            $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
+            if ($null -eq $value) { $value = "" }
+            "$key=$value" >> $env:GITHUB_ENV
+          }
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build iOS app (unsigned)
+        shell: pwsh
+        run: |
+          $defines = @(
+            "--dart-define=APP_ENV=${{ inputs.app_env }}",
+            "--dart-define=USE_MOCK_FALLBACK=false",
+            "--dart-define=API_BASE_URL=${{ inputs.api_base_url }}",
+            "--dart-define=FORCE_CASH_PAYMENTS_ONLY=${{ inputs.force_cash_payments_only }}",
+            "--dart-define=FIREBASE_API_KEY=$env:FIREBASE_API_KEY",
+            "--dart-define=FIREBASE_PROJECT_ID=$env:FIREBASE_PROJECT_ID",
+            "--dart-define=FIREBASE_MESSAGING_SENDER_ID=$env:FIREBASE_MESSAGING_SENDER_ID",
+            "--dart-define=FIREBASE_STORAGE_BUCKET=$env:FIREBASE_STORAGE_BUCKET",
+            "--dart-define=FIREBASE_AUTH_DOMAIN=$env:FIREBASE_AUTH_DOMAIN",
+            "--dart-define=FIREBASE_GOOGLE_SERVER_CLIENT_ID=$env:FIREBASE_GOOGLE_SERVER_CLIENT_ID",
+            "--dart-define=FIREBASE_IOS_BUNDLE_ID=$env:FIREBASE_IOS_BUNDLE_ID",
+            "--dart-define=FIREBASE_ANDROID_APP_ID=$env:FIREBASE_ANDROID_APP_ID",
+            "--dart-define=FIREBASE_IOS_APP_ID=$env:FIREBASE_IOS_APP_ID",
+            "--dart-define=FIREBASE_WEB_APP_ID=$env:FIREBASE_WEB_APP_ID",
+            "--dart-define=FIREBASE_FACEBOOK_ENABLED=$env:FIREBASE_FACEBOOK_ENABLED"
+          )
+          flutter build ios --release --no-codesign $defines
+
+      - name: Package iOS artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d build/ios/iphoneos/Runner.app
+          ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app build/ios/travelbox-ios-runner.app.zip
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: travelbox-ios-runner-app-unsigned
+          path: build/ios/travelbox-ios-runner.app.zip
+          if-no-files-found: error
+
+  build-windows:
+    if: ${{ inputs.target == 'all' || inputs.target == 'windows' }}
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Login Azure (keyvault mode)
+        if: ${{ inputs.secrets_mode == 'keyvault' }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
+
+      - name: Load FIREBASE_* from Azure Key Vault
+        if: ${{ inputs.secrets_mode == 'keyvault' }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $vault = "${{ inputs.azure_keyvault_name }}"
+          $map = @(
+            @{ secret = "tbx-app-firebase-api-key"; env = "FIREBASE_API_KEY"; required = $true },
+            @{ secret = "tbx-app-firebase-project-id"; env = "FIREBASE_PROJECT_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-messaging-sender-id"; env = "FIREBASE_MESSAGING_SENDER_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-storage-bucket"; env = "FIREBASE_STORAGE_BUCKET"; required = $false },
+            @{ secret = "tbx-app-firebase-auth-domain"; env = "FIREBASE_AUTH_DOMAIN"; required = $false },
+            @{ secret = "tbx-app-google-server-client-id"; env = "FIREBASE_GOOGLE_SERVER_CLIENT_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-bundle-id"; env = "FIREBASE_IOS_BUNDLE_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false }
+          )
+
+          foreach ($item in $map) {
+            $value = az keyvault secret show --vault-name $vault --name $item.secret --query value -o tsv 2>$null
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($value)) {
+              if ($item.required) {
+                throw "Falta secret requerido en Key Vault: $($item.secret)"
+              }
+              continue
+            }
+            "$($item.env)=$value" >> $env:GITHUB_ENV
+          }
+          $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
+          if ([string]::IsNullOrWhiteSpace($fbEnabled)) {
+            $fbEnabled = "false"
+          }
+          "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" >> $env:GITHUB_ENV
+
+      - name: Load FIREBASE_* from GitHub secrets (env mode)
+        if: ${{ inputs.secrets_mode == 'env' }}
+        shell: pwsh
+        env:
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_GOOGLE_SERVER_CLIENT_ID: ${{ secrets.FIREBASE_GOOGLE_SERVER_CLIENT_ID }}
+          FIREBASE_IOS_BUNDLE_ID: ${{ secrets.FIREBASE_IOS_BUNDLE_ID }}
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_IOS_APP_ID: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+          FIREBASE_FACEBOOK_ENABLED: ${{ secrets.FIREBASE_FACEBOOK_ENABLED }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $required = @("FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID")
+          foreach ($key in $required) {
+            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$key").Value)) {
+              throw "Missing required GitHub secret: $key"
+            }
+          }
+          $all = @(
+            "FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID",
+            "FIREBASE_STORAGE_BUCKET","FIREBASE_AUTH_DOMAIN","FIREBASE_GOOGLE_SERVER_CLIENT_ID",
+            "FIREBASE_IOS_BUNDLE_ID","FIREBASE_ANDROID_APP_ID","FIREBASE_IOS_APP_ID",
+            "FIREBASE_WEB_APP_ID","FIREBASE_FACEBOOK_ENABLED"
+          )
+          foreach ($key in $all) {
+            $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
+            if ($null -eq $value) { $value = "" }
+            "$key=$value" >> $env:GITHUB_ENV
+          }
+
+      - name: Enable Windows desktop and dependencies
+        shell: pwsh
+        run: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+
+      - name: Build Windows app (release)
+        shell: pwsh
+        run: |
+          $defines = @(
+            "--dart-define=APP_ENV=${{ inputs.app_env }}",
+            "--dart-define=USE_MOCK_FALLBACK=false",
+            "--dart-define=API_BASE_URL=${{ inputs.api_base_url }}",
+            "--dart-define=FORCE_CASH_PAYMENTS_ONLY=${{ inputs.force_cash_payments_only }}",
+            "--dart-define=FIREBASE_API_KEY=$env:FIREBASE_API_KEY",
+            "--dart-define=FIREBASE_PROJECT_ID=$env:FIREBASE_PROJECT_ID",
+            "--dart-define=FIREBASE_MESSAGING_SENDER_ID=$env:FIREBASE_MESSAGING_SENDER_ID",
+            "--dart-define=FIREBASE_STORAGE_BUCKET=$env:FIREBASE_STORAGE_BUCKET",
+            "--dart-define=FIREBASE_AUTH_DOMAIN=$env:FIREBASE_AUTH_DOMAIN",
+            "--dart-define=FIREBASE_GOOGLE_SERVER_CLIENT_ID=$env:FIREBASE_GOOGLE_SERVER_CLIENT_ID",
+            "--dart-define=FIREBASE_IOS_BUNDLE_ID=$env:FIREBASE_IOS_BUNDLE_ID",
+            "--dart-define=FIREBASE_ANDROID_APP_ID=$env:FIREBASE_ANDROID_APP_ID",
+            "--dart-define=FIREBASE_IOS_APP_ID=$env:FIREBASE_IOS_APP_ID",
+            "--dart-define=FIREBASE_WEB_APP_ID=$env:FIREBASE_WEB_APP_ID",
+            "--dart-define=FIREBASE_FACEBOOK_ENABLED=$env:FIREBASE_FACEBOOK_ENABLED"
+          )
+          flutter build windows --release $defines
+
+      - name: Package Windows artifact
+        shell: pwsh
+        run: |
+          $releaseDir = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $releaseDir)) {
+            throw "No se encontro salida de build Windows en: $releaseDir"
+          }
+          $zipPath = "build/windows/travelbox-windows-release.zip"
+          if (Test-Path $zipPath) {
+            Remove-Item -Force $zipPath
+          }
+          Compress-Archive -Path "$releaseDir\\*" -DestinationPath $zipPath -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: travelbox-windows-release
+          path: build/windows/travelbox-windows-release.zip
+          if-no-files-found: error
