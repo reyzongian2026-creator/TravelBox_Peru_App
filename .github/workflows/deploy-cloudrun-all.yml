@@ -360,7 +360,9 @@ jobs:
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'backend_only' }}
         working-directory: TravelBox_Peru_Backend
         shell: bash
-        run: ./mvnw -DskipTests compile
+        run: |
+          chmod +x mvnw
+          ./mvnw -DskipTests compile
 
       - name: Setup Flutter for frontend
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'frontend_only' }}
