@@ -1,0 +1,33 @@
+name: Run Once - Deploy Frontend Mobile Layout
+# trigger: 2026-03-20 mobile-layout-shell-refactor deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/run-once-deploy-frontend-mobile-layout.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: run-once-deploy-frontend-mobile-layout-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-frontend:
+    uses: ./.github/workflows/deploy-cloudrun-all.yml
+    with:
+      deploy_target: frontend_only
+      secrets_mode: keyvault
+      project_id: travelboxperudb
+      region: us-central1
+      frontend_service_name: travelbox-frontend-prod
+      backend_service_name: travelbox-backend-prod
+      azure_keyvault_name: kvtravelboxpe
+      force_cash_payments_only: "false"
+      dry_run: "false"
+    secrets: inherit
