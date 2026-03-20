@@ -32,7 +32,9 @@ class AppShellScaffold extends ConsumerWidget {
     final l10n = context.l10n;
     final session = ref.watch(sessionControllerProvider);
     final notificationsState = ref.watch(notificationCenterControllerProvider);
-    final screenWidth = MediaQuery.of(context).size.width;
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final safeBottomInset = mediaQuery.padding.bottom;
     final compactTopBar = screenWidth < 390;
     final operationGuide = resolveOperationGuide(currentRoute);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -204,7 +206,16 @@ class AppShellScaffold extends ConsumerWidget {
           (item.route == '/courier/services' &&
               routeForSelection.startsWith('/courier')),
     );
-    final body = SafeArea(top: false, child: child);
+    final mobileBottomInset = screenWidth >= 1000
+        ? 0.0
+        : (98 + safeBottomInset + 14);
+    final body = SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: mobileBottomInset),
+        child: child,
+      ),
+    );
 
     if (MediaQuery.of(context).size.width >= 1000) {
       return Scaffold(

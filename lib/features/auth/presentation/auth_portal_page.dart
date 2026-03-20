@@ -43,9 +43,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   @override
   void initState() {
     super.initState();
-    _accessMode = widget.initialMode == AuthPortalMode.register
-        ? _AccessMode.client
-        : _AccessMode.internal;
+    _accessMode = _AccessMode.client;
     _loginEmailFocusNode.addListener(_syncTeddyFromFocus);
     _loginPasswordFocusNode.addListener(_syncTeddyFromFocus);
   }
@@ -459,10 +457,13 @@ class _AuthPanel extends StatelessWidget {
                   ],
                 ),
               ),
-              TextButton(
-                onPressed: authState.isLoading ? null : onEmailRegisterPressed,
-                child: Text(l10n.t('create_account')),
-              ),
+              if (isClient)
+                TextButton(
+                  onPressed: authState.isLoading
+                      ? null
+                      : onEmailRegisterPressed,
+                  child: Text(l10n.t('create_account')),
+                ),
             ],
           ),
           const SizedBox(height: 6),

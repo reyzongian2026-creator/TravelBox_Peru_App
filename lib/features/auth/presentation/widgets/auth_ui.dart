@@ -145,9 +145,11 @@ class AuthSplitScaffold extends StatelessWidget {
                     final compact = constraints.maxWidth < 980;
                     if (compact) {
                       if (!showCompactHero) {
-                        return AuthCard(
-                          padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-                          child: formChild,
+                        return SizedBox.expand(
+                          child: AuthCard(
+                            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+                            child: formChild,
+                          ),
                         );
                       }
                       return Column(
