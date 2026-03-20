@@ -2,6 +2,16 @@ name: Mobile Layout Audit
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "lib/**"
+      - "web/**"
+      - "tools/mobile_layout_audit.cjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/mobile-layout-audit.yml"
   pull_request:
     branches:
       - main
