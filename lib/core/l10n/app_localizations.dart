@@ -25,46 +25,351 @@ class AppLocalizations {
 
   String t(String key) {
     final languageCode = locale.languageCode.toLowerCase();
-    final byLang = _translations[languageCode];
-    final localValue = byLang?[key];
-    if (_isUsableLocalizedValue(
-      localValue,
-      key,
-      allowPlaceholder: languageCode == 'en',
-    )) {
+    final localPriority = _priorityTranslations[languageCode]?[key];
+    if (_isUsableLocalizedValue(localPriority, key)) {
+      return localPriority!;
+    }
+
+    final localValue = _translations[languageCode]?[key];
+    if (_isUsableLocalizedValue(localValue, key)) {
       return localValue!;
     }
 
+    final englishPriority = _priorityTranslations['en']?[key];
+    if (languageCode != 'en' && _isUsableLocalizedValue(englishPriority, key)) {
+      return englishPriority!;
+    }
+
     final englishValue = _translations['en']?[key];
-    if (languageCode != 'en' &&
-        _isUsableLocalizedValue(englishValue, key, allowPlaceholder: true)) {
+    if (languageCode != 'en' && _isUsableLocalizedValue(englishValue, key)) {
       return englishValue!;
     }
 
+    final spanishPriority = _priorityTranslations['es']?[key];
+    if (_isUsableLocalizedValue(spanishPriority, key)) {
+      return spanishPriority!;
+    }
+
     final spanishValue = _translations['es']?[key];
-    if (spanishValue != null && spanishValue.trim().isNotEmpty) {
-      return spanishValue;
+    if (_isUsableLocalizedValue(spanishValue, key)) {
+      return spanishValue!;
     }
 
     return key;
   }
 
-  static bool _isUsableLocalizedValue(
-    String? candidate,
-    String key, {
-    bool allowPlaceholder = false,
-  }) {
+  static bool _isUsableLocalizedValue(String? candidate, String key) {
     final value = candidate?.trim() ?? '';
     if (value.isEmpty || value == key) {
       return false;
     }
 
     // Avoid placeholder-style values copied from ES with "(EN|DE|...)" suffix.
-    if (!allowPlaceholder && RegExp(r'\([A-Z]{2}\)$').hasMatch(value)) {
+    if (RegExp(r'\([A-Z]{2,4}\)$').hasMatch(value)) {
       return false;
     }
     return true;
   }
+
+  static const Map<String, Map<String, String>> _priorityTranslations = {
+    'es': {
+      'settings_options': 'Opciones',
+      'back': 'Volver',
+      'mock_code': 'Código mock',
+      'password_reset_code_required': 'Ingresa el código de recuperación.',
+      'invalid_code': 'Código inválido.',
+      'hide_password': 'Ocultar contraseña',
+      'show_password': 'Ver contraseña',
+      'send_code_failed': 'No se pudo enviar código',
+      'update_failed': 'No se pudo actualizar',
+      'register_failed': 'No se pudo registrar',
+      'invalid_phone': 'Ingresa un teléfono válido.',
+      'phone_international_format':
+          'Usa formato internacional, ejemplo +51999999999.',
+      'temporary_password': 'Contraseña temporal',
+      'current_password_sensitive_changes':
+          'Contraseña actual para cambios sensibles',
+      'route_not_found': 'Ruta no encontrada',
+      'operations_panel': 'Operaciones',
+      'services': 'Servicios',
+      'period_week': 'Semana',
+      'period_month': 'Mes',
+      'period_year': 'Año',
+      'qr_scan_title': 'Escanear QR',
+      'qr_scan_flash_on': 'Encender flash',
+      'qr_scan_flash_off': 'Apagar flash',
+      'qr_scan_switch_camera': 'Cambiar cámara',
+      'qr_scan_open_camera_failed': 'No se pudo abrir la cámara',
+      'qr_scan_aim_hint': 'Apunta la cámara al QR. Se abrirá automáticamente.',
+      'qr_scan_starting_camera': 'Iniciando cámara...',
+      'qr_scan_fallback_info':
+          'Escaneo por cámara disponible en Android/iOS/Web.',
+      'qr_scan_detected': 'QR detectado',
+      'delivery_request_pickup_title': 'Solicitar recojo',
+      'delivery_request_dropoff_title': 'Solicitar delivery',
+      'delivery_address_pickup_label': 'Dirección de recojo',
+      'delivery_address_dropoff_label': 'Dirección de entrega',
+      'delivery_address_pickup_hint':
+          'Hotel, casa o punto donde retiraremos el equipaje',
+      'delivery_address_dropoff_hint':
+          'Hotel, terminal o dirección exacta de entrega',
+      'delivery_window_pickup_label': 'Franja de recojo',
+      'delivery_window_dropoff_label': 'Franja de entrega',
+      'delivery_price_pickup_label': 'Costo base recojo',
+      'delivery_price_dropoff_label': 'Costo base delivery',
+      'delivery_confirm_pickup': 'Confirmar recojo',
+      'delivery_confirm_dropoff': 'Confirmar delivery',
+      'delivery_pickup_success':
+          'Recojo solicitado. Ahora podrás seguir el courier en vivo.',
+      'delivery_dropoff_success':
+          'Delivery solicitado. Ahora podrás seguir el courier en vivo.',
+      'delivery_location_current': 'Ubicación actual',
+      'delivery_location_map': 'Elegir en mapa',
+      'delivery_reservation_not_available_subtitle':
+          'En el estado actual no se puede crear recojo ni delivery. Si abriste una ventana antigua, vuelve al detalle y recarga la reserva.',
+      'delivery_status_not_allowed_pickup':
+          'Este estado de reserva aún no permite solicitar recojo.',
+      'delivery_status_not_allowed_dropoff':
+          'Este estado de reserva aún no permite solicitar delivery.',
+      'delivery_base_point': 'Punto base',
+      'delivery_detecting_location': 'Detectando ubicación...',
+      'delivery_use_current_location': 'Usar mi ubicación actual',
+      'delivery_zone_city_label': 'Zona o ciudad',
+      'delivery_zone_city_hint': 'LIMA, CUSCO, MIRAFLORES, etc.',
+      'delivery_pickup_info_subtitle':
+          'El equipaje será recogido y trasladado al almacén.',
+      'delivery_dropoff_info_subtitle':
+          'El equipaje será entregado en el destino indicado.',
+      'delivery_pickup_steps':
+          '1. Solicitas la movilidad.\n2. Un courier toma el servicio.\n3. Sigue el tracking en vivo.\n4. Cuando el equipaje llega al almacén, tu reserva pasa a almacenada.',
+      'delivery_processing': 'Procesando...',
+      'delivery_prepare_failed': 'No se pudo preparar la solicitud',
+      'delivery_enable_gps': 'Activa el GPS para usar tu ubicación actual.',
+      'delivery_location_permission_denied':
+          'No hay permisos de ubicación para continuar.',
+      'delivery_browser_location_invalid':
+          'El navegador no entregó una ubicación válida.',
+      'delivery_device_location_invalid':
+          'El dispositivo no devolvió coordenadas válidas.',
+      'delivery_location_captured': 'Ubicación actual capturada',
+      'delivery_location_failed': 'No se pudo obtener ubicación actual',
+      'delivery_location_pick_success': 'Ubicación seleccionada en mapa.',
+      'delivery_status_changed_retry':
+          'Esta reserva cambió de estado. Actualiza y vuelve a intentar la solicitud.',
+      'delivery_enter_field': 'Ingresa',
+      'delivery_service_location_required':
+          'Debes fijar ubicación del servicio (actual o mapa) antes de confirmar.',
+      'delivery_request_failed': 'No se pudo registrar la solicitud',
+      'delivery_no_window': 'sin franja',
+      'delivery_map_pick_title': 'Elegir punto en mapa',
+      'delivery_map_pick_subtitle':
+          'Toca el mapa para fijar la ubicación de recojo o entrega.',
+      'delivery_my_current_location_prefix': 'Mi ubicación actual',
+      'delivery_pickup_point_prefix': 'Punto de recojo',
+      'delivery_dropoff_point_prefix': 'Punto de entrega',
+      'reservation_not_found': 'Reserva no encontrada.',
+      'reservation_initial_luggage_photo_title': 'Foto inicial del equipaje',
+      'reservation_initial_luggage_photo_subtitle':
+          'Sube la foto de cómo entregas tu maleta antes del ingreso al almacén.',
+      'upload': 'Subir',
+      'reservation_payment': 'Pago',
+      'reservation_flow_method': 'Flujo',
+      'reservation_method': 'Método',
+      'reservation_pending_payment_qr_warning':
+          'El QR de check-in aún no debe usarse. Primero se debe validar el cobro en caja desde el panel del operador.',
+      'reservation_refund_and_cancel': 'Reembolsar y cancelar',
+      'reservation_cancel': 'Cancelar reserva',
+      'reservation_report_incident': 'Reportar incidencia',
+      'reservation_contact_support': 'Contactar soporte',
+      'reservation_load_failed': 'No se pudo cargar la reserva',
+      'reservation_uploading_evidence': 'Subiendo evidencia',
+      'reservation_preparing_file': 'Preparando archivo...',
+      'reservation_progress': 'Progreso',
+      'reservation_photo_uploaded': 'Foto inicial subida correctamente.',
+      'reservation_photo_upload_failed': 'No se pudo subir la foto',
+      'reservation_cancel_failed': 'No se pudo completar la cancelación',
+      'reservation_refund_cancel_success':
+          'Reembolso ejecutado y reserva cancelada.',
+      'reservation_cancel_success': 'Reserva cancelada.',
+      'reservation_current_status': 'Estado actual',
+      'reservation_operational_status': 'Estado operativo',
+      'reservation_qr_pin_stage': 'Etapa QR/PIN',
+      'reservation_bag_units': 'Bultos',
+      'reservation_luggage_photos': 'Fotos equipaje',
+      'reservation_warehouse_checkin': 'Ingreso a almacén',
+      'reservation_bag_id': 'ID de equipaje',
+      'reservation_pickup_pin_available': 'PIN disponible en detalle.',
+      'reservation_pickup_pin_restricted':
+          'PIN generado, visibilidad restringida por rol.',
+      'reservation_pickup_pin_pending_or_validated':
+          'Pendiente de generación o ya validado',
+      'reservation_pickup_pin_generated_pending_secure':
+          'Generado, pendiente de consulta segura',
+      'reservation_pickup_pin_role_protected': 'Protegido por permisos de rol',
+      'pending': 'Pendiente',
+      'discovery_empty_zone': 'No hay almacenes para esta zona.',
+      'discovery_expand_search': 'Expandir búsqueda',
+      'discovery_empty_city_prefix': 'No hay almacenes en',
+      'discovery_view_all_cities': 'Ver todas las ciudades',
+      'discovery_load_failed': 'No se pudo cargar almacenes',
+      'discover_title_nearby': 'Descubre almacenes cercanos',
+      'discover_hero_subtitle':
+          'Reserva por horas o días, con QR y seguimiento en tiempo real.',
+      'discovery_distance_to_you_prefix': 'A',
+      'km_de_tu_ubicacion': 'km de tu ubicación',
+      'discovery_tourism_nearby': 'Turismo cercano',
+      'discovery_price_from': 'Desde',
+      'discovery_per_hour': '/hora',
+    },
+    'en': {
+      'settings_options': 'Options',
+      'back': 'Back',
+      'mock_code': 'Mock code',
+      'password_reset_code_required': 'Enter the recovery code.',
+      'invalid_code': 'Invalid code.',
+      'hide_password': 'Hide password',
+      'show_password': 'Show password',
+      'send_code_failed': 'Could not send code',
+      'update_failed': 'Could not update',
+      'register_failed': 'Could not register',
+      'invalid_phone': 'Enter a valid phone number.',
+      'phone_international_format':
+          'Use international format, for example +51999999999.',
+      'temporary_password': 'Temporary password',
+      'current_password_sensitive_changes':
+          'Current password for sensitive changes',
+      'route_not_found': 'Route not found',
+      'operations_panel': 'Operations',
+      'services': 'Services',
+      'period_week': 'Week',
+      'period_month': 'Month',
+      'period_year': 'Year',
+      'qr_scan_title': 'Scan QR',
+      'qr_scan_flash_on': 'Turn flash on',
+      'qr_scan_flash_off': 'Turn flash off',
+      'qr_scan_switch_camera': 'Switch camera',
+      'qr_scan_open_camera_failed': 'Could not open camera',
+      'qr_scan_aim_hint': 'Point the camera at the QR. It opens automatically.',
+      'qr_scan_starting_camera': 'Starting camera...',
+      'qr_scan_fallback_info': 'Camera scan is available on Android/iOS/Web.',
+      'qr_scan_detected': 'QR detected',
+      'delivery_request_pickup_title': 'Request pickup',
+      'delivery_request_dropoff_title': 'Request delivery',
+      'delivery_address_pickup_label': 'Pickup address',
+      'delivery_address_dropoff_label': 'Drop-off address',
+      'delivery_address_pickup_hint':
+          'Hotel, home, or point where we will collect luggage',
+      'delivery_address_dropoff_hint':
+          'Hotel, terminal, or exact delivery address',
+      'delivery_window_pickup_label': 'Pickup time window',
+      'delivery_window_dropoff_label': 'Delivery time window',
+      'delivery_price_pickup_label': 'Pickup base cost',
+      'delivery_price_dropoff_label': 'Delivery base cost',
+      'delivery_confirm_pickup': 'Confirm pickup',
+      'delivery_confirm_dropoff': 'Confirm delivery',
+      'delivery_pickup_success':
+          'Pickup requested. You can now track the courier live.',
+      'delivery_dropoff_success':
+          'Delivery requested. You can now track the courier live.',
+      'delivery_location_current': 'Current location',
+      'delivery_location_map': 'Pick on map',
+      'delivery_reservation_not_available_subtitle':
+          'In the current status you cannot create pickup or delivery. If you opened an old tab, go back to reservation details and reload.',
+      'delivery_status_not_allowed_pickup':
+          'This reservation status does not allow pickup yet.',
+      'delivery_status_not_allowed_dropoff':
+          'This reservation status does not allow delivery yet.',
+      'delivery_base_point': 'Base point',
+      'delivery_detecting_location': 'Detecting location...',
+      'delivery_use_current_location': 'Use my current location',
+      'delivery_zone_city_label': 'Area or city',
+      'delivery_zone_city_hint': 'LIMA, CUSCO, MIRAFLORES, etc.',
+      'delivery_pickup_info_subtitle':
+          'Luggage will be collected and moved to the warehouse.',
+      'delivery_dropoff_info_subtitle':
+          'Luggage will be delivered to the selected destination.',
+      'delivery_pickup_steps':
+          '1. Request mobility.\n2. A courier takes the service.\n3. Track it live.\n4. When luggage arrives at the warehouse, reservation changes to stored.',
+      'delivery_processing': 'Processing...',
+      'delivery_prepare_failed': 'Could not prepare request',
+      'delivery_enable_gps': 'Enable GPS to use your current location.',
+      'delivery_location_permission_denied':
+          'Location permissions are required to continue.',
+      'delivery_browser_location_invalid':
+          'Browser did not return a valid location.',
+      'delivery_device_location_invalid':
+          'Device did not return valid coordinates.',
+      'delivery_location_captured': 'Current location captured',
+      'delivery_location_failed': 'Could not get current location',
+      'delivery_location_pick_success': 'Location selected on map.',
+      'delivery_status_changed_retry':
+          'Reservation status changed. Refresh and try again.',
+      'delivery_enter_field': 'Enter',
+      'delivery_service_location_required':
+          'You must set the service location (current or map) before confirming.',
+      'delivery_request_failed': 'Could not submit request',
+      'delivery_no_window': 'no window',
+      'delivery_map_pick_title': 'Pick point on map',
+      'delivery_map_pick_subtitle':
+          'Tap on the map to set pickup or delivery location.',
+      'delivery_my_current_location_prefix': 'My current location',
+      'delivery_pickup_point_prefix': 'Pickup point',
+      'delivery_dropoff_point_prefix': 'Drop-off point',
+      'reservation_not_found': 'Reservation not found.',
+      'reservation_initial_luggage_photo_title': 'Initial luggage photo',
+      'reservation_initial_luggage_photo_subtitle':
+          'Upload a photo of how you hand over your luggage before warehouse check-in.',
+      'upload': 'Upload',
+      'reservation_payment': 'Payment',
+      'reservation_flow_method': 'Flow',
+      'reservation_method': 'Method',
+      'reservation_pending_payment_qr_warning':
+          'Check-in QR should not be used yet. Cash payment must be validated first from operator panel.',
+      'reservation_refund_and_cancel': 'Refund and cancel',
+      'reservation_cancel': 'Cancel reservation',
+      'reservation_report_incident': 'Report incident',
+      'reservation_contact_support': 'Contact support',
+      'reservation_load_failed': 'Could not load reservation',
+      'reservation_uploading_evidence': 'Uploading evidence',
+      'reservation_preparing_file': 'Preparing file...',
+      'reservation_progress': 'Progress',
+      'reservation_photo_uploaded': 'Initial photo uploaded successfully.',
+      'reservation_photo_upload_failed': 'Could not upload photo',
+      'reservation_cancel_failed': 'Could not complete cancellation',
+      'reservation_refund_cancel_success':
+          'Refund completed and reservation canceled.',
+      'reservation_cancel_success': 'Reservation canceled.',
+      'reservation_current_status': 'Current status',
+      'reservation_operational_status': 'Operational status',
+      'reservation_qr_pin_stage': 'QR/PIN stage',
+      'reservation_bag_units': 'Bag units',
+      'reservation_luggage_photos': 'Luggage photos',
+      'reservation_warehouse_checkin': 'Warehouse check-in',
+      'reservation_bag_id': 'Luggage ID',
+      'reservation_pickup_pin_available': 'PIN available in details.',
+      'reservation_pickup_pin_restricted':
+          'PIN generated, visibility restricted by role.',
+      'reservation_pickup_pin_pending_or_validated':
+          'Pending generation or already validated',
+      'reservation_pickup_pin_generated_pending_secure':
+          'Generated, pending secure view',
+      'reservation_pickup_pin_role_protected': 'Protected by role permissions',
+      'pending': 'Pending',
+      'discovery_empty_zone': 'No warehouses found for this area.',
+      'discovery_expand_search': 'Expand search',
+      'discovery_empty_city_prefix': 'No warehouses in',
+      'discovery_view_all_cities': 'Show all cities',
+      'discovery_load_failed': 'Could not load warehouses',
+      'discover_title_nearby': 'Discover nearby warehouses',
+      'discover_hero_subtitle':
+          'Book by hour or day with QR and real-time tracking.',
+      'discovery_distance_to_you_prefix': 'At',
+      'km_de_tu_ubicacion': 'km from your location',
+      'discovery_tourism_nearby': 'Nearby tourism',
+      'discovery_price_from': 'From',
+      'discovery_per_hour': '/hour',
+    },
+  };
 
   static const Map<String, Map<String, String>> _translations = {
     'es': {

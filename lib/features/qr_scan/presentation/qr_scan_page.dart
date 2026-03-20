@@ -47,17 +47,20 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scannerState = _cameraController.value;
     final torchEnabled = scannerState.torchState == TorchState.on;
     final cameraReady = scannerState.isInitialized && scannerState.isRunning;
 
     return AppShellScaffold(
-      title: 'Escanear QR',
+      title: l10n.t('qr_scan_title'),
       currentRoute: widget.currentRoute,
       actions: [
         if (_supportsLiveCamera)
           IconButton(
-            tooltip: torchEnabled ? 'Apagar flash' : 'Encender flash',
+            tooltip: torchEnabled
+                ? l10n.t('qr_scan_flash_off')
+                : l10n.t('qr_scan_flash_on'),
             onPressed: () => _cameraController.toggleTorch(),
             icon: Icon(
               torchEnabled ? Icons.flash_on_rounded : Icons.flash_off_rounded,
@@ -65,7 +68,7 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
           ),
         if (_supportsLiveCamera)
           IconButton(
-            tooltip: 'Cambiar camara',
+            tooltip: l10n.t('qr_scan_switch_camera'),
             onPressed: () => _cameraController.switchCamera(),
             icon: const Icon(Icons.cameraswitch_outlined),
           ),
@@ -95,7 +98,9 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
           },
           fit: BoxFit.cover,
           errorBuilder: (_, error) {
-            return Center(child: Text('No se pudo abrir la camara: $error'));
+            return Center(
+              child: Text('${context.l10n.t('qr_scan_open_camera_failed')}: $error'),
+            );
           },
         ),
         IgnorePointer(
@@ -130,8 +135,8 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Text(
                 cameraReady
-                    ? 'Apunta la camara al QR. Se abrira automaticamente.'
-                    : 'Iniciando camara...',
+                    ? context.l10n.t('qr_scan_aim_hint')
+                    : context.l10n.t('qr_scan_starting_camera'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
@@ -157,8 +162,8 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
               children: [
                 const Icon(Icons.qr_code_scanner_rounded, size: 44),
                 const SizedBox(height: 10),
-                const Text(
-                  'Escaneo por camara disponible en Android/iOS/Web.',
+                Text(
+                  context.l10n.t('qr_scan_fallback_info'),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
@@ -190,7 +195,9 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('QR detectado: $value')));
+    ).showSnackBar(
+      SnackBar(content: Text('${context.l10n.t('qr_scan_detected')}: $value')),
+    );
     context.go('/reservations');
   }
 

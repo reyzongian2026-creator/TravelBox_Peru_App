@@ -279,8 +279,8 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
           if (items.isEmpty) {
             contentChildren.add(
               EmptyStateView(
-                message: 'No hay almacenes para esta zona.',
-                actionLabel: 'Expandir búsqueda',
+                message: l10n.t('discovery_empty_zone'),
+                actionLabel: l10n.t('discovery_expand_search'),
                 onAction: _clearDiscoveryFilters,
               ),
             );
@@ -313,11 +313,11 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
             contentChildren.add(
               EmptyStateView(
                 message: selectedCity == null
-                    ? 'No hay almacenes para esta zona.'
-                    : 'No hay almacenes en $selectedCity.',
+                    ? l10n.t('discovery_empty_zone')
+                    : '${l10n.t('discovery_empty_city_prefix')} $selectedCity.',
                 actionLabel: selectedCity == null
-                    ? 'Expandir búsqueda'
-                    : 'Ver todas las ciudades',
+                    ? l10n.t('discovery_expand_search')
+                    : l10n.t('discovery_view_all_cities'),
                 onAction: _clearDiscoveryFilters,
               ),
             );
@@ -412,7 +412,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar almacenes: $error',
+          message: '${l10n.t('discovery_load_failed')}: $error',
           onRetry: () => ref.invalidate(discoveryWarehousesProvider),
         ),
       ),
@@ -682,7 +682,7 @@ class _HeroTextBlock extends StatelessWidget {
         ),
         SizedBox(height: compact ? 4 : 6),
         Text(
-          'Descubre almacenes cercanos',
+          context.l10n.t('discover_title_nearby'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -693,7 +693,7 @@ class _HeroTextBlock extends StatelessWidget {
         if (!compact) ...[
           const SizedBox(height: 2),
           Text(
-            'Reserva por horas o días, con QR y seguimiento en tiempo real.',
+            context.l10n.t('discover_hero_subtitle'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
@@ -865,7 +865,12 @@ class _NearestWarehouseCard extends StatelessWidget {
           style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
-          '${info.warehouse.name}\nA ${info.distanceKm.toStringAsFixed(2)} km de tu ubicación\nTurismo cercano: ${tourism.heroLandmark}',
+          '${info.warehouse.name}\n'
+          '${context.l10n.t('discovery_distance_to_you_prefix')} '
+          '${info.distanceKm.toStringAsFixed(2)} '
+          '${context.l10n.t('km_de_tu_ubicacion')}\n'
+          '${context.l10n.t('discovery_tourism_nearby')}: '
+          '${tourism.heroLandmark}',
           style: TextStyle(color: subtitleColor),
         ),
         isThreeLine: true,
@@ -1022,7 +1027,9 @@ class _WarehouseCard extends StatelessWidget {
             if (distanceKm != null) ...[
               const SizedBox(height: 2),
               Text(
-                'A ${distanceKm!.toStringAsFixed(2)} km de tu ubicación',
+                '${context.l10n.t('discovery_distance_to_you_prefix')} '
+                '${distanceKm!.toStringAsFixed(2)} '
+                '${context.l10n.t('km_de_tu_ubicacion')}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF0B8B8C),
                   fontWeight: FontWeight.w600,
@@ -1065,7 +1072,9 @@ class _WarehouseCard extends StatelessWidget {
               runSpacing: responsive.itemGap,
               children: [
                 Text(
-                  'Desde S/${warehouse.priceFromPerHour.toStringAsFixed(2)}/hora',
+                  '${context.l10n.t('discovery_price_from')}: '
+                  'S/${warehouse.priceFromPerHour.toStringAsFixed(2)}'
+                  '${context.l10n.t('discovery_per_hour')}',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 FilledButton(

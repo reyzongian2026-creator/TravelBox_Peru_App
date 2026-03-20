@@ -1,0 +1,51 @@
+name: Mobile Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "tools/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/mobile-quality-gate.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "tools/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/mobile-quality-gate.yml"
+  workflow_dispatch:
+
+jobs:
+  mobile-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: i18n + hardcoded guard
+        run: dart run tools/mobile_quality_guard.dart
+
+      - name: Flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Flutter test
+        run: flutter test

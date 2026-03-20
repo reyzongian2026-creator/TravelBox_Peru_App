@@ -465,8 +465,8 @@ class _AuthPanel extends StatelessWidget {
                   .copyWith(
                     suffixIcon: IconButton(
                       tooltip: loginPasswordVisible
-                          ? 'Ocultar contrasena'
-                          : 'Ver contrasena',
+                          ? l10n.t('hide_password')
+                          : l10n.t('show_password'),
                       onPressed: () => onToggleLoginPasswordVisibility(
                         !loginPasswordVisible,
                       ),

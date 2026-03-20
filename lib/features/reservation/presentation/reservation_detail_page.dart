@@ -75,7 +75,9 @@ class ReservationDetailPage extends ConsumerWidget {
         body: reservationAsync.when(
           data: (reservation) {
             if (reservation == null) {
-              return EmptyStateView(message: 'Reserva no encontrada.');
+              return EmptyStateView(
+                message: context.l10n.t('reservation_not_found'),
+              );
             }
             final session = ref.watch(sessionControllerProvider);
             final canOperate = session.canAccessAdmin;
@@ -85,7 +87,7 @@ class ReservationDetailPage extends ConsumerWidget {
               session: session,
             );
             final bagTagId = operational?.bagTagId;
-            final pickupPinText = _pickupPinText(operational);
+            final pickupPinText = _pickupPinText(context, operational);
             final qrSource = _reservationQrSource(reservation);
             final showTrackingAction = _shouldShowTrackingAction(reservation);
             final paymentStatus = ref.watch(
@@ -155,9 +157,15 @@ class ReservationDetailPage extends ConsumerWidget {
                   Card(
                     child: ListTile(
                       leading: const Icon(Icons.add_a_photo_outlined),
-                      title: const Text('Foto inicial del equipaje'),
-                      subtitle: const Text(
-                        'Sube la foto de cómo entregas tu maleta antes del ingreso al almacén.',
+                      title: Text(
+                        context.l10n.t(
+                          'reservation_initial_luggage_photo_title',
+                        ),
+                      ),
+                      subtitle: Text(
+                        context.l10n.t(
+                          'reservation_initial_luggage_photo_subtitle',
+                        ),
                       ),
                       trailing: FilledButton.tonalIcon(
                         onPressed: () => _uploadClientHandoffPhoto(
@@ -166,7 +174,7 @@ class ReservationDetailPage extends ConsumerWidget {
                           reservation: reservation,
                         ),
                         icon: const Icon(Icons.upload_outlined),
-                        label: const Text('Subir'),
+                        label: Text(context.l10n.t('upload')),
                       ),
                     ),
                   ),
@@ -190,7 +198,9 @@ class ReservationDetailPage extends ConsumerWidget {
                         Card(
                           child: ListTile(
                             leading: const Icon(Icons.payments_outlined),
-                            title: Text('Pago: $paymentStateLabel'),
+                            title: Text(
+                              '${context.l10n.t('reservation_payment')}: $paymentStateLabel',
+                            ),
                             subtitle: Text(
                               'Flujo: $flow\nMétodo: $paymentMethodLabel',
                             ),
@@ -272,8 +282,8 @@ class ReservationDetailPage extends ConsumerWidget {
                         icon: Icon(Icons.cancel_outlined),
                         label: Text(
                           requiresRefundForCancel
-                              ? 'Reembolsar y cancelar'
-                              : 'Cancelar reserva',
+                              ? context.l10n.t('reservation_refund_and_cancel')
+                              : context.l10n.t('reservation_cancel'),
                         ),
                       ),
                     if (showTrackingAction)
@@ -288,8 +298,8 @@ class ReservationDetailPage extends ConsumerWidget {
                       ),
                       child: Text(
                         canOperate
-                            ? 'Reportar incidencia'
-                            : 'Contactar soporte',
+                            ? context.l10n.t('reservation_report_incident')
+                            : context.l10n.t('reservation_contact_support'),
                       ),
                     ),
                   ],
@@ -312,7 +322,7 @@ class ReservationDetailPage extends ConsumerWidget {
           },
           loading: () => const LoadingStateView(),
           error: (error, _) => ErrorStateView(
-            message: 'No se pudo cargar la reserva: $error',
+            message: '${context.l10n.t('reservation_load_failed')}: $error',
             onRetry: () =>
                 ref.invalidate(reservationByIdProvider(reservationId)),
           ),
@@ -352,7 +362,7 @@ class ReservationDetailPage extends ConsumerWidget {
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Subiendo evidencia'),
+          title: Text(context.l10n.t('reservation_uploading_evidence')),
           content: ValueListenableBuilder<double>(
             valueListenable: progress,
             builder: (context, value, child) => Column(
@@ -362,8 +372,9 @@ class ReservationDetailPage extends ConsumerWidget {
                 const SizedBox(height: 10),
                 Text(
                   value <= 0
-                      ? 'Preparando archivo...'
-                      : 'Progreso ${(value * 100).toStringAsFixed(0)}%',
+                      ? context.l10n.t('reservation_preparing_file')
+                      : '${context.l10n.t('reservation_progress')} '
+                            '${(value * 100).toStringAsFixed(0)}%',
                 ),
               ],
             ),
@@ -401,14 +412,18 @@ class ReservationDetailPage extends ConsumerWidget {
       ref.invalidate(myReservationsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Foto inicial subida correctamente.')),
+          SnackBar(content: Text(context.l10n.t('reservation_photo_uploaded'))),
         );
       }
     } catch (error) {
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo subir la foto: $error')),
+          SnackBar(
+            content: Text(
+              '${context.l10n.t('reservation_photo_upload_failed')}: $error',
+            ),
+          ),
         );
       }
     } finally {
@@ -435,7 +450,11 @@ class ReservationDetailPage extends ConsumerWidget {
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo completar la cancelacion: $error')),
+        SnackBar(
+          content: Text(
+            '${context.l10n.t('reservation_cancel_failed')}: $error',
+          ),
+        ),
       );
       return;
     }
@@ -450,8 +469,8 @@ class ReservationDetailPage extends ConsumerWidget {
       SnackBar(
         content: Text(
           requiresRefund
-              ? 'Reembolso ejecutado y reserva cancelada.'
-              : 'Reserva cancelada.',
+              ? context.l10n.t('reservation_refund_cancel_success')
+              : context.l10n.t('reservation_cancel_success'),
         ),
       ),
     );
@@ -477,9 +496,12 @@ class _TimelineTile extends StatelessWidget {
   }
 }
 
-String _pickupPinText(ReservationOperationalDetail? operational) {
+String _pickupPinText(
+  BuildContext context,
+  ReservationOperationalDetail? operational,
+) {
   if (operational == null) {
-    return 'Pendiente de generación o ya validado';
+    return context.l10n.t('reservation_pickup_pin_pending_or_validated');
   }
   final visiblePin = operational.pickupPin?.trim();
   if (visiblePin != null && visiblePin.isNotEmpty) {
@@ -487,10 +509,10 @@ String _pickupPinText(ReservationOperationalDetail? operational) {
   }
   if (operational.pickupPinGenerated) {
     return operational.pickupPinVisible
-        ? 'Generado, pendiente de consulta segura'
-        : 'Protegido por permisos de rol';
+        ? context.l10n.t('reservation_pickup_pin_generated_pending_secure')
+        : context.l10n.t('reservation_pickup_pin_role_protected');
   }
-  return 'Pendiente de generación o ya validado';
+  return context.l10n.t('reservation_pickup_pin_pending_or_validated');
 }
 
 class _OperationalDetailCard extends StatelessWidget {
@@ -509,7 +531,7 @@ class _OperationalDetailCard extends StatelessWidget {
     final stage = _operationalStageLabel(operational, reservationStatus);
     final checkinAt = operational.checkinAt;
     final checkinLabel = checkinAt == null
-        ? 'Pendiente'
+        ? context.l10n.t('pending')
         : PeruTime.formatDateTime(checkinAt);
 
     return Card(
@@ -519,7 +541,7 @@ class _OperationalDetailCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Estado operativo',
+              context.l10n.t('reservation_operational_status'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -529,11 +551,22 @@ class _OperationalDetailCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                Chip(label: Text('Etapa QR/PIN: $stage')),
-                Chip(label: Text('Bultos: ${operational.bagUnits}')),
                 Chip(
                   label: Text(
-                    'Fotos equipaje: ${operational.storedLuggagePhotos}/${operational.expectedLuggagePhotos}',
+                    '${context.l10n.t('reservation_qr_pin_stage')}: $stage',
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    '${context.l10n.t('reservation_bag_units')}: '
+                    '${operational.bagUnits}',
+                  ),
+                ),
+                Chip(
+                  label: Text(
+                    '${context.l10n.t('reservation_luggage_photos')}: '
+                    '${operational.storedLuggagePhotos}/'
+                    '${operational.expectedLuggagePhotos}',
                   ),
                 ),
                 if (operational.luggagePhotosLocked)
@@ -543,15 +576,21 @@ class _OperationalDetailCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Text('Ingreso a almacén: $checkinLabel'),
+            Text(
+              '${context.l10n.t('reservation_warehouse_checkin')}: '
+              '$checkinLabel',
+            ),
             if (operational.bagTagId?.trim().isNotEmpty == true)
-              Text('ID de equipaje: ${operational.bagTagId}'),
+              Text(
+                '${context.l10n.t('reservation_bag_id')}: '
+                '${operational.bagTagId}',
+              ),
             if (!isCourier && operational.pickupPinGenerated)
               Text(
                 operational.pickupPinVisible &&
                         operational.pickupPin?.trim().isNotEmpty == true
-                    ? 'PIN disponible en detalle.'
-                    : 'PIN generado, visibilidad restringida por rol.',
+                    ? context.l10n.t('reservation_pickup_pin_available')
+                    : context.l10n.t('reservation_pickup_pin_restricted'),
               ),
           ],
         ),

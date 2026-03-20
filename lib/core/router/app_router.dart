@@ -34,6 +34,7 @@ import '../../features/reservation/presentation/reservation_form_page.dart';
 import '../../features/reservation/presentation/reservation_success_page.dart';
 import '../../features/auth/presentation/verify_email_page.dart';
 import '../../features/warehouse/presentation/warehouse_detail_page.dart';
+import '../l10n/app_localizations.dart';
 import '../../shared/state/session_controller.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -372,7 +373,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
     errorBuilder: (_, state) {
       return Scaffold(
-        body: Center(child: Text('Ruta no encontrada: ${state.uri}')),
+        body: Builder(
+          builder: (context) => Center(
+            child: Text(
+              '${context.l10n.t('route_not_found')}: ${state.uri}',
+            ),
+          ),
+        ),
       );
     },
   );

@@ -21,44 +21,44 @@ enum DeliveryRequestType { delivery, pickup }
 extension DeliveryRequestTypeX on DeliveryRequestType {
   String get code => this == DeliveryRequestType.pickup ? 'PICKUP' : 'DELIVERY';
 
-  String get title => this == DeliveryRequestType.pickup
-      ? 'Solicitar recojo'
-      : 'Solicitar delivery';
+  String get titleKey => this == DeliveryRequestType.pickup
+      ? 'delivery_request_pickup_title'
+      : 'delivery_request_dropoff_title';
 
-  String get addressLabel => this == DeliveryRequestType.pickup
-      ? 'Direccion de recojo'
-      : 'Direccion de entrega';
+  String get addressLabelKey => this == DeliveryRequestType.pickup
+      ? 'delivery_address_pickup_label'
+      : 'delivery_address_dropoff_label';
 
-  String get addressHint => this == DeliveryRequestType.pickup
-      ? 'Hotel, casa o punto donde retiraremos el equipaje'
-      : 'Hotel, terminal o direccion exacta de entrega';
+  String get addressHintKey => this == DeliveryRequestType.pickup
+      ? 'delivery_address_pickup_hint'
+      : 'delivery_address_dropoff_hint';
 
-  String get windowLabel => this == DeliveryRequestType.pickup
-      ? 'Franja de recojo'
-      : 'Franja de entrega';
+  String get windowLabelKey => this == DeliveryRequestType.pickup
+      ? 'delivery_window_pickup_label'
+      : 'delivery_window_dropoff_label';
 
-  String get priceLabel => this == DeliveryRequestType.pickup
-      ? 'Costo base recojo'
-      : 'Costo base delivery';
+  String get priceLabelKey => this == DeliveryRequestType.pickup
+      ? 'delivery_price_pickup_label'
+      : 'delivery_price_dropoff_label';
 
-  String get actionLabel => this == DeliveryRequestType.pickup
-      ? 'Confirmar recojo'
-      : 'Confirmar delivery';
+  String get actionLabelKey => this == DeliveryRequestType.pickup
+      ? 'delivery_confirm_pickup'
+      : 'delivery_confirm_dropoff';
 
-  String get successMessage => this == DeliveryRequestType.pickup
-      ? 'Recojo solicitado. Ahora podras seguir el courier en vivo.'
-      : 'Delivery solicitado. Ahora podras seguir el courier en vivo.';
+  String get successMessageKey => this == DeliveryRequestType.pickup
+      ? 'delivery_pickup_success'
+      : 'delivery_dropoff_success';
 }
 
 enum DeliveryLocationMode { currentLocation, mapPoint }
 
 extension DeliveryLocationModeX on DeliveryLocationMode {
-  String get label {
+  String get labelKey {
     switch (this) {
       case DeliveryLocationMode.currentLocation:
-        return 'Ubicacion actual';
+        return 'delivery_location_current';
       case DeliveryLocationMode.mapPoint:
-        return 'Elegir en mapa';
+        return 'delivery_location_map';
     }
   }
 }
@@ -122,21 +122,20 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final reservationAsync = ref.watch(
       reservationByIdProvider(widget.reservationId),
     );
 
     return Scaffold(
       appBar: AppBar(
-        leading: AppBackButton(
-          fallbackRoute: _resolvedBackRoute(),
-        ),
-        title: Text(_type.title),
+        leading: AppBackButton(fallbackRoute: _resolvedBackRoute()),
+        title: Text(l10n.t(_type.titleKey)),
       ),
       body: reservationAsync.when(
         data: (reservation) {
           if (reservation == null) {
-            return const EmptyStateView(message: 'Reserva no encontrada.');
+            return EmptyStateView(message: l10n.t('reservation_not_found'));
           }
           final allowedTypes = _allowedTypesForReservation(reservation);
           if (allowedTypes.isEmpty) {
@@ -145,9 +144,13 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
               children: [
                 Card(
                   child: ListTile(
-                    title: Text('Reserva ${reservation.code}'),
+                    title: Text(
+                      '${l10n.t('admin_reservation_code')}: ${reservation.code}',
+                    ),
                     subtitle: Text(
-                      '${reservation.warehouse.name}\nEstado actual: ${reservation.status.label}',
+                      '${reservation.warehouse.name}\n'
+                      '${l10n.t('reservation_current_status')}: '
+                      '${reservation.status.label}',
                     ),
                   ),
                 ),
@@ -157,7 +160,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                     leading: Icon(Icons.block_outlined),
                     title: Text(context.l10n.t('solicitud_no_disponible')),
                     subtitle: Text(
-                      'En el estado actual no se puede crear recojo ni delivery. Si abriste una ventana antigua, vuelve al detalle y recarga la reserva.',
+                      l10n.t('delivery_reservation_not_available_subtitle'),
                     ),
                   ),
                 ),
@@ -168,15 +171,20 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
             _type = allowedTypes.first;
           }
           _seedReservationContext(reservation);
-          final servicePoint = _selectedPoint ?? _defaultServicePoint(reservation);
+          final servicePoint =
+              _selectedPoint ?? _defaultServicePoint(reservation);
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Card(
                 child: ListTile(
-                  title: Text('Reserva ${reservation.code}'),
+                  title: Text(
+                    '${l10n.t('admin_reservation_code')}: ${reservation.code}',
+                  ),
                   subtitle: Text(
-                    '${reservation.warehouse.name}\nEstado actual: ${reservation.status.label}',
+                    '${reservation.warehouse.name}\n'
+                    '${l10n.t('reservation_current_status')}: '
+                    '${reservation.status.label}',
                   ),
                 ),
               ),
@@ -194,27 +202,27 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                     label: Text(context.l10n.t('entrega')),
                   ),
                 ],
-                        selected: {_type},
-                        onSelectionChanged: (selection) {
-                          final next = selection.first;
+                selected: {_type},
+                onSelectionChanged: (selection) {
+                  final next = selection.first;
                   if (!allowedTypes.contains(next)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           next == DeliveryRequestType.pickup
-                              ? 'Este estado de reserva aun no permite solicitar recojo.'
-                              : 'Este estado de reserva aun no permite solicitar delivery.',
+                              ? l10n.t('delivery_status_not_allowed_pickup')
+                              : l10n.t('delivery_status_not_allowed_dropoff'),
                         ),
                       ),
                     );
                     return;
-                          }
-                          setState(() {
-                            _type = next;
-                            _seededReservationKey = null;
-                          });
-                        },
-                      ),
+                  }
+                  setState(() {
+                    _type = next;
+                    _seededReservationKey = null;
+                  });
+                },
+              ),
               SizedBox(height: 12),
               Card(
                 child: Padding(
@@ -247,7 +255,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.warehouse_outlined),
                         title: Text(
-                          'Punto base: ${reservation.warehouse.name}',
+                          '${l10n.t('delivery_base_point')}: ${reservation.warehouse.name}',
                         ),
                         subtitle: Text(
                           '${reservation.warehouse.address}\n${_defaultZone(reservation)}',
@@ -262,8 +270,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                           icon: const Icon(Icons.gps_fixed_outlined),
                           label: Text(
                             _resolvingCurrentLocation
-                                ? 'Detectando ubicacion...'
-                                : 'Usar mi ubicacion actual',
+                                ? l10n.t('delivery_detecting_location')
+                                : l10n.t('delivery_use_current_location'),
                           ),
                         )
                       else
@@ -297,32 +305,34 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
               TextField(
                 controller: _addressController,
                 decoration: InputDecoration(
-                  labelText: _type.addressLabel,
-                  hintText: _type.addressHint,
+                  labelText: l10n.t(_type.addressLabelKey),
+                  hintText: l10n.t(_type.addressHintKey),
                 ),
                 maxLines: 2,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _windowController,
-                decoration: InputDecoration(labelText: _type.windowLabel),
+                decoration: InputDecoration(
+                  labelText: l10n.t(_type.windowLabelKey),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _zoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Zona o ciudad',
-                  hintText: 'LIMA, CUSCO, MIRAFLORES, etc.',
+                decoration: InputDecoration(
+                  labelText: l10n.t('delivery_zone_city_label'),
+                  hintText: l10n.t('delivery_zone_city_hint'),
                 ),
               ),
               const SizedBox(height: 12),
               Card(
                 child: ListTile(
-                  title: Text(_type.priceLabel),
+                  title: Text(l10n.t(_type.priceLabelKey)),
                   subtitle: Text(
                     _type == DeliveryRequestType.pickup
-                        ? 'El equipaje sera recogido y trasladado al almacen.'
-                        : 'El equipaje sera entregado en el destino indicado.',
+                        ? l10n.t('delivery_pickup_info_subtitle')
+                        : l10n.t('delivery_dropoff_info_subtitle'),
                   ),
                   trailing: Text(context.l10n.t('s1500')),
                 ),
@@ -333,12 +343,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                   child: ListTile(
                     leading: Icon(Icons.info_outline),
                     title: Text(context.l10n.t('como_funciona_el_recojo')),
-                    subtitle: Text(
-                      '1. Solicitas la movilidad.\n'
-                      '2. Un courier toma el servicio.\n'
-                      '3. Sigue el tracking en vivo.\n'
-                      '4. Cuando el equipaje llega al almacen, tu reserva pasa a almacenada.',
-                    ),
+                    subtitle: Text(l10n.t('delivery_pickup_steps')),
                   ),
                 ),
               ],
@@ -350,14 +355,18 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(double.infinity, 52),
                 ),
-                child: Text(_loading ? 'Procesando...' : _type.actionLabel),
+                child: Text(
+                  _loading
+                      ? l10n.t('delivery_processing')
+                      : l10n.t(_type.actionLabelKey),
+                ),
               ),
             ],
           );
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo preparar la solicitud: $error',
+          message: '${l10n.t('delivery_prepare_failed')}: $error',
           onRetry: () =>
               ref.invalidate(reservationByIdProvider(widget.reservationId)),
         ),
@@ -447,7 +456,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showMessage('Activa el GPS para usar tu ubicacion actual.');
+        _showMessage(context.l10n.t('delivery_enable_gps'));
         return;
       }
 
@@ -457,7 +466,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        _showMessage('No hay permisos de ubicacion para continuar.');
+        _showMessage(context.l10n.t('delivery_location_permission_denied'));
         return;
       }
 
@@ -465,8 +474,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       if (position == null) {
         throw StateError(
           kIsWeb
-              ? 'El navegador no entrego una ubicacion valida.'
-              : 'El dispositivo no devolvio coordenadas validas.',
+              ? context.l10n.t('delivery_browser_location_invalid')
+              : context.l10n.t('delivery_device_location_invalid'),
         );
       }
       final point = LatLng(position.latitude, position.longitude);
@@ -474,11 +483,14 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       setState(() => _selectedPoint = point);
       _prefillAddressFromPoint(point, reservation, currentLocation: true);
       _showMessage(
-        'Ubicacion actual capturada (precision ~${position.accuracy.toStringAsFixed(0)} m).',
+        '${context.l10n.t('delivery_location_captured')} '
+        '(~${position.accuracy.toStringAsFixed(0)} m).',
       );
     } catch (error) {
       _showMessage(
-        'No se pudo obtener ubicacion actual: ${AppErrorFormatter.readable(error)}. Puedes ajustar el punto manualmente en el mapa.',
+        '${context.l10n.t('delivery_location_failed')}: '
+        '${AppErrorFormatter.readable(error)}. '
+        '${context.l10n.t('elegir_punto_en_mapa')}.',
       );
     } finally {
       if (mounted) {
@@ -491,14 +503,13 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     final initialPoint = _selectedPoint ?? _defaultServicePoint(reservation);
     final selected = await showDialog<LatLng>(
       context: context,
-      builder: (context) => _DeliveryLocationPickerDialog(
-        initialPoint: initialPoint,
-      ),
+      builder: (context) =>
+          _DeliveryLocationPickerDialog(initialPoint: initialPoint),
     );
     if (selected == null || !mounted) return;
     setState(() => _selectedPoint = selected);
     _prefillAddressFromPoint(selected, reservation, currentLocation: false);
-    _showMessage('Ubicacion seleccionada en mapa.');
+    _showMessage(context.l10n.t('delivery_location_pick_success'));
   }
 
   void _prefillAddressFromPoint(
@@ -510,11 +521,11 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
         '${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}';
     final baseArea = _defaultZone(reservation);
     final prefix = currentLocation
-        ? 'Mi ubicacion actual'
+        ? context.l10n.t('delivery_my_current_location_prefix')
         : _type == DeliveryRequestType.pickup
-        ? 'Punto de recojo'
-        : 'Punto de entrega';
-    _setAddressText('$prefix en $baseArea ($locationLabel)');
+        ? context.l10n.t('delivery_pickup_point_prefix')
+        : context.l10n.t('delivery_dropoff_point_prefix');
+    _setAddressText('$prefix - $baseArea ($locationLabel)');
     if (_zoneController.text.trim().isEmpty || _zoneAutofilled) {
       _setZoneText(baseArea);
     }
@@ -527,10 +538,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     final allowedTypes = _allowedTypesForReservation(reservation);
     if (!allowedTypes.contains(_type)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Esta reserva cambio de estado. Actualiza y vuelve a intentar la solicitud.',
-          ),
+        SnackBar(
+          content: Text(context.l10n.t('delivery_status_changed_retry')),
         ),
       );
       return;
@@ -543,22 +552,29 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
 
     if (address.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ingresa ${_type.addressLabel.toLowerCase()}.')),
+        SnackBar(
+          content: Text(
+            '${context.l10n.t('delivery_enter_field')} '
+            '${context.l10n.t(_type.addressLabelKey).toLowerCase()}.',
+          ),
+        ),
       );
       return;
     }
     if (zone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('ingresa_la_zona_o_ciudad_del_servicio'))),
+        SnackBar(
+          content: Text(
+            context.l10n.t('ingresa_la_zona_o_ciudad_del_servicio'),
+          ),
+        ),
       );
       return;
     }
     if (!_hasValidPoint(point)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Debes fijar ubicacion del servicio (actual o mapa) antes de confirmar.',
-          ),
+          content: Text(context.l10n.t('delivery_service_location_required')),
         ),
       );
       return;
@@ -576,16 +592,19 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
             latitude: point.latitude,
             longitude: point.longitude,
             message:
-                '${_type.title} solicitado hacia $address (${window.isEmpty ? 'sin franja' : window}) [${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}].',
+                '${context.l10n.t(_type.titleKey)} '
+                'hacia $address '
+                '(${window.isEmpty ? context.l10n.t('delivery_no_window') : window}) '
+                '[${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}].',
           );
       ref.invalidate(reservationByIdProvider(widget.reservationId));
       ref.invalidate(myReservationsProvider);
       ref.invalidate(adminReservationsProvider);
       ref.invalidate(adminReservationListProvider);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_type.successMessage)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t(_type.successMessageKey))),
+      );
       context.push(_resolveTrackingRoute(reservation.id));
     } catch (error) {
       if (!context.mounted) return;
@@ -593,7 +612,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo registrar la solicitud: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('delivery_request_failed')}: '
+            '${AppErrorFormatter.readable(error)}',
           ),
         ),
       );
@@ -662,14 +682,19 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     }
 
     try {
-      final streamed = await Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 0,
-        ),
-      ).where((position) => _isValidCoordinate(position.latitude, position.longitude)).first.timeout(
-            const Duration(seconds: 8),
-          );
+      final streamed =
+          await Geolocator.getPositionStream(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.high,
+                  distanceFilter: 0,
+                ),
+              )
+              .where(
+                (position) =>
+                    _isValidCoordinate(position.latitude, position.longitude),
+              )
+              .first
+              .timeout(const Duration(seconds: 8));
       if (bestPosition == null || streamed.accuracy < bestPosition.accuracy) {
         bestPosition = streamed;
       }
@@ -682,7 +707,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     }
 
     final lastKnown = await Geolocator.getLastKnownPosition();
-    if (lastKnown != null && _isPositionFresh(lastKnown, maxAge: const Duration(minutes: 15))) {
+    if (lastKnown != null &&
+        _isPositionFresh(lastKnown, maxAge: const Duration(minutes: 15))) {
       return lastKnown;
     }
     return bestPosition;
@@ -729,15 +755,13 @@ class _DeliveryLocationPickerDialogState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Elegir punto en mapa',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                context.l10n.t('delivery_map_pick_title'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Toca el mapa para fijar la ubicacion de recojo o entrega.',
-              ),
+              Text(context.l10n.t('delivery_map_pick_subtitle')),
               const SizedBox(height: 12),
               Expanded(
                 child: ClipRRect(
@@ -829,14 +853,14 @@ class _CoordinatePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final composedLabel = '$label: $value';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FA),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text('$label: $value'),
+      child: Text(composedLabel),
     );
   }
 }
-

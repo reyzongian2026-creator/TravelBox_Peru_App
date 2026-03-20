@@ -404,11 +404,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 controller: _currentPasswordController,
                 obscureText: !_currentPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: 'Contrasena actual para cambios sensibles',
+                  labelText: context.l10n.t('current_password_sensitive_changes'),
                   suffixIcon: IconButton(
                     tooltip: _currentPasswordVisible
-                        ? 'Ocultar contrasena'
-                        : 'Ver contrasena',
+                        ? context.l10n.t('hide_password')
+                        : context.l10n.t('show_password'),
                     onPressed: () => setState(
                       () => _currentPasswordVisible = !_currentPasswordVisible,
                     ),

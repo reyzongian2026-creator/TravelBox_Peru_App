@@ -1156,11 +1156,11 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     TextFormField(
                       controller: _passwordController,
                       decoration: InputDecoration(
-                        labelText: 'Contrasena temporal',
+                        labelText: context.l10n.t('temporary_password'),
                         suffixIcon: IconButton(
                           tooltip: _passwordVisible
-                              ? 'Ocultar contrasena'
-                              : 'Ver contrasena',
+                              ? context.l10n.t('hide_password')
+                              : context.l10n.t('show_password'),
                           onPressed: () => setState(
                             () => _passwordVisible = !_passwordVisible,
                           ),
@@ -1178,11 +1178,11 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     TextFormField(
                       controller: _confirmPasswordController,
                       decoration: InputDecoration(
-                        labelText: 'Confirmar contrasena',
+                        labelText: context.l10n.t('confirm_password'),
                         suffixIcon: IconButton(
                           tooltip: _confirmPasswordVisible
-                              ? 'Ocultar contrasena'
-                              : 'Ver contrasena',
+                              ? context.l10n.t('hide_password')
+                              : context.l10n.t('show_password'),
                           onPressed: () => setState(
                             () => _confirmPasswordVisible =
                                 !_confirmPasswordVisible,
@@ -1453,11 +1453,11 @@ class _PasswordDialogState extends State<_PasswordDialog> {
                   TextFormField(
                     controller: _passwordController,
                     decoration: InputDecoration(
-                      labelText: 'Nueva contrasena',
+                      labelText: context.l10n.t('new_password'),
                       suffixIcon: IconButton(
                         tooltip: _passwordVisible
-                            ? 'Ocultar contrasena'
-                            : 'Ver contrasena',
+                            ? context.l10n.t('hide_password')
+                            : context.l10n.t('show_password'),
                         onPressed: () => setState(
                           () => _passwordVisible = !_passwordVisible,
                         ),
@@ -1475,11 +1475,11 @@ class _PasswordDialogState extends State<_PasswordDialog> {
                   TextFormField(
                     controller: _confirmPasswordController,
                     decoration: InputDecoration(
-                      labelText: 'Confirmar contrasena',
+                      labelText: context.l10n.t('confirm_password'),
                       suffixIcon: IconButton(
                         tooltip: _confirmPasswordVisible
-                            ? 'Ocultar contrasena'
-                            : 'Ver contrasena',
+                            ? context.l10n.t('hide_password')
+                            : context.l10n.t('show_password'),
                         onPressed: () => setState(
                           () => _confirmPasswordVisible =
                               !_confirmPasswordVisible,

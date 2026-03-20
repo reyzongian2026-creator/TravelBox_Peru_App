@@ -45,3 +45,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local automation artifacts
+/node_modules/
+/artifacts/mobile-layout-audit-*/
+/tmp-*.png
+/tmp_spa_server.pid
+/frontend-web-active.err
+/android-run.err

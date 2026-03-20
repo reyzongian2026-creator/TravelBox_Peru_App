@@ -56,7 +56,7 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: _loading ? null : () => context.go('/login'),
-                  tooltip: 'Volver',
+                  tooltip: l10n.t('back'),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -103,7 +103,7 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: SelectableText(
-                  'Codigo mock: $_resetCodePreview',
+                  '${l10n.t('mock_code')}: $_resetCodePreview',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -128,10 +128,10 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                       validator: (value) {
                         final text = value?.trim() ?? '';
                         if (text.isEmpty) {
-                          return 'Ingresa el codigo de recuperacion.';
+                          return l10n.t('password_reset_code_required');
                         }
                         if (text.length < 4) {
-                          return 'Codigo invalido.';
+                          return l10n.t('invalid_code');
                         }
                         return null;
                       },
@@ -143,8 +143,8 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                         labelText: l10n.t('new_password'),
                         suffixIcon: IconButton(
                           tooltip: _newPasswordVisible
-                              ? 'Ocultar contrasena'
-                              : 'Ver contrasena',
+                              ? l10n.t('hide_password')
+                              : l10n.t('show_password'),
                           onPressed: () => setState(
                             () => _newPasswordVisible = !_newPasswordVisible,
                           ),
@@ -165,8 +165,8 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                         labelText: l10n.t('confirm_new_password'),
                         suffixIcon: IconButton(
                           tooltip: _confirmNewPasswordVisible
-                              ? 'Ocultar contrasena'
-                              : 'Ver contrasena',
+                              ? l10n.t('hide_password')
+                              : l10n.t('show_password'),
                           onPressed: () => setState(
                             () => _confirmNewPasswordVisible =
                                 !_confirmNewPasswordVisible,
@@ -234,7 +234,8 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo enviar codigo: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('send_code_failed')}: '
+            '${AppErrorFormatter.readable(error)}',
           ),
         ),
       );
@@ -268,7 +269,8 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo actualizar: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('update_failed')}: '
+            '${AppErrorFormatter.readable(error)}',
           ),
         ),
       );

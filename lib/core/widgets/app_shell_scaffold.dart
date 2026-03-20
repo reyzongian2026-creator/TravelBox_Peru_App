@@ -542,7 +542,7 @@ class _MobileFloatingNavBar extends StatelessWidget {
 
   static const double _dockBottomInset = 8;
   static const double _hiddenPeekInset = 8;
-  static const double _contentInsetBuffer = 16;
+  static const double _contentInsetBuffer = 28;
   static const double _centerButtonSize = 56;
   static const double _centerButtonTopOffset = -2;
 

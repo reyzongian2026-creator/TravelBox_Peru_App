@@ -85,7 +85,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'No se pudo registrar: ${AppErrorFormatter.readable(next.error!)}',
+              '${context.l10n.t('register_failed')}: '
+              '${AppErrorFormatter.readable(next.error!)}',
             ),
           ),
         );
@@ -280,8 +281,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               obscureText: !_passwordVisible,
               suffixIcon: IconButton(
                 tooltip: _passwordVisible
-                    ? 'Ocultar contrasena'
-                    : 'Ver contrasena',
+                    ? l10n.t('hide_password')
+                    : l10n.t('show_password'),
                 onPressed: () =>
                     setState(() => _passwordVisible = !_passwordVisible),
                 icon: Icon(
@@ -298,8 +299,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               obscureText: !_confirmPasswordVisible,
               suffixIcon: IconButton(
                 tooltip: _confirmPasswordVisible
-                    ? 'Ocultar contrasena'
-                    : 'Ver contrasena',
+                    ? l10n.t('hide_password')
+                    : l10n.t('show_password'),
                 onPressed: () => setState(
                   () => _confirmPasswordVisible = !_confirmPasswordVisible,
                 ),
@@ -415,10 +416,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   String? _phoneValidator(String? value) {
     final raw = value?.trim() ?? '';
     if (raw.isEmpty) {
-      return 'Ingresa un teléfono válido.';
+      return context.l10n.t('invalid_phone');
     }
     if (!RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(raw)) {
-      return 'Usa formato internacional, ejemplo +51999999999.';
+      return context.l10n.t('phone_international_format');
     }
     return null;
   }
