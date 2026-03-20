@@ -137,7 +137,10 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                             value: 'ACTIVE',
                             child: Text(context.l10n.t('activos')),
                           ),
-                          DropdownMenuItem(value: 'ALL', child: Text(context.l10n.t('todos'))),
+                          DropdownMenuItem(
+                            value: 'ALL',
+                            child: Text(context.l10n.t('todos')),
+                          ),
                           DropdownMenuItem(
                             value: 'INACTIVE',
                             child: Text(context.l10n.t('inactivos')),
@@ -375,7 +378,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       _refreshWarehouseViews();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('almacen_actualizado_correctamente'))),
+        SnackBar(
+          content: Text(context.l10n.t('almacen_actualizado_correctamente')),
+        ),
       );
     } catch (error) {
       _showError(error);
@@ -390,16 +395,18 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
     String warehouseId,
     SelectedEvidenceImage image,
   ) async {
-    await ref.read(dioProvider).post<Map<String, dynamic>>(
-      '/admin/warehouses/$warehouseId/photo',
-      data: FormData.fromMap({
-        'file': MultipartFile.fromBytes(
-          image.bytes,
-          filename: image.filename,
-          contentType: MediaType.parse(image.mimeType),
-        ),
-      }),
-    );
+    await ref
+        .read(dioProvider)
+        .post<Map<String, dynamic>>(
+          '/admin/warehouses/$warehouseId/photo',
+          data: FormData.fromMap({
+            'file': MultipartFile.fromBytes(
+              image.bytes,
+              filename: image.filename,
+              contentType: MediaType.parse(image.mimeType),
+            ),
+          }),
+        );
   }
 
   Future<void> _deleteWarehouse(AdminWarehouse warehouse) async {
@@ -432,7 +439,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       _refreshWarehouseViews();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('almacen_desactivado_correctamente'))),
+        SnackBar(
+          content: Text(context.l10n.t('almacen_desactivado_correctamente')),
+        ),
       );
     } catch (error) {
       _showError(error);
@@ -455,7 +464,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       _refreshWarehouseViews();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('almacen_reactivado_correctamente'))),
+        SnackBar(
+          content: Text(context.l10n.t('almacen_reactivado_correctamente')),
+        ),
       );
     } catch (error) {
       _showError(error);
@@ -634,388 +645,407 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     final citiesAsync = ref.watch(adminCitiesProvider);
     final zonesAsync = ref.watch(adminZonesProvider(_selectedCityId ?? 0));
     final isEditing = widget.initial != null;
+    final media = MediaQuery.of(context);
+    final maxDialogWidth = media.size.width >= 760
+        ? 560.0
+        : media.size.width * 0.94;
+    final maxDialogHeight = media.size.height * 0.78;
 
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       title: Text(isEditing ? 'Editar almacen' : 'Nuevo almacen'),
       content: SizedBox(
-        width: 560,
-        child: Form(
-          key: _formKey,
-          autovalidateMode: _showValidation
-              ? AutovalidateMode.always
-              : AutovalidateMode.disabled,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              if (_formError != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF1F1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _formError!,
-                      style: const TextStyle(
-                        color: Color(0xFF9E1B1B),
-                        fontWeight: FontWeight.w600,
+        width: maxDialogWidth,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxDialogHeight),
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _showValidation
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                if (_formError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1F1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _formError!,
+                        style: const TextStyle(
+                          color: Color(0xFF9E1B1B),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
+                _WarehousePhotoPreview(
+                  imageUrl: widget.initial?.imageUrl,
+                  selectedBytes: _selectedPhoto?.bytes,
+                  warehouseName: _nameController.text.trim().isEmpty
+                      ? (widget.initial?.name ?? 'TravelBox')
+                      : _nameController.text.trim(),
+                  cityName:
+                      _selectedCityName ?? widget.initial?.cityName ?? 'Peru',
                 ),
-              _WarehousePhotoPreview(
-                imageUrl: widget.initial?.imageUrl,
-                selectedBytes: _selectedPhoto?.bytes,
-                warehouseName: _nameController.text.trim().isEmpty
-                    ? (widget.initial?.name ?? 'TravelBox')
-                    : _nameController.text.trim(),
-                cityName:
-                    _selectedCityName ?? widget.initial?.cityName ?? 'Peru',
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.tonalIcon(
-                    onPressed: AppEnv.firebaseStorageUploadsEnabled
-                        ? _pickPhoto
-                        : null,
-                    icon: const Icon(Icons.photo_camera_back_outlined),
-                    label: Text(
-                      widget.initial?.imageUrl != null || _selectedPhoto != null
-                          ? 'Cambiar foto'
-                          : 'Subir foto',
-                    ),
-                  ),
-                  if (_selectedPhoto != null)
-                    OutlinedButton.icon(
-                      onPressed: _clearPhotoSelection,
-                      icon: const Icon(Icons.close),
-                      label: Text(context.l10n.t('quitar_seleccion')),
-                    ),
-                ],
-              ),
-              SizedBox(height: 6),
-              Text(
-                AppEnv.firebaseStorageUploadsEnabled
-                    ? 'Si no subes una foto, TravelBox mostrara una portada automatica por sede.'
-                    : 'Firebase Storage esta deshabilitado por ahora. Se mostrara la portada automatica por sede.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
-                textInputAction: TextInputAction.next,
-                validator: (value) {
-                  final required = FormValidators.requiredText(
-                    value,
-                    label: 'el nombre del almacen',
-                    minLength: 4,
-                  );
-                  if (required != null) return required;
-                  final text = value?.trim() ?? '';
-                  if (text.length > 140) {
-                    return 'El nombre no puede superar 140 caracteres.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Direccion'),
-                textInputAction: TextInputAction.next,
-                validator: (value) {
-                  final required = FormValidators.requiredText(
-                    value,
-                    label: 'la direccion',
-                    minLength: 6,
-                  );
-                  if (required != null) return required;
-                  final text = value?.trim() ?? '';
-                  if (text.length > 220) {
-                    return 'La direccion no puede superar 220 caracteres.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              citiesAsync.when(
-                data: (cities) => DropdownButtonFormField<int>(
-                  initialValue: _selectedCityId,
-                  decoration: const InputDecoration(labelText: 'Ciudad'),
-                  items: cities
-                      .map(
-                        (city) => DropdownMenuItem<int>(
-                          value: city.id,
-                          child: Text(city.name),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCityId = value;
-                      _selectedCityName = _findCity(cities, value)?.name;
-                      _selectedZoneId = null;
-                      _formError = null;
-                      _applyCityCenterIfEmpty(_findCity(cities, value));
-                    });
-                  },
-                  validator: (value) =>
-                      value == null ? 'Selecciona la ciudad del almacen.' : null,
-                ),
-                loading: () => const LinearProgressIndicator(),
-                error: (_, _) => Text(context.l10n.t('no_se_pudieron_cargar_ciudades')),
-              ),
-              SizedBox(height: 10),
-              zonesAsync.when(
-                data: (zones) => DropdownButtonFormField<int>(
-                  initialValue: _selectedZoneId,
-                  decoration: const InputDecoration(
-                    labelText: 'Zona turistica (opcional)',
-                  ),
-                  items: zones
-                      .map(
-                        (zone) => DropdownMenuItem<int>(
-                          value: zone.id,
-                          child: Text(zone.name),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() {
-                    _selectedZoneId = value;
-                    _formError = null;
-                    _applyZoneCenterIfEmpty(_findZone(zones, value));
-                  }),
-                ),
-                loading: () => const LinearProgressIndicator(),
-                error: (_, _) => Text(context.l10n.t('no_se_pudieron_cargar_zonas')),
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _latitudeController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      decoration: const InputDecoration(labelText: 'Latitud'),
-                      validator: FormValidators.latitude,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _longitudeController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      decoration: const InputDecoration(labelText: 'Longitud'),
-                      validator: FormValidators.longitude,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              zonesAsync.when(
-                data: (zones) => citiesAsync.when(
-                  data: (cities) {
-                    final cityName =
-                        _findCity(cities, _selectedCityId)?.name ?? 'Peru';
-                    final zoneName = _findZone(zones, _selectedZoneId)?.name;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            FilledButton.tonalIcon(
-                              onPressed: () => _openMapPicker(
-                                cityName: cityName,
-                                zoneName: zoneName,
-                                zones: zones,
-                              ),
-                              icon: const Icon(Icons.map_outlined),
-                              label: Text(context.l10n.t('elegir_en_mapa')),
-                            ),
-                            if (_latitudeController.text.trim().isNotEmpty &&
-                                _longitudeController.text.trim().isNotEmpty)
-                              Chip(
-                                label: Text(
-                                  '${_latitudeController.text.trim()}, ${_longitudeController.text.trim()}',
-                                ),
-                              ),
-                          ],
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          'Puedes tocar el mapa para registrar la ubicacion exacta sin calcular coordenadas manualmente.',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    );
-                  },
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                ),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _capacityController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Capacidad'),
-                      validator: (value) => FormValidators.positiveInt(
-                        value,
-                        label: 'La capacidad',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _openHourController,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(labelText: 'Apertura'),
-                      validator: (value) =>
-                          FormValidators.hour(value, label: 'La apertura'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _closeHourController,
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(labelText: 'Cierre'),
-                      validator: (value) {
-                        final base = FormValidators.hour(
-                          value,
-                          label: 'El cierre',
-                        );
-                        if (base != null) return base;
-                        return FormValidators.hourRange(
-                          _openHourController.text,
-                          value,
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    Text(
-                      'Precios por almacen (solo admin)',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                    FilledButton.tonalIcon(
+                      onPressed: AppEnv.firebaseStorageUploadsEnabled
+                          ? _pickPhoto
+                          : null,
+                      icon: const Icon(Icons.photo_camera_back_outlined),
+                      label: Text(
+                        widget.initial?.imageUrl != null ||
+                                _selectedPhoto != null
+                            ? 'Cambiar foto'
+                            : 'Subir foto',
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MoneyField(
-                            controller: _pricePerHourSmallController,
-                            label: 'Tarifa S/h',
+                    if (_selectedPhoto != null)
+                      OutlinedButton.icon(
+                        onPressed: _clearPhotoSelection,
+                        icon: const Icon(Icons.close),
+                        label: Text(context.l10n.t('quitar_seleccion')),
+                      ),
+                  ],
+                ),
+                SizedBox(height: 6),
+                Text(
+                  AppEnv.firebaseStorageUploadsEnabled
+                      ? 'Si no subes una foto, TravelBox mostrara una portada automatica por sede.'
+                      : 'Firebase Storage esta deshabilitado por ahora. Se mostrara la portada automatica por sede.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(labelText: 'Nombre'),
+                  textInputAction: TextInputAction.next,
+                  validator: (value) {
+                    final required = FormValidators.requiredText(
+                      value,
+                      label: 'el nombre del almacen',
+                      minLength: 4,
+                    );
+                    if (required != null) return required;
+                    final text = value?.trim() ?? '';
+                    if (text.length > 140) {
+                      return 'El nombre no puede superar 140 caracteres.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(labelText: 'Direccion'),
+                  textInputAction: TextInputAction.next,
+                  validator: (value) {
+                    final required = FormValidators.requiredText(
+                      value,
+                      label: 'la direccion',
+                      minLength: 6,
+                    );
+                    if (required != null) return required;
+                    final text = value?.trim() ?? '';
+                    if (text.length > 220) {
+                      return 'La direccion no puede superar 220 caracteres.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                citiesAsync.when(
+                  data: (cities) => DropdownButtonFormField<int>(
+                    initialValue: _selectedCityId,
+                    decoration: const InputDecoration(labelText: 'Ciudad'),
+                    items: cities
+                        .map(
+                          (city) => DropdownMenuItem<int>(
+                            value: city.id,
+                            child: Text(city.name),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MoneyField(
-                            controller: _pricePerHourMediumController,
-                            label: 'Tarifa M/h',
-                          ),
-                        ),
-                      ],
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCityId = value;
+                        _selectedCityName = _findCity(cities, value)?.name;
+                        _selectedZoneId = null;
+                        _formError = null;
+                        _applyCityCenterIfEmpty(_findCity(cities, value));
+                      });
+                    },
+                    validator: (value) => value == null
+                        ? 'Selecciona la ciudad del almacen.'
+                        : null,
+                  ),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, _) =>
+                      Text(context.l10n.t('no_se_pudieron_cargar_ciudades')),
+                ),
+                SizedBox(height: 10),
+                zonesAsync.when(
+                  data: (zones) => DropdownButtonFormField<int>(
+                    initialValue: _selectedZoneId,
+                    decoration: const InputDecoration(
+                      labelText: 'Zona turistica (opcional)',
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MoneyField(
-                            controller: _pricePerHourLargeController,
-                            label: 'Tarifa L/h',
+                    items: zones
+                        .map(
+                          (zone) => DropdownMenuItem<int>(
+                            value: zone.id,
+                            child: Text(zone.name),
                           ),
+                        )
+                        .toList(),
+                    onChanged: (value) => setState(() {
+                      _selectedZoneId = value;
+                      _formError = null;
+                      _applyZoneCenterIfEmpty(_findZone(zones, value));
+                    }),
+                  ),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, _) =>
+                      Text(context.l10n.t('no_se_pudieron_cargar_zonas')),
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _latitudeController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MoneyField(
-                            controller: _pricePerHourExtraLargeController,
-                            label: 'Tarifa XL/h',
-                          ),
-                        ),
-                      ],
+                        decoration: const InputDecoration(labelText: 'Latitud'),
+                        validator: FormValidators.latitude,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MoneyField(
-                            controller: _pickupFeeController,
-                            label: 'Recojo delivery',
-                          ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _longitudeController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MoneyField(
-                            controller: _dropoffFeeController,
-                            label: 'Entrega delivery',
-                          ),
+                        decoration: const InputDecoration(
+                          labelText: 'Longitud',
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _MoneyField(
-                      controller: _insuranceFeeController,
-                      label: 'Seguro adicional',
+                        validator: FormValidators.longitude,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _rulesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Reglas (opcional)',
+                const SizedBox(height: 10),
+                zonesAsync.when(
+                  data: (zones) => citiesAsync.when(
+                    data: (cities) {
+                      final cityName =
+                          _findCity(cities, _selectedCityId)?.name ?? 'Peru';
+                      final zoneName = _findZone(zones, _selectedZoneId)?.name;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilledButton.tonalIcon(
+                                onPressed: () => _openMapPicker(
+                                  cityName: cityName,
+                                  zoneName: zoneName,
+                                  zones: zones,
+                                ),
+                                icon: const Icon(Icons.map_outlined),
+                                label: Text(context.l10n.t('elegir_en_mapa')),
+                              ),
+                              if (_latitudeController.text.trim().isNotEmpty &&
+                                  _longitudeController.text.trim().isNotEmpty)
+                                Chip(
+                                  label: Text(
+                                    '${_latitudeController.text.trim()}, ${_longitudeController.text.trim()}',
+                                  ),
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Puedes tocar el mapa para registrar la ubicacion exacta sin calcular coordenadas manualmente.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                  ),
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
                 ),
-                validator: (value) {
-                  final text = value?.trim() ?? '';
-                  if (text.length > 600) {
-                    return 'Las reglas no pueden superar 600 caracteres.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _active,
-                onChanged: (value) => setState(() => _active = value),
-                title: Text(context.l10n.t('activo')),
-              ),
-            ],
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _capacityController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Capacidad',
+                        ),
+                        validator: (value) => FormValidators.positiveInt(
+                          value,
+                          label: 'La capacidad',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _openHourController,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Apertura',
+                        ),
+                        validator: (value) =>
+                            FormValidators.hour(value, label: 'La apertura'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _closeHourController,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(labelText: 'Cierre'),
+                        validator: (value) {
+                          final base = FormValidators.hour(
+                            value,
+                            label: 'El cierre',
+                          );
+                          if (base != null) return base;
+                          return FormValidators.hourRange(
+                            _openHourController.text,
+                            value,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Precios por almacen (solo admin)',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MoneyField(
+                              controller: _pricePerHourSmallController,
+                              label: 'Tarifa S/h',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MoneyField(
+                              controller: _pricePerHourMediumController,
+                              label: 'Tarifa M/h',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MoneyField(
+                              controller: _pricePerHourLargeController,
+                              label: 'Tarifa L/h',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MoneyField(
+                              controller: _pricePerHourExtraLargeController,
+                              label: 'Tarifa XL/h',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MoneyField(
+                              controller: _pickupFeeController,
+                              label: 'Recojo delivery',
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MoneyField(
+                              controller: _dropoffFeeController,
+                              label: 'Entrega delivery',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _MoneyField(
+                        controller: _insuranceFeeController,
+                        label: 'Seguro adicional',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _rulesController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Reglas (opcional)',
+                  ),
+                  validator: (value) {
+                    final text = value?.trim() ?? '';
+                    if (text.length > 600) {
+                      return 'Las reglas no pueden superar 600 caracteres.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 10),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _active,
+                  onChanged: (value) => setState(() => _active = value),
+                  title: Text(context.l10n.t('activo')),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1028,7 +1058,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
           onPressed: () {
             final isValid = _formKey.currentState!.validate();
             final cityId = _selectedCityId;
-            final latitude = FormValidators.parseDouble(_latitudeController.text);
+            final latitude = FormValidators.parseDouble(
+              _latitudeController.text,
+            );
             final longitude = FormValidators.parseDouble(
               _longitudeController.text,
             );
@@ -1132,7 +1164,8 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
         FormValidators.parseDouble(_longitudeController.text) == null) {
       setState(() {
         _showValidation = true;
-        _formError = 'Selecciona primero la ciudad para ubicar el almacen en el mapa.';
+        _formError =
+            'Selecciona primero la ciudad para ubicar el almacen en el mapa.';
       });
       return;
     }
@@ -1355,9 +1388,8 @@ class _WarehouseCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         warehouse.name,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     Chip(
@@ -1585,7 +1617,8 @@ class _WarehouseRegistryTable extends StatefulWidget {
   final List<AdminWarehouse> items;
 
   @override
-  State<_WarehouseRegistryTable> createState() => _WarehouseRegistryTableState();
+  State<_WarehouseRegistryTable> createState() =>
+      _WarehouseRegistryTableState();
 }
 
 class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
@@ -1663,9 +1696,7 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
                               Text('S/${item.dropoffFee.toStringAsFixed(2)}'),
                             ),
                             DataCell(
-                              Text(
-                                'S/${item.insuranceFee.toStringAsFixed(2)}',
-                              ),
+                              Text('S/${item.insuranceFee.toStringAsFixed(2)}'),
                             ),
                             DataCell(Text('${item.capacity}')),
                             DataCell(Text('${item.occupied}')),
@@ -1992,4 +2023,3 @@ String? _readWarehouseImageUrl(Map<String, dynamic> json) {
   }
   return null;
 }
-

@@ -100,12 +100,18 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                 DropdownButton<String>(
                   value: status,
                   items: [
-                    DropdownMenuItem(value: 'OPEN', child: Text(context.l10n.t('abiertos'))),
+                    DropdownMenuItem(
+                      value: 'OPEN',
+                      child: Text(context.l10n.t('abiertos')),
+                    ),
                     DropdownMenuItem(
                       value: 'RESOLVED',
                       child: Text(context.l10n.t('resueltos')),
                     ),
-                    DropdownMenuItem(value: 'ALL', child: Text(context.l10n.t('todos'))),
+                    DropdownMenuItem(
+                      value: 'ALL',
+                      child: Text(context.l10n.t('todos')),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -179,14 +185,18 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                   ? null
                                   : () => _exportResolvedCsv(resolvedItems),
                               icon: const Icon(Icons.table_view_outlined),
-                              label: Text(context.l10n.t('exportar_csv_resueltos')),
+                              label: Text(
+                                context.l10n.t('exportar_csv_resueltos'),
+                              ),
                             ),
                             OutlinedButton.icon(
                               onPressed: _saving || resolvedItems.isEmpty
                                   ? null
                                   : () => _exportResolvedPdf(resolvedItems),
                               icon: Icon(Icons.picture_as_pdf_outlined),
-                              label: Text(context.l10n.t('exportar_pdf_resueltos')),
+                              label: Text(
+                                context.l10n.t('exportar_pdf_resueltos'),
+                              ),
                             ),
                             if (resolvedItems.isEmpty)
                               Chip(
@@ -253,11 +263,15 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                     children: [
                                       if (item.customerName.isNotEmpty)
                                         Chip(
-                                          label: Text('Cliente: ${item.customerName}'),
+                                          label: Text(
+                                            'Cliente: ${item.customerName}',
+                                          ),
                                         ),
                                       if (item.customerPhone.isNotEmpty)
                                         Chip(
-                                          label: Text('Tel: ${item.customerPhone}'),
+                                          label: Text(
+                                            'Tel: ${item.customerPhone}',
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -306,7 +320,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                         icon: const Icon(
                                           Icons.visibility_outlined,
                                         ),
-                                        label: Text(context.l10n.t('ver_reserva')),
+                                        label: Text(
+                                          context.l10n.t('ver_reserva'),
+                                        ),
                                       ),
                                     if (!supportMode)
                                       OutlinedButton.icon(
@@ -314,7 +330,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                           _trackingRoute(item.reservationId),
                                         ),
                                         icon: Icon(Icons.route_outlined),
-                                        label: Text(context.l10n.t('ver_tracking')),
+                                        label: Text(
+                                          context.l10n.t('ver_tracking'),
+                                        ),
                                       ),
                                     if (item.customerWhatsappUrl != null)
                                       OutlinedButton.icon(
@@ -339,9 +357,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                         onPressed: _saving
                                             ? null
                                             : () => _resolveIncident(item),
-                                        icon: Icon(
-                                          Icons.task_alt_outlined,
-                                        ),
+                                        icon: Icon(Icons.task_alt_outlined),
                                         label: Text(context.l10n.t('resolver')),
                                       ),
                                   ],
@@ -433,9 +449,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
   Future<void> _openExternal(String url, String failMessage) async {
     final success = await launchUrlString(url);
     if (success || !mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(failMessage)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(failMessage)));
   }
 
   Future<void> _exportResolvedCsv(List<AdminIncidentItem> items) async {
@@ -626,10 +642,16 @@ class _ResolutionDialogState extends State<_ResolutionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final maxDialogWidth = media.size.width >= 620
+        ? 420.0
+        : media.size.width * 0.92;
+
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       title: Text(context.l10n.t('resolver_incidencia')),
       content: SizedBox(
-        width: 420,
+        width: maxDialogWidth,
         child: TextField(
           controller: _controller,
           maxLines: 4,
@@ -726,4 +748,3 @@ class AdminIncidentItem {
     caseSensitive: false,
   );
 }
-

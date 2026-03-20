@@ -1267,96 +1267,106 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
   @override
   Widget build(BuildContext context) {
     final completed = _selected.every((item) => item != null);
+    final media = MediaQuery.of(context);
+    final maxDialogWidth = media.size.width >= 980
+        ? 720.0
+        : media.size.width * 0.94;
+    final maxDialogHeight = media.size.height * 0.78;
+
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       title: Text(context.l10n.t('fotos_del_equipaje')),
       content: SizedBox(
-        width: 720,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Debes registrar ${widget.requiredPhotos} foto(s), una por cada bulto. Estas imágenes quedarán cerradas al confirmar el ingreso a almacén.',
-              ),
-              SizedBox(height: 14),
-              ...List.generate(widget.requiredPhotos, (index) {
-                final current = _selected[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bulto ${index + 1}',
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: 10),
-                          if (current != null)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                current.bytes,
-                                height: 180,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          else
-                            Container(
-                              height: 140,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF4F7F9),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFFD4DCE3),
-                                ),
-                              ),
-                              alignment: Alignment.center,
-                              child: const Text(
-                                'Aún no hay imagen seleccionada',
-                              ),
+        width: maxDialogWidth,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxDialogHeight),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Debes registrar ${widget.requiredPhotos} foto(s), una por cada bulto. Estas imágenes quedarán cerradas al confirmar el ingreso a almacén.',
+                ),
+                SizedBox(height: 14),
+                ...List.generate(widget.requiredPhotos, (index) {
+                  final current = _selected[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bulto ${index + 1}',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
-                          const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: _picking
-                                    ? null
-                                    : () => _pickForIndex(index),
-                                icon: const Icon(Icons.upload_file_outlined),
-                                label: Text(
-                                  current == null
-                                      ? 'Seleccionar imagen'
-                                      : 'Cambiar imagen',
+                            const SizedBox(height: 10),
+                            if (current != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.memory(
+                                  current.bytes,
+                                  height: 180,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            else
+                              Container(
+                                height: 140,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF4F7F9),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFD4DCE3),
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Aún no hay imagen seleccionada',
                                 ),
                               ),
-                              if (current != null)
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
                                 OutlinedButton.icon(
                                   onPressed: _picking
                                       ? null
-                                      : () => setState(
-                                          () => _selected[index] = null,
-                                        ),
-                                  icon: const Icon(Icons.close),
-                                  label: Text(context.l10n.t('quitar')),
+                                      : () => _pickForIndex(index),
+                                  icon: const Icon(Icons.upload_file_outlined),
+                                  label: Text(
+                                    current == null
+                                        ? 'Seleccionar imagen'
+                                        : 'Cambiar imagen',
+                                  ),
                                 ),
-                            ],
-                          ),
-                        ],
+                                if (current != null)
+                                  OutlinedButton.icon(
+                                    onPressed: _picking
+                                        ? null
+                                        : () => setState(
+                                            () => _selected[index] = null,
+                                          ),
+                                    icon: const Icon(Icons.close),
+                                    label: Text(context.l10n.t('quitar')),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
-            ],
+                  );
+                }),
+              ],
+            ),
           ),
         ),
       ),

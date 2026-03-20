@@ -130,9 +130,18 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 DropdownButton<String>(
                   value: _draftRole,
                   items: [
-                    DropdownMenuItem(value: 'ALL', child: Text(context.l10n.t('todos'))),
-                    DropdownMenuItem(value: 'CLIENT', child: Text(context.l10n.t('client'))),
-                    DropdownMenuItem(value: 'COURIER', child: Text(context.l10n.t('courier'))),
+                    DropdownMenuItem(
+                      value: 'ALL',
+                      child: Text(context.l10n.t('todos')),
+                    ),
+                    DropdownMenuItem(
+                      value: 'CLIENT',
+                      child: Text(context.l10n.t('client')),
+                    ),
+                    DropdownMenuItem(
+                      value: 'COURIER',
+                      child: Text(context.l10n.t('courier')),
+                    ),
                     DropdownMenuItem(
                       value: 'OPERATOR',
                       child: Text(context.l10n.t('operator')),
@@ -141,8 +150,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                       value: 'CITY_SUPERVISOR',
                       child: Text(context.l10n.t('citysupervisor')),
                     ),
-                    DropdownMenuItem(value: 'SUPPORT', child: Text(context.l10n.t('support'))),
-                    DropdownMenuItem(value: 'ADMIN', child: Text(context.l10n.t('admin'))),
+                    DropdownMenuItem(
+                      value: 'SUPPORT',
+                      child: Text(context.l10n.t('support')),
+                    ),
+                    DropdownMenuItem(
+                      value: 'ADMIN',
+                      child: Text(context.l10n.t('admin')),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -903,255 +918,282 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final maxDialogWidth = media.size.width >= 640
+        ? 460.0
+        : media.size.width * 0.92;
+    final maxDialogHeight = media.size.height * 0.72;
+
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       title: Text(widget.title),
       content: SizedBox(
-        width: 460,
-        child: Form(
-          key: _formKey,
-          autovalidateMode: _autovalidateMode,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre completo',
-                  ),
-                  validator: (value) =>
-                      FormValidators.requiredText(value, label: 'nombre'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Correo'),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: FormValidators.email,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Telefono'),
-                  keyboardType: TextInputType.phone,
-                  validator: FormValidators.phone,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _preferredLanguage,
-                  decoration: InputDecoration(labelText: 'Idioma'),
-                  items: [
-                    DropdownMenuItem(value: 'es', child: Text(context.l10n.t('es'))),
-                    DropdownMenuItem(value: 'en', child: Text(context.l10n.t('en'))),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _preferredLanguage = value);
-                    }
-                  },
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  controller: _nationalityController,
-                  decoration: const InputDecoration(labelText: 'Nacionalidad'),
-                  validator: (value) =>
-                      FormValidators.requiredText(value, label: 'nacionalidad'),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _documentType,
-                  decoration: InputDecoration(
-                    labelText: 'Tipo de documento',
-                    helperText: _requiresWorkerDocument
-                        ? 'Obligatorio para operadores, couriers y soporte.'
-                        : 'Opcional para este rol.',
-                  ),
-                  items: [
-                    DropdownMenuItem(value: 'DNI', child: Text(context.l10n.t('dni'))),
-                    DropdownMenuItem(value: 'CE', child: Text(context.l10n.t('ce'))),
-                    DropdownMenuItem(
-                      value: 'PASSPORT',
-                      child: Text(context.l10n.t('pasaporte')),
+        width: maxDialogWidth,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxDialogHeight),
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _autovalidateMode,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _fullNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre completo',
                     ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _documentType = value);
-                    }
-                  },
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  controller: _documentNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Numero de documento',
+                    validator: (value) =>
+                        FormValidators.requiredText(value, label: 'nombre'),
                   ),
-                  validator: (value) {
-                    if (_requiresWorkerDocument) {
-                      return FormValidators.requiredText(
-                        value,
-                        label: 'numero de documento',
-                      );
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: _pickDocumentPhoto,
-                        icon: const Icon(Icons.upload_file_outlined),
-                        label: Text(context.l10n.t('adjuntar_foto_dni')),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(labelText: 'Correo'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: FormValidators.email,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(labelText: 'Telefono'),
+                    keyboardType: TextInputType.phone,
+                    validator: FormValidators.phone,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _preferredLanguage,
+                    decoration: InputDecoration(labelText: 'Idioma'),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'es',
+                        child: Text(context.l10n.t('es')),
                       ),
-                      if (_documentPhotoFile != null)
-                        Chip(label: Text(_documentPhotoFile!.filename))
-                      else if (_existingDocumentPhotoPath?.isNotEmpty == true)
-                        Chip(label: Text(context.l10n.t('dni_ya_adjuntado'))),
+                      DropdownMenuItem(
+                        value: 'en',
+                        child: Text(context.l10n.t('en')),
+                      ),
                     ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _preferredLanguage = value);
+                      }
+                    },
                   ),
-                ),
-                SizedBox(height: 12),
-                TextFormField(
-                  controller: _vehiclePlateController,
-                  decoration: InputDecoration(
-                    labelText: 'Placa del vehiculo',
-                    helperText: _selectedRoles.contains('COURIER')
-                        ? 'Obligatoria para usuarios courier.'
-                        : 'Solo aplica para courier.',
-                  ),
-                  textCapitalization: TextCapitalization.characters,
-                  validator: (value) {
-                    if (_selectedRoles.contains('COURIER')) {
-                      return FormValidators.requiredText(
-                        value,
-                        label: 'la placa del vehiculo',
-                      );
-                    }
-                    return null;
-                  },
-                ),
-                if (widget.includePassword) ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   TextFormField(
-                    controller: _passwordController,
+                    controller: _nationalityController,
                     decoration: const InputDecoration(
-                      labelText: 'Contrasena temporal',
+                      labelText: 'Nacionalidad',
                     ),
-                    obscureText: true,
-                    validator: FormValidators.password,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Confirmar contrasena',
-                    ),
-                    obscureText: true,
-                    validator: (value) => FormValidators.confirmPassword(
+                    validator: (value) => FormValidators.requiredText(
                       value,
-                      _passwordController.text,
+                      label: 'nacionalidad',
                     ),
                   ),
-                ],
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(context.l10n.t('usuario_activo')),
-                  value: _active,
-                  subtitle: _selectedRoles.contains('ADMIN')
-                      ? Text(context.l10n.t('admin_siempre_activo'))
-                      : null,
-                  onChanged: _selectedRoles.contains('ADMIN')
-                      ? null
-                      : (value) => setState(() => _active = value),
-                ),
-                SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Roles',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ..._roles.map(
-                  (role) => CheckboxListTile(
-                    value: _selectedRoles.contains(role),
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(role),
-                    onChanged: (checked) {
-                      setState(() {
-                        if (checked == true) {
-                          _selectedRoles.add(role);
-                        } else {
-                          _selectedRoles.remove(role);
-                        }
-                        if (_selectedRoles.contains('ADMIN')) {
-                          _active = true;
-                        }
-                      });
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: _documentType,
+                    decoration: InputDecoration(
+                      labelText: 'Tipo de documento',
+                      helperText: _requiresWorkerDocument
+                          ? 'Obligatorio para operadores, couriers y soporte.'
+                          : 'Opcional para este rol.',
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'DNI',
+                        child: Text(context.l10n.t('dni')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'CE',
+                        child: Text(context.l10n.t('ce')),
+                      ),
+                      DropdownMenuItem(
+                        value: 'PASSPORT',
+                        child: Text(context.l10n.t('pasaporte')),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _documentType = value);
+                      }
                     },
                   ),
-                ),
-                if (_selectedRoles.isEmpty)
-                  const Align(
+                  SizedBox(height: 12),
+                  TextFormField(
+                    controller: _documentNumberController,
+                    decoration: const InputDecoration(
+                      labelText: 'Numero de documento',
+                    ),
+                    validator: (value) {
+                      if (_requiresWorkerDocument) {
+                        return FormValidators.requiredText(
+                          value,
+                          label: 'numero de documento',
+                        );
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Debes seleccionar al menos un rol.',
-                      style: TextStyle(color: Color(0xFFC43D3D)),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _pickDocumentPhoto,
+                          icon: const Icon(Icons.upload_file_outlined),
+                          label: Text(context.l10n.t('adjuntar_foto_dni')),
+                        ),
+                        if (_documentPhotoFile != null)
+                          Chip(label: Text(_documentPhotoFile!.filename))
+                        else if (_existingDocumentPhotoPath?.isNotEmpty == true)
+                          Chip(label: Text(context.l10n.t('dni_ya_adjuntado'))),
+                      ],
                     ),
                   ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Sedes asignadas',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                if (_requiresWarehouseScope && widget.warehouseOptions.isEmpty)
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'No hay sedes activas. Crea o activa una sede antes de guardar este usuario.',
-                      style: TextStyle(color: Color(0xFFC43D3D)),
+                  SizedBox(height: 12),
+                  TextFormField(
+                    controller: _vehiclePlateController,
+                    decoration: InputDecoration(
+                      labelText: 'Placa del vehiculo',
+                      helperText: _selectedRoles.contains('COURIER')
+                          ? 'Obligatoria para usuarios courier.'
+                          : 'Solo aplica para courier.',
                     ),
+                    textCapitalization: TextCapitalization.characters,
+                    validator: (value) {
+                      if (_selectedRoles.contains('COURIER')) {
+                        return FormValidators.requiredText(
+                          value,
+                          label: 'la placa del vehiculo',
+                        );
+                      }
+                      return null;
+                    },
                   ),
-                ...widget.warehouseOptions.map(
-                  (warehouse) => CheckboxListTile(
-                    value: _selectedWarehouseIds.contains(warehouse.id),
+                  if (widget.includePassword) ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Contrasena temporal',
+                      ),
+                      obscureText: true,
+                      validator: FormValidators.password,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmar contrasena',
+                      ),
+                      obscureText: true,
+                      validator: (value) => FormValidators.confirmPassword(
+                        value,
+                        _passwordController.text,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(warehouse.label),
-                    subtitle: warehouse.cityName.isNotEmpty
-                        ? Text('Ciudad: ${warehouse.cityName}')
+                    title: Text(context.l10n.t('usuario_activo')),
+                    value: _active,
+                    subtitle: _selectedRoles.contains('ADMIN')
+                        ? Text(context.l10n.t('admin_siempre_activo'))
                         : null,
-                    onChanged: (checked) {
-                      setState(() {
-                        if (checked == true) {
-                          _selectedWarehouseIds.add(warehouse.id);
-                        } else {
-                          _selectedWarehouseIds.remove(warehouse.id);
-                        }
-                      });
-                    },
+                    onChanged: _selectedRoles.contains('ADMIN')
+                        ? null
+                        : (value) => setState(() => _active = value),
                   ),
-                ),
-                if (_requiresWarehouseScope && _selectedWarehouseIds.isEmpty)
-                  const Align(
+                  SizedBox(height: 8),
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Debes seleccionar al menos una sede para estos roles.',
-                      style: TextStyle(color: Color(0xFFC43D3D)),
+                      'Roles',
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
-              ],
+                  const SizedBox(height: 4),
+                  ..._roles.map(
+                    (role) => CheckboxListTile(
+                      value: _selectedRoles.contains(role),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(role),
+                      onChanged: (checked) {
+                        setState(() {
+                          if (checked == true) {
+                            _selectedRoles.add(role);
+                          } else {
+                            _selectedRoles.remove(role);
+                          }
+                          if (_selectedRoles.contains('ADMIN')) {
+                            _active = true;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  if (_selectedRoles.isEmpty)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Debes seleccionar al menos un rol.',
+                        style: TextStyle(color: Color(0xFFC43D3D)),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Sedes asignadas',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (_requiresWarehouseScope &&
+                      widget.warehouseOptions.isEmpty)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'No hay sedes activas. Crea o activa una sede antes de guardar este usuario.',
+                        style: TextStyle(color: Color(0xFFC43D3D)),
+                      ),
+                    ),
+                  ...widget.warehouseOptions.map(
+                    (warehouse) => CheckboxListTile(
+                      value: _selectedWarehouseIds.contains(warehouse.id),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(warehouse.label),
+                      subtitle: warehouse.cityName.isNotEmpty
+                          ? Text('Ciudad: ${warehouse.cityName}')
+                          : null,
+                      onChanged: (checked) {
+                        setState(() {
+                          if (checked == true) {
+                            _selectedWarehouseIds.add(warehouse.id);
+                          } else {
+                            _selectedWarehouseIds.remove(warehouse.id);
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  if (_requiresWarehouseScope && _selectedWarehouseIds.isEmpty)
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Debes seleccionar al menos una sede para estos roles.',
+                        style: TextStyle(color: Color(0xFFC43D3D)),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1179,7 +1221,9 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
       setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l10n.t('debes_adjuntar_foto_de_dni_para_este_tra')),
+          content: Text(
+            context.l10n.t('debes_adjuntar_foto_de_dni_para_este_tra'),
+          ),
         ),
       );
       return;
@@ -1230,7 +1274,9 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l10n.t('no_se_pudo_leer_la_imagen_seleccionada')),
+          content: Text(
+            context.l10n.t('no_se_pudo_leer_la_imagen_seleccionada'),
+          ),
         ),
       );
       return;
@@ -1280,37 +1326,49 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final maxDialogWidth = media.size.width >= 560
+        ? 380.0
+        : media.size.width * 0.9;
+    final maxDialogHeight = media.size.height * 0.52;
+
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       title: Text('Actualizar credenciales de ${widget.user.fullName}'),
       content: SizedBox(
-        width: 380,
-        child: Form(
-          key: _formKey,
-          autovalidateMode: _autovalidateMode,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Nueva contrasena',
-                ),
-                obscureText: true,
-                validator: FormValidators.password,
+        width: maxDialogWidth,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxDialogHeight),
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _autovalidateMode,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nueva contrasena',
+                    ),
+                    obscureText: true,
+                    validator: FormValidators.password,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirmar contrasena',
+                    ),
+                    obscureText: true,
+                    validator: (value) => FormValidators.confirmPassword(
+                      value,
+                      _passwordController.text,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Confirmar contrasena',
-                ),
-                obscureText: true,
-                validator: (value) => FormValidators.confirmPassword(
-                  value,
-                  _passwordController.text,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1529,4 +1587,3 @@ class _AdminWarehouseOption {
     );
   }
 }
-

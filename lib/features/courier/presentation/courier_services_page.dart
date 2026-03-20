@@ -669,6 +669,11 @@ class _CourierProgressDialogState
   @override
   Widget build(BuildContext context) {
     final statuses = _statusOptions(widget.item.deliveryStatus);
+    final media = MediaQuery.of(context);
+    final maxDialogWidth = media.size.width >= 860
+        ? 520.0
+        : media.size.width * 0.94;
+    final maxDialogHeight = media.size.height * 0.78;
     final routeAsync = ref.watch(
       geoRouteProvider(
         GeoRouteRequest(
@@ -697,199 +702,216 @@ class _CourierProgressDialogState
     );
 
     return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       title: Text(context.l10n.t('actualizar_tracking')),
       content: SizedBox(
-        width: 520,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: 220,
-                child: Card(
-                  margin: EdgeInsets.zero,
-                  clipBehavior: Clip.antiAlias,
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: LatLng(
-                        widget.item.currentLatitude,
-                        widget.item.currentLongitude,
+        width: maxDialogWidth,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxDialogHeight),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: 220,
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    clipBehavior: Clip.antiAlias,
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          widget.item.currentLatitude,
+                          widget.item.currentLongitude,
+                        ),
+                        initialZoom: 13,
+                        initialCameraFit: CameraFit.bounds(
+                          bounds: LatLngBounds.fromPoints(routePoints),
+                          padding: const EdgeInsets.all(28),
+                          maxZoom: 16,
+                        ),
                       ),
-                      initialZoom: 13,
-                      initialCameraFit: CameraFit.bounds(
-                        bounds: LatLngBounds.fromPoints(routePoints),
-                        padding: const EdgeInsets.all(28),
-                        maxZoom: 16,
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'travelbox.peru.app',
+                        ),
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: routePoints,
+                              strokeWidth: 4,
+                              color: route?.fallbackUsed == true
+                                  ? Color(0xFF3B82F6)
+                                  : const Color(0xFF0B8B8C),
+                            ),
+                          ],
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(
+                                widget.item.currentLatitude,
+                                widget.item.currentLongitude,
+                              ),
+                              width: 44,
+                              height: 44,
+                              child: const Icon(
+                                Icons.local_shipping,
+                                color: Colors.red,
+                              ),
+                            ),
+                            Marker(
+                              point: LatLng(
+                                widget.item.destinationLatitude,
+                                widget.item.destinationLongitude,
+                              ),
+                              width: 44,
+                              height: 44,
+                              child: Icon(
+                                widget.item.deliveryType.toUpperCase() ==
+                                        'PICKUP'
+                                    ? Icons.inventory_2_outlined
+                                    : Icons.flag,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    route == null
+                        ? 'Cargando ruta sugerida...'
+                        : 'Ruta ${route.fallbackUsed ? 'simulada' : route.provider.toUpperCase()} - ${(route.distanceMeters / 1000).toStringAsFixed(1)} km',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: statuses.contains(_status)
+                      ? _status
+                      : statuses.first,
+                  decoration: const InputDecoration(labelText: 'Nuevo estado'),
+                  items: statuses
+                      .map(
+                        (status) => DropdownMenuItem(
+                          value: status,
+                          child: Text(status),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _status = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _latitudeController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        decoration: const InputDecoration(labelText: 'Latitud'),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _longitudeController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Longitud',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'travelbox.peru.app',
+                      FilledButton.tonalIcon(
+                        onPressed: _gettingLocation
+                            ? null
+                            : _useBrowserLocation,
+                        icon: const Icon(Icons.my_location_outlined),
+                        label: Text(
+                          _gettingLocation ? 'Leyendo GPS...' : 'Usar mi GPS',
+                        ),
                       ),
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: routePoints,
-                            strokeWidth: 4,
-                            color: route?.fallbackUsed == true
-                                ? Color(0xFF3B82F6)
-                                : const Color(0xFF0B8B8C),
-                          ),
-                        ],
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: LatLng(
-                              widget.item.currentLatitude,
-                              widget.item.currentLongitude,
-                            ),
-                            width: 44,
-                            height: 44,
-                            child: const Icon(
-                              Icons.local_shipping,
-                              color: Colors.red,
-                            ),
-                          ),
-                          Marker(
-                            point: LatLng(
-                              widget.item.destinationLatitude,
-                              widget.item.destinationLongitude,
-                            ),
-                            width: 44,
-                            height: 44,
-                            child: Icon(
-                              widget.item.deliveryType.toUpperCase() == 'PICKUP'
-                                  ? Icons.inventory_2_outlined
-                                  : Icons.flag,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          _latitudeController.text = widget.item.currentLatitude
+                              .toStringAsFixed(6);
+                          _longitudeController.text = widget
+                              .item
+                              .currentLongitude
+                              .toStringAsFixed(6);
+                        },
+                        icon: const Icon(Icons.restart_alt_outlined),
+                        label: Text(context.l10n.t('usar_ultimo_punto')),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  route == null
-                      ? 'Cargando ruta sugerida...'
-                      : 'Ruta ${route.fallbackUsed ? 'simulada' : route.provider.toUpperCase()} - ${(route.distanceMeters / 1000).toStringAsFixed(1)} km',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: statuses.contains(_status)
-                    ? _status
-                    : statuses.first,
-                decoration: const InputDecoration(labelText: 'Nuevo estado'),
-                items: statuses
-                    .map(
-                      (status) =>
-                          DropdownMenuItem(value: status, child: Text(status)),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _status = value);
-                  }
-                },
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _latitudeController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      decoration: const InputDecoration(labelText: 'Latitud'),
+                if (_locationError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      _locationError!,
+                      style: TextStyle(color: Color(0xFFC43D3D)),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _longitudeController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      decoration: const InputDecoration(labelText: 'Longitud'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.tonalIcon(
-                      onPressed: _gettingLocation ? null : _useBrowserLocation,
-                      icon: const Icon(Icons.my_location_outlined),
-                      label: Text(
-                        _gettingLocation ? 'Leyendo GPS...' : 'Usar mi GPS',
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        _latitudeController.text = widget.item.currentLatitude
-                            .toStringAsFixed(6);
-                        _longitudeController.text = widget.item.currentLongitude
-                            .toStringAsFixed(6);
-                      },
-                      icon: const Icon(Icons.restart_alt_outlined),
-                      label: Text(context.l10n.t('usar_ultimo_punto')),
-                    ),
-                  ],
-                ),
-              ),
-              if (_locationError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    _locationError!,
-                    style: TextStyle(color: Color(0xFFC43D3D)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _etaController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'ETA en minutos',
                   ),
                 ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _etaController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'ETA en minutos'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _vehicleTypeController,
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de vehiculo',
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _vehicleTypeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de vehiculo',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _vehiclePlateController,
-                decoration: const InputDecoration(labelText: 'Placa o codigo'),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _messageController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Mensaje operativo',
-                  hintText: 'Ej. Llegue al hotel / equipaje verificado',
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _vehiclePlateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Placa o codigo',
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _messageController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Mensaje operativo',
+                    hintText: 'Ej. Llegue al hotel / equipaje verificado',
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -967,4 +989,3 @@ class _CourierProgressDialogState
     }
   }
 }
-
