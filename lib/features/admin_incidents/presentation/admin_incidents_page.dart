@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -65,6 +66,10 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final sectionGap = responsive.sectionGap;
+    final cardPadding = responsive.cardPadding;
     final incidentsAsync = ref.watch(adminIncidentsProvider);
     final status = ref.watch(adminIncidentsStatusProvider);
     final session = ref.watch(sessionControllerProvider);
@@ -79,13 +84,18 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: EdgeInsets.fromLTRB(
+              responsive.horizontalPadding,
+              responsive.verticalPadding,
+              responsive.horizontalPadding,
+              0,
+            ),
             child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: itemGap,
+              runSpacing: itemGap,
               children: [
                 SizedBox(
-                  width: 360,
+                  width: responsive.isMobile ? double.infinity : 360,
                   child: TextField(
                     controller: _searchController,
                     onChanged: (value) =>
@@ -124,13 +134,17 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                   onPressed: _saving
                       ? null
                       : () => ref.invalidate(adminIncidentsProvider),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.refresh),
                   label: Text(context.l10n.t('recargar')),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: itemGap),
           Expanded(
             child: incidentsAsync.when(
               data: (items) {
@@ -149,11 +163,11 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                   );
                 }
                 return ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   children: [
                     Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: itemGap,
+                      runSpacing: itemGap,
                       children: [
                         _IncidentKpi(
                           title: 'Abiertos',
@@ -172,18 +186,22 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: sectionGap),
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.all(cardPadding),
                         child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: itemGap,
+                          runSpacing: itemGap,
                           children: [
                             FilledButton.icon(
                               onPressed: _saving || resolvedItems.isEmpty
                                   ? null
                                   : () => _exportResolvedCsv(resolvedItems),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                                visualDensity: VisualDensity.compact,
+                              ),
                               icon: const Icon(Icons.table_view_outlined),
                               label: Text(
                                 context.l10n.t('exportar_csv_resueltos'),
@@ -193,6 +211,10 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                               onPressed: _saving || resolvedItems.isEmpty
                                   ? null
                                   : () => _exportResolvedPdf(resolvedItems),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                                visualDensity: VisualDensity.compact,
+                              ),
                               icon: Icon(Icons.picture_as_pdf_outlined),
                               label: Text(
                                 context.l10n.t('exportar_pdf_resueltos'),
@@ -208,19 +230,19 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: sectionGap),
                     ...items.map(
                       (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: EdgeInsets.only(bottom: itemGap),
                         child: Card(
                           child: Padding(
-                            padding: const EdgeInsets.all(14),
+                            padding: EdgeInsets.all(cardPadding),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
+                                  spacing: itemGap,
+                                  runSpacing: itemGap,
                                   crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
@@ -244,46 +266,48 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                SizedBox(height: itemGap / 1.5),
                                 Text(
                                   '${item.reservationCode} - ${item.warehouseName}',
                                   style: Theme.of(context).textTheme.bodyLarge,
                                 ),
                                 Text(item.warehouseAddress),
-                                const SizedBox(height: 8),
+                                SizedBox(height: itemGap),
                                 Text(
                                   'Cliente: ${item.openedByName} (${item.openedByEmail})',
                                 ),
-                                const SizedBox(height: 6),
+                                SizedBox(height: itemGap / 1.5),
                                 if (item.customerName.isNotEmpty ||
                                     item.customerPhone.isNotEmpty)
                                   Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
+                                    spacing: itemGap,
+                                    runSpacing: itemGap,
                                     children: [
                                       if (item.customerName.isNotEmpty)
                                         Chip(
                                           label: Text(
                                             'Cliente: ${item.customerName}',
                                           ),
+                                          visualDensity: VisualDensity.compact,
                                         ),
                                       if (item.customerPhone.isNotEmpty)
                                         Chip(
                                           label: Text(
                                             'Tel: ${item.customerPhone}',
                                           ),
+                                          visualDensity: VisualDensity.compact,
                                         ),
                                     ],
                                   ),
-                                const SizedBox(height: 8),
+                                SizedBox(height: itemGap),
                                 Text(item.cleanDescription),
                                 if (item.evidenceUrl != null) ...[
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: sectionGap),
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: AppSmartImage(
                                       source: item.evidenceUrl,
-                                      height: 200,
+                                      height: responsive.isMobile ? 184 : 200,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
                                       fallback: Container(
@@ -299,7 +323,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                 ],
                                 if (item.resolution != null &&
                                     item.resolution!.trim().isNotEmpty) ...[
-                                  const SizedBox(height: 10),
+                                  SizedBox(height: itemGap),
                                   Text(
                                     'Resolucion: ${item.resolution}',
                                     style: Theme.of(
@@ -307,15 +331,19 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                     ).textTheme.bodyMedium,
                                   ),
                                 ],
-                                const SizedBox(height: 12),
+                                SizedBox(height: sectionGap),
                                 Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
+                                  spacing: itemGap,
+                                  runSpacing: itemGap,
                                   children: [
                                     if (!supportMode)
                                       OutlinedButton.icon(
                                         onPressed: () => context.go(
                                           '/reservation/${item.reservationId}',
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: const Size(0, 40),
+                                          visualDensity: VisualDensity.compact,
                                         ),
                                         icon: const Icon(
                                           Icons.visibility_outlined,
@@ -329,6 +357,10 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                         onPressed: () => context.go(
                                           _trackingRoute(item.reservationId),
                                         ),
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: const Size(0, 40),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
                                         icon: Icon(Icons.route_outlined),
                                         label: Text(
                                           context.l10n.t('ver_tracking'),
@@ -340,6 +372,10 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                           item.customerWhatsappUrl!,
                                           'No se pudo abrir WhatsApp en este dispositivo.',
                                         ),
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: const Size(0, 40),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
                                         icon: Icon(Icons.chat_outlined),
                                         label: Text(context.l10n.t('whatsapp')),
                                       ),
@@ -349,6 +385,10 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                           item.customerCallUrl!,
                                           'No se pudo iniciar la llamada en este dispositivo.',
                                         ),
+                                        style: OutlinedButton.styleFrom(
+                                          minimumSize: const Size(0, 40),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
                                         icon: Icon(Icons.call_outlined),
                                         label: Text(context.l10n.t('llamar')),
                                       ),
@@ -357,6 +397,10 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                         onPressed: _saving
                                             ? null
                                             : () => _resolveIncident(item),
+                                        style: FilledButton.styleFrom(
+                                          minimumSize: const Size(0, 40),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
                                         icon: Icon(Icons.task_alt_outlined),
                                         label: Text(context.l10n.t('resolver')),
                                       ),
@@ -596,10 +640,12 @@ class _IncidentKpi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final width = responsive.isMobile ? 150.0 : 180.0;
     return SizedBox(
-      width: 180,
+      width: width,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(responsive.cardPadding),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(16),
@@ -609,7 +655,7 @@ class _IncidentKpi extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title),
-            const SizedBox(height: 8),
+            SizedBox(height: responsive.itemGap),
             Text(
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(

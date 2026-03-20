@@ -155,14 +155,19 @@ class _DashboardContent extends ConsumerWidget {
     ];
 
     final responsive = context.responsive;
+    final isMobile = responsive.isMobile;
+    final cardPadding = responsive.cardPadding;
+    final itemGap = responsive.itemGap;
+    final sectionGap = responsive.sectionGap;
+    final rankingMinHeight = isMobile ? 188.0 : 220.0;
     return ListView(
       padding: responsive.pageInsets(
         top: responsive.verticalPadding,
-        bottom: 24,
+        bottom: responsive.sectionGap,
       ),
       children: [
         Container(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(isMobile ? 14 : 18),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [Color(0xFF173B56), Color(0xFF1F6E8C)],
@@ -179,12 +184,12 @@ class _DashboardContent extends ConsumerWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: itemGap / 2),
               Text(
                 '${stats['periodLabel'] ?? 'Periodo actual'} - actualizado ${_formattedDate(stats['generatedAt'])}',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: sectionGap),
               SegmentedButton<AdminDashboardPeriodOption>(
                 segments: AdminDashboardPeriodOption.values
                     .map(
@@ -203,10 +208,10 @@ class _DashboardContent extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: sectionGap),
         LayoutBuilder(
           builder: (context, constraints) {
-            const spacing = 10.0;
+            final spacing = itemGap;
             final columns = _kpiColumnsForWidth(constraints.maxWidth);
             final totalSpacing = spacing * (columns - 1);
             final cardWidth =
@@ -224,6 +229,7 @@ class _DashboardContent extends ConsumerWidget {
                         value: kpi.value,
                         subtitle: kpi.subtitle,
                         colors: kpi.colors,
+                        compact: isMobile,
                       ),
                     ),
                   )
@@ -231,13 +237,13 @@ class _DashboardContent extends ConsumerWidget {
             );
           },
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: sectionGap),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(cardPadding),
             child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: itemGap,
+              runSpacing: itemGap,
               children: [
                 FilledButton.icon(
                   onPressed: () => context.go('/admin/tracking'),
@@ -263,7 +269,7 @@ class _DashboardContent extends ConsumerWidget {
             ),
           ),
         ),
-        SizedBox(height: 16),
+        SizedBox(height: sectionGap),
         if (bestWarehouse.isNotEmpty)
           Card(
             child: ListTile(
@@ -276,10 +282,10 @@ class _DashboardContent extends ConsumerWidget {
               ),
             ),
           ),
-        const SizedBox(height: 12),
+        SizedBox(height: sectionGap),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -289,7 +295,7 @@ class _DashboardContent extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: sectionGap),
                 _TrendChart(
                   points: trend,
                   selectedPeriod: selectedPeriod,
@@ -299,10 +305,10 @@ class _DashboardContent extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: sectionGap),
         LayoutBuilder(
           builder: (context, constraints) {
-            const spacing = 12.0;
+            final spacing = sectionGap;
             final columns = _rankingColumnsForWidth(constraints.maxWidth);
             final totalSpacing = spacing * (columns - 1);
             final cardWidth =
@@ -316,6 +322,9 @@ class _DashboardContent extends ConsumerWidget {
                   width: cardWidth,
                   child: _RankingCard(
                     title: 'Top almacenes',
+                    minHeight: rankingMinHeight,
+                    padding: cardPadding,
+                    spacing: itemGap,
                     children: topWarehouses.isEmpty
                         ? [
                             Text(
@@ -344,6 +353,9 @@ class _DashboardContent extends ConsumerWidget {
                   width: cardWidth,
                   child: _RankingCard(
                     title: 'Ciudades con mayor demanda',
+                    minHeight: rankingMinHeight,
+                    padding: cardPadding,
+                    spacing: itemGap,
                     children: topCities.isEmpty
                         ? [
                             Text(
@@ -372,6 +384,9 @@ class _DashboardContent extends ConsumerWidget {
                   width: cardWidth,
                   child: _RankingCard(
                     title: 'Top couriers',
+                    minHeight: rankingMinHeight,
+                    padding: cardPadding,
+                    spacing: itemGap,
                     children: topCouriers.isEmpty
                         ? const [
                             Text(
@@ -400,6 +415,9 @@ class _DashboardContent extends ConsumerWidget {
                   width: cardWidth,
                   child: _RankingCard(
                     title: 'Top operadores',
+                    minHeight: rankingMinHeight,
+                    padding: cardPadding,
+                    spacing: itemGap,
                     children: topOperators.isEmpty
                         ? const [
                             Text(
@@ -425,10 +443,10 @@ class _DashboardContent extends ConsumerWidget {
             );
           },
         ),
-        SizedBox(height: 12),
+        SizedBox(height: sectionGap),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -438,10 +456,10 @@ class _DashboardContent extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: itemGap),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: itemGap,
+                  runSpacing: itemGap,
                   children: statusBreakdown
                       .map(
                         (item) => Chip(
@@ -456,7 +474,7 @@ class _DashboardContent extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: sectionGap),
         Card(
           child: Column(
             children: [
@@ -640,18 +658,27 @@ class _RankingTile extends StatelessWidget {
 }
 
 class _RankingCard extends StatelessWidget {
-  const _RankingCard({required this.title, required this.children});
+  const _RankingCard({
+    required this.title,
+    required this.children,
+    required this.minHeight,
+    required this.padding,
+    required this.spacing,
+  });
 
   final String title;
   final List<Widget> children;
+  final double minHeight;
+  final double padding;
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 220),
+        constraints: BoxConstraints(minHeight: minHeight),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(padding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -661,7 +688,7 @@ class _RankingCard extends StatelessWidget {
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: spacing),
               ...children,
             ],
           ),
@@ -677,21 +704,25 @@ class _KpiCard extends StatelessWidget {
     required this.value,
     required this.subtitle,
     required this.colors,
+    required this.compact,
   });
 
   final String title;
   final String value;
   final String subtitle;
   final List<Color> colors;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final padding = compact ? 12.0 : 16.0;
+    final minHeight = compact ? 100.0 : 120.0;
     return Container(
-      padding: const EdgeInsets.all(16),
-      constraints: const BoxConstraints(minHeight: 120),
+      padding: EdgeInsets.all(padding),
+      constraints: BoxConstraints(minHeight: minHeight),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: colors),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 14 : 16),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -704,7 +735,7 @@ class _KpiCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: compact ? 6 : 8),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -712,7 +743,7 @@ class _KpiCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: compact ? 2 : 4),
           Text(
             subtitle,
             style: TextStyle(color: Colors.white.withValues(alpha: 0.88)),

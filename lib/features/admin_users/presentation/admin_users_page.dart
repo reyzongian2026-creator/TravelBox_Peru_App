@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -100,6 +101,9 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final sectionGap = responsive.sectionGap;
     final usersAsync = ref.watch(adminUsersProvider);
     final summaryAsync = ref.watch(adminUsersSummaryProvider);
     final loadRequested = ref.watch(adminUsersLoadRequestedProvider);
@@ -110,13 +114,18 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: EdgeInsets.fromLTRB(
+              responsive.horizontalPadding,
+              responsive.verticalPadding,
+              responsive.horizontalPadding,
+              0,
+            ),
             child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: itemGap,
+              runSpacing: itemGap,
               children: [
                 SizedBox(
-                  width: 360,
+                  width: responsive.isMobile ? double.infinity : 360,
                   child: TextField(
                     controller: _searchController,
                     onChanged: (_) => _scheduleFilterApplyFromTyping(),
@@ -169,6 +178,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 ChoiceChip(
                   label: Text(context.l10n.t('solo_ultimo_registro')),
                   selected: _draftLatestOnly,
+                  visualDensity: VisualDensity.compact,
                   onSelected: (_) {
                     setState(() => _draftLatestOnly = true);
                     _maybeApplyFiltersAfterFirstLoad();
@@ -177,6 +187,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 ChoiceChip(
                   label: Text(context.l10n.t('todos_los_registros')),
                   selected: !_draftLatestOnly,
+                  visualDensity: VisualDensity.compact,
                   onSelected: (_) {
                     setState(() => _draftLatestOnly = false);
                     _maybeApplyFiltersAfterFirstLoad();
@@ -184,11 +195,19 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 ),
                 FilledButton.icon(
                   onPressed: _saving ? null : _applyUserFilters,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.filter_alt_outlined),
                   label: Text(context.l10n.t('ver_usuarios')),
                 ),
                 FilledButton.icon(
                   onPressed: _saving ? null : () => _openCreateDialog(),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.person_add_alt_1_outlined),
                   label: Text(context.l10n.t('nuevo_usuario')),
                 ),
@@ -197,6 +216,10 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                       ? null
                       : () =>
                             _openCreateDialog(presetRoles: const {'OPERATOR'}),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.badge_outlined),
                   label: Text(context.l10n.t('nuevo_operador')),
                 ),
@@ -204,6 +227,10 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                   onPressed: _saving
                       ? null
                       : () => _openCreateDialog(presetRoles: const {'COURIER'}),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.delivery_dining_outlined),
                   label: Text(context.l10n.t('nuevo_courier')),
                 ),
@@ -213,13 +240,17 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                       : loadRequested
                       ? _reloadUsers
                       : _applyUserFilters,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.refresh),
                   label: Text(context.l10n.t('recargar')),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: itemGap),
           Expanded(
             child: usersAsync.when(
               data: (items) {
@@ -237,16 +268,16 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                   );
                 }
                 return ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   children: [
                     _AdminUsersSummary(
                       items: items,
                       summary: summaryAsync.asData?.value,
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: sectionGap),
                     ...items.map(
                       (user) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: EdgeInsets.only(bottom: itemGap),
                         child: _AdminUserCard(
                           user: user,
                           saving: _saving,
@@ -525,6 +556,7 @@ class _AdminUsersSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     final totalUsers = summary?.totalUsers ?? items.length;
     final activeCount =
         summary?.activeUsers ?? items.where((item) => item.active).length;
@@ -537,8 +569,8 @@ class _AdminUsersSummary extends StatelessWidget {
         items.fold<int>(0, (sum, item) => sum + item.deliveryCompletedCount);
 
     return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+      spacing: responsive.itemGap,
+      runSpacing: responsive.itemGap,
       children: [
         _SummaryCard(title: 'Usuarios', value: '$totalUsers'),
         _SummaryCard(title: 'Activos', value: '$activeCount'),
@@ -593,13 +625,16 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final width = responsive.isMobile ? 150.0 : 180.0;
+    final height = responsive.isMobile ? 96.0 : 108.0;
     return SizedBox(
-      width: 180,
+      width: width,
       child: SizedBox(
-        height: 108,
+        height: height,
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(responsive.cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -639,9 +674,12 @@ class _AdminUserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final sectionGap = responsive.sectionGap;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(responsive.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -656,7 +694,7 @@ class _AdminUserCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: itemGap / 2),
                       Text(user.email),
                       Text(user.phone),
                     ],
@@ -673,35 +711,55 @@ class _AdminUserCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: itemGap),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
+              spacing: itemGap,
+              runSpacing: itemGap,
               children: [
-                ...user.roles.map((role) => Chip(label: Text(role))),
-                Chip(label: Text('Auth ${user.authProvider}')),
+                ...user.roles.map(
+                  (role) => Chip(
+                    label: Text(role),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+                Chip(
+                  label: Text('Auth ${user.authProvider}'),
+                  visualDensity: VisualDensity.compact,
+                ),
                 if (user.managedByAdmin)
-                  Chip(label: Text(context.l10n.t('gestionado_por_admin'))),
+                  Chip(
+                    label: Text(context.l10n.t('gestionado_por_admin')),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 if (user.preferredLanguage.isNotEmpty)
-                  Chip(label: Text('Idioma ${user.preferredLanguage}')),
+                  Chip(
+                    label: Text('Idioma ${user.preferredLanguage}'),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 if (user.nationality.isNotEmpty)
-                  Chip(label: Text(user.nationality)),
+                  Chip(
+                    label: Text(user.nationality),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 if (user.documentNumber?.trim().isNotEmpty == true)
                   Chip(
                     avatar: Icon(Icons.badge_outlined, size: 16),
                     label: Text(
                       '${user.documentType ?? 'DOC'} ${user.documentNumber}',
                     ),
+                    visualDensity: VisualDensity.compact,
                   ),
                 if (user.documentPhotoPath?.trim().isNotEmpty == true)
                   Chip(
                     avatar: Icon(Icons.photo_camera_outlined, size: 16),
                     label: Text(context.l10n.t('foto_dni_adjunta')),
+                    visualDensity: VisualDensity.compact,
                   ),
                 if (user.vehiclePlate?.trim().isNotEmpty == true)
                   Chip(
                     avatar: Icon(Icons.local_shipping_outlined, size: 16),
                     label: Text('Placa ${user.vehiclePlate}'),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ...user.warehouseNames.map(
                   (warehouseName) => Chip(
@@ -710,19 +768,21 @@ class _AdminUserCard extends StatelessWidget {
                       size: 16,
                     ),
                     label: Text(warehouseName),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ),
                 if (user.requiresWarehouseScope && user.warehouseNames.isEmpty)
                   Chip(
                     backgroundColor: Color(0xFFFFE4E4),
                     label: Text(context.l10n.t('sin_sede_asignada')),
+                    visualDensity: VisualDensity.compact,
                   ),
               ],
             ),
-            SizedBox(height: 10),
+            SizedBox(height: itemGap),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: itemGap,
+              runSpacing: itemGap,
               children: [
                 if (user.deliveryCreatedCount > 0)
                   _MetricBadge(
@@ -746,18 +806,26 @@ class _AdminUserCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: sectionGap),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: itemGap,
+              runSpacing: itemGap,
               children: [
                 OutlinedButton.icon(
                   onPressed: saving ? null : onEdit,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(context.l10n.t('editar_ficha')),
                 ),
                 OutlinedButton.icon(
                   onPressed: saving ? null : onPassword,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   icon: Icon(Icons.lock_reset_outlined),
                   label: Text(context.l10n.t('credenciales')),
                 ),
@@ -767,6 +835,10 @@ class _AdminUserCard extends StatelessWidget {
                       : 'Eliminar usuario',
                   child: OutlinedButton.icon(
                     onPressed: (saving || user.isAdmin) ? null : onDelete,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 40),
+                      visualDensity: VisualDensity.compact,
+                    ),
                     icon: Icon(Icons.delete_outline),
                     label: Text(context.l10n.t('eliminar')),
                   ),
@@ -788,8 +860,9 @@ class _MetricBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: const Color(0xFFE8F2F8),
         borderRadius: BorderRadius.circular(999),
@@ -798,8 +871,8 @@ class _MetricBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: const Color(0xFF1F6E8C)),
-          const SizedBox(width: 6),
-          Text(label),
+          SizedBox(width: responsive.itemGap / 1.5),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );

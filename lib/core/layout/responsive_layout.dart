@@ -62,14 +62,54 @@ class ResponsiveLayout {
   double get verticalPadding {
     switch (tier) {
       case ResponsiveTier.mobileSmall:
-        return 12;
+        return 10;
       case ResponsiveTier.mobile:
-        return 14;
+        return 12;
       case ResponsiveTier.tablet:
-        return 16;
+        return 14;
       case ResponsiveTier.desktopSmall:
       case ResponsiveTier.desktop:
         return 18;
+    }
+  }
+
+  double get sectionGap {
+    switch (tier) {
+      case ResponsiveTier.mobileSmall:
+        return 10;
+      case ResponsiveTier.mobile:
+        return 12;
+      case ResponsiveTier.tablet:
+        return 14;
+      case ResponsiveTier.desktopSmall:
+      case ResponsiveTier.desktop:
+        return 16;
+    }
+  }
+
+  double get itemGap {
+    switch (tier) {
+      case ResponsiveTier.mobileSmall:
+      case ResponsiveTier.mobile:
+        return 8;
+      case ResponsiveTier.tablet:
+        return 10;
+      case ResponsiveTier.desktopSmall:
+      case ResponsiveTier.desktop:
+        return 12;
+    }
+  }
+
+  double get cardPadding {
+    switch (tier) {
+      case ResponsiveTier.mobileSmall:
+        return 12;
+      case ResponsiveTier.mobile:
+        return 13;
+      case ResponsiveTier.tablet:
+      case ResponsiveTier.desktopSmall:
+      case ResponsiveTier.desktop:
+        return 14;
     }
   }
 
@@ -137,39 +177,26 @@ class ResponsiveLayout {
 
   double mapHeight({double max = 560}) {
     final base = adaptiveFont(
-      mobileSmall: 290,
-      mobile: 330,
-      tablet: 380,
+      mobileSmall: 320,
+      mobile: 350,
+      tablet: 400,
       desktopSmall: 420,
       desktop: 460,
     );
-    final dynamicByHeight = (height * 0.45).clamp(250, max);
+    final dynamicByHeight = (height * 0.58).clamp(300, max);
     return base > dynamicByHeight ? base : dynamicByHeight.toDouble();
-  }
-
-  double shellBottomPadding({
-    required double safeBottom,
-    required double navHeight,
-  }) {
-    if (useDesktopShell) {
-      return safeBottom;
-    }
-    if (keyboardVisible) {
-      return safeBottom + 16;
-    }
-    return navHeight + safeBottom + 12;
   }
 
   double navBarBaseHeight() {
     switch (tier) {
       case ResponsiveTier.mobileSmall:
-        return 84;
+        return 72;
       case ResponsiveTier.mobile:
-        return 88;
+        return 76;
       case ResponsiveTier.tablet:
-        return 92;
+        return 80;
       case ResponsiveTier.desktopSmall:
-        return 96;
+        return 84;
       case ResponsiveTier.desktop:
         return 0;
     }

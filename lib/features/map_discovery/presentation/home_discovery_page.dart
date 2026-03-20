@@ -45,7 +45,7 @@ final discoveryWarehousesProvider = FutureProvider<List<Warehouse>>((ref) {
 });
 
 class HomeDiscoveryPage extends ConsumerStatefulWidget {
-  HomeDiscoveryPage({super.key});
+  const HomeDiscoveryPage({super.key});
 
   @override
   ConsumerState<HomeDiscoveryPage> createState() => _HomeDiscoveryPageState();
@@ -69,7 +69,17 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
     final warehousesAsync = ref.watch(discoveryWarehousesProvider);
     final currentPosition = ref.watch(currentPositionProvider);
     final selectedCity = ref.watch(discoveryFeaturedCityProvider);
-    final mapHeight = responsive.mapHeight(max: 520);
+    final mediaQuery = MediaQuery.of(context);
+    final mapMode = viewMode == DiscoveryViewMode.map;
+    final baseMapHeight = responsive.mapHeight(max: 560);
+    final immersiveMapHeight =
+        (mediaQuery.size.height * (responsive.isMobile ? 0.86 : 0.72))
+            .clamp(baseMapHeight + (responsive.isMobile ? 36 : 0), 860)
+            .toDouble();
+    final mapHeight = mapMode ? immersiveMapHeight : baseMapHeight;
+    final sectionGap = responsive.sectionGap;
+    final itemGap = responsive.itemGap;
+    final cardPadding = responsive.cardPadding;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final controlSurface = isDark ? const Color(0xFF111827) : Colors.white;
     final controlBorder = isDark
@@ -89,9 +99,9 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
       child: warehousesAsync.when(
         data: (items) {
           final contentChildren = <Widget>[
-            _DiscoveryHero(),
-            const SizedBox(height: 12),
-            if (currentPosition == null)
+            if (!mapMode) _DiscoveryHero(),
+            if (!mapMode) SizedBox(height: sectionGap),
+            if (currentPosition == null && !mapMode)
               AnimatedSize(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
@@ -117,13 +127,13 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                                   next ?? '';
                             },
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: itemGap),
                         ],
                       )
                     : const SizedBox.shrink(),
               ),
             Container(
-              padding: EdgeInsets.all(responsive.isMobile ? 12 : 14),
+              padding: EdgeInsets.all(cardPadding),
               decoration: BoxDecoration(
                 color: controlSurface,
                 borderRadius: BorderRadius.circular(16),
@@ -151,7 +161,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 14,
+                        vertical: 12,
                       ),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.clear),
@@ -159,10 +169,10 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: itemGap),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: itemGap,
+                    runSpacing: itemGap,
                     children: [
                       ChoiceChip(
                         label: Text(l10n.t('list')),
@@ -194,33 +204,76 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.tonalIcon(
-                      onPressed: () => _locateUser(context),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF0B8B8C),
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.my_location_outlined),
-                      label: Text(l10n.t('share_location')),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () =>
-                          ref.invalidate(discoveryWarehousesProvider),
-                      icon: const Icon(Icons.refresh),
-                      label: Text(l10n.t('reload')),
-                    ),
+                  SizedBox(height: itemGap),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 320) {
+                        return Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.tonalIcon(
+                                onPressed: () => _locateUser(context),
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 42),
+                                  backgroundColor: const Color(0xFF0B8B8C),
+                                  foregroundColor: Colors.white,
+                                ),
+                                icon: const Icon(Icons.my_location_outlined),
+                                label: Text(l10n.t('share_location')),
+                              ),
+                            ),
+                            SizedBox(height: itemGap),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () =>
+                                    ref.invalidate(discoveryWarehousesProvider),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 42),
+                                ),
+                                icon: const Icon(Icons.refresh),
+                                label: Text(l10n.t('reload')),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.tonalIcon(
+                              onPressed: () => _locateUser(context),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 42),
+                                backgroundColor: const Color(0xFF0B8B8C),
+                                foregroundColor: Colors.white,
+                              ),
+                              icon: const Icon(Icons.my_location_outlined),
+                              label: Text(l10n.t('share_location')),
+                            ),
+                          ),
+                          SizedBox(width: itemGap),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () =>
+                                  ref.invalidate(discoveryWarehousesProvider),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(0, 42),
+                              ),
+                              icon: const Icon(Icons.refresh),
+                              label: Text(l10n.t('reload')),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: sectionGap),
           ];
 
           if (items.isEmpty) {
@@ -231,11 +284,11 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                 onAction: _clearDiscoveryFilters,
               ),
             );
-            contentChildren.add(const SizedBox(height: 20));
+            contentChildren.add(SizedBox(height: sectionGap));
             return ListView(
               padding: responsive.pageInsets(
                 top: responsive.verticalPadding,
-                bottom: 24,
+                bottom: sectionGap,
               ),
               children: contentChildren,
             );
@@ -268,11 +321,11 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                 onAction: _clearDiscoveryFilters,
               ),
             );
-            contentChildren.add(const SizedBox(height: 20));
+            contentChildren.add(SizedBox(height: sectionGap));
             return ListView(
               padding: responsive.pageInsets(
                 top: responsive.verticalPadding,
-                bottom: 24,
+                bottom: sectionGap,
               ),
               children: contentChildren,
             );
@@ -281,7 +334,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
           if (viewMode == DiscoveryViewMode.map) {
             if (nearest != null) {
               contentChildren.add(_NearestWarehouseCard(info: nearest));
-              contentChildren.add(const SizedBox(height: 10));
+              contentChildren.add(SizedBox(height: itemGap));
             }
             contentChildren.add(
               SizedBox(
@@ -293,11 +346,10 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                 ),
               ),
             );
-            contentChildren.add(const SizedBox(height: 22));
             return ListView(
               padding: responsive.pageInsets(
                 top: responsive.verticalPadding,
-                bottom: 24,
+                bottom: 0,
               ),
               children: contentChildren,
             );
@@ -311,7 +363,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
 
           if (nearest != null) {
             contentChildren.add(_NearestWarehouseCard(info: nearest));
-            contentChildren.add(const SizedBox(height: 10));
+            contentChildren.add(SizedBox(height: itemGap));
           }
 
           for (final warehouse in listItems) {
@@ -321,7 +373,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
             );
             contentChildren.add(
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: EdgeInsets.only(bottom: itemGap),
                 child: _WarehouseCard(
                   warehouse: warehouse,
                   distanceKm: currentPosition == null ? null : distanceKm,
@@ -329,12 +381,12 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
               ),
             );
           }
-          contentChildren.add(const SizedBox(height: 16));
+          contentChildren.add(SizedBox(height: sectionGap));
 
           final list = ListView(
             padding: responsive.pageInsets(
               top: responsive.verticalPadding,
-              bottom: 24,
+              bottom: sectionGap,
             ),
             children: contentChildren,
           );
@@ -401,7 +453,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
 }
 
 class _DiscoveryHero extends StatelessWidget {
-  _DiscoveryHero();
+  const _DiscoveryHero();
 
   @override
   Widget build(BuildContext context) {
@@ -409,8 +461,8 @@ class _DiscoveryHero extends StatelessWidget {
       builder: (context, constraints) {
         final hidePreview = constraints.maxWidth < 390;
         final compact = constraints.maxWidth < 840;
-        final heroHeight = hidePreview ? 108.0 : (compact ? 132.0 : 112.0);
-        final previewWidth = compact ? 156.0 : 236.0;
+        final heroHeight = hidePreview ? 102.0 : (compact ? 120.0 : 112.0);
+        final previewWidth = compact ? 148.0 : 220.0;
         return SizedBox(
           height: heroHeight,
           child: Container(
@@ -521,13 +573,14 @@ class _TourismHighlightsStripState extends State<_TourismHighlightsStrip> {
   @override
   Widget build(BuildContext context) {
     final featured = PeruTourismCatalog.featured.take(6).toList();
+    final responsive = context.responsive;
     return SizedBox(
-      height: 132,
+      height: responsive.isMobile ? 120 : 132,
       child: ListView.separated(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         itemCount: featured.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, index) {
           final item = featured[index];
           final selected =
@@ -571,7 +624,7 @@ class _CityCarouselCard extends StatelessWidget {
         : const Color(0xFF4B6476);
 
     return SizedBox(
-      width: 206,
+      width: 188,
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
@@ -926,21 +979,28 @@ class _WarehouseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final cardPadding = responsive.cardPadding;
+    final sectionGap = responsive.sectionGap;
+    final imageHeight = responsive.isMobile ? 132.0 : 146.0;
     final tourism = PeruTourismCatalog.forCity(warehouse.city);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             AppSmartImage(
               source: warehouse.imageUrl,
-              height: 146,
+              height: imageHeight,
               width: double.infinity,
               borderRadius: BorderRadius.circular(14),
-              fallback: PeruFlatScene(city: warehouse.city, height: 146),
+              fallback: PeruFlatScene(
+                city: warehouse.city,
+                height: imageHeight,
+              ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: sectionGap),
             Row(
               children: [
                 Expanded(
@@ -976,29 +1036,44 @@ class _WarehouseCard extends StatelessWidget {
                 context,
               ).textTheme.bodySmall?.copyWith(color: const Color(0xFF486581)),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: responsive.itemGap),
             Wrap(
               spacing: 6,
               runSpacing: 6,
               children: [
                 ...warehouse.extraServices.map(
-                  (service) => Chip(label: Text(service)),
+                  (service) => Chip(
+                    label: Text(service),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
                 ...tourism.highlights
                     .take(2)
-                    .map((item) => Chip(label: Text(item))),
+                    .map(
+                      (item) => Chip(
+                        label: Text(item),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
               ].toList(),
             ),
-            const SizedBox(height: 12),
-            Row(
+            SizedBox(height: sectionGap),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: responsive.itemGap,
+              runSpacing: responsive.itemGap,
               children: [
                 Text(
                   'Desde S/${warehouse.priceFromPerHour.toStringAsFixed(2)}/hora',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const Spacer(),
                 FilledButton(
                   onPressed: () => context.push('/warehouse/${warehouse.id}'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 42),
+                    visualDensity: VisualDensity.compact,
+                  ),
                   child: Text(context.l10n.t('ver_detalle')),
                 ),
               ],

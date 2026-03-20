@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,11 +10,12 @@ import '../../shared/state/session_controller.dart';
 import '../../shared/state/theme_mode_controller.dart';
 import '../../shared/widgets/operation_guide.dart';
 import '../../shared/widgets/travelbox_logo.dart';
+import '../layout/mobile_nav_behavior.dart';
 import '../layout/responsive_layout.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/brand_tokens.dart';
 
-class AppShellScaffold extends ConsumerWidget {
+class AppShellScaffold extends ConsumerStatefulWidget {
   const AppShellScaffold({
     super.key,
     required this.title,
@@ -29,7 +32,39 @@ class AppShellScaffold extends ConsumerWidget {
   final List<Widget> actions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShellScaffold> createState() => _AppShellScaffoldState();
+}
+
+class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
+  late final MobileNavBehaviorController _mobileNavBehavior;
+  bool _preventAutoHideFromInput = false;
+  int? _activePointerId;
+  double? _lastPointerDy;
+
+  @override
+  void initState() {
+    super.initState();
+    _mobileNavBehavior = MobileNavBehaviorController();
+    _mobileNavBehavior.addListener(_onMobileNavBehaviorChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant AppShellScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentRoute != widget.currentRoute) {
+      _mobileNavBehavior.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _mobileNavBehavior.removeListener(_onMobileNavBehaviorChanged);
+    _mobileNavBehavior.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final session = ref.watch(sessionControllerProvider);
     final notificationsState = ref.watch(notificationCenterControllerProvider);
@@ -38,7 +73,7 @@ class AppShellScaffold extends ConsumerWidget {
     final screenWidth = mediaQuery.size.width;
     final safeBottomInset = mediaQuery.padding.bottom;
     final compactTopBar = screenWidth < 390;
-    final keyboardVisible = mediaQuery.viewInsets.bottom > 0;
+    final inputLocked = _isKeyboardOrInputVisible(mediaQuery);
     final operationGuide = resolveOperationGuide(currentRoute);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBackground = isDark
@@ -119,7 +154,7 @@ class AppShellScaffold extends ConsumerWidget {
             context.push('/notifications');
           },
         ),
-      ...actions,
+      ...widget.actions,
     ];
 
     final navItems = session.isCourier
@@ -210,15 +245,55 @@ class AppShellScaffold extends ConsumerWidget {
               routeForSelection.startsWith('/courier')),
     );
     final navBarBaseHeight = responsive.navBarBaseHeight();
-    final mobileBottomInset = responsive.shellBottomPadding(
-      safeBottom: safeBottomInset,
-      navHeight: navBarBaseHeight,
-    );
+    _preventAutoHideFromInput = inputLocked;
+    final navVisible =
+        inputLocked ||
+        !_mobileNavBehavior.canAutoHide ||
+        _mobileNavBehavior.isVisible;
+    final mobileBottomInset = responsive.useDesktopShell
+        ? safeBottomInset
+        : (navVisible
+              ? _MobileFloatingNavBar.visibleContentInset(
+                  safeBottom: safeBottomInset,
+                  baseHeight: navBarBaseHeight,
+                )
+              : _MobileFloatingNavBar.hiddenContentInset(
+                  safeBottom: safeBottomInset,
+                ));
     final body = SafeArea(
       top: false,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: mobileBottomInset),
-        child: child,
+      bottom: false,
+      child: Listener(
+        onPointerSignal: _handlePointerSignal,
+        onPointerDown: _handlePointerDown,
+        onPointerMove: _handlePointerMove,
+        onPointerUp: _handlePointerDone,
+        onPointerCancel: _handlePointerDone,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            _mobileNavBehavior.handleScrollNotification(
+              notification,
+              preventAutoHide: inputLocked,
+            );
+            return false;
+          },
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.only(bottom: mobileBottomInset),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final minHeight = constraints.maxHeight.isFinite
+                    ? constraints.maxHeight
+                    : mediaQuery.size.height;
+                return ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: minHeight),
+                  child: widget.child,
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
 
@@ -227,14 +302,14 @@ class AppShellScaffold extends ConsumerWidget {
         extendBodyBehindAppBar: true,
         backgroundColor: scaffoldBackground,
         appBar: AppBar(
-          title: _ShellAppBarTitle(title: title),
+          title: _ShellAppBarTitle(title: widget.title),
           actions: appBarActions,
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
         ),
-        floatingActionButton: floatingActionButton,
+        floatingActionButton: widget.floatingActionButton,
         body: Container(
           decoration: BoxDecoration(gradient: shellGradient),
           child: Center(
@@ -333,22 +408,95 @@ class AppShellScaffold extends ConsumerWidget {
       extendBody: true,
       backgroundColor: scaffoldBackground,
       appBar: AppBar(
-        title: _ShellAppBarTitle(title: title),
+        title: _ShellAppBarTitle(title: widget.title),
         actions: appBarActions,
       ),
       floatingActionButton: null,
       body: body,
-      bottomNavigationBar: keyboardVisible
-          ? null
-          : _MobileFloatingNavBar(
-              items: navItems,
-              selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-              baseHeight: navBarBaseHeight,
-              centerAction: floatingActionButton,
-              onSelect: (index) => context.go(navItems[index].route),
-              onCenterPressed: () => context.go(_resolveMobileCenterRoute()),
-            ),
+      bottomNavigationBar: _MobileFloatingNavBar(
+        items: navItems,
+        selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+        baseHeight: navBarBaseHeight,
+        centerAction: widget.floatingActionButton,
+        isVisible: navVisible,
+        autoHideEnabled: _mobileNavBehavior.canAutoHide && !inputLocked,
+        onSelect: (index) => context.go(navItems[index].route),
+        onCenterPressed: () => context.go(_resolveMobileCenterRoute()),
+      ),
     );
+  }
+
+  String get currentRoute => widget.currentRoute;
+
+  bool _isKeyboardOrInputVisible(MediaQueryData mediaQuery) {
+    if (mediaQuery.viewInsets.bottom > 0) {
+      return true;
+    }
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus == null || !primaryFocus.hasFocus) {
+      return false;
+    }
+    final focusedContext = primaryFocus.context;
+    if (focusedContext == null || !focusedContext.mounted) {
+      return false;
+    }
+    final focusedWidget = focusedContext.widget;
+    if (focusedWidget is! EditableText) {
+      return false;
+    }
+    // On web, keeping nav forced-visible for any focused editable produces
+    // false positives because hidden editable hosts can retain focus.
+    if (kIsWeb) {
+      return mediaQuery.viewInsets.bottom > 0;
+    }
+    return true;
+  }
+
+  void _onMobileNavBehaviorChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) {
+      return;
+    }
+    _mobileNavBehavior.handlePointerDelta(
+      delta: event.scrollDelta.dy,
+      preventAutoHide: _preventAutoHideFromInput,
+      scrollableHint: true,
+    );
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    _activePointerId = event.pointer;
+    _lastPointerDy = event.position.dy;
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (_activePointerId != event.pointer || _lastPointerDy == null) {
+      return;
+    }
+    final dy = event.position.dy - _lastPointerDy!;
+    _lastPointerDy = event.position.dy;
+    if (dy.abs() < 0.6) {
+      return;
+    }
+    _mobileNavBehavior.handlePointerDelta(
+      delta: -dy,
+      preventAutoHide: _preventAutoHideFromInput,
+      scrollableHint: true,
+    );
+  }
+
+  void _handlePointerDone(PointerEvent event) {
+    if (_activePointerId != event.pointer) {
+      return;
+    }
+    _activePointerId = null;
+    _lastPointerDy = null;
   }
 }
 
@@ -384,14 +532,35 @@ class _MobileFloatingNavBar extends StatelessWidget {
     required this.items,
     required this.selectedIndex,
     required this.baseHeight,
+    required this.isVisible,
+    required this.autoHideEnabled,
     required this.onSelect,
     required this.onCenterPressed,
     this.centerAction,
   });
 
+  static const double _dockBottomInset = 8;
+  static const double _hiddenPeekInset = 8;
+  static const double _contentInsetBuffer = 16;
+  static const double _centerButtonSize = 56;
+  static const double _centerButtonTopOffset = -2;
+
+  static double visibleContentInset({
+    required double safeBottom,
+    required double baseHeight,
+  }) {
+    return baseHeight + safeBottom + _dockBottomInset + _contentInsetBuffer;
+  }
+
+  static double hiddenContentInset({required double safeBottom}) {
+    return safeBottom + _hiddenPeekInset;
+  }
+
   final List<_NavItem> items;
   final int selectedIndex;
   final double baseHeight;
+  final bool isVisible;
+  final bool autoHideEnabled;
   final ValueChanged<int> onSelect;
   final VoidCallback onCenterPressed;
   final Widget? centerAction;
@@ -403,70 +572,129 @@ class _MobileFloatingNavBar extends StatelessWidget {
     final leftCount = (items.length / 2).floor();
     final leftItems = items.take(leftCount).toList();
     final rightItems = items.skip(leftCount).toList();
+    final showNav = isVisible || !autoHideEnabled;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navBackgroundColor = isDark ? const Color(0xFF111827) : Colors.white;
     final horizontalInset = responsive.horizontalPadding;
-    final totalHeight = baseHeight + safeBottom + 8;
+    final expandedHeight = baseHeight + safeBottom + _dockBottomInset;
+    final collapsedHeight = hiddenContentInset(safeBottom: safeBottom);
 
-    return SizedBox(
-      height: totalHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          Positioned(
-            left: horizontalInset,
-            right: horizontalInset,
-            bottom: 8 + safeBottom,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: navBackgroundColor,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF273449)
-                      : TravelBoxBrand.border,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 11, 12, 9),
-                child: Row(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      height: showNav ? expandedHeight : collapsedHeight,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: IgnorePointer(
+          ignoring: !showNav,
+          child: AnimatedSlide(
+            duration: const Duration(milliseconds: 210),
+            curve: Curves.easeOutCubic,
+            offset: showNav ? Offset.zero : const Offset(0, 1.15),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              opacity: showNav ? 1 : 0,
+              child: SizedBox(
+                height: expandedHeight,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.topCenter,
                   children: [
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: leftItems
-                            .asMap()
-                            .entries
-                            .map(
-                              (entry) => _MobileNavItemButton(
-                                item: entry.value,
-                                selected: selectedIndex == entry.key,
-                                onTap: () => onSelect(entry.key),
+                    Positioned(
+                      left: horizontalInset,
+                      right: horizontalInset,
+                      bottom: _dockBottomInset + safeBottom,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: navBackgroundColor,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: isDark
+                                ? const Color(0xFF273449)
+                                : TravelBoxBrand.border,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.28 : 0.10,
                               ),
-                            )
-                            .toList(),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: leftItems
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (entry) => _MobileNavItemButton(
+                                          item: entry.value,
+                                          selected: selectedIndex == entry.key,
+                                          onTap: () => onSelect(entry.key),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ),
+                              const SizedBox(width: 64),
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: rightItems.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final absoluteIndex = leftCount + entry.key;
+                                    return _MobileNavItemButton(
+                                      item: entry.value,
+                                      selected: selectedIndex == absoluteIndex,
+                                      onTap: () => onSelect(absoluteIndex),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 72),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: rightItems.asMap().entries.map((entry) {
-                          final absoluteIndex = leftCount + entry.key;
-                          return _MobileNavItemButton(
-                            item: entry.value,
-                            selected: selectedIndex == absoluteIndex,
-                            onTap: () => onSelect(absoluteIndex),
-                          );
-                        }).toList(),
+                    Positioned(
+                      top: _centerButtonTopOffset,
+                      child: GestureDetector(
+                        onTap: onCenterPressed,
+                        child: Container(
+                          width: _centerButtonSize,
+                          height: _centerButtonSize,
+                          decoration: BoxDecoration(
+                            gradient: TravelBoxBrand.brandGradient,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF2A89F8,
+                                ).withValues(alpha: 0.42),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child:
+                              centerAction ??
+                              const Icon(
+                                Icons.qr_code_scanner_rounded,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                        ),
                       ),
                     ),
                   ],
@@ -474,35 +702,7 @@ class _MobileFloatingNavBar extends StatelessWidget {
               ),
             ),
           ),
-          Positioned(
-            top: -4,
-            child: GestureDetector(
-              onTap: onCenterPressed,
-              child: Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: TravelBoxBrand.brandGradient,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF2A89F8).withValues(alpha: 0.45),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child:
-                    centerAction ??
-                    const Icon(
-                      Icons.qr_code_scanner_rounded,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

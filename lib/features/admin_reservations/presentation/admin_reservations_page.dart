@@ -3,6 +3,7 @@ import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
@@ -46,6 +47,10 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final sectionGap = responsive.sectionGap;
+    final cardPadding = responsive.cardPadding;
     final selectedStatus = ref.watch(adminReservationStatusFilterProvider);
     final reservations = ref.watch(adminReservationListProvider);
     return AppShellScaffold(
@@ -54,7 +59,12 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: EdgeInsets.fromLTRB(
+              responsive.horizontalPadding,
+              responsive.verticalPadding,
+              responsive.horizontalPadding,
+              0,
+            ),
             child: Column(
               children: [
                 TextField(
@@ -76,38 +86,30 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                SizedBox(height: itemGap),
+                _StatusFilterBar(
+                  selectedStatus: selectedStatus,
+                  itemGap: itemGap,
+                  mobile: responsive.isMobile,
+                  onStatusSelected: (status) {
+                    ref
+                            .read(
+                              adminReservationStatusFilterProvider.notifier,
+                            )
+                            .state =
+                        status;
+                  },
+                ),
+                SizedBox(height: itemGap),
+                Row(
                   children: [
-                    FilterChip(
-                      selected: selectedStatus == null,
-                      label: Text(context.l10n.t('todas')),
-                      onSelected: (_) {
-                        ref
-                            .read(adminReservationStatusFilterProvider.notifier)
-                            .state = null;
-                      },
-                    ),
-                    ...ReservationStatus.values.map(
-                      (status) => FilterChip(
-                        selected: selectedStatus == status,
-                        label: Text(status.label),
-                        onSelected: (_) {
-                          ref
-                                  .read(
-                                    adminReservationStatusFilterProvider
-                                        .notifier,
-                                  )
-                                  .state =
-                              status;
-                        },
-                      ),
-                    ),
                     OutlinedButton.icon(
                       onPressed: _refreshReservations,
-                      icon: Icon(Icons.refresh),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: const Icon(Icons.refresh),
                       label: Text(context.l10n.t('recargar')),
                     ),
                   ],
@@ -115,7 +117,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
               ],
             ),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: itemGap),
           Expanded(
             child: reservations.when(
               data: (items) {
@@ -127,22 +129,22 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   itemCount: items.length,
                   separatorBuilder: (context, index) =>
-                      const SizedBox(height: 10),
+                      SizedBox(height: itemGap),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     final isBusy = _busyReservationId == item.id;
                     return Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(14),
+                        padding: EdgeInsets.all(cardPadding),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                              spacing: itemGap,
+                              runSpacing: itemGap,
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
@@ -150,7 +152,10 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(fontWeight: FontWeight.w700),
                                 ),
-                                Chip(label: Text(item.status.label)),
+                                Chip(
+                                  label: Text(item.status.label),
+                                  visualDensity: VisualDensity.compact,
+                                ),
                                 if (isBusy)
                                   const SizedBox(
                                     width: 18,
@@ -161,77 +166,109 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: itemGap / 1.5),
                             SelectableText(
                               'Codigo ${item.code}',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: itemGap / 2),
                             Text(
                               '${item.warehouse.city}, ${item.warehouse.district}\n${_formatDate(item.startAt)} -> ${_formatDate(item.endAt)}\nTotal S/${item.totalPrice.toStringAsFixed(2)}',
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: sectionGap),
                             Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
+                              spacing: itemGap,
+                              runSpacing: itemGap,
                               children: [
                                 OutlinedButton.icon(
                                   onPressed: isBusy
                                       ? null
-                                      : () =>
-                                            context.go('/reservation/${item.id}'),
+                                      : () => context.go(
+                                          '/reservation/${item.id}',
+                                        ),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(0, 40),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
                                   icon: const Icon(Icons.visibility_outlined),
                                   label: Text(context.l10n.t('ver_reserva')),
                                 ),
-                                if (item.status == ReservationStatus.confirmed &&
+                                if (item.status ==
+                                        ReservationStatus.confirmed &&
                                     item.pickupRequested)
                                   FilledButton.tonalIcon(
                                     onPressed: isBusy
                                         ? null
                                         : () => _openDeliveryRequest(
-                                              item,
-                                              type: 'PICKUP',
-                                            ),
+                                            item,
+                                            type: 'PICKUP',
+                                          ),
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.home_work_outlined),
-                                    label: Text(context.l10n.t('solicitar_recojo')),
+                                    label: Text(
+                                      context.l10n.t('solicitar_recojo'),
+                                    ),
                                   ),
-                                if (item.status == ReservationStatus.confirmed ||
+                                if (item.status ==
+                                        ReservationStatus.confirmed ||
                                     item.status ==
                                         ReservationStatus.checkinPending)
                                   FilledButton.tonalIcon(
                                     onPressed: isBusy
                                         ? null
                                         : () => context.push('/ops/qr-handoff'),
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.inventory_2_outlined),
-                                    label: Text(context.l10n.t('registrar_ingreso_qr')),
+                                    label: Text(
+                                      context.l10n.t('registrar_ingreso_qr'),
+                                    ),
                                   ),
                                 if (item.status == ReservationStatus.stored)
                                   FilledButton.tonalIcon(
                                     onPressed: isBusy
                                         ? null
                                         : () => _changeStatus(
-                                              item: item,
-                                              status:
-                                                  ReservationStatus.readyForPickup,
-                                              message:
-                                                  'Reserva lista para recojo en almacen.',
-                                            ),
+                                            item: item,
+                                            status: ReservationStatus
+                                                .readyForPickup,
+                                            message:
+                                                'Reserva lista para recojo en almacen.',
+                                          ),
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.shopping_bag_outlined),
-                                    label: Text(context.l10n.t('lista_para_recojo')),
+                                    label: Text(
+                                      context.l10n.t('lista_para_recojo'),
+                                    ),
                                   ),
                                 if ((item.status == ReservationStatus.stored ||
-                                        item.status == ReservationStatus.readyForPickup) &&
+                                        item.status ==
+                                            ReservationStatus.readyForPickup) &&
                                     item.dropoffRequested)
                                   FilledButton.tonalIcon(
                                     onPressed: isBusy
                                         ? null
                                         : () => _openDeliveryRequest(
-                                              item,
-                                              type: 'DELIVERY',
-                                            ),
+                                            item,
+                                            type: 'DELIVERY',
+                                          ),
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.local_shipping_outlined),
-                                    label: Text(context.l10n.t('solicitar_delivery')),
+                                    label: Text(
+                                      context.l10n.t('solicitar_delivery'),
+                                    ),
                                   ),
                                 if (item.status ==
                                         ReservationStatus.readyForPickup ||
@@ -241,12 +278,15 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                     onPressed: isBusy
                                         ? null
                                         : () => _changeStatus(
-                                              item: item,
-                                              status:
-                                                  ReservationStatus.completed,
-                                              message:
-                                                  'Reserva finalizada desde el panel operativo.',
-                                            ),
+                                            item: item,
+                                            status: ReservationStatus.completed,
+                                            message:
+                                                'Reserva finalizada desde el panel operativo.',
+                                          ),
+                                    style: FilledButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.check_circle_outline),
                                     label: Text(context.l10n.t('finalizar')),
                                   ),
@@ -255,16 +295,27 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                     onPressed: isBusy
                                         ? null
                                         : () => _cancelOrRefund(item),
+                                    style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.cancel_outlined),
-                                    label: Text(context.l10n.t('cancelar__reembolsar')),
+                                    label: Text(
+                                      context.l10n.t('cancelar__reembolsar'),
+                                    ),
                                   ),
                                 if (item.status ==
                                     ReservationStatus.outForDelivery)
                                   OutlinedButton.icon(
                                     onPressed: isBusy
                                         ? null
-                                        : () =>
-                                              context.go(_trackingRoute(item.id)),
+                                        : () => context.go(
+                                            _trackingRoute(item.id),
+                                          ),
+                                    style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size(0, 40),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
                                     icon: Icon(Icons.route_outlined),
                                     label: Text(context.l10n.t('tracking')),
                                   ),
@@ -306,7 +357,9 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       _refreshReservations();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reserva ${item.code} actualizada a ${status.label}.')),
+        SnackBar(
+          content: Text('Reserva ${item.code} actualizada a ${status.label}.'),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
@@ -399,3 +452,50 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
   }
 }
 
+class _StatusFilterBar extends StatelessWidget {
+  const _StatusFilterBar({
+    required this.selectedStatus,
+    required this.itemGap,
+    required this.mobile,
+    required this.onStatusSelected,
+  });
+
+  final ReservationStatus? selectedStatus;
+  final double itemGap;
+  final bool mobile;
+  final ValueChanged<ReservationStatus?> onStatusSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <Widget>[
+      FilterChip(
+        selected: selectedStatus == null,
+        visualDensity: VisualDensity.compact,
+        label: Text(context.l10n.t('todas')),
+        onSelected: (_) => onStatusSelected(null),
+      ),
+      ...ReservationStatus.values.map(
+        (status) => FilterChip(
+          selected: selectedStatus == status,
+          visualDensity: VisualDensity.compact,
+          label: Text(status.label),
+          onSelected: (_) => onStatusSelected(status),
+        ),
+      ),
+    ];
+
+    if (!mobile) {
+      return Wrap(spacing: itemGap, runSpacing: itemGap, children: chips);
+    }
+
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: chips.length,
+        separatorBuilder: (_, _) => SizedBox(width: itemGap),
+        itemBuilder: (context, index) => chips[index],
+      ),
+    );
+  }
+}
