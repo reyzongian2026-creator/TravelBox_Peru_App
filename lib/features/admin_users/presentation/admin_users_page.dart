@@ -68,7 +68,7 @@ final adminUsersSummaryProvider = FutureProvider<AdminUsersSummaryData?>((
 });
 
 class AdminUsersPage extends ConsumerStatefulWidget {
-  AdminUsersPage({super.key});
+  const AdminUsersPage({super.key});
 
   @override
   ConsumerState<AdminUsersPage> createState() => _AdminUsersPageState();
@@ -853,7 +853,7 @@ class _AdminUserCard extends StatelessWidget {
 }
 
 class _MetricBadge extends StatelessWidget {
-  _MetricBadge({required this.icon, required this.label});
+  const _MetricBadge({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -938,6 +938,8 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
   late String _documentType;
   String? _existingDocumentPhotoPath;
   SelectedEvidenceImage? _documentPhotoFile;
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   bool get _requiresWarehouseScope =>
@@ -1153,19 +1155,46 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _passwordController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Contrasena temporal',
+                        suffixIcon: IconButton(
+                          tooltip: _passwordVisible
+                              ? 'Ocultar contrasena'
+                              : 'Ver contrasena',
+                          onPressed: () => setState(
+                            () => _passwordVisible = !_passwordVisible,
+                          ),
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                        ),
                       ),
-                      obscureText: true,
+                      obscureText: !_passwordVisible,
                       validator: FormValidators.password,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _confirmPasswordController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Confirmar contrasena',
+                        suffixIcon: IconButton(
+                          tooltip: _confirmPasswordVisible
+                              ? 'Ocultar contrasena'
+                              : 'Ver contrasena',
+                          onPressed: () => setState(
+                            () => _confirmPasswordVisible =
+                                !_confirmPasswordVisible,
+                          ),
+                          icon: Icon(
+                            _confirmPasswordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                        ),
                       ),
-                      obscureText: true,
+                      obscureText: !_confirmPasswordVisible,
                       validator: (value) => FormValidators.confirmPassword(
                         value,
                         _passwordController.text,
@@ -1376,7 +1405,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
 }
 
 class _PasswordDialog extends StatefulWidget {
-  _PasswordDialog({required this.user});
+  const _PasswordDialog({required this.user});
 
   final AdminUserItem user;
 
@@ -1388,6 +1417,8 @@ class _PasswordDialogState extends State<_PasswordDialog> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   @override
@@ -1421,19 +1452,46 @@ class _PasswordDialogState extends State<_PasswordDialog> {
                 children: [
                   TextFormField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Nueva contrasena',
+                      suffixIcon: IconButton(
+                        tooltip: _passwordVisible
+                            ? 'Ocultar contrasena'
+                            : 'Ver contrasena',
+                        onPressed: () => setState(
+                          () => _passwordVisible = !_passwordVisible,
+                        ),
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: !_passwordVisible,
                     validator: FormValidators.password,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _confirmPasswordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Confirmar contrasena',
+                      suffixIcon: IconButton(
+                        tooltip: _confirmPasswordVisible
+                            ? 'Ocultar contrasena'
+                            : 'Ver contrasena',
+                        onPressed: () => setState(
+                          () => _confirmPasswordVisible =
+                              !_confirmPasswordVisible,
+                        ),
+                        icon: Icon(
+                          _confirmPasswordVisible
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                        ),
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: !_confirmPasswordVisible,
                     validator: (value) => FormValidators.confirmPassword(
                       value,
                       _passwordController.text,

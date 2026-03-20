@@ -26,6 +26,8 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
 
   bool _loading = false;
   bool _codeRequested = false;
+  bool _newPasswordVisible = false;
+  bool _confirmNewPasswordVisible = false;
   String? _resetCodePreview;
   String? _expiresAt;
 
@@ -139,8 +141,21 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                       controller: _passwordController,
                       decoration: InputDecoration(
                         labelText: l10n.t('new_password'),
+                        suffixIcon: IconButton(
+                          tooltip: _newPasswordVisible
+                              ? 'Ocultar contrasena'
+                              : 'Ver contrasena',
+                          onPressed: () => setState(
+                            () => _newPasswordVisible = !_newPasswordVisible,
+                          ),
+                          icon: Icon(
+                            _newPasswordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                        ),
                       ),
-                      obscureText: true,
+                      obscureText: !_newPasswordVisible,
                       validator: FormValidators.strongPassword,
                     ),
                     const SizedBox(height: 12),
@@ -148,8 +163,22 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
                       controller: _confirmPasswordController,
                       decoration: InputDecoration(
                         labelText: l10n.t('confirm_new_password'),
+                        suffixIcon: IconButton(
+                          tooltip: _confirmNewPasswordVisible
+                              ? 'Ocultar contrasena'
+                              : 'Ver contrasena',
+                          onPressed: () => setState(
+                            () => _confirmNewPasswordVisible =
+                                !_confirmNewPasswordVisible,
+                          ),
+                          icon: Icon(
+                            _confirmNewPasswordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                        ),
                       ),
-                      obscureText: true,
+                      obscureText: !_confirmNewPasswordVisible,
                       validator: (value) => FormValidators.confirmPassword(
                         value,
                         _passwordController.text,
@@ -248,4 +277,3 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
     }
   }
 }
-

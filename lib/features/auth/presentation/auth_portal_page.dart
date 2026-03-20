@@ -37,6 +37,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   late _AccessMode _accessMode;
   bool _showValidation = false;
   bool _keepSignedIn = true;
+  bool _loginPasswordVisible = false;
   String _teddyAnimation = 'idle';
   double _teddyLookOffsetX = -1;
   Timer? _animationResetTimer;
@@ -106,9 +107,12 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
         loginPasswordFocusNode: _loginPasswordFocusNode,
         teddyAnimation: _teddyAnimation,
         teddyLookOffsetX: _teddyLookOffsetX,
+        loginPasswordVisible: _loginPasswordVisible,
         showValidation: _showValidation,
         onModeChanged: (mode) => setState(() => _accessMode = mode),
         onKeepSignedInChanged: (value) => setState(() => _keepSignedIn = value),
+        onToggleLoginPasswordVisibility: (value) =>
+            setState(() => _loginPasswordVisible = value),
         onClientLogin: _handleLogin,
         onInternalLogin: _handleLogin,
         onGoogleLogin: () => _handleSocialLogin('GOOGLE'),
@@ -278,9 +282,11 @@ class _AuthPanel extends StatelessWidget {
     required this.loginPasswordFocusNode,
     required this.teddyAnimation,
     required this.teddyLookOffsetX,
+    required this.loginPasswordVisible,
     required this.showValidation,
     required this.onModeChanged,
     required this.onKeepSignedInChanged,
+    required this.onToggleLoginPasswordVisibility,
     required this.onClientLogin,
     required this.onInternalLogin,
     required this.onGoogleLogin,
@@ -302,9 +308,11 @@ class _AuthPanel extends StatelessWidget {
   final FocusNode loginPasswordFocusNode;
   final String teddyAnimation;
   final double teddyLookOffsetX;
+  final bool loginPasswordVisible;
   final bool showValidation;
   final ValueChanged<_AccessMode> onModeChanged;
   final ValueChanged<bool> onKeepSignedInChanged;
+  final ValueChanged<bool> onToggleLoginPasswordVisibility;
   final Future<void> Function() onClientLogin;
   final Future<void> Function() onInternalLogin;
   final Future<void> Function() onGoogleLogin;
@@ -451,9 +459,24 @@ class _AuthPanel extends StatelessWidget {
               focusNode: loginPasswordFocusNode,
               onTap: () => onPasswordTyping(loginPasswordController.text),
               onChanged: onPasswordTyping,
-              obscureText: true,
+              obscureText: !loginPasswordVisible,
               validator: FormValidators.password,
-              decoration: AuthUi.lineFieldDecoration(l10n.t('password_hint')),
+              decoration: AuthUi.lineFieldDecoration(l10n.t('password_hint'))
+                  .copyWith(
+                    suffixIcon: IconButton(
+                      tooltip: loginPasswordVisible
+                          ? 'Ocultar contrasena'
+                          : 'Ver contrasena',
+                      onPressed: () => onToggleLoginPasswordVisibility(
+                        !loginPasswordVisible,
+                      ),
+                      icon: Icon(
+                        loginPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                    ),
+                  ),
             ),
           ),
           const SizedBox(height: 8),

@@ -12,7 +12,7 @@ import 'auth_controller.dart';
 import 'widgets/auth_ui.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
-  RegisterPage({super.key});
+  const RegisterPage({super.key});
 
   @override
   ConsumerState<RegisterPage> createState() => _RegisterPageState();
@@ -31,6 +31,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   String _preferredLanguage = 'es';
   bool _termsAccepted = false;
   bool _showValidation = false;
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
 
   @override
   void dispose() {
@@ -275,13 +277,38 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               controller: _passwordController,
               hint: l10n.t('password_hint'),
               validator: FormValidators.strongPassword,
-              obscureText: true,
+              obscureText: !_passwordVisible,
+              suffixIcon: IconButton(
+                tooltip: _passwordVisible
+                    ? 'Ocultar contrasena'
+                    : 'Ver contrasena',
+                onPressed: () =>
+                    setState(() => _passwordVisible = !_passwordVisible),
+                icon: Icon(
+                  _passwordVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             _textLineField(
               controller: _confirmPasswordController,
               hint: l10n.t('confirm_password'),
-              obscureText: true,
+              obscureText: !_confirmPasswordVisible,
+              suffixIcon: IconButton(
+                tooltip: _confirmPasswordVisible
+                    ? 'Ocultar contrasena'
+                    : 'Ver contrasena',
+                onPressed: () => setState(
+                  () => _confirmPasswordVisible = !_confirmPasswordVisible,
+                ),
+                icon: Icon(
+                  _confirmPasswordVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                ),
+              ),
               validator: (value) => FormValidators.confirmPassword(
                 value,
                 _passwordController.text,
@@ -336,6 +363,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     bool obscureText = false,
+    Widget? suffixIcon,
   }) {
     return AuthLineField(
       child: TextFormField(
@@ -343,7 +371,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         validator: validator,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        decoration: AuthUi.lineFieldDecoration(hint),
+        decoration: AuthUi.lineFieldDecoration(
+          hint,
+        ).copyWith(suffixIcon: suffixIcon),
       ),
     );
   }
@@ -422,7 +452,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 }
 
 class _AcceptTermsLabel extends StatelessWidget {
-  _AcceptTermsLabel();
+  const _AcceptTermsLabel();
 
   @override
   Widget build(BuildContext context) {

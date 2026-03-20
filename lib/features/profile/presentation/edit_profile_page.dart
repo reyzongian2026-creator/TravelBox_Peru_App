@@ -16,7 +16,7 @@ import '../../incidents/data/selected_evidence_image.dart';
 import '../data/profile_repository_impl.dart';
 
 class EditProfilePage extends ConsumerStatefulWidget {
-  EditProfilePage({super.key, this.forceComplete = false});
+  const EditProfilePage({super.key, this.forceComplete = false});
 
   final bool forceComplete;
 
@@ -50,6 +50,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   bool _loading = false;
   bool _showValidation = false;
+  bool _currentPasswordVisible = false;
   String _nationality = 'Peru';
   late CountryDialingInfo _dialingCountry;
   String _preferredLanguage = 'es';
@@ -401,9 +402,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _currentPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: !_currentPasswordVisible,
+                decoration: InputDecoration(
                   labelText: 'Contrasena actual para cambios sensibles',
+                  suffixIcon: IconButton(
+                    tooltip: _currentPasswordVisible
+                        ? 'Ocultar contrasena'
+                        : 'Ver contrasena',
+                    onPressed: () => setState(
+                      () => _currentPasswordVisible = !_currentPasswordVisible,
+                    ),
+                    icon: Icon(
+                      _currentPasswordVisible
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
                 validator: (value) =>
                     _requiresSensitiveReauth && _requiresLocalPasswordReauth
