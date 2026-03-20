@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -120,8 +121,10 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
     List<DeliveryMonitorItem> items,
     bool activeOnly,
   ) {
+    final responsive = context.responsive;
     final selected = _resolveSelection(items);
     final width = MediaQuery.of(context).size.width;
+    final searchFieldWidth = (width - 72).clamp(220.0, 360.0).toDouble();
     final list = _buildList(context, items, selected);
     final detail = _buildDetail(context, selected, items.length, activeOnly);
 
@@ -131,14 +134,17 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 420, child: list),
+                SizedBox(width: 420, child: SingleChildScrollView(child: list)),
                 const SizedBox(width: 16),
-                Expanded(child: detail),
+                Expanded(child: SingleChildScrollView(child: detail)),
               ],
             ),
           )
         : ListView(
-            padding: const EdgeInsets.all(16),
+            padding: responsive.pageInsets(
+              top: responsive.verticalPadding,
+              bottom: 24,
+            ),
             children: [list, const SizedBox(height: 16), detail],
           );
 
@@ -176,7 +182,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
-                      width: 340,
+                      width: searchFieldWidth,
                       child: TextField(
                         controller: _searchController,
                         onChanged: (value) {
@@ -530,7 +536,9 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
           padding: const EdgeInsets.all(18),
           child: ListTile(
             leading: const Icon(Icons.warning_amber_outlined),
-            title: Text(context.l10n.t('no_se_pudo_cargar_el_tracking_embebido')),
+            title: Text(
+              context.l10n.t('no_se_pudo_cargar_el_tracking_embebido'),
+            ),
             subtitle: Text(error.toString()),
             trailing: OutlinedButton(
               onPressed: () => ref.invalidate(
@@ -551,7 +559,7 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
       case 'ASSIGNED':
         return 'Asignado';
       case 'IN_TRANSIT':
-        return 'En transito';
+        return 'En tránsito';
       case 'DELIVERED':
         return 'Entregado';
       case 'CANCELLED':
@@ -573,6 +581,7 @@ class _EmbeddedTrackingMap extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final responsive = context.responsive;
     final current = LatLng(tracking.currentLatitude, tracking.currentLongitude);
     final destination = LatLng(
       tracking.destinationLatitude,
@@ -595,7 +604,7 @@ class _EmbeddedTrackingMap extends ConsumerWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: SizedBox(
-        height: 300,
+        height: responsive.mapHeight(max: 440),
         child: FlutterMap(
           options: MapOptions(
             initialCenter: current,
@@ -797,7 +806,7 @@ class DeliveryMonitorItem {
       case 'ASSIGNED':
         return 'Asignado';
       case 'IN_TRANSIT':
-        return 'En transito';
+        return 'En tránsito';
       case 'DELIVERED':
         return 'Entregado';
       case 'CANCELLED':
@@ -846,4 +855,3 @@ class DeliveryMonitorItem {
     );
   }
 }
-

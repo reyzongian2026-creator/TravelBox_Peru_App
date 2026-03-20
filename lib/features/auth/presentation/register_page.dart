@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/brand_tokens.dart';
 import '../../../shared/state/session_controller.dart';
@@ -48,6 +49,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final authState = ref.watch(authControllerProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = MediaQuery.of(context).size.shortestSide < 600;
+    final responsive = context.responsive;
+    final titleSize = responsive.adaptiveFont(
+      mobileSmall: 30,
+      mobile: 33,
+      tablet: 35,
+      desktopSmall: 37,
+      desktop: 38,
+    );
     final headlineColor = isDark
         ? const Color(0xFFE2E8F0)
         : const Color(0xFF2948B0);
@@ -131,7 +140,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               l10n.t('register_title'),
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 38,
+                fontSize: titleSize,
                 fontWeight: FontWeight.w700,
                 color: headlineColor,
                 letterSpacing: -0.3,
@@ -144,7 +153,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               style: TextStyle(
                 color: descriptionColor,
                 height: 1.35,
-                fontSize: 12.5,
+                fontSize: responsive.isMobile ? 12.8 : 13,
               ),
             ),
             Align(
@@ -359,7 +368,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   Widget _twoColumn(Widget left, Widget right) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 580) {
+        if (constraints.maxWidth < 600) {
           return Column(children: [left, const SizedBox(height: 10), right]);
         }
         return Row(
@@ -376,7 +385,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   String? _phoneValidator(String? value) {
     final raw = value?.trim() ?? '';
     if (raw.isEmpty) {
-      return 'Ingresa un telefono valido.';
+      return 'Ingresa un teléfono válido.';
     }
     if (!RegExp(r'^\+[1-9]\d{6,14}$').hasMatch(raw)) {
       return 'Usa formato internacional, ejemplo +51999999999.';

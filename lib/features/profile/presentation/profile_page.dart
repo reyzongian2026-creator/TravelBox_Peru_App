@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/app_localizations.dart';
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
@@ -17,6 +18,7 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final responsive = context.responsive;
     final session = ref.watch(sessionControllerProvider);
     final user = session.user;
 
@@ -32,7 +34,10 @@ class ProfilePage extends ConsumerWidget {
             ]
           : const [],
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: responsive.pageInsets(
+          top: responsive.verticalPadding,
+          bottom: 24,
+        ),
         children: [
           Card(
             child: ListTile(
@@ -71,21 +76,21 @@ class ProfilePage extends ConsumerWidget {
             Card(
               color: const Color(0xFFF6F1E8),
               child: ListTile(
-                leading: Icon(Icons.admin_panel_settings_outlined),
+                leading: const Icon(Icons.admin_panel_settings_outlined),
                 title: Text(
                   context.l10n.t('perfil_administrado_por_travelbox'),
                 ),
-                subtitle: Text(
+                subtitle: const Text(
                   'Los usuarios internos solo pueden ser editados por un administrador desde la plataforma.',
                 ),
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
           ],
           Card(
             child: Column(
               children: [
-                _ProfileRow('Telefono', user?.phone ?? '-'),
+                _ProfileRow('Teléfono', user?.phone ?? '-'),
                 _ProfileRow(
                   'Dirección',
                   user?.address.isNotEmpty == true ? user!.address : '-',
@@ -127,7 +132,7 @@ class ProfilePage extends ConsumerWidget {
                   subtitle: Text(
                     (user?.emailVerified ?? true)
                         ? 'Verificado'
-                        : 'Pendiente de verificacion',
+                        : 'Pendiente de verificación',
                   ),
                   trailing: !(user?.emailVerified ?? true)
                       ? TextButton(
@@ -137,11 +142,11 @@ class ProfilePage extends ConsumerWidget {
                       : null,
                 ),
                 ListTile(
-                  leading: Icon(Icons.language_outlined),
+                  leading: const Icon(Icons.language_outlined),
                   title: Text(context.l10n.t('idioma_de_app')),
                   subtitle: Text(user?.preferredLanguage.toUpperCase() ?? 'ES'),
                   trailing: SizedBox(
-                    width: 150,
+                    width: responsive.isMobile ? 116 : 150,
                     child: DropdownButtonFormField<String>(
                       initialValue: session.locale.languageCode,
                       items: const ['es', 'en', 'de', 'fr', 'it', 'pt']
@@ -164,7 +169,7 @@ class ProfilePage extends ConsumerWidget {
               ],
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           FilledButton.tonal(
             onPressed: () async {
               final refreshToken = session.refreshToken?.trim();
@@ -180,7 +185,7 @@ class ProfilePage extends ConsumerWidget {
                 );
               }
             },
-            child: Text(context.l10n.t('cerrar_sesin')),
+            child: Text(context.l10n.t('logout')),
           ),
         ],
       ),

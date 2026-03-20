@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/env/app_env.dart';
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/brand_tokens.dart';
 import '../../../shared/state/session_controller.dart';
@@ -43,7 +44,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   @override
   void initState() {
     super.initState();
-    _accessMode = _AccessMode.client;
+    _accessMode = _AccessMode.internal;
     _loginEmailFocusNode.addListener(_syncTeddyFromFocus);
     _loginPasswordFocusNode.addListener(_syncTeddyFromFocus);
   }
@@ -320,9 +321,24 @@ class _AuthPanel extends StatelessWidget {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final media = MediaQuery.of(context);
+    final responsive = context.responsive;
     final width = media.size.width;
     final isMobile = media.size.shortestSide < 600;
-    final topGap = width >= 980 ? 60.0 : 12.0;
+    final topGap = width >= 980 ? 34.0 : (responsive.isMobile ? 4.0 : 10.0);
+    final titleSize = responsive.adaptiveFont(
+      mobileSmall: 30,
+      mobile: 34,
+      tablet: 37,
+      desktopSmall: 40,
+      desktop: 42,
+    );
+    final accessTitleSize = responsive.adaptiveFont(
+      mobileSmall: 17,
+      mobile: 18,
+      tablet: 19,
+      desktopSmall: 20,
+      desktop: 20,
+    );
     final headlineColor = isDark
         ? const Color(0xFFE2E8F0)
         : const Color(0xFF1C2434);
@@ -376,7 +392,7 @@ class _AuthPanel extends StatelessWidget {
             l10n.t('login_title'),
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 42,
+              fontSize: titleSize,
               fontWeight: FontWeight.w700,
               color: headlineColor,
               letterSpacing: -0.3,
@@ -389,7 +405,7 @@ class _AuthPanel extends StatelessWidget {
             style: TextStyle(
               color: descriptionColor,
               height: 1.35,
-              fontSize: 12.5,
+              fontSize: responsive.isMobile ? 12.8 : 13,
             ),
           ),
           const SizedBox(height: 16),
@@ -411,7 +427,7 @@ class _AuthPanel extends StatelessWidget {
           Text(
             isClient ? l10n.t('access_client') : l10n.t('access_internal'),
             style: TextStyle(
-              fontSize: 20,
+              fontSize: accessTitleSize,
               fontWeight: FontWeight.w700,
               color: headlineColor,
             ),
@@ -441,10 +457,11 @@ class _AuthPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Flexible(
-                child: Row(
+          if (width < 430)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
                     Checkbox(
                       value: keepSignedIn,
@@ -456,16 +473,44 @@ class _AuthPanel extends StatelessWidget {
                     const Expanded(child: _KeepSignedInLabel()),
                   ],
                 ),
-              ),
-              if (isClient)
-                TextButton(
-                  onPressed: authState.isLoading
-                      ? null
-                      : onEmailRegisterPressed,
-                  child: Text(l10n.t('create_account')),
+                if (isClient)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: TextButton(
+                      onPressed: authState.isLoading
+                          ? null
+                          : onEmailRegisterPressed,
+                      child: Text(l10n.t('create_account')),
+                    ),
+                  ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Flexible(
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: keepSignedIn,
+                        onChanged: authState.isLoading
+                            ? null
+                            : (value) =>
+                                  onKeepSignedInChanged(value ?? keepSignedIn),
+                      ),
+                      const Expanded(child: _KeepSignedInLabel()),
+                    ],
+                  ),
                 ),
-            ],
-          ),
+                if (isClient)
+                  TextButton(
+                    onPressed: authState.isLoading
+                        ? null
+                        : onEmailRegisterPressed,
+                    child: Text(l10n.t('create_account')),
+                  ),
+              ],
+            ),
           const SizedBox(height: 6),
           AuthStripeButton(
             onPressed: authState.isLoading
@@ -481,27 +526,52 @@ class _AuthPanel extends StatelessWidget {
           ),
           if (isClient) ...[
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _SocialGhostButton(
-                    icon: Icons.g_mobiledata,
-                    label: 'Google',
-                    onTap: authState.isLoading ? null : onGoogleLogin,
+            if (width < 380)
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: _SocialGhostButton(
+                      icon: Icons.g_mobiledata,
+                      label: 'Google',
+                      onTap: authState.isLoading ? null : onGoogleLogin,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _SocialGhostButton(
-                    icon: Icons.facebook,
-                    label: 'Facebook',
-                    onTap: authState.isLoading || !isFacebookEnabled
-                        ? null
-                        : onFacebookLogin,
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _SocialGhostButton(
+                      icon: Icons.facebook,
+                      label: 'Facebook',
+                      onTap: authState.isLoading || !isFacebookEnabled
+                          ? null
+                          : onFacebookLogin,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _SocialGhostButton(
+                      icon: Icons.g_mobiledata,
+                      label: 'Google',
+                      onTap: authState.isLoading ? null : onGoogleLogin,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _SocialGhostButton(
+                      icon: Icons.facebook,
+                      label: 'Facebook',
+                      onTap: authState.isLoading || !isFacebookEnabled
+                          ? null
+                          : onFacebookLogin,
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 10),
             TextButton.icon(
               onPressed: authState.isLoading ? null : onEmailRegisterPressed,

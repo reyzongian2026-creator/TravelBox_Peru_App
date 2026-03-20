@@ -8,6 +8,7 @@ import '../../shared/state/session_controller.dart';
 import '../../shared/state/theme_mode_controller.dart';
 import '../../shared/widgets/operation_guide.dart';
 import '../../shared/widgets/travelbox_logo.dart';
+import '../layout/responsive_layout.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/brand_tokens.dart';
 
@@ -33,9 +34,11 @@ class AppShellScaffold extends ConsumerWidget {
     final session = ref.watch(sessionControllerProvider);
     final notificationsState = ref.watch(notificationCenterControllerProvider);
     final mediaQuery = MediaQuery.of(context);
+    final responsive = context.responsive;
     final screenWidth = mediaQuery.size.width;
     final safeBottomInset = mediaQuery.padding.bottom;
     final compactTopBar = screenWidth < 390;
+    final keyboardVisible = mediaQuery.viewInsets.bottom > 0;
     final operationGuide = resolveOperationGuide(currentRoute);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBackground = isDark
@@ -206,9 +209,11 @@ class AppShellScaffold extends ConsumerWidget {
           (item.route == '/courier/services' &&
               routeForSelection.startsWith('/courier')),
     );
-    final mobileBottomInset = screenWidth >= 1000
-        ? 0.0
-        : (98 + safeBottomInset + 14);
+    final navBarBaseHeight = responsive.navBarBaseHeight();
+    final mobileBottomInset = responsive.shellBottomPadding(
+      safeBottom: safeBottomInset,
+      navHeight: navBarBaseHeight,
+    );
     final body = SafeArea(
       top: false,
       child: Padding(
@@ -217,7 +222,7 @@ class AppShellScaffold extends ConsumerWidget {
       ),
     );
 
-    if (MediaQuery.of(context).size.width >= 1000) {
+    if (responsive.useDesktopShell) {
       return Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: scaffoldBackground,
@@ -333,13 +338,16 @@ class AppShellScaffold extends ConsumerWidget {
       ),
       floatingActionButton: null,
       body: body,
-      bottomNavigationBar: _MobileFloatingNavBar(
-        items: navItems,
-        selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-        centerAction: floatingActionButton,
-        onSelect: (index) => context.go(navItems[index].route),
-        onCenterPressed: () => context.go(_resolveMobileCenterRoute()),
-      ),
+      bottomNavigationBar: keyboardVisible
+          ? null
+          : _MobileFloatingNavBar(
+              items: navItems,
+              selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+              baseHeight: navBarBaseHeight,
+              centerAction: floatingActionButton,
+              onSelect: (index) => context.go(navItems[index].route),
+              onCenterPressed: () => context.go(_resolveMobileCenterRoute()),
+            ),
     );
   }
 }
@@ -375,6 +383,7 @@ class _MobileFloatingNavBar extends StatelessWidget {
   const _MobileFloatingNavBar({
     required this.items,
     required this.selectedIndex,
+    required this.baseHeight,
     required this.onSelect,
     required this.onCenterPressed,
     this.centerAction,
@@ -382,6 +391,7 @@ class _MobileFloatingNavBar extends StatelessWidget {
 
   final List<_NavItem> items;
   final int selectedIndex;
+  final double baseHeight;
   final ValueChanged<int> onSelect;
   final VoidCallback onCenterPressed;
   final Widget? centerAction;
@@ -389,26 +399,29 @@ class _MobileFloatingNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safeBottom = MediaQuery.of(context).padding.bottom;
+    final responsive = context.responsive;
     final leftCount = (items.length / 2).floor();
     final leftItems = items.take(leftCount).toList();
     final rightItems = items.skip(leftCount).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navBackgroundColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final horizontalInset = responsive.horizontalPadding;
+    final totalHeight = baseHeight + safeBottom + 8;
 
     return SizedBox(
-      height: 98 + safeBottom,
+      height: totalHeight,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
           Positioned(
-            left: 14,
-            right: 14,
-            bottom: 10 + safeBottom,
+            left: horizontalInset,
+            right: horizontalInset,
+            bottom: 8 + safeBottom,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: navBackgroundColor,
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(28),
                 border: Border.all(
                   color: isDark
                       ? const Color(0xFF273449)
@@ -423,7 +436,7 @@ class _MobileFloatingNavBar extends StatelessWidget {
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                padding: const EdgeInsets.fromLTRB(12, 11, 12, 9),
                 child: Row(
                   children: [
                     Expanded(
@@ -462,7 +475,7 @@ class _MobileFloatingNavBar extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: -2,
+            top: -4,
             child: GestureDetector(
               onTap: onCenterPressed,
               child: Container(

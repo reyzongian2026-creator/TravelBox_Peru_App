@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/layout/responsive_layout.dart';
 import '../../../../core/theme/brand_tokens.dart';
 import 'auth_teddy_animation.dart';
 
@@ -33,6 +34,7 @@ class AuthPageScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final responsive = context.responsive;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -52,7 +54,13 @@ class AuthPageScaffold extends StatelessWidget {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxWidth),
-              child: Padding(padding: const EdgeInsets.all(20), child: child),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.horizontalPadding + 6,
+                  vertical: responsive.verticalPadding + 6,
+                ),
+                child: child,
+              ),
             ),
           ),
         ),
@@ -65,11 +73,13 @@ class AuthCard extends StatelessWidget {
   const AuthCard({
     required this.child,
     this.padding = const EdgeInsets.fromLTRB(20, 18, 20, 20),
+    this.scrollable = true,
     super.key,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +99,9 @@ class AuthCard extends StatelessWidget {
           ),
         ],
       ),
-      child: SingleChildScrollView(padding: padding, child: child),
+      child: scrollable
+          ? SingleChildScrollView(padding: padding, child: child)
+          : Padding(padding: padding, child: child),
     );
   }
 }
@@ -119,6 +131,7 @@ class AuthSplitScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final responsive = context.responsive;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -139,45 +152,65 @@ class AuthSplitScaffold extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxWidth),
               child: Padding(
-                padding: const EdgeInsets.all(18),
+                padding: EdgeInsets.all(responsive.horizontalPadding + 4),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final compact = constraints.maxWidth < 980;
                     if (compact) {
+                      final heroHeight = constraints.maxWidth < 520
+                          ? 188.0
+                          : 224.0;
+                      final cardPadding = constraints.maxWidth < 520
+                          ? const EdgeInsets.fromLTRB(14, 14, 14, 18)
+                          : const EdgeInsets.fromLTRB(18, 18, 18, 20);
+                      final sheetPadding = constraints.maxWidth < 520
+                          ? const EdgeInsets.fromLTRB(10, 8, 10, 14)
+                          : const EdgeInsets.fromLTRB(12, 8, 12, 14);
                       if (!showCompactHero) {
-                        return SizedBox.expand(
-                          child: AuthCard(
-                            padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-                            child: formChild,
-                          ),
-                        );
-                      }
-                      return Column(
-                        children: [
-                          SizedBox(
-                            height: 240,
-                            child: AuthHeroPanel(
-                              label: heroLabel,
-                              title: heroTitle,
-                              subtitle: heroSubtitle,
-                              compact: true,
-                              showGuardianBear: showGuardianBear,
-                              heroAnimation: heroAnimation,
+                        return SingleChildScrollView(
+                          padding: sheetPadding,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
                             ),
-                          ),
-                          const SizedBox(height: 14),
-                          Expanded(
                             child: AuthCard(
-                              padding: const EdgeInsets.fromLTRB(
-                                18,
-                                18,
-                                18,
-                                20,
-                              ),
+                              scrollable: false,
+                              padding: cardPadding,
                               child: formChild,
                             ),
                           ),
-                        ],
+                        );
+                      }
+                      return SingleChildScrollView(
+                        padding: sheetPadding,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(
+                                height: heroHeight,
+                                child: AuthHeroPanel(
+                                  label: heroLabel,
+                                  title: heroTitle,
+                                  subtitle: heroSubtitle,
+                                  compact: true,
+                                  showGuardianBear: showGuardianBear,
+                                  heroAnimation: heroAnimation,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              AuthCard(
+                                scrollable: false,
+                                padding: cardPadding,
+                                child: formChild,
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                          ),
+                        ),
                       );
                     }
 

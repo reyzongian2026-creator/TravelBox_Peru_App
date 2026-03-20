@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/delivery_tracking.dart';
@@ -118,6 +119,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
   }
 
   Widget _mapCard(BuildContext context) {
+    final responsive = context.responsive;
     final tracking = _tracking!;
     final current = LatLng(tracking.currentLatitude, tracking.currentLongitude);
     final destination = LatLng(
@@ -140,7 +142,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
 
     return Card(
       child: SizedBox(
-        height: 320,
+        height: responsive.mapHeight(max: 460),
         child: FlutterMap(
           options: MapOptions(
             initialCenter: current,
@@ -353,7 +355,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
       case 'ASSIGNED':
         return 'Asignado';
       case 'IN_TRANSIT':
-        return 'En transito';
+        return 'En tránsito';
       case 'DELIVERED':
         return 'Entregado';
       case 'CANCELLED':
@@ -460,14 +462,14 @@ class _MissingDeliveryState extends StatelessWidget {
                   const Icon(Icons.route_outlined, size: 42),
                   const SizedBox(height: 12),
                   Text(
-                    'Aun no hay tracking disponible',
+                    'Aún no hay tracking disponible',
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     canRequestDelivery || canRequestPickup
-                        ? 'La reserva todavia no tiene una orden logistica creada. Puedes solicitar delivery o recojo segun el estado de la reserva.'
+                        ? 'La reserva todavía no tiene una orden logística creada. Puedes solicitar delivery o recojo según el estado de la reserva.'
                         : 'Esta reserva no tiene una orden de delivery asociada o ya no requiere seguimiento en vivo.',
                     textAlign: TextAlign.center,
                   ),

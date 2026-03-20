@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -129,7 +130,7 @@ class _DashboardContent extends ConsumerWidget {
       _KpiStat(
         title: 'Clientes',
         value: '${_asInt(summary['uniqueClients'])}',
-        subtitle: 'Clientes unicos',
+        subtitle: 'Clientes únicos',
         colors: const [Color(0xFF475569), Color(0xFF64748B)],
       ),
       _KpiStat(
@@ -148,13 +149,17 @@ class _DashboardContent extends ConsumerWidget {
       _KpiStat(
         title: 'Activas',
         value: '${_asInt(summary['activeReservations'])}',
-        subtitle: 'Open incidents: ${_asInt(summary['openIncidents'])}',
+        subtitle: 'Incidencias abiertas: ${_asInt(summary['openIncidents'])}',
         colors: const [Color(0xFF1D4ED8), Color(0xFF2563EB)],
       ),
     ];
 
+    final responsive = context.responsive;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+      padding: responsive.pageInsets(
+        top: responsive.verticalPadding,
+        bottom: 24,
+      ),
       children: [
         Container(
           padding: const EdgeInsets.all(18),
@@ -168,7 +173,7 @@ class _DashboardContent extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Operacion central',
+                'Operación central',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -204,7 +209,8 @@ class _DashboardContent extends ConsumerWidget {
             const spacing = 10.0;
             final columns = _kpiColumnsForWidth(constraints.maxWidth);
             final totalSpacing = spacing * (columns - 1);
-            final cardWidth = (constraints.maxWidth - totalSpacing) / columns - 0.1;
+            final cardWidth =
+                (constraints.maxWidth - totalSpacing) / columns - 0.1;
 
             return Wrap(
               spacing: spacing,
@@ -263,7 +269,7 @@ class _DashboardContent extends ConsumerWidget {
             child: ListTile(
               leading: const Icon(Icons.emoji_events_outlined),
               title: Text(
-                'Mejor almacen: ${bestWarehouse['warehouseName'] ?? '-'}',
+                'Mejor almacén: ${bestWarehouse['warehouseName'] ?? '-'}',
               ),
               subtitle: Text(
                 '${bestWarehouse['city'] ?? '-'} - ${_asInt(bestWarehouse['interactionCount'])} interacciones - ${formatter.format(_asDouble(bestWarehouse['confirmedRevenue']))}',
@@ -299,7 +305,8 @@ class _DashboardContent extends ConsumerWidget {
             const spacing = 12.0;
             final columns = _rankingColumnsForWidth(constraints.maxWidth);
             final totalSpacing = spacing * (columns - 1);
-            final cardWidth = (constraints.maxWidth - totalSpacing) / columns - 0.1;
+            final cardWidth =
+                (constraints.maxWidth - totalSpacing) / columns - 0.1;
 
             return Wrap(
               spacing: spacing,
@@ -310,7 +317,13 @@ class _DashboardContent extends ConsumerWidget {
                   child: _RankingCard(
                     title: 'Top almacenes',
                     children: topWarehouses.isEmpty
-                        ? [Text(context.l10n.t('aun_no_hay_data_para_este_periodo'))]
+                        ? [
+                            Text(
+                              context.l10n.t(
+                                'aun_no_hay_data_para_este_periodo',
+                              ),
+                            ),
+                          ]
                         : topWarehouses.take(5).map((item) {
                             return _RankingTile(
                               title: item['warehouseName']?.toString() ?? '-',
@@ -332,7 +345,13 @@ class _DashboardContent extends ConsumerWidget {
                   child: _RankingCard(
                     title: 'Ciudades con mayor demanda',
                     children: topCities.isEmpty
-                        ? [Text(context.l10n.t('aun_no_hay_data_para_este_periodo'))]
+                        ? [
+                            Text(
+                              context.l10n.t(
+                                'aun_no_hay_data_para_este_periodo',
+                              ),
+                            ),
+                          ]
                         : topCities.take(5).map((item) {
                             return _RankingTile(
                               title: item['city']?.toString() ?? '-',
@@ -356,7 +375,7 @@ class _DashboardContent extends ConsumerWidget {
                     children: topCouriers.isEmpty
                         ? const [
                             Text(
-                              'Aun no hay entregas suficientes en este periodo.',
+                              'Aún no hay entregas suficientes en este periodo.',
                             ),
                           ]
                         : topCouriers.take(5).map((item) {
@@ -384,7 +403,7 @@ class _DashboardContent extends ConsumerWidget {
                     children: topOperators.isEmpty
                         ? const [
                             Text(
-                              'Aun no hay operadores con servicios generados.',
+                              'Aún no hay operadores con servicios generados.',
                             ),
                           ]
                         : topOperators.take(5).map((item) {
@@ -458,9 +477,7 @@ class _DashboardContent extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.point_of_sale_outlined),
                 title: Text(context.l10n.t('pagos_en_caja')),
-                subtitle: Text(
-                  'Validacion de pagos cash/counter pendientes',
-                ),
+                subtitle: Text('Validacion de pagos cash/counter pendientes'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/admin/cash-payments'),
               ),
@@ -474,14 +491,18 @@ class _DashboardContent extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.receipt_long_outlined),
                 title: Text(context.l10n.t('historial_de_pagos')),
-                subtitle: Text(context.l10n.t('trazabilidad_completa_de_cobros')),
+                subtitle: Text(
+                  context.l10n.t('trazabilidad_completa_de_cobros'),
+                ),
                 trailing: Icon(Icons.chevron_right),
                 onTap: () => context.go('/admin/payments-history'),
               ),
               ListTile(
                 leading: const Icon(Icons.manage_accounts_outlined),
                 title: Text(context.l10n.t('usuarios_y_roles')),
-                subtitle: Text(context.l10n.t('accesos_roles_y_estados_de_cuenta')),
+                subtitle: Text(
+                  context.l10n.t('accesos_roles_y_estados_de_cuenta'),
+                ),
                 trailing: Icon(Icons.chevron_right),
                 onTap: () => context.go('/admin/users'),
               ),
@@ -489,7 +510,7 @@ class _DashboardContent extends ConsumerWidget {
                 leading: const Icon(Icons.qr_code_scanner_outlined),
                 title: Text(context.l10n.t('operacion_qr_y_pin')),
                 subtitle: Text(
-                  'Escaneo, etiqueta de maleta, validacion presencial y delivery seguro',
+                  'Escaneo, etiqueta de maleta, validación presencial y delivery seguro',
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/ops/qr-handoff'),
@@ -628,7 +649,7 @@ class _RankingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 290),
+        constraints: const BoxConstraints(minHeight: 220),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -667,7 +688,7 @@ class _KpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      constraints: const BoxConstraints(minHeight: 138),
+      constraints: const BoxConstraints(minHeight: 120),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: colors),
         borderRadius: BorderRadius.circular(16),
@@ -717,6 +738,8 @@ class _KpiStat {
 }
 
 int _kpiColumnsForWidth(double width) {
+  if (width < 560) return 1;
+  if (width < 860) return 2;
   final estimated = ((width + 10) / 170).floor();
   return estimated.clamp(2, 4).toInt();
 }
@@ -790,4 +813,3 @@ String _errorMessage(Object error) {
   }
   return text;
 }
-

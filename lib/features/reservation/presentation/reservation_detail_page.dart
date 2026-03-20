@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http_parser/http_parser.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
@@ -97,8 +98,12 @@ class ReservationDetailPage extends ConsumerWidget {
             final canCancelReservation = _canCancelReservation(
               reservation.status,
             );
+            final responsive = context.responsive;
             final content = ListView(
-              padding: const EdgeInsets.all(16),
+              padding: responsive.pageInsets(
+                top: responsive.verticalPadding,
+                bottom: 24,
+              ),
               children: [
                 Card(
                   child: ListTile(
@@ -152,7 +157,7 @@ class ReservationDetailPage extends ConsumerWidget {
                       leading: const Icon(Icons.add_a_photo_outlined),
                       title: const Text('Foto inicial del equipaje'),
                       subtitle: const Text(
-                        'Sube la foto de como entregas tu maleta antes del ingreso al almacen.',
+                        'Sube la foto de cómo entregas tu maleta antes del ingreso al almacén.',
                       ),
                       trailing: FilledButton.tonalIcon(
                         onPressed: () => _uploadClientHandoffPhoto(
@@ -175,6 +180,8 @@ class ReservationDetailPage extends ConsumerWidget {
                         '-';
                     final flow = payment['paymentFlow']?.toString() ?? '-';
                     final method = payment['paymentMethod']?.toString() ?? '-';
+                    final paymentStateLabel = _paymentStatusLabel(paymentState);
+                    final paymentMethodLabel = _paymentMethodLabel(method);
                     final pendingOffline =
                         paymentState.toUpperCase() == 'PENDING' &&
                         flow.toUpperCase().contains('OFFLINE');
@@ -183,8 +190,10 @@ class ReservationDetailPage extends ConsumerWidget {
                         Card(
                           child: ListTile(
                             leading: const Icon(Icons.payments_outlined),
-                            title: Text('Pago: $paymentState'),
-                            subtitle: Text('Flujo: $flow\nMetodo: $method'),
+                            title: Text('Pago: $paymentStateLabel'),
+                            subtitle: Text(
+                              'Flujo: $flow\nMétodo: $paymentMethodLabel',
+                            ),
                           ),
                         ),
                         if (pendingOffline)
@@ -195,7 +204,7 @@ class ReservationDetailPage extends ConsumerWidget {
                                 context.l10n.t('pago_pendiente_de_aprobacion'),
                               ),
                               subtitle: Text(
-                                'El QR de check-in aun no debe usarse. Primero se debe validar el cobro en caja desde el panel del operador.',
+                                'El QR de check-in aún no debe usarse. Primero se debe validar el cobro en caja desde el panel del operador.',
                               ),
                             ),
                           ),
@@ -470,7 +479,7 @@ class _TimelineTile extends StatelessWidget {
 
 String _pickupPinText(ReservationOperationalDetail? operational) {
   if (operational == null) {
-    return 'Pendiente de generacion o ya validado';
+    return 'Pendiente de generación o ya validado';
   }
   final visiblePin = operational.pickupPin?.trim();
   if (visiblePin != null && visiblePin.isNotEmpty) {
@@ -481,7 +490,7 @@ String _pickupPinText(ReservationOperationalDetail? operational) {
         ? 'Generado, pendiente de consulta segura'
         : 'Protegido por permisos de rol';
   }
-  return 'Pendiente de generacion o ya validado';
+  return 'Pendiente de generación o ya validado';
 }
 
 class _OperationalDetailCard extends StatelessWidget {
@@ -534,7 +543,7 @@ class _OperationalDetailCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Text('Ingreso a almacen: $checkinLabel'),
+            Text('Ingreso a almacén: $checkinLabel'),
             if (operational.bagTagId?.trim().isNotEmpty == true)
               Text('ID de equipaje: ${operational.bagTagId}'),
             if (!isCourier && operational.pickupPinGenerated)
@@ -576,7 +585,7 @@ class _ReservationQrCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               paymentPending
-                  ? 'El QR ya esta generado, pero solo debe usarse cuando el pago quede confirmado.'
+                  ? 'El QR ya está generado, pero solo debe usarse cuando el pago quede confirmado.'
                   : 'Presenta este QR cuando el operador valide el ingreso o la entrega.',
             ),
             const SizedBox(height: 12),
@@ -614,6 +623,12 @@ class _WarehouseLuggageSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final photos = operational.luggagePhotos;
+    final responsive = context.responsive;
+    final photoCardWidth = responsive.isMobile
+        ? (responsive.width - (responsive.horizontalPadding * 2) - 34)
+              .clamp(180.0, 280.0)
+              .toDouble()
+        : 220.0;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -621,32 +636,37 @@ class _WarehouseLuggageSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Registro en almacen',
+              'Registro en almacén',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
-              'Incluye foto inicial del cliente y fotos del ingreso a almacen para validar estado de entrega y recepcion.',
+              'Incluye foto inicial del cliente y fotos del ingreso al almacén para validar estado de entrega y recepción.',
             ),
             const SizedBox(height: 12),
             if (!operational.canViewLuggagePhotos)
               const Text(
-                'Tu perfil no puede ver las fotos, pero el registro ya quedo cerrado en almacen.',
+                'Tu perfil no puede ver las fotos, pero el registro ya quedó cerrado en almacén.',
               )
             else if (photos.isEmpty)
               Text(
                 operational.luggagePhotosLocked
                     ? 'No hay fotos visibles cargadas para esta reserva.'
-                    : 'Aun no se registran las fotos del equipaje.',
+                    : 'Aún no se registran las fotos del equipaje.',
               )
             else
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: photos
-                    .map((photo) => _LuggagePhotoCard(photo: photo))
+                    .map(
+                      (photo) => _LuggagePhotoCard(
+                        photo: photo,
+                        width: photoCardWidth,
+                      ),
+                    )
                     .toList(),
               ),
           ],
@@ -657,14 +677,16 @@ class _WarehouseLuggageSection extends StatelessWidget {
 }
 
 class _LuggagePhotoCard extends StatelessWidget {
-  const _LuggagePhotoCard({required this.photo});
+  const _LuggagePhotoCard({required this.photo, required this.width});
 
   final ReservationLuggagePhoto photo;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
+    final imageHeight = (width * 0.66).clamp(136.0, 170.0).toDouble();
     return SizedBox(
-      width: 220,
+      width: width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -672,8 +694,8 @@ class _LuggagePhotoCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: AppSmartImage(
               source: photo.imageUrl,
-              height: 150,
-              width: 220,
+              height: imageHeight,
+              width: width,
               fit: BoxFit.cover,
             ),
           ),
@@ -718,7 +740,7 @@ String _photoSourceLabel(String rawType) {
     return 'Origen: cliente';
   }
   if (normalized == 'CHECKIN_BAG_PHOTO') {
-    return 'Origen: ingreso a almacen';
+    return 'Origen: ingreso a almacén';
   }
   return 'Origen: evidencia operativa';
 }
@@ -764,7 +786,7 @@ String _trackingActionLabel(Reservation reservation) {
       reservation.dropoffRequested) {
     return 'Ver tracking de entrega';
   }
-  return 'Ver tracking logistico';
+  return 'Ver tracking logístico';
 }
 
 bool _canCancelReservation(ReservationStatus status) {
@@ -790,6 +812,44 @@ bool _requiresRefundForCancellation(Map<String, dynamic>? payment) {
       method == 'WALLET';
 }
 
+String _paymentStatusLabel(String rawStatus) {
+  switch (rawStatus.trim().toUpperCase()) {
+    case 'CONFIRMED':
+      return 'Confirmado';
+    case 'PENDING':
+      return 'Pendiente';
+    case 'REJECTED':
+      return 'Rechazado';
+    case 'CANCELLED':
+      return 'Cancelado';
+    case 'REFUNDED':
+      return 'Reembolsado';
+    case 'FAILED':
+      return 'Fallido';
+    default:
+      return rawStatus;
+  }
+}
+
+String _paymentMethodLabel(String rawMethod) {
+  switch (rawMethod.trim().toUpperCase()) {
+    case 'CARD':
+      return 'tarjeta';
+    case 'CASH':
+      return 'efectivo';
+    case 'COUNTER':
+      return 'en caja';
+    case 'YAPE':
+      return 'yape';
+    case 'PLIN':
+      return 'plin';
+    case 'WALLET':
+      return 'wallet/plin';
+    default:
+      return rawMethod;
+  }
+}
+
 String _operationalStageLabel(
   ReservationOperationalDetail operational,
   ReservationStatus reservationStatus,
@@ -801,7 +861,7 @@ String _operationalStageLabel(
     case 'BAG_TAGGED':
       return 'ID de equipaje generado';
     case 'STORED_AT_WAREHOUSE':
-      return 'Equipaje en almacen';
+      return 'Equipaje en almacén';
     case 'READY_FOR_PICKUP':
       return 'PIN listo para recojo';
     case 'PICKUP_PIN_VALIDATED':
@@ -811,7 +871,7 @@ String _operationalStageLabel(
     case 'DELIVERY_LUGGAGE_VALIDATED':
       return 'Equipaje validado';
     case 'DELIVERY_APPROVAL_PENDING':
-      return 'Aprobacion de entrega pendiente';
+      return 'Aprobación de entrega pendiente';
     case 'DELIVERY_APPROVAL_GRANTED':
       return 'Entrega aprobada';
     case 'DELIVERY_COMPLETED':
@@ -824,7 +884,7 @@ String _operationalStageLabel(
     return 'PIN generado';
   }
   if (operational.checkinAt != null) {
-    return 'Equipaje en almacen';
+    return 'Equipaje en almacén';
   }
   switch (reservationStatus) {
     case ReservationStatus.pendingPayment:
@@ -834,7 +894,7 @@ String _operationalStageLabel(
     case ReservationStatus.checkinPending:
       return 'Recojo solicitado';
     case ReservationStatus.stored:
-      return 'Equipaje en almacen';
+      return 'Equipaje en almacén';
     case ReservationStatus.outForDelivery:
       return 'Entrega en ruta';
     case ReservationStatus.readyForPickup:
@@ -844,7 +904,7 @@ String _operationalStageLabel(
     case ReservationStatus.cancelled:
       return 'Reserva cancelada';
     case ReservationStatus.incident:
-      return 'En revision por incidencia';
+      return 'En revisión por incidencia';
     case ReservationStatus.expired:
       return 'Reserva expirada';
     case ReservationStatus.draft:

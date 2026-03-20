@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -46,6 +47,7 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     final realtimeCursor = ref.watch(reservationRealtimeEventCursorProvider);
     if (_lastRealtimeCursor != realtimeCursor) {
       final shouldReload = _lastRealtimeCursor >= 0;
@@ -82,38 +84,75 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TabBar(
-                          tabs: const [
+                  if (responsive.width < 920)
+                    Column(
+                      children: [
+                        const TabBar(
+                          tabs: [
                             Tab(text: 'Disponibles'),
                             Tab(text: 'Mis servicios'),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      FilterChip(
-                        selected: _activeOnly,
-                        label: Text(context.l10n.t('solo_activos')),
-                        onSelected: (value) {
-                          setState(() => _activeOnly = value);
-                          _loadData();
-                        },
-                      ),
-                      SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        onPressed: _loadData,
-                        icon: const Icon(Icons.refresh),
-                        label: Text(context.l10n.t('recargar')),
-                      ),
-                      FilledButton.tonalIcon(
-                        onPressed: () => context.go('/ops/qr-handoff'),
-                        icon: Icon(Icons.qr_code_scanner_outlined),
-                        label: Text(context.l10n.t('qrpin')),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilterChip(
+                              selected: _activeOnly,
+                              label: Text(context.l10n.t('solo_activos')),
+                              onSelected: (value) {
+                                setState(() => _activeOnly = value);
+                                _loadData();
+                              },
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: _loadData,
+                              icon: const Icon(Icons.refresh),
+                              label: Text(context.l10n.t('recargar')),
+                            ),
+                            FilledButton.tonalIcon(
+                              onPressed: () => context.go('/ops/qr-handoff'),
+                              icon: const Icon(Icons.qr_code_scanner_outlined),
+                              label: Text(context.l10n.t('qrpin')),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: TabBar(
+                            tabs: [
+                              Tab(text: 'Disponibles'),
+                              Tab(text: 'Mis servicios'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        FilterChip(
+                          selected: _activeOnly,
+                          label: Text(context.l10n.t('solo_activos')),
+                          onSelected: (value) {
+                            setState(() => _activeOnly = value);
+                            _loadData();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          onPressed: _loadData,
+                          icon: const Icon(Icons.refresh),
+                          label: Text(context.l10n.t('recargar')),
+                        ),
+                        FilledButton.tonalIcon(
+                          onPressed: () => context.go('/ops/qr-handoff'),
+                          icon: const Icon(Icons.qr_code_scanner_outlined),
+                          label: Text(context.l10n.t('qrpin')),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -448,7 +487,7 @@ class CourierDeliveryItem {
       case 'ASSIGNED':
         return 'Asignado';
       case 'IN_TRANSIT':
-        return 'En transito';
+        return 'En tránsito';
       case 'DELIVERED':
         return 'Entregado';
       case 'CANCELLED':

@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -63,10 +64,12 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final responsive = context.responsive;
     final viewMode = ref.watch(discoveryViewModeProvider);
     final warehousesAsync = ref.watch(discoveryWarehousesProvider);
     final currentPosition = ref.watch(currentPositionProvider);
     final selectedCity = ref.watch(discoveryFeaturedCityProvider);
+    final mapHeight = responsive.mapHeight(max: 520);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final controlSurface = isDark ? const Color(0xFF111827) : Colors.white;
     final controlBorder = isDark
@@ -83,13 +86,12 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
           icon: const Icon(Icons.my_location_outlined),
         ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
-        child: Column(
-          children: [
+      child: warehousesAsync.when(
+        data: (items) {
+          final contentChildren = <Widget>[
             _DiscoveryHero(),
-            const SizedBox(height: 14),
-            if (currentPosition == null) ...[
+            const SizedBox(height: 12),
+            if (currentPosition == null)
               AnimatedSize(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
@@ -115,14 +117,13 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                                   next ?? '';
                             },
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                         ],
                       )
                     : const SizedBox.shrink(),
               ),
-            ],
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(responsive.isMobile ? 12 : 14),
               decoration: BoxDecoration(
                 color: controlSurface,
                 borderRadius: BorderRadius.circular(16),
@@ -154,14 +155,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                       ),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(discoveryQueryProvider.notifier).state = '';
-                          ref
-                                  .read(discoveryFeaturedCityProvider.notifier)
-                                  .state =
-                              null;
-                        },
+                        onPressed: _clearDiscoveryFilters,
                       ),
                     ),
                   ),
@@ -226,129 +220,160 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: warehousesAsync.when(
-                data: (items) {
-                  if (items.isEmpty) {
-                    return EmptyStateView(
-                      message: 'No hay almacenes para esta zona.',
-                      actionLabel: 'Expandir busqueda',
-                      onAction: () {
-                        _searchController.clear();
-                        ref.read(discoveryQueryProvider.notifier).state = '';
-                        ref.read(discoveryFeaturedCityProvider.notifier).state =
-                            null;
-                      },
-                    );
-                  }
+            const SizedBox(height: 12),
+          ];
 
-                  final nearest = _resolveNearestWarehouse(
-                    warehouses: items,
-                    userPosition: currentPosition,
-                  );
+          if (items.isEmpty) {
+            contentChildren.add(
+              EmptyStateView(
+                message: 'No hay almacenes para esta zona.',
+                actionLabel: 'Expandir búsqueda',
+                onAction: _clearDiscoveryFilters,
+              ),
+            );
+            contentChildren.add(const SizedBox(height: 20));
+            return ListView(
+              padding: responsive.pageInsets(
+                top: responsive.verticalPadding,
+                bottom: 24,
+              ),
+              children: contentChildren,
+            );
+          }
 
-                  final visibleItems = nearest != null
-                      ? _sortWarehousesByDistance(
-                          warehouses: items,
-                          userPosition: currentPosition,
-                        )
-                      : _filterWarehousesByCity(
-                          warehouses: items,
-                          selectedCity: selectedCity,
-                        );
+          final nearest = _resolveNearestWarehouse(
+            warehouses: items,
+            userPosition: currentPosition,
+          );
 
-                  if (visibleItems.isEmpty) {
-                    return EmptyStateView(
-                      message: selectedCity == null
-                          ? 'No hay almacenes para esta zona.'
-                          : 'No hay almacenes en $selectedCity.',
-                      actionLabel: selectedCity == null
-                          ? 'Expandir busqueda'
-                          : 'Ver todas las ciudades',
-                      onAction: () {
-                        _searchController.clear();
-                        ref.read(discoveryQueryProvider.notifier).state = '';
-                        ref.read(discoveryFeaturedCityProvider.notifier).state =
-                            null;
-                      },
-                    );
-                  }
+          final visibleItems = nearest != null
+              ? _sortWarehousesByDistance(
+                  warehouses: items,
+                  userPosition: currentPosition,
+                )
+              : _filterWarehousesByCity(
+                  warehouses: items,
+                  selectedCity: selectedCity,
+                );
 
-                  if (viewMode == DiscoveryViewMode.map) {
-                    return Column(
-                      children: [
-                        if (nearest != null) ...[
-                          _NearestWarehouseCard(info: nearest),
-                          const SizedBox(height: 10),
-                        ],
-                        Expanded(
-                          child: _MapView(
-                            warehouses: visibleItems,
-                            userPosition: currentPosition,
-                            nearestWarehouseId: nearest?.warehouse.id,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
+          if (visibleItems.isEmpty) {
+            contentChildren.add(
+              EmptyStateView(
+                message: selectedCity == null
+                    ? 'No hay almacenes para esta zona.'
+                    : 'No hay almacenes en $selectedCity.',
+                actionLabel: selectedCity == null
+                    ? 'Expandir búsqueda'
+                    : 'Ver todas las ciudades',
+                onAction: _clearDiscoveryFilters,
+              ),
+            );
+            contentChildren.add(const SizedBox(height: 20));
+            return ListView(
+              padding: responsive.pageInsets(
+                top: responsive.verticalPadding,
+                bottom: 24,
+              ),
+              children: contentChildren,
+            );
+          }
 
-                  final listItems = nearest == null
-                      ? visibleItems
-                      : visibleItems
-                            .where((item) => item.id != nearest.warehouse.id)
-                            .toList();
-
-                  return NotificationListener<UserScrollNotification>(
-                    onNotification: (notification) {
-                      if (currentPosition != null) return false;
-                      if (notification.direction == ScrollDirection.reverse &&
-                          _showHighlightsStrip) {
-                        setState(() => _showHighlightsStrip = false);
-                      } else if ((notification.direction ==
-                                  ScrollDirection.forward ||
-                              notification.metrics.pixels <= 8) &&
-                          !_showHighlightsStrip) {
-                        setState(() => _showHighlightsStrip = true);
-                      }
-                      return false;
-                    },
-                    child: ListView(
-                      children: [
-                        if (nearest != null) ...[
-                          _NearestWarehouseCard(info: nearest),
-                          const SizedBox(height: 10),
-                        ],
-                        ...listItems.map((warehouse) {
-                          final distanceKm = _distanceKmToWarehouse(
-                            userPosition: currentPosition,
-                            warehouse: warehouse,
-                          );
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _WarehouseCard(
-                              warehouse: warehouse,
-                              distanceKm: currentPosition == null
-                                  ? null
-                                  : distanceKm,
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
-                  );
-                },
-                loading: () => const LoadingStateView(),
-                error: (error, _) => ErrorStateView(
-                  message: 'No se pudo cargar almacenes: $error',
-                  onRetry: () => ref.invalidate(discoveryWarehousesProvider),
+          if (viewMode == DiscoveryViewMode.map) {
+            if (nearest != null) {
+              contentChildren.add(_NearestWarehouseCard(info: nearest));
+              contentChildren.add(const SizedBox(height: 10));
+            }
+            contentChildren.add(
+              SizedBox(
+                height: mapHeight,
+                child: _MapView(
+                  warehouses: visibleItems,
+                  userPosition: currentPosition,
+                  nearestWarehouseId: nearest?.warehouse.id,
                 ),
               ),
+            );
+            contentChildren.add(const SizedBox(height: 22));
+            return ListView(
+              padding: responsive.pageInsets(
+                top: responsive.verticalPadding,
+                bottom: 24,
+              ),
+              children: contentChildren,
+            );
+          }
+
+          final listItems = nearest == null
+              ? visibleItems
+              : visibleItems
+                    .where((item) => item.id != nearest.warehouse.id)
+                    .toList();
+
+          if (nearest != null) {
+            contentChildren.add(_NearestWarehouseCard(info: nearest));
+            contentChildren.add(const SizedBox(height: 10));
+          }
+
+          for (final warehouse in listItems) {
+            final distanceKm = _distanceKmToWarehouse(
+              userPosition: currentPosition,
+              warehouse: warehouse,
+            );
+            contentChildren.add(
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _WarehouseCard(
+                  warehouse: warehouse,
+                  distanceKm: currentPosition == null ? null : distanceKm,
+                ),
+              ),
+            );
+          }
+          contentChildren.add(const SizedBox(height: 16));
+
+          final list = ListView(
+            padding: responsive.pageInsets(
+              top: responsive.verticalPadding,
+              bottom: 24,
             ),
-          ],
+            children: contentChildren,
+          );
+
+          if (currentPosition != null) {
+            return list;
+          }
+
+          return NotificationListener<UserScrollNotification>(
+            onNotification: (notification) {
+              if (notification.direction == ScrollDirection.reverse &&
+                  _showHighlightsStrip) {
+                setState(() => _showHighlightsStrip = false);
+              } else if ((notification.direction == ScrollDirection.forward ||
+                      notification.metrics.pixels <= 8) &&
+                  !_showHighlightsStrip) {
+                setState(() => _showHighlightsStrip = true);
+              }
+              return false;
+            },
+            child: list,
+          );
+        },
+        loading: () => const LoadingStateView(),
+        error: (error, _) => ErrorStateView(
+          message: 'No se pudo cargar almacenes: $error',
+          onRetry: () => ref.invalidate(discoveryWarehousesProvider),
         ),
       ),
     );
+  }
+
+  void _clearDiscoveryFilters() {
+    _searchController.clear();
+    ref.read(discoveryQueryProvider.notifier).state = '';
+    ref.read(discoveryFeaturedCityProvider.notifier).state = null;
+    if (!_showHighlightsStrip) {
+      setState(() => _showHighlightsStrip = true);
+    }
   }
 
   Future<void> _locateUser(BuildContext context) async {
@@ -382,8 +407,9 @@ class _DiscoveryHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final hidePreview = constraints.maxWidth < 390;
         final compact = constraints.maxWidth < 840;
-        final heroHeight = compact ? 132.0 : 112.0;
+        final heroHeight = hidePreview ? 108.0 : (compact ? 132.0 : 112.0);
         final previewWidth = compact ? 156.0 : 236.0;
         return SizedBox(
           height: heroHeight,
@@ -401,31 +427,33 @@ class _DiscoveryHero extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: _HeroTextBlock(compact: compact)),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: previewWidth,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.84),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
+                if (!hidePreview) ...[
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: previewWidth,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.84),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: const PeruFlatScene(
+                            city: 'Cusco',
+                            height: 46,
+                            showLabel: false,
                           ),
                         ),
-                        child: const PeruFlatScene(
-                          city: 'Cusco',
-                          height: 46,
-                          showLabel: false,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                    ],
+                        const SizedBox(height: 5),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -612,7 +640,7 @@ class _HeroTextBlock extends StatelessWidget {
         if (!compact) ...[
           const SizedBox(height: 2),
           Text(
-            'Reserva por horas o dias, con QR y seguimiento en tiempo real.',
+            'Reserva por horas o días, con QR y seguimiento en tiempo real.',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
@@ -784,7 +812,7 @@ class _NearestWarehouseCard extends StatelessWidget {
           style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
-          '${info.warehouse.name}\nA ${info.distanceKm.toStringAsFixed(2)} km de tu ubicacion\nTurismo cercano: ${tourism.heroLandmark}',
+          '${info.warehouse.name}\nA ${info.distanceKm.toStringAsFixed(2)} km de tu ubicación\nTurismo cercano: ${tourism.heroLandmark}',
           style: TextStyle(color: subtitleColor),
         ),
         isThreeLine: true,
@@ -934,7 +962,7 @@ class _WarehouseCard extends StatelessWidget {
             if (distanceKm != null) ...[
               const SizedBox(height: 2),
               Text(
-                'A ${distanceKm!.toStringAsFixed(2)} km de tu ubicacion',
+                'A ${distanceKm!.toStringAsFixed(2)} km de tu ubicación',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF0B8B8C),
                   fontWeight: FontWeight.w600,

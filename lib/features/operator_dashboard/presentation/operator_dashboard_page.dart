@@ -3,6 +3,7 @@ import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
@@ -41,9 +42,11 @@ class OperatorDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final responsive = context.responsive;
     final pendingCash = ref.watch(cashPendingPaymentsProvider);
     final reservations = ref.watch(adminReservationsProvider);
-    final pendingApprovals = ref.watch(opsPendingApprovalsProvider).valueOrNull ?? 0;
+    final pendingApprovals =
+        ref.watch(opsPendingApprovalsProvider).valueOrNull ?? 0;
 
     final reservationItems = reservations.valueOrNull ?? const <Reservation>[];
     final activeReservations = reservationItems
@@ -70,7 +73,10 @@ class OperatorDashboardPage extends ConsumerWidget {
           ref.invalidate(opsPendingApprovalsProvider);
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          padding: responsive.pageInsets(
+            top: responsive.verticalPadding,
+            bottom: 24,
+          ),
           children: [
             Container(
               padding: const EdgeInsets.all(16),
@@ -81,7 +87,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Text(
-                'Atencion diaria: cobros en caja, control de reservas y seguimiento de incidencias.',
+                'Atención diaria: cobros en caja, control de reservas y seguimiento de incidencias.',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(color: Colors.white),
@@ -89,14 +95,43 @@ class OperatorDashboardPage extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             if (operatorGuide != null) ...[
-              OperationGuideSummaryCard(
-                guide: operatorGuide,
-                compact: true,
-              ),
+              OperationGuideSummaryCard(guide: operatorGuide, compact: true),
               const SizedBox(height: 12),
             ],
             LayoutBuilder(
               builder: (context, constraints) {
+                if (constraints.maxWidth < 430) {
+                  return Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: _KpiCard(
+                          title: 'Cobros pendientes',
+                          value: '$pendingCashCount',
+                          colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _KpiCard(
+                          title: 'Reservas activas',
+                          value: '$activeReservations',
+                          colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: _KpiCard(
+                          title: 'Incidencias',
+                          value: '$incidentReservations',
+                          colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
+                        ),
+                      ),
+                    ],
+                  );
+                }
                 if (constraints.maxWidth < 600) {
                   return Column(
                     children: [
@@ -106,7 +141,10 @@ class OperatorDashboardPage extends ConsumerWidget {
                             child: _KpiCard(
                               title: 'Cobros pendientes',
                               value: '$pendingCashCount',
-                              colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
+                              colors: const [
+                                Color(0xFF1F6E8C),
+                                Color(0xFF3F9AC1),
+                              ],
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -114,7 +152,10 @@ class OperatorDashboardPage extends ConsumerWidget {
                             child: _KpiCard(
                               title: 'Reservas activas',
                               value: '$activeReservations',
-                              colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
+                              colors: const [
+                                Color(0xFF0B8B8C),
+                                Color(0xFF2AAAC2),
+                              ],
                             ),
                           ),
                         ],
@@ -167,7 +208,9 @@ class OperatorDashboardPage extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Icons.point_of_sale_outlined),
                     title: Text(context.l10n.t('cobros_en_caja')),
-                    subtitle: Text(context.l10n.t('aprobar_o_rechazar_pagos_pendientes')),
+                    subtitle: Text(
+                      context.l10n.t('aprobar_o_rechazar_pagos_pendientes'),
+                    ),
                     trailing: Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/cash-payments'),
                   ),
@@ -175,7 +218,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                     leading: const Icon(Icons.assignment_outlined),
                     title: Text(context.l10n.t('reservas_operativas')),
                     subtitle: Text(
-                      'Busqueda por codigo, cambios de estado y trazabilidad',
+                      'Búsqueda por código, cambios de estado y trazabilidad',
                     ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/reservations'),
@@ -183,14 +226,18 @@ class OperatorDashboardPage extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Icons.warning_amber_outlined),
                     title: Text(context.l10n.t('incidencias')),
-                    subtitle: Text(context.l10n.t('monitoreo_y_atencion_de_casos')),
+                    subtitle: Text(
+                      context.l10n.t('monitoreo_y_atencion_de_casos'),
+                    ),
                     trailing: Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/incidents'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.route_outlined),
                     title: Text(context.l10n.t('tracking_logistico')),
-                    subtitle: Text(context.l10n.t('seguimiento_de_deliveries_en_vivo')),
+                    subtitle: Text(
+                      context.l10n.t('seguimiento_de_deliveries_en_vivo'),
+                    ),
                     trailing: Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/tracking'),
                   ),
@@ -214,7 +261,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                   leading: const Icon(Icons.notifications_active_outlined),
                   title: Text('$pendingApprovals aprobaciones pendientes'),
                   subtitle: const Text(
-                    'Hay entregas de delivery esperando validacion de operador/admin.',
+                    'Hay entregas de delivery esperando validación de operador/admin.',
                   ),
                   trailing: FilledButton.tonal(
                     onPressed: () => context.go('/ops/qr-handoff'),
@@ -288,7 +335,7 @@ class _KpiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      constraints: const BoxConstraints(minHeight: 110),
+      constraints: const BoxConstraints(minHeight: 100),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: colors),
         borderRadius: BorderRadius.circular(16),
@@ -317,4 +364,3 @@ class _KpiCard extends StatelessWidget {
     );
   }
 }
-
