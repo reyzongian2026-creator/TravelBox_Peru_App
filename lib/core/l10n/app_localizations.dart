@@ -24,8 +24,46 @@ class AppLocalizations {
   }
 
   String t(String key) {
-    final byLang = _translations[locale.languageCode] ?? _translations['es']!;
-    return byLang[key] ?? _translations['es']![key] ?? key;
+    final languageCode = locale.languageCode.toLowerCase();
+    final byLang = _translations[languageCode];
+    final localValue = byLang?[key];
+    if (_isUsableLocalizedValue(
+      localValue,
+      key,
+      allowPlaceholder: languageCode == 'en',
+    )) {
+      return localValue!;
+    }
+
+    final englishValue = _translations['en']?[key];
+    if (languageCode != 'en' &&
+        _isUsableLocalizedValue(englishValue, key, allowPlaceholder: true)) {
+      return englishValue!;
+    }
+
+    final spanishValue = _translations['es']?[key];
+    if (spanishValue != null && spanishValue.trim().isNotEmpty) {
+      return spanishValue;
+    }
+
+    return key;
+  }
+
+  static bool _isUsableLocalizedValue(
+    String? candidate,
+    String key, {
+    bool allowPlaceholder = false,
+  }) {
+    final value = candidate?.trim() ?? '';
+    if (value.isEmpty || value == key) {
+      return false;
+    }
+
+    // Avoid placeholder-style values copied from ES with "(EN|DE|...)" suffix.
+    if (!allowPlaceholder && RegExp(r'\([A-Z]{2}\)$').hasMatch(value)) {
+      return false;
+    }
+    return true;
   }
 
   static const Map<String, Map<String, String>> _translations = {
@@ -380,6 +418,98 @@ class AppLocalizations {
       'xl': 'XL',
       'como_dejar_de_estar_pendiente': 'Como dejar de estar pendiente',
       'reservar_ahora': 'Reservar ahora',
+      'incident_open_from_reservation_required':
+          'Debes ingresar desde una reserva para abrir un ticket.',
+      'incident_reservation_load_failed': 'No se pudo cargar la reserva',
+      'incident_operational_title': 'Incidencia operativa',
+      'incident_support_ticket_title': 'Ticket de soporte',
+      'incident_operational_subtitle':
+          'Al enviarla, la reserva pasara a estado INCIDENT para gestion interna.',
+      'incident_support_ticket_subtitle':
+          'Tu mensaje llegara al panel de soporte y podras adjuntar evidencia.',
+      'incident_current_status': 'Estado actual',
+      'incident_category': 'Categoria',
+      'incident_comment': 'Comentario',
+      'incident_comment_hint':
+          'Describe lo ocurrido. Si es pago pendiente, indica si ya pagaste en caja.',
+      'incident_image_requirements':
+          'Sube una imagen JPG, PNG o WEBP de hasta 5MB.',
+      'incident_image_selected': 'Imagen seleccionada',
+      'incident_select_image': 'Seleccionar imagen',
+      'incident_change_image': 'Cambiar imagen',
+      'incident_sending': 'Enviando...',
+      'incident_send_ticket': 'Enviar ticket',
+      'incident_generated_tickets': 'Tickets generados',
+      'incident_empty_history_hint':
+          'Cuando envies uno, aparecera aqui con su estado.',
+      'incident_image_pick_unavailable':
+          'No se selecciono ninguna imagen o no esta disponible.',
+      'incident_invalid_reservation': 'Reserva invalida para abrir ticket.',
+      'incident_comment_required': 'Describe el caso para continuar.',
+      'incident_created_success': 'Incidencia registrada correctamente',
+      'incident_support_created_success':
+          'Ticket de soporte enviado correctamente',
+      'incident_send_failed': 'No se pudo enviar el ticket',
+      'incident_no_image_selected': 'No hay imagen seleccionada.',
+      'incident_image_url_missing': 'No se recibio URL de la evidencia.',
+      'incident_ticket': 'Ticket',
+      'incident_created_at': 'Creado',
+      'incident_resolution': 'Resolucion',
+      'incident_resolution_hint':
+          'Indica que accion se tomo para cerrar el ticket.',
+      'incident_admin_search_label': 'Buscar por reserva, cliente o detalle',
+      'incident_admin_empty_for_filter': 'No hay tickets para este filtro.',
+      'incident_admin_no_resolved_in_view':
+          'No hay resueltos en la vista actual',
+      'incident_reservation': 'Reserva',
+      'incident_client': 'Cliente',
+      'incident_phone': 'Tel',
+      'incident_evidence_load_failed': 'No se pudo cargar la evidencia.',
+      'incident_whatsapp_open_failed':
+          'No se pudo abrir WhatsApp en este dispositivo.',
+      'incident_call_open_failed':
+          'No se pudo iniciar la llamada en este dispositivo.',
+      'incident_admin_load_failed': 'No se pudieron cargar incidencias',
+      'incident_view_resolved': 'Ver resueltos',
+      'incident_resolve_failed': 'No se pudo resolver la incidencia',
+      'services': 'Servicios',
+      'operations_panel': 'Operaciones',
+      'settings_options': 'Opciones',
+      'admin_reservation_search_label': 'Buscar por codigo, almacen o ciudad',
+      'admin_reservation_search_hint': 'Ej. TRAVELBOX-ABC123 o Miraflores',
+      'admin_reservation_empty_default': 'No hay reservas con ese criterio.',
+      'admin_reservation_empty_query': 'No se encontro ninguna reserva para',
+      'admin_reservation_code': 'Codigo',
+      'admin_reservation_total': 'Total',
+      'admin_reservation_load_failed': 'No se pudo cargar reservas',
+      'admin_reservation_status_updated': 'Reserva actualizada',
+      'admin_reservation_status_update_failed':
+          'No se pudo actualizar la reserva',
+      'admin_reservation_refund_done':
+          'Se ejecuto cancelacion/reembolso para la reserva',
+      'admin_reservation_refund_failed': 'No se pudo cancelar/reembolsar',
+      'dashboard_load_failed': 'No se pudo cargar dashboard',
+      'dashboard_period_selected': 'Periodo seleccionado',
+      'dashboard_revenue': 'Ingresos',
+      'dashboard_confirmed_collections': 'Cobros confirmados',
+      'dashboard_clients': 'Clientes',
+      'dashboard_unique_clients': 'Clientes unicos',
+      'dashboard_completed': 'Completadas',
+      'dashboard_cancelled': 'Canceladas',
+      'dashboard_active': 'Activas',
+      'dashboard_open_incidents': 'Incidencias abiertas',
+      'dashboard_top_warehouses': 'Top almacenes',
+      'dashboard_interactions': 'interacciones',
+      'dashboard_top_cities': 'Ciudades con mayor demanda',
+      'dashboard_top_couriers': 'Top couriers',
+      'dashboard_top_operators': 'Top operadores',
+      'dashboard_created': 'creados',
+      'dashboard_reservation_status': 'Estado de reservas',
+      'dashboard_cash_validation_subtitle':
+          'Validacion de pagos cash/counter pendientes',
+      'period_week': 'Semana',
+      'period_month': 'Mes',
+      'period_year': 'Anio',
     },
     'en': {
       'app_name': 'TravelBox',
@@ -743,6 +873,98 @@ class AppLocalizations {
       'xl': 'XL (EN)',
       'como_dejar_de_estar_pendiente': 'Como dejar de estar pendiente (EN)',
       'reservar_ahora': 'Reservar ahora (EN)',
+      'incident_open_from_reservation_required':
+          'Open this page from a reservation to create a ticket.',
+      'incident_reservation_load_failed': 'Could not load reservation',
+      'incident_operational_title': 'Operational incident',
+      'incident_support_ticket_title': 'Support ticket',
+      'incident_operational_subtitle':
+          'Submitting will move the reservation to INCIDENT status for internal handling.',
+      'incident_support_ticket_subtitle':
+          'Your message will be sent to support and you can attach evidence.',
+      'incident_current_status': 'Current status',
+      'incident_category': 'Category',
+      'incident_comment': 'Comment',
+      'incident_comment_hint':
+          'Describe what happened. If payment is pending, indicate if you already paid at the counter.',
+      'incident_image_requirements':
+          'Upload a JPG, PNG, or WEBP image up to 5MB.',
+      'incident_image_selected': 'Selected image',
+      'incident_select_image': 'Select image',
+      'incident_change_image': 'Change image',
+      'incident_sending': 'Sending...',
+      'incident_send_ticket': 'Send ticket',
+      'incident_generated_tickets': 'Generated tickets',
+      'incident_empty_history_hint':
+          'Once you send one, it will appear here with its status.',
+      'incident_image_pick_unavailable':
+          'No image was selected or selection is unavailable.',
+      'incident_invalid_reservation': 'Invalid reservation to create ticket.',
+      'incident_comment_required': 'Describe the case to continue.',
+      'incident_created_success': 'Incident created successfully',
+      'incident_support_created_success': 'Support ticket sent successfully',
+      'incident_send_failed': 'Failed to send ticket',
+      'incident_no_image_selected': 'No image selected.',
+      'incident_image_url_missing': 'No evidence URL was returned.',
+      'incident_ticket': 'Ticket',
+      'incident_created_at': 'Created',
+      'incident_resolution': 'Resolution',
+      'incident_resolution_hint':
+          'Describe which action was taken to close the ticket.',
+      'incident_admin_search_label':
+          'Search by reservation, customer, or detail',
+      'incident_admin_empty_for_filter': 'No tickets for this filter.',
+      'incident_admin_no_resolved_in_view':
+          'No resolved tickets in the current view',
+      'incident_reservation': 'Reservation',
+      'incident_client': 'Client',
+      'incident_phone': 'Phone',
+      'incident_evidence_load_failed': 'Could not load evidence.',
+      'incident_whatsapp_open_failed':
+          'Could not open WhatsApp on this device.',
+      'incident_call_open_failed':
+          'Could not start the phone call on this device.',
+      'incident_admin_load_failed': 'Could not load incidents',
+      'incident_view_resolved': 'View resolved',
+      'incident_resolve_failed': 'Could not resolve incident',
+      'services': 'Services',
+      'operations_panel': 'Operations',
+      'settings_options': 'Options',
+      'admin_reservation_search_label': 'Search by code, warehouse, or city',
+      'admin_reservation_search_hint':
+          'Example: TRAVELBOX-ABC123 or Miraflores',
+      'admin_reservation_empty_default': 'No reservations for this filter.',
+      'admin_reservation_empty_query': 'No reservation found for',
+      'admin_reservation_code': 'Code',
+      'admin_reservation_total': 'Total',
+      'admin_reservation_load_failed': 'Could not load reservations',
+      'admin_reservation_status_updated': 'Reservation updated',
+      'admin_reservation_status_update_failed': 'Could not update reservation',
+      'admin_reservation_refund_done':
+          'Cancellation/refund was executed for reservation',
+      'admin_reservation_refund_failed': 'Could not cancel/refund',
+      'dashboard_load_failed': 'Could not load dashboard',
+      'dashboard_period_selected': 'Selected period',
+      'dashboard_revenue': 'Revenue',
+      'dashboard_confirmed_collections': 'Confirmed collections',
+      'dashboard_clients': 'Clients',
+      'dashboard_unique_clients': 'Unique clients',
+      'dashboard_completed': 'Completed',
+      'dashboard_cancelled': 'Cancelled',
+      'dashboard_active': 'Active',
+      'dashboard_open_incidents': 'Open incidents',
+      'dashboard_top_warehouses': 'Top warehouses',
+      'dashboard_interactions': 'interactions',
+      'dashboard_top_cities': 'Top demand cities',
+      'dashboard_top_couriers': 'Top couriers',
+      'dashboard_top_operators': 'Top operators',
+      'dashboard_created': 'created',
+      'dashboard_reservation_status': 'Reservation status',
+      'dashboard_cash_validation_subtitle':
+          'Validation of pending cash/counter payments',
+      'period_week': 'Week',
+      'period_month': 'Month',
+      'period_year': 'Year',
     },
     'de': {
       'app_name': 'TravelBox',

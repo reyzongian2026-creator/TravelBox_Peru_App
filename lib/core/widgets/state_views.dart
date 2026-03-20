@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 class LoadingStateView extends StatelessWidget {
   const LoadingStateView({super.key, this.message = 'Cargando...'});
 
@@ -13,7 +15,7 @@ class LoadingStateView extends StatelessWidget {
         children: [
           const CircularProgressIndicator(),
           const SizedBox(height: 12),
-          Text(message),
+          Text(_resolveUiMessage(context, message)),
         ],
       ),
     );
@@ -40,9 +42,15 @@ class ErrorStateView extends StatelessWidget {
           children: [
             const Icon(Icons.warning_amber_rounded, size: 44),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(
+              _resolveUiMessage(context, message),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
+            FilledButton(
+              onPressed: onRetry,
+              child: Text(context.l10n.t('reintentar')),
+            ),
           ],
         ),
       ),
@@ -72,14 +80,34 @@ class EmptyStateView extends StatelessWidget {
           children: [
             const Icon(Icons.search_off_rounded, size: 44),
             const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            Text(
+              _resolveUiMessage(context, message),
+              textAlign: TextAlign.center,
+            ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),
+              OutlinedButton(
+                onPressed: onAction,
+                child: Text(_resolveUiMessage(context, actionLabel!)),
+              ),
             ],
           ],
         ),
       ),
     );
+  }
+}
+
+String _resolveUiMessage(BuildContext context, String raw) {
+  final normalized = raw.trim();
+  switch (normalized) {
+    case 'Cargando...':
+      return context.l10n.t('loading');
+    case 'Reintentar':
+      return context.l10n.t('reintentar');
+    case 'Sin datos por ahora':
+      return context.l10n.t('empty');
+    default:
+      return raw;
   }
 }

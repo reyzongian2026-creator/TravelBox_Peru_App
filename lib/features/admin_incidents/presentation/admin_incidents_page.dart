@@ -13,6 +13,8 @@ import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/incident_i18n_codec.dart';
+import '../../../shared/utils/incident_translation_service.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/file_exporter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
@@ -73,6 +75,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     final incidentsAsync = ref.watch(adminIncidentsProvider);
     final status = ref.watch(adminIncidentsStatusProvider);
     final session = ref.watch(sessionControllerProvider);
+    final translator = ref.read(incidentTranslationServiceProvider);
     final supportMode = widget.currentRoute.startsWith('/support');
     final canResolve =
         session.user?.role == UserRole.admin ||
@@ -101,8 +104,8 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                     onChanged: (value) =>
                         ref.read(adminIncidentsSearchProvider.notifier).state =
                             value,
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar por reserva, cliente o detalle',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('incident_admin_search_label'),
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),
@@ -158,8 +161,8 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                     .where((item) => item.status == 'RESOLVED')
                     .toList();
                 if (items.isEmpty) {
-                  return const EmptyStateView(
-                    message: 'No hay tickets para este filtro.',
+                  return EmptyStateView(
+                    message: context.l10n.t('incident_admin_empty_for_filter'),
                   );
                 }
                 return ListView(
@@ -170,17 +173,17 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                       runSpacing: itemGap,
                       children: [
                         _IncidentKpi(
-                          title: 'Abiertos',
+                          title: context.l10n.t('abiertos'),
                           value: '$openCount',
                           color: const Color(0xFFC43D3D),
                         ),
                         _IncidentKpi(
-                          title: 'Resueltos',
+                          title: context.l10n.t('resueltos'),
                           value: '$resolvedCount',
                           color: const Color(0xFF168F64),
                         ),
                         _IncidentKpi(
-                          title: 'Total',
+                          title: context.l10n.t('todos'),
                           value: '${items.length}',
                           color: const Color(0xFF1F6E8C),
                         ),
@@ -223,7 +226,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                             if (resolvedItems.isEmpty)
                               Chip(
                                 label: Text(
-                                  'No hay resueltos en la vista actual',
+                                  context.l10n.t(
+                                    'incident_admin_no_resolved_in_view',
+                                  ),
                                 ),
                               ),
                           ],
@@ -231,8 +236,19 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                       ),
                     ),
                     SizedBox(height: sectionGap),
-                    ...items.map(
-                      (item) => Padding(
+                    ...items.map((item) {
+                      final localizedDescription = item.localizedDescription(
+                        viewerLanguage: session.locale.languageCode,
+                        backofficeMode: true,
+                        translator: translator,
+                      );
+                      final localizedResolution = item.localizedResolution(
+                        viewerLanguage: session.locale.languageCode,
+                        backofficeMode: true,
+                        translator: translator,
+                      );
+
+                      return Padding(
                         padding: EdgeInsets.only(bottom: itemGap),
                         child: Card(
                           child: Padding(
@@ -246,7 +262,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                   crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
-                                      'Ticket #${item.id}',
+                                      '${context.l10n.t('incident_ticket')}: #${item.id}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleMedium
@@ -260,7 +276,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                     ),
                                     Chip(
                                       label: Text(
-                                        'Reserva ${item.reservationStatus}',
+                                        '${context.l10n.t('incident_reservation')}: ${item.reservationStatus}',
                                       ),
                                       visualDensity: VisualDensity.compact,
                                     ),
@@ -274,7 +290,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                 Text(item.warehouseAddress),
                                 SizedBox(height: itemGap),
                                 Text(
-                                  'Cliente: ${item.openedByName} (${item.openedByEmail})',
+                                  '${context.l10n.t('incident_client')}: ${item.openedByName} (${item.openedByEmail})',
                                 ),
                                 SizedBox(height: itemGap / 1.5),
                                 if (item.customerName.isNotEmpty ||
@@ -286,21 +302,21 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                       if (item.customerName.isNotEmpty)
                                         Chip(
                                           label: Text(
-                                            'Cliente: ${item.customerName}',
+                                            '${context.l10n.t('incident_client')}: ${item.customerName}',
                                           ),
                                           visualDensity: VisualDensity.compact,
                                         ),
                                       if (item.customerPhone.isNotEmpty)
                                         Chip(
                                           label: Text(
-                                            'Tel: ${item.customerPhone}',
+                                            '${context.l10n.t('incident_phone')}: ${item.customerPhone}',
                                           ),
                                           visualDensity: VisualDensity.compact,
                                         ),
                                     ],
                                   ),
                                 SizedBox(height: itemGap),
-                                Text(item.cleanDescription),
+                                Text(localizedDescription),
                                 if (item.evidenceUrl != null) ...[
                                   SizedBox(height: sectionGap),
                                   ClipRRect(
@@ -314,18 +330,19 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                         height: 84,
                                         alignment: Alignment.center,
                                         color: const Color(0xFFF3F4F6),
-                                        child: const Text(
-                                          'No se pudo cargar la evidencia.',
+                                        child: Text(
+                                          context.l10n.t(
+                                            'incident_evidence_load_failed',
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ],
-                                if (item.resolution != null &&
-                                    item.resolution!.trim().isNotEmpty) ...[
+                                if (localizedResolution.isNotEmpty) ...[
                                   SizedBox(height: itemGap),
                                   Text(
-                                    'Resolucion: ${item.resolution}',
+                                    '${context.l10n.t('incident_resolution')}: $localizedResolution',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodyMedium,
@@ -370,7 +387,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                       OutlinedButton.icon(
                                         onPressed: () => _openExternal(
                                           item.customerWhatsappUrl!,
-                                          'No se pudo abrir WhatsApp en este dispositivo.',
+                                          context.l10n.t(
+                                            'incident_whatsapp_open_failed',
+                                          ),
                                         ),
                                         style: OutlinedButton.styleFrom(
                                           minimumSize: const Size(0, 40),
@@ -383,7 +402,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                       OutlinedButton.icon(
                                         onPressed: () => _openExternal(
                                           item.customerCallUrl!,
-                                          'No se pudo iniciar la llamada en este dispositivo.',
+                                          context.l10n.t(
+                                            'incident_call_open_failed',
+                                          ),
                                         ),
                                         style: OutlinedButton.styleFrom(
                                           minimumSize: const Size(0, 40),
@@ -410,14 +431,15 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ],
                 );
               },
               loading: () => LoadingStateView(),
               error: (error, _) => ErrorStateView(
-                message: 'No se pudieron cargar incidencias: $error',
+                message:
+                    '${context.l10n.t('incident_admin_load_failed')}: $error',
                 onRetry: () => ref.invalidate(adminIncidentsProvider),
               ),
             ),
@@ -438,11 +460,29 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
 
     setState(() => _saving = true);
     try {
+      final customerLanguage = item.customerLanguage;
+      final sourceLanguage = ref
+          .read(sessionControllerProvider)
+          .locale
+          .languageCode;
+      final translatedResolution = ref
+          .read(incidentTranslationServiceProvider)
+          .translate(
+            message: resolution.trim(),
+            sourceLanguage: sourceLanguage,
+            customerLanguage: customerLanguage,
+          )
+          .messageInSpanish;
       await ref
           .read(dioProvider)
           .patch<Map<String, dynamic>>(
             '/incidents/${item.id}/resolve',
-            data: {'resolution': resolution.trim()},
+            data: {
+              'resolution': IncidentI18nCodec.withLanguageMarker(
+                textInSpanish: translatedResolution,
+                customerLanguage: customerLanguage,
+              ),
+            },
           );
       ref.invalidate(adminIncidentsProvider);
       if (!mounted) return;
@@ -451,7 +491,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
           content: Text(context.l10n.t('incidencia_resuelta_correctamente')),
           action: ref.read(adminIncidentsStatusProvider) == 'OPEN'
               ? SnackBarAction(
-                  label: 'Ver resueltos',
+                  label: context.l10n.t('incident_view_resolved'),
                   onPressed: () {
                     ref.read(adminIncidentsStatusProvider.notifier).state =
                         'RESOLVED';
@@ -465,7 +505,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo resolver la incidencia: ${_errorMessage(error)}',
+            '${context.l10n.t('incident_resolve_failed')}: ${_errorMessage(error)}',
           ),
         ),
       );
@@ -564,7 +604,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
           item.openedByName,
           item.openedByEmail,
           item.cleanDescription,
-          item.resolution ?? '',
+          item.cleanResolution,
         ],
       ),
     ];
@@ -588,7 +628,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
   <td>${escape.convert(item.warehouseName)}</td>
   <td>${escape.convert(item.openedByName)}</td>
   <td>${escape.convert(item.cleanDescription)}</td>
-  <td>${escape.convert(item.resolution ?? '-')}</td>
+  <td>${escape.convert(item.cleanResolution.isEmpty ? '-' : item.cleanResolution)}</td>
 </tr>
 ''';
     }).join();
@@ -702,8 +742,8 @@ class _ResolutionDialogState extends State<_ResolutionDialog> {
           controller: _controller,
           maxLines: 4,
           decoration: InputDecoration(
-            labelText: 'Resolucion',
-            hintText: 'Indica que accion se tomo para cerrar el ticket.',
+            labelText: context.l10n.t('incident_resolution'),
+            hintText: context.l10n.t('incident_resolution_hint'),
           ),
         ),
       ),
@@ -758,10 +798,63 @@ class AdminIncidentItem {
   final String description;
   final String? resolution;
 
-  String get cleanDescription => description
-      .replaceAll(_evidencePattern, '')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
+  String get cleanDescription => IncidentI18nCodec.stripMarker(
+    description
+        .replaceAll(_evidencePattern, '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim(),
+  );
+
+  String get customerLanguage =>
+      IncidentI18nCodec.customerLanguageFrom(description, fallback: 'es');
+
+  String get cleanResolution =>
+      IncidentI18nCodec.stripMarker(resolution?.trim() ?? '');
+
+  String localizedDescription({
+    required String viewerLanguage,
+    required bool backofficeMode,
+    required IncidentTranslationService translator,
+  }) {
+    if (cleanDescription.isEmpty) {
+      return cleanDescription;
+    }
+    if (backofficeMode || _normalizeLanguage(viewerLanguage) == 'es') {
+      return cleanDescription;
+    }
+    return translator
+        .translate(
+          message: cleanDescription,
+          sourceLanguage: 'es',
+          customerLanguage: _normalizeLanguage(viewerLanguage),
+        )
+        .messageForCustomerLanguage;
+  }
+
+  String localizedResolution({
+    required String viewerLanguage,
+    required bool backofficeMode,
+    required IncidentTranslationService translator,
+  }) {
+    final raw = resolution?.trim() ?? '';
+    if (raw.isEmpty) {
+      return '';
+    }
+    final clean = IncidentI18nCodec.stripMarker(raw);
+    if (clean.isEmpty) {
+      return '';
+    }
+    if (backofficeMode || _normalizeLanguage(viewerLanguage) == 'es') {
+      return clean;
+    }
+    return translator
+        .translate(
+          message: clean,
+          sourceLanguage: 'es',
+          customerLanguage: _normalizeLanguage(viewerLanguage),
+        )
+        .messageForCustomerLanguage;
+  }
 
   String? get evidenceUrl {
     final match = _evidencePattern.firstMatch(description);
@@ -793,4 +886,15 @@ class AdminIncidentItem {
     r'EVIDENCIA:\s*(\S+)',
     caseSensitive: false,
   );
+
+  static String _normalizeLanguage(String languageCode) {
+    final normalized = languageCode.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return 'es';
+    }
+    if (normalized.length <= 2) {
+      return normalized;
+    }
+    return normalized.substring(0, 2);
+  }
 }

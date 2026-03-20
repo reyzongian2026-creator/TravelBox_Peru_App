@@ -84,7 +84,8 @@ class AdminDashboardPage extends ConsumerWidget {
             _DashboardContent(stats: stats, selectedPeriod: selectedPeriod),
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar dashboard: ${_errorMessage(error)}',
+          message:
+              '${context.l10n.t('dashboard_load_failed')}: ${_errorMessage(error)}',
           onRetry: () => ref.invalidate(adminDashboardProvider(selectedPeriod)),
         ),
       ),
@@ -114,42 +115,44 @@ class _DashboardContent extends ConsumerWidget {
       symbol: 'S/',
       decimalDigits: 2,
     );
+    final l10n = context.l10n;
     final kpiCards = <_KpiStat>[
       _KpiStat(
-        title: 'Reservas',
+        title: l10n.t('reservas'),
         value: '${_asInt(summary['reservations'])}',
-        subtitle: 'Periodo seleccionado',
+        subtitle: l10n.t('dashboard_period_selected'),
         colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
       ),
       _KpiStat(
-        title: 'Ingresos',
+        title: l10n.t('dashboard_revenue'),
         value: formatter.format(_asDouble(summary['confirmedRevenue'])),
-        subtitle: 'Cobros confirmados',
+        subtitle: l10n.t('dashboard_confirmed_collections'),
         colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
       ),
       _KpiStat(
-        title: 'Clientes',
+        title: l10n.t('dashboard_clients'),
         value: '${_asInt(summary['uniqueClients'])}',
         subtitle: 'Clientes únicos',
         colors: const [Color(0xFF475569), Color(0xFF64748B)],
       ),
       _KpiStat(
-        title: 'Completadas',
+        title: l10n.t('dashboard_completed'),
         value: '${_asInt(summary['completedReservations'])}',
         subtitle: '${_asDouble(summary['completionRate']).toStringAsFixed(1)}%',
         colors: const [Color(0xFF168F64), Color(0xFF30A46C)],
       ),
       _KpiStat(
-        title: 'Canceladas',
+        title: l10n.t('dashboard_cancelled'),
         value: '${_asInt(summary['cancelledReservations'])}',
         subtitle:
             '${_asDouble(summary['cancellationRate']).toStringAsFixed(1)}%',
         colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
       ),
       _KpiStat(
-        title: 'Activas',
+        title: l10n.t('dashboard_active'),
         value: '${_asInt(summary['activeReservations'])}',
-        subtitle: 'Incidencias abiertas: ${_asInt(summary['openIncidents'])}',
+        subtitle:
+            '${l10n.t('dashboard_open_incidents')}: ${_asInt(summary['openIncidents'])}',
         colors: const [Color(0xFF1D4ED8), Color(0xFF2563EB)],
       ),
     ];
@@ -195,7 +198,7 @@ class _DashboardContent extends ConsumerWidget {
                     .map(
                       (period) => ButtonSegment(
                         value: period,
-                        label: Text(period.label),
+                        label: Text(_periodLabel(context, period)),
                       ),
                     )
                     .toList(),
@@ -321,7 +324,7 @@ class _DashboardContent extends ConsumerWidget {
                 SizedBox(
                   width: cardWidth,
                   child: _RankingCard(
-                    title: 'Top almacenes',
+                    title: context.l10n.t('dashboard_top_warehouses'),
                     minHeight: rankingMinHeight,
                     padding: cardPadding,
                     spacing: itemGap,
@@ -337,7 +340,7 @@ class _DashboardContent extends ConsumerWidget {
                             return _RankingTile(
                               title: item['warehouseName']?.toString() ?? '-',
                               subtitle:
-                                  '${item['city'] ?? '-'} - ${_asInt(item['interactionCount'])} interacciones',
+                                  '${item['city'] ?? '-'} - ${_asInt(item['interactionCount'])} ${context.l10n.t('dashboard_interactions')}',
                               trailing: formatter.format(
                                 _asDouble(item['confirmedRevenue']),
                               ),
@@ -352,7 +355,7 @@ class _DashboardContent extends ConsumerWidget {
                 SizedBox(
                   width: cardWidth,
                   child: _RankingCard(
-                    title: 'Ciudades con mayor demanda',
+                    title: context.l10n.t('dashboard_top_cities'),
                     minHeight: rankingMinHeight,
                     padding: cardPadding,
                     spacing: itemGap,
@@ -368,7 +371,7 @@ class _DashboardContent extends ConsumerWidget {
                             return _RankingTile(
                               title: item['city']?.toString() ?? '-',
                               subtitle:
-                                  '${_asInt(item['interactionCount'])} reservas - ${_asInt(item['incidentCount'])} incidencias',
+                                  '${_asInt(item['interactionCount'])} ${context.l10n.t('reservas')} - ${_asInt(item['incidentCount'])} ${context.l10n.t('incidencias')}',
                               trailing: formatter.format(
                                 _asDouble(item['confirmedRevenue']),
                               ),
@@ -383,7 +386,7 @@ class _DashboardContent extends ConsumerWidget {
                 SizedBox(
                   width: cardWidth,
                   child: _RankingCard(
-                    title: 'Top couriers',
+                    title: context.l10n.t('dashboard_top_couriers'),
                     minHeight: rankingMinHeight,
                     padding: cardPadding,
                     spacing: itemGap,
@@ -397,9 +400,9 @@ class _DashboardContent extends ConsumerWidget {
                             return _RankingTile(
                               title: item['fullName']?.toString() ?? '-',
                               subtitle:
-                                  '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} activos',
+                                  '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} ${context.l10n.t('dashboard_active')}',
                               trailing:
-                                  '${_asInt(item['deliveryCompletedCount'])} completados',
+                                  '${_asInt(item['deliveryCompletedCount'])} ${context.l10n.t('dashboard_completed')}',
                               progress: _ratio(
                                 _asDouble(item['deliveryCompletedCount']),
                                 _maxValue(
@@ -414,7 +417,7 @@ class _DashboardContent extends ConsumerWidget {
                 SizedBox(
                   width: cardWidth,
                   child: _RankingCard(
-                    title: 'Top operadores',
+                    title: context.l10n.t('dashboard_top_operators'),
                     minHeight: rankingMinHeight,
                     padding: cardPadding,
                     spacing: itemGap,
@@ -428,9 +431,9 @@ class _DashboardContent extends ConsumerWidget {
                             return _RankingTile(
                               title: item['fullName']?.toString() ?? '-',
                               subtitle:
-                                  '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} activos',
+                                  '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} ${context.l10n.t('dashboard_active')}',
                               trailing:
-                                  '${_asInt(item['deliveryCreatedCount'])} creados',
+                                  '${_asInt(item['deliveryCreatedCount'])} ${context.l10n.t('dashboard_created')}',
                               progress: _ratio(
                                 _asDouble(item['deliveryCreatedCount']),
                                 _maxValue(topOperators, 'deliveryCreatedCount'),
@@ -451,7 +454,7 @@ class _DashboardContent extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Estado de reservas',
+                  context.l10n.t('dashboard_reservation_status'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -495,7 +498,9 @@ class _DashboardContent extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.point_of_sale_outlined),
                 title: Text(context.l10n.t('pagos_en_caja')),
-                subtitle: Text('Validacion de pagos cash/counter pendientes'),
+                subtitle: Text(
+                  context.l10n.t('dashboard_cash_validation_subtitle'),
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.go('/admin/cash-payments'),
               ),
@@ -826,6 +831,17 @@ double _ratio(double value, double max) {
     return 0;
   }
   return value / max;
+}
+
+String _periodLabel(BuildContext context, AdminDashboardPeriodOption period) {
+  switch (period) {
+    case AdminDashboardPeriodOption.week:
+      return context.l10n.t('period_week');
+    case AdminDashboardPeriodOption.month:
+      return context.l10n.t('period_month');
+    case AdminDashboardPeriodOption.year:
+      return context.l10n.t('period_year');
+  }
 }
 
 String _formattedDate(dynamic value) {

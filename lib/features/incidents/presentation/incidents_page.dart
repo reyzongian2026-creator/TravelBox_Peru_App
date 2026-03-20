@@ -10,6 +10,8 @@ import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/incident_i18n_codec.dart';
+import '../../../shared/utils/incident_translation_service.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../reservation/presentation/reservation_providers.dart';
@@ -62,7 +64,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
         body: Padding(
           padding: EdgeInsets.all(16),
           child: EmptyStateView(
-            message: 'Debes ingresar desde una reserva para abrir un ticket.',
+            message: context.l10n.t('incident_open_from_reservation_required'),
           ),
         ),
       );
@@ -81,7 +83,8 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
         data: (reservation) => _buildBody(context, reservation, incidentsAsync),
         loading: () => LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar la reserva: $error',
+          message:
+              '${context.l10n.t('incident_reservation_load_failed')}: $error',
           onRetry: () =>
               ref.invalidate(reservationByIdProvider(widget.reservationId!)),
         ),
@@ -114,13 +117,13 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
               ),
               title: Text(
                 canAccessBackoffice && createsOperationalIncident
-                    ? 'Incidencia operativa'
-                    : 'Ticket de soporte',
+                    ? context.l10n.t('incident_operational_title')
+                    : context.l10n.t('incident_support_ticket_title'),
               ),
               subtitle: Text(
                 canAccessBackoffice && createsOperationalIncident
-                    ? 'Al enviarla, la reserva pasara a estado INCIDENT para gestion interna.'
-                    : 'Tu mensaje llegara al panel de soporte y podras adjuntar evidencia.',
+                    ? context.l10n.t('incident_operational_subtitle')
+                    : context.l10n.t('incident_support_ticket_subtitle'),
               ),
             ),
           ),
@@ -131,7 +134,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                 title: Text(context.l10n.t('reserva_vinculada')),
                 subtitle: Text(
                   'ID ${reservation.id} - ${reservation.warehouse.name}\n'
-                  'Estado actual: ${reservation.status.label}',
+                  '${context.l10n.t('incident_current_status')}: ${reservation.status.label}',
                 ),
                 trailing: OutlinedButton(
                   onPressed: () => context.go('/reservation/${reservation.id}'),
@@ -143,30 +146,43 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
           DropdownButtonFormField<String>(
             initialValue: category,
             items: [
-              DropdownMenuItem(value: 'damage', child: Text(context.l10n.t('danio'))),
-              DropdownMenuItem(value: 'delay', child: Text(context.l10n.t('retraso'))),
+              DropdownMenuItem(
+                value: 'damage',
+                child: Text(context.l10n.t('danio')),
+              ),
+              DropdownMenuItem(
+                value: 'delay',
+                child: Text(context.l10n.t('retraso')),
+              ),
               DropdownMenuItem(
                 value: 'wrong-item',
                 child: Text(context.l10n.t('objeto_equivocado')),
               ),
-              DropdownMenuItem(value: 'payment', child: Text(context.l10n.t('pago'))),
-              DropdownMenuItem(value: 'other', child: Text(context.l10n.t('otro'))),
+              DropdownMenuItem(
+                value: 'payment',
+                child: Text(context.l10n.t('pago')),
+              ),
+              DropdownMenuItem(
+                value: 'other',
+                child: Text(context.l10n.t('otro')),
+              ),
             ],
             onChanged: (value) {
               if (value != null) {
                 setState(() => category = value);
               }
             },
-            decoration: InputDecoration(labelText: 'Categoria'),
+            decoration: InputDecoration(
+              labelText: context.l10n.t('incident_category'),
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _commentController,
             maxLines: 5,
-            decoration: const InputDecoration(
-              labelText: 'Comentario',
-              hintText:
-                  'Describe lo ocurrido. Si es pago pendiente, indica si ya pagaste en caja.',
+            decoration: InputDecoration(
+              labelText: context.l10n.t('incident_comment'),
+              hintText: context.l10n.t('incident_comment_hint'),
             ),
           ),
           const SizedBox(height: 12),
@@ -175,8 +191,8 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
             title: Text(context.l10n.t('adjuntar_evidencia_fotografica')),
             subtitle: Text(
               _selectedImage == null
-                  ? 'Sube una imagen JPG, PNG o WEBP de hasta 5MB.'
-                  : 'Imagen seleccionada: ${_selectedImage!.filename}',
+                  ? context.l10n.t('incident_image_requirements')
+                  : '${context.l10n.t('incident_image_selected')}: ${_selectedImage!.filename}',
             ),
             onChanged: submitting
                 ? null
@@ -199,8 +215,8 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                   icon: Icon(Icons.upload_file_outlined),
                   label: Text(
                     _selectedImage == null
-                        ? 'Seleccionar imagen'
-                        : 'Cambiar imagen',
+                        ? context.l10n.t('incident_select_image')
+                        : context.l10n.t('incident_change_image'),
                   ),
                 ),
                 if (_selectedImage != null)
@@ -232,11 +248,15 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 52),
             ),
-            child: Text(submitting ? 'Enviando...' : 'Enviar ticket'),
+            child: Text(
+              submitting
+                  ? context.l10n.t('incident_sending')
+                  : context.l10n.t('incident_send_ticket'),
+            ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Tickets generados',
+            context.l10n.t('incident_generated_tickets'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -248,9 +268,11 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                 return Card(
                   child: ListTile(
                     leading: Icon(Icons.inbox_outlined),
-                    title: Text(context.l10n.t('aun_no_hay_tickets_para_esta_reserva')),
+                    title: Text(
+                      context.l10n.t('aun_no_hay_tickets_para_esta_reserva'),
+                    ),
                     subtitle: Text(
-                      'Cuando envies uno, aparecera aqui con su estado.',
+                      context.l10n.t('incident_empty_history_hint'),
                     ),
                   ),
                 );
@@ -260,7 +282,11 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                     .map(
                       (item) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: _TicketCard(item: item),
+                        child: _TicketCard(
+                          item: item,
+                          viewerLanguage: session.locale.languageCode,
+                          backofficeMode: canAccessBackoffice,
+                        ),
                       ),
                     )
                     .toList(),
@@ -300,10 +326,8 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
     if (!mounted) return;
     if (selected == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No se selecciono ninguna imagen o no esta disponible.',
-          ),
+        SnackBar(
+          content: Text(context.l10n.t('incident_image_pick_unavailable')),
         ),
       );
       return;
@@ -312,15 +336,21 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   }
 
   Future<void> _submit(Reservation? reservation) async {
+    final session = ref.read(sessionControllerProvider);
+    final selectedLocale = session.locale.languageCode;
+    final customerLanguage = _normalizeLanguage(
+      session.user?.preferredLanguage ?? selectedLocale,
+    );
+
     final reservationId = int.tryParse(widget.reservationId ?? '');
     if (reservationId == null) {
-      _showSnackBar('Reserva invalida para abrir ticket.');
+      _showSnackBar(context.l10n.t('incident_invalid_reservation'));
       return;
     }
 
     final comment = _commentController.text.trim();
     if (comment.isEmpty) {
-      _showSnackBar('Describe el caso para continuar.');
+      _showSnackBar(context.l10n.t('incident_comment_required'));
       return;
     }
 
@@ -334,6 +364,19 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
         );
       }
 
+      final translation = ref
+          .read(incidentTranslationServiceProvider)
+          .translate(
+            message: comment,
+            sourceLanguage: customerLanguage,
+            customerLanguage: customerLanguage,
+          );
+      final commentInSpanish = IncidentI18nCodec.withLanguageMarker(
+        textInSpanish:
+            '[${_categoryLabel(category)}] ${translation.messageInSpanish}',
+        customerLanguage: translation.customerLanguage,
+      );
+
       final response = await ref
           .read(dioProvider)
           .post<Map<String, dynamic>>(
@@ -341,7 +384,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
             data: {
               'reservationId': reservationId,
               'description': _buildDescription(
-                comment: comment,
+                commentInSpanish: commentInSpanish,
                 evidenceUrl: evidenceUrl,
               ),
             },
@@ -366,14 +409,16 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
           content: Text(
             reservation != null &&
                     _isOperationalIncidentState(reservation.status)
-                ? 'Incidencia #$incidentId registrada correctamente.'
-                : 'Ticket de soporte #$incidentId enviado correctamente.',
+                ? '${context.l10n.t('incident_created_success')}: #$incidentId'
+                : '${context.l10n.t('incident_support_created_success')}: #$incidentId',
           ),
         ),
       );
     } catch (error) {
       if (!mounted) return;
-      _showSnackBar('No se pudo enviar el ticket: ${_errorMessage(error)}');
+      _showSnackBar(
+        '${context.l10n.t('incident_send_failed')}: ${_errorMessage(error)}',
+      );
     } finally {
       if (mounted) {
         setState(() => submitting = false);
@@ -385,9 +430,10 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
     required int reservationId,
     required String observation,
   }) async {
+    final missingUrlMessage = context.l10n.t('incident_image_url_missing');
     final image = _selectedImage;
     if (image == null) {
-      throw StateError('No hay imagen seleccionada.');
+      throw StateError(context.l10n.t('incident_no_image_selected'));
     }
 
     final response = await ref
@@ -412,21 +458,23 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
         data['photoUrl']?.toString() ??
         data['url']?.toString();
     if (url == null || url.trim().isEmpty) {
-      throw StateError('No se recibio URL de la evidencia.');
+      throw StateError(missingUrlMessage);
     }
     return url.trim();
   }
 
-  String _buildDescription({required String comment, String? evidenceUrl}) {
-    final prefix = '[${_categoryLabel(category)}] ';
+  String _buildDescription({
+    required String commentInSpanish,
+    String? evidenceUrl,
+  }) {
     final suffix = evidenceUrl == null || evidenceUrl.isEmpty
         ? ''
         : '\nEVIDENCIA: $evidenceUrl';
-    final availableForComment = 500 - prefix.length - suffix.length;
+    final availableForComment = 500 - suffix.length;
     final safeComment = availableForComment <= 0
         ? ''
-        : _truncate(comment, availableForComment);
-    return '$prefix$safeComment$suffix';
+        : _truncate(commentInSpanish, availableForComment);
+    return '$safeComment$suffix';
   }
 
   String _categoryLabel(String rawCategory) {
@@ -467,15 +515,44 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
+
+  String _normalizeLanguage(String rawLanguage) {
+    final normalized = rawLanguage.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return 'es';
+    }
+    if (normalized.length <= 2) {
+      return normalized;
+    }
+    return normalized.substring(0, 2);
+  }
 }
 
-class _TicketCard extends StatelessWidget {
-  const _TicketCard({required this.item});
+class _TicketCard extends ConsumerWidget {
+  const _TicketCard({
+    required this.item,
+    required this.viewerLanguage,
+    required this.backofficeMode,
+  });
 
   final ClientIncidentItem item;
+  final String viewerLanguage;
+  final bool backofficeMode;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final translator = ref.read(incidentTranslationServiceProvider);
+    final description = item.localizedDescription(
+      viewerLanguage: viewerLanguage,
+      backofficeMode: backofficeMode,
+      translator: translator,
+    );
+    final resolution = item.localizedResolution(
+      viewerLanguage: viewerLanguage,
+      backofficeMode: backofficeMode,
+      translator: translator,
+    );
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -496,10 +573,10 @@ class _TicketCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text(item.cleanDescription),
+            Text(description),
             const SizedBox(height: 8),
             Text(
-              'Creado: ${PeruTime.formatDateTime(item.createdAt)}',
+              '${context.l10n.t('incident_created_at')}: ${PeruTime.formatDateTime(item.createdAt)}',
             ),
             if (item.evidenceUrl != null) ...[
               const SizedBox(height: 12),
@@ -510,10 +587,9 @@ class _TicketCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ],
-            if (item.resolution != null &&
-                item.resolution!.trim().isNotEmpty) ...[
+            if (resolution.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Text('Resolucion: ${item.resolution}'),
+              Text('${context.l10n.t('incident_resolution')}: $resolution'),
             ],
           ],
         ),
@@ -539,10 +615,60 @@ class ClientIncidentItem {
   final DateTime createdAt;
   final String? resolution;
 
-  String get cleanDescription => description
-      .replaceAll(_evidencePattern, '')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
+  String get cleanDescription => IncidentI18nCodec.stripMarker(
+    description
+        .replaceAll(_evidencePattern, '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim(),
+  );
+
+  String get customerLanguage =>
+      IncidentI18nCodec.customerLanguageFrom(description, fallback: 'es');
+
+  String localizedDescription({
+    required String viewerLanguage,
+    required bool backofficeMode,
+    required IncidentTranslationService translator,
+  }) {
+    if (cleanDescription.isEmpty) {
+      return cleanDescription;
+    }
+    if (backofficeMode || _normalizeLang(viewerLanguage) == 'es') {
+      return cleanDescription;
+    }
+    return translator
+        .translate(
+          message: cleanDescription,
+          sourceLanguage: 'es',
+          customerLanguage: _normalizeLang(viewerLanguage),
+        )
+        .messageForCustomerLanguage;
+  }
+
+  String localizedResolution({
+    required String viewerLanguage,
+    required bool backofficeMode,
+    required IncidentTranslationService translator,
+  }) {
+    final raw = resolution?.trim() ?? '';
+    if (raw.isEmpty) {
+      return '';
+    }
+    final clean = IncidentI18nCodec.stripMarker(raw);
+    if (clean.isEmpty) {
+      return '';
+    }
+    if (backofficeMode || _normalizeLang(viewerLanguage) == 'es') {
+      return clean;
+    }
+    return translator
+        .translate(
+          message: clean,
+          sourceLanguage: 'es',
+          customerLanguage: _normalizeLang(viewerLanguage),
+        )
+        .messageForCustomerLanguage;
+  }
 
   String? get evidenceUrl {
     final match = _evidencePattern.firstMatch(description);
@@ -566,5 +692,15 @@ class ClientIncidentItem {
     r'EVIDENCIA:\s*(\S+)',
     caseSensitive: false,
   );
-}
 
+  static String _normalizeLang(String language) {
+    final normalized = language.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return 'es';
+    }
+    if (normalized.length <= 2) {
+      return normalized;
+    }
+    return normalized.substring(0, 2);
+  }
+}

@@ -66,6 +66,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final localizedTitle = _localizeShellTitle(widget.title, l10n);
     final session = ref.watch(sessionControllerProvider);
     final notificationsState = ref.watch(notificationCenterControllerProvider);
     final mediaQuery = MediaQuery.of(context);
@@ -159,13 +160,13 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
 
     final navItems = session.isCourier
         ? <_NavItem>[
-            const _NavItem(
-              label: 'Courier',
+            _NavItem(
+              label: l10n.t('courier'),
               icon: Icons.delivery_dining_outlined,
               route: '/courier/panel',
             ),
-            const _NavItem(
-              label: 'Servicios',
+            _NavItem(
+              label: l10n.t('services'),
               icon: Icons.route_outlined,
               route: '/courier/services',
             ),
@@ -177,8 +178,8 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
           ]
         : session.isSupport
         ? <_NavItem>[
-            const _NavItem(
-              label: 'Incidencias',
+            _NavItem(
+              label: l10n.t('incidencias'),
               icon: Icons.support_agent_outlined,
               route: '/support/incidents',
             ),
@@ -211,8 +212,8 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
                 route: '/admin/dashboard',
               ),
             if (!session.isAdmin && session.canAccessAdmin)
-              const _NavItem(
-                label: 'Operaciones',
+              _NavItem(
+                label: l10n.t('operations_panel'),
                 icon: Icons.point_of_sale_outlined,
                 route: '/operator/panel',
               ),
@@ -302,7 +303,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
         extendBodyBehindAppBar: true,
         backgroundColor: scaffoldBackground,
         appBar: AppBar(
-          title: _ShellAppBarTitle(title: widget.title),
+          title: _ShellAppBarTitle(title: localizedTitle),
           actions: appBarActions,
           backgroundColor: Colors.transparent,
           surfaceTintColor: Colors.transparent,
@@ -408,7 +409,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
       extendBody: true,
       backgroundColor: scaffoldBackground,
       appBar: AppBar(
-        title: _ShellAppBarTitle(title: widget.title),
+        title: _ShellAppBarTitle(title: localizedTitle),
         actions: appBarActions,
       ),
       floatingActionButton: null,
@@ -862,7 +863,7 @@ class _SettingsComboMenu extends ConsumerWidget {
 
     return PopupMenuButton<String>(
       icon: const Icon(Icons.settings_outlined),
-      tooltip: 'Opciones',
+      tooltip: l10n.t('settings_options'),
       onSelected: (value) {
         if (value == 'theme') {
           ref.read(themeModeControllerProvider.notifier).toggle();
@@ -904,6 +905,33 @@ class _SettingsComboMenu extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+String _localizeShellTitle(String rawTitle, AppLocalizations l10n) {
+  final normalized = rawTitle.trim().toLowerCase();
+  switch (normalized) {
+    case 'panel admin':
+      return l10n.t('dashboard');
+    case 'admin incidencias':
+    case 'incidencias operativas':
+      return l10n.t('incidencias');
+    case 'incidencias de soporte':
+      return l10n.t('soporte_e_incidencias');
+    case 'tracking logistico':
+    case 'tracking courier':
+      return l10n.t('tracking_logistico');
+    case 'cobros en caja':
+      return l10n.t('cobros_en_caja');
+    case 'reservas operativas':
+    case 'admin reservas':
+      return l10n.t('reservas');
+    case 'usuarios operativos':
+      return l10n.t('usuarios_y_roles');
+    case 'perfil':
+      return l10n.t('profile');
+    default:
+      return rawTitle;
   }
 }
 

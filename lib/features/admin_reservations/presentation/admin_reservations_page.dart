@@ -75,8 +75,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                     setState(() {});
                   },
                   decoration: InputDecoration(
-                    labelText: 'Buscar por codigo, almacen o ciudad',
-                    hintText: 'Ej. TRAVELBOX-ABC123 o Miraflores',
+                    labelText: context.l10n.t('admin_reservation_search_label'),
+                    hintText: context.l10n.t('admin_reservation_search_hint'),
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.trim().isEmpty
                         ? null
@@ -93,9 +93,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                   mobile: responsive.isMobile,
                   onStatusSelected: (status) {
                     ref
-                            .read(
-                              adminReservationStatusFilterProvider.notifier,
-                            )
+                            .read(adminReservationStatusFilterProvider.notifier)
                             .state =
                         status;
                   },
@@ -124,8 +122,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                 if (items.isEmpty) {
                   return EmptyStateView(
                     message: _searchController.text.trim().isEmpty
-                        ? 'No hay reservas con ese criterio.'
-                        : 'No se encontro ninguna reserva para "${_searchController.text.trim()}".',
+                        ? context.l10n.t('admin_reservation_empty_default')
+                        : '${context.l10n.t('admin_reservation_empty_query')}: "${_searchController.text.trim()}".',
                   );
                 }
                 return ListView.separated(
@@ -168,13 +166,13 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                             ),
                             SizedBox(height: itemGap / 1.5),
                             SelectableText(
-                              'Codigo ${item.code}',
+                              '${context.l10n.t('admin_reservation_code')} ${item.code}',
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             SizedBox(height: itemGap / 2),
                             Text(
-                              '${item.warehouse.city}, ${item.warehouse.district}\n${_formatDate(item.startAt)} -> ${_formatDate(item.endAt)}\nTotal S/${item.totalPrice.toStringAsFixed(2)}',
+                              '${item.warehouse.city}, ${item.warehouse.district}\n${_formatDate(item.startAt)} -> ${_formatDate(item.endAt)}\n${context.l10n.t('admin_reservation_total')} S/${item.totalPrice.toStringAsFixed(2)}',
                             ),
                             SizedBox(height: sectionGap),
                             Wrap(
@@ -330,7 +328,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
               },
               loading: () => const LoadingStateView(),
               error: (error, _) => ErrorStateView(
-                message: 'No se pudo cargar reservas admin: $error',
+                message:
+                    '${context.l10n.t('admin_reservation_load_failed')}: $error',
                 onRetry: _refreshReservations,
               ),
             ),
@@ -358,7 +357,9 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Reserva ${item.code} actualizada a ${status.label}.'),
+          content: Text(
+            '${context.l10n.t('admin_reservation_status_updated')}: ${item.code} -> ${status.label}.',
+          ),
         ),
       );
     } catch (error) {
@@ -366,7 +367,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo actualizar la reserva: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('admin_reservation_status_update_failed')}: ${AppErrorFormatter.readable(error)}',
           ),
         ),
       );
@@ -391,7 +392,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Se ejecuto cancelacion/reembolso para la reserva ${item.code}.',
+            '${context.l10n.t('admin_reservation_refund_done')}: ${item.code}.',
           ),
         ),
       );
@@ -400,7 +401,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo cancelar/reembolsar: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('admin_reservation_refund_failed')}: ${AppErrorFormatter.readable(error)}',
           ),
         ),
       );
