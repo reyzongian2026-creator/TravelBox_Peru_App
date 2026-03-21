@@ -288,7 +288,7 @@ class _DashboardContent extends ConsumerWidget {
                             title: Text(context.l10n.t('users_and_roles')),
                             subtitle: Text(
                               context.l10n.t(
-                                'accesos_roles_y_estados_de_cuenta',
+                                'access_roles_account_status',
                               ),
                             ),
                             trailing: Icon(Icons.chevron_right),
