@@ -61,7 +61,7 @@ class ProfilePage extends ConsumerWidget {
               subtitle: Text(
                 '${user?.email ?? context.l10n.t('profile_not_available')}\n'
                 '${context.l10n.t('profile_role_prefix')}: '
-                '${user?.role.displayLabel ?? '-'}',
+                '${user == null ? '-' : context.l10n.t(user.role.localizationKey)}',
               ),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

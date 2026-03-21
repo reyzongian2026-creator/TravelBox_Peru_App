@@ -26,18 +26,21 @@ class AppLocalizations {
   String t(String key) {
     final languageCode = locale.languageCode.toLowerCase();
     final override = _runtimeOverrides[languageCode]?[key];
-    if (_isUsableLocalizedValue(override, key)) {
-      return override!;
+    if (_isUsableLocalizedValue(override, key) &&
+        !_isSpanishDuplicateValue(languageCode, key, override)) {
+      return override ?? key;
     }
 
     final localPriority = _priorityTranslations[languageCode]?[key];
-    if (_isUsableLocalizedValue(localPriority, key)) {
-      return localPriority!;
+    if (_isUsableLocalizedValue(localPriority, key) &&
+        !_isSpanishDuplicateValue(languageCode, key, localPriority)) {
+      return localPriority ?? key;
     }
 
     final localValue = _translations[languageCode]?[key];
-    if (_isUsableLocalizedValue(localValue, key)) {
-      return localValue!;
+    if (_isUsableLocalizedValue(localValue, key) &&
+        !_isSpanishDuplicateValue(languageCode, key, localValue)) {
+      return localValue ?? key;
     }
 
     final englishOverride = _runtimeOverrides['en']?[key];
@@ -55,17 +58,39 @@ class AppLocalizations {
       return englishValue!;
     }
 
-    final spanishPriority = _priorityTranslations['es']?[key];
-    if (_isUsableLocalizedValue(spanishPriority, key)) {
-      return spanishPriority!;
-    }
+    if (languageCode == 'es') {
+      final spanishPriority = _priorityTranslations['es']?[key];
+      if (_isUsableLocalizedValue(spanishPriority, key)) {
+        return spanishPriority!;
+      }
 
-    final spanishValue = _translations['es']?[key];
-    if (_isUsableLocalizedValue(spanishValue, key)) {
-      return spanishValue!;
+      final spanishValue = _translations['es']?[key];
+      if (_isUsableLocalizedValue(spanishValue, key)) {
+        return spanishValue!;
+      }
     }
 
     return key;
+  }
+
+  static bool _isSpanishDuplicateValue(
+    String languageCode,
+    String key,
+    String? candidate,
+  ) {
+    if (languageCode == 'es') {
+      return false;
+    }
+    final normalizedCandidate = candidate?.trim() ?? '';
+    if (normalizedCandidate.isEmpty) {
+      return false;
+    }
+    final spanishOverride = _runtimeOverrides['es']?[key]?.trim();
+    final spanishPriority = _priorityTranslations['es']?[key]?.trim();
+    final spanishValue = _translations['es']?[key]?.trim();
+    return normalizedCandidate == spanishOverride ||
+        normalizedCandidate == spanishPriority ||
+        normalizedCandidate == spanishValue;
   }
 
   static bool _isUsableLocalizedValue(String? candidate, String key) {
@@ -188,6 +213,15 @@ class AppLocalizations {
       'admin_incidents_title': 'Incidencias admin',
       'admin_incidents_operator_title': 'Incidencias operativas',
       'admin_incidents_support_title': 'Incidencias de soporte',
+      'admin_incidents_resolved_title': 'Incidencias resueltas',
+      'admin_incidents_generated_on_label': 'Generado el',
+      'admin_incidents_exported_count_label': 'Cantidad exportada',
+      'admin_incidents_col_ticket': 'Ticket',
+      'admin_incidents_col_reservation': 'Reserva',
+      'admin_incidents_col_warehouse': 'Almacen',
+      'admin_incidents_col_client': 'Cliente',
+      'admin_incidents_col_detail': 'Detalle',
+      'admin_incidents_col_resolution': 'Resolucion',
       'admin_incidents_csv_generated': 'CSV de incidencias resueltas generado.',
       'admin_incidents_pdf_title': 'Incidencias resueltas TravelBox',
       'admin_incidents_print_preview_opened':
@@ -510,6 +544,150 @@ class AppLocalizations {
       'reservation_success_pending_steps':
           '1. Paga en caja o al encargado.\n2. El operador debe aprobar el cobro en su panel.\n3. Cuando el pago pase a CONFIRMED, el QR se habilitara para check-in.',
       'reservation_success_qr_pending_label': 'QR pendiente',
+      'reservation_prepare_failed_prefix': 'No se pudo preparar la reserva',
+      'solo_activos': 'Solo activos',
+      'qrpin': 'QR/PIN',
+      'tomar_servicio': 'Tomar servicio',
+      'salir_a_ruta': 'Salir a ruta',
+      'actualizar_tracking': 'Actualizar tracking',
+      'aceptar_servicio': 'Aceptar servicio',
+      'usar_ultimo_punto': 'Usar ultimo punto',
+      'guardar_avance': 'Guardar avance',
+      'ver_tracking': 'Ver tracking',
+      'request_pickup': 'Solicitar recojo',
+      'user_role_client': 'Cliente',
+      'user_role_courier': 'Courier',
+      'user_role_operator': 'Operador',
+      'user_role_city_supervisor': 'Supervisor de ciudad',
+      'user_role_admin': 'Administrador',
+      'user_role_support': 'Soporte',
+      'reservation_timeline_pending_payment':
+          'Reserva creada, pendiente de pago.',
+      'reservation_timeline_confirmed': 'Pago confirmado.',
+      'reservation_timeline_checkin_pending': 'Check-in pendiente.',
+      'reservation_timeline_stored': 'Equipaje almacenado.',
+      'reservation_timeline_ready_for_pickup': 'Listo para recojo.',
+      'reservation_timeline_out_for_delivery': 'En ruta de delivery.',
+      'reservation_timeline_completed': 'Reserva completada.',
+      'reservation_timeline_cancelled': 'Reserva cancelada.',
+      'reservation_timeline_cancelled_reason_prefix': 'Cancelada',
+      'reservation_timeline_incident': 'Incidencia reportada.',
+      'reservation_timeline_expired': 'Reserva expirada.',
+      'reservation_timeline_draft': 'Borrador de reserva.',
+      'reservation_timeline_pickup_requested': 'Recojo solicitado.',
+      'reservation_timeline_delivery_requested': 'Delivery solicitado.',
+      'reservation_timeline_cancel_requested_app':
+          'Cancelacion solicitada desde la app.',
+      'reservation_timeline_cancel_requested_refund_app':
+          'Cancelacion con reembolso solicitada desde la app.',
+      'reservation_timeline_frontend_cancelled': 'Cancelada desde frontend',
+      'reservation_timeline_delivery_address_pending':
+          'Direccion por confirmar en app',
+      'reservation_timeline_reservation_confirmed_qr_generated':
+          'Reserva confirmada y QR generado.',
+      'fallback_warehouse_name': 'Almacen',
+      'fallback_no_address': 'Sin direccion',
+      'fallback_address_pending': 'Direccion pendiente',
+      'fallback_customer_name': 'Cliente',
+      'fallback_unassigned': 'Sin asignar',
+      'delivery_monitor_reload_tooltip': 'Recargar',
+      'delivery_monitor_load_failed_prefix':
+          'No se pudo cargar monitoreo logistico',
+      'delivery_monitor_live_title': 'Monitoreo logistico en vivo',
+      'delivery_monitor_live_subtitle':
+          'Actualizacion automatica por eventos. Selecciona una orden para ver mapa, ruta y eventos dentro del mismo panel.',
+      'delivery_monitor_search_hint':
+          'Buscar por reserva, cliente, ciudad o chofer',
+      'delivery_monitor_orders_suffix': 'ordenes',
+      'delivery_monitor_empty_filter':
+          'No hay ordenes de delivery para el filtro actual.',
+      'delivery_monitor_no_active':
+          'No hay deliveries activos para monitorear ahora.',
+      'delivery_monitor_no_recent':
+          'No hay deliveries recientes disponibles.',
+      'delivery_monitor_reservation_prefix': 'Reserva',
+      'delivery_monitor_eta_prefix': 'ETA',
+      'delivery_monitor_panel_summary_prefix': 'Panel monitoreando',
+      'delivery_monitor_panel_summary_active_suffix': 'activas',
+      'delivery_monitor_panel_summary_recent_suffix': 'recientes',
+      'delivery_monitor_label_customer': 'Cliente',
+      'delivery_monitor_label_email': 'Correo',
+      'delivery_monitor_label_address': 'Direccion',
+      'delivery_monitor_label_zone': 'Zona',
+      'delivery_monitor_label_driver': 'Chofer',
+      'delivery_monitor_label_phone': 'Telefono',
+      'delivery_monitor_label_vehicle': 'Unidad',
+      'delivery_monitor_label_updated': 'Actualizado',
+      'delivery_monitor_tracking_not_linked':
+          'La reserva todavia no tiene una orden de delivery asociada.',
+      'delivery_monitor_embedded_tracking_title': 'Tracking embebido',
+      'delivery_monitor_loading_embedded_tracking':
+          'Cargando tracking embebido...',
+      'delivery_monitor_route_loading': 'Cargando ruta sugerida...',
+      'delivery_monitor_route_simulated': 'simulada',
+      'delivery_monitor_route_road_prefix': 'Ruta',
+      'courier_services_title': 'Servicios courier',
+      'courier_services_search_label': 'Buscar por codigo, cliente o ciudad',
+      'courier_services_tab_available': 'Disponibles',
+      'courier_services_tab_mine': 'Mis servicios',
+      'courier_services_empty_available':
+          'No hay servicios libres para este filtro.',
+      'courier_services_empty_mine':
+          'No tienes servicios asignados en este momento.',
+      'courier_services_service_prefix': 'Servicio',
+      'courier_services_pickup_point_prefix': 'Punto de recojo',
+      'courier_services_destination_prefix': 'Destino',
+      'courier_services_eta_prefix': 'ETA actual',
+      'courier_services_vehicle_prefix': 'Vehiculo',
+      'courier_services_load_failed_prefix':
+          'No se pudieron cargar servicios courier',
+      'courier_services_claim_success_prefix': 'Tomaste el servicio',
+      'courier_services_tracking_updated_prefix':
+          'Tracking actualizado para',
+      'courier_services_vehicle_type_label': 'Tipo de vehiculo',
+      'courier_services_plate_or_code_label': 'Placa o codigo',
+      'courier_services_loading_route': 'Cargando ruta sugerida...',
+      'courier_services_route_simulated': 'simulada',
+      'courier_services_route_prefix': 'Ruta',
+      'courier_services_status_new': 'Nuevo estado',
+      'courier_services_latitude': 'Latitud',
+      'courier_services_longitude': 'Longitud',
+      'courier_services_reading_gps': 'Leyendo GPS...',
+      'courier_services_use_my_gps': 'Usar mi GPS',
+      'courier_services_eta_minutes_label': 'ETA en minutos',
+      'courier_services_operational_message_label': 'Mensaje operativo',
+      'courier_services_operational_message_hint':
+          'Ej. Llegue al hotel / equipaje verificado',
+      'courier_services_location_permission_denied':
+          'No se concedio permiso de ubicacion.',
+      'warehouse_detail_title': 'Detalle de sede',
+      'warehouse_detail_not_found': 'No encontramos este almacen.',
+      'warehouse_detail_city_prefix': 'Sede en',
+      'warehouse_detail_schedule_prefix': 'Horario',
+      'warehouse_detail_capacity_available_prefix': 'Capacidad disponible',
+      'warehouse_detail_price_from_prefix': 'Precio desde',
+      'warehouse_detail_score_prefix': 'Score',
+      'warehouse_detail_extra_services_title': 'Servicios extra',
+      'warehouse_detail_tourism_highlight_prefix': 'Turismo destacado',
+      'warehouse_detail_load_failed_prefix':
+          'No se pudo cargar el detalle',
+      'admin_warehouses_title': 'Gestion de almacenes',
+      'admin_warehouses_empty_filter': 'No hay almacenes para este filtro.',
+      'admin_warehouses_load_failed_prefix': 'No se pudo cargar almacenes',
+      'admin_warehouses_stock_sites': 'Sedes',
+      'admin_warehouses_stock_total_capacity': 'Capacidad total',
+      'admin_warehouses_stock_occupied': 'Ocupado',
+      'admin_warehouses_stock_available': 'Disponible',
+      'admin_warehouses_search_label': 'Buscar por nombre, direccion o ciudad',
+      'admin_warehouses_status_active': 'Activo',
+      'admin_warehouses_status_inactive': 'Inactivo',
+      'admin_warehouses_registry_board': 'Tablero de registros',
+      'admin_warehouses_swipe_right_hint':
+          'Desliza hacia la derecha para ver mas columnas.',
+      'verify_email_back_tooltip': 'Volver',
+      'verify_email_mock_code_prefix': 'Codigo mock',
+      'verify_email_verify_failed_prefix': 'No se pudo verificar',
+      'verify_email_resend_failed_prefix': 'No se pudo reenviar',
       'amount': 'Monto',
       'schedule': 'Horario',
       'payment': 'Pago',
@@ -621,6 +799,15 @@ class AppLocalizations {
       'admin_incidents_title': 'Admin incidents',
       'admin_incidents_operator_title': 'Operations incidents',
       'admin_incidents_support_title': 'Support incidents',
+      'admin_incidents_resolved_title': 'Resolved incidents',
+      'admin_incidents_generated_on_label': 'Generated on',
+      'admin_incidents_exported_count_label': 'Exported count',
+      'admin_incidents_col_ticket': 'Ticket',
+      'admin_incidents_col_reservation': 'Reservation',
+      'admin_incidents_col_warehouse': 'Warehouse',
+      'admin_incidents_col_client': 'Client',
+      'admin_incidents_col_detail': 'Detail',
+      'admin_incidents_col_resolution': 'Resolution',
       'admin_incidents_csv_generated': 'Resolved incidents CSV generated.',
       'admin_incidents_pdf_title': 'Resolved incidents TravelBox',
       'admin_incidents_print_preview_opened':
@@ -938,6 +1125,150 @@ class AppLocalizations {
       'reservation_success_pending_steps':
           '1. Pay at counter or to staff.\n2. Operator must approve collection in panel.\n3. When payment changes to CONFIRMED, QR will be enabled for check-in.',
       'reservation_success_qr_pending_label': 'QR pending',
+      'reservation_prepare_failed_prefix': 'Could not prepare reservation',
+      'solo_activos': 'Active only',
+      'qrpin': 'QR/PIN',
+      'tomar_servicio': 'Claim service',
+      'salir_a_ruta': 'Start route',
+      'actualizar_tracking': 'Update tracking',
+      'aceptar_servicio': 'Accept service',
+      'usar_ultimo_punto': 'Use last point',
+      'guardar_avance': 'Save progress',
+      'ver_tracking': 'View tracking',
+      'request_pickup': 'Request pickup',
+      'user_role_client': 'Client',
+      'user_role_courier': 'Courier',
+      'user_role_operator': 'Operator',
+      'user_role_city_supervisor': 'City supervisor',
+      'user_role_admin': 'Administrator',
+      'user_role_support': 'Support',
+      'reservation_timeline_pending_payment':
+          'Reservation created, pending payment.',
+      'reservation_timeline_confirmed': 'Payment confirmed.',
+      'reservation_timeline_checkin_pending': 'Check-in pending.',
+      'reservation_timeline_stored': 'Luggage stored.',
+      'reservation_timeline_ready_for_pickup': 'Ready for pickup.',
+      'reservation_timeline_out_for_delivery': 'Out for delivery.',
+      'reservation_timeline_completed': 'Reservation completed.',
+      'reservation_timeline_cancelled': 'Reservation cancelled.',
+      'reservation_timeline_cancelled_reason_prefix': 'Cancelled',
+      'reservation_timeline_incident': 'Incident reported.',
+      'reservation_timeline_expired': 'Reservation expired.',
+      'reservation_timeline_draft': 'Reservation draft.',
+      'reservation_timeline_pickup_requested': 'Pickup requested.',
+      'reservation_timeline_delivery_requested': 'Delivery requested.',
+      'reservation_timeline_cancel_requested_app':
+          'Cancellation requested from the app.',
+      'reservation_timeline_cancel_requested_refund_app':
+          'Cancellation with refund requested from the app.',
+      'reservation_timeline_frontend_cancelled': 'Cancelled from frontend',
+      'reservation_timeline_delivery_address_pending':
+          'Address pending confirmation in app',
+      'reservation_timeline_reservation_confirmed_qr_generated':
+          'Reservation confirmed and QR generated.',
+      'fallback_warehouse_name': 'Warehouse',
+      'fallback_no_address': 'No address',
+      'fallback_address_pending': 'Address pending',
+      'fallback_customer_name': 'Customer',
+      'fallback_unassigned': 'Unassigned',
+      'delivery_monitor_reload_tooltip': 'Reload',
+      'delivery_monitor_load_failed_prefix':
+          'Could not load logistics monitoring',
+      'delivery_monitor_live_title': 'Live logistics monitoring',
+      'delivery_monitor_live_subtitle':
+          'Automatic event updates. Select an order to view map, route, and events in the same panel.',
+      'delivery_monitor_search_hint':
+          'Search by reservation, customer, city, or driver',
+      'delivery_monitor_orders_suffix': 'orders',
+      'delivery_monitor_empty_filter':
+          'There are no delivery orders for this filter.',
+      'delivery_monitor_no_active': 'There are no active deliveries right now.',
+      'delivery_monitor_no_recent':
+          'There are no recent deliveries available.',
+      'delivery_monitor_reservation_prefix': 'Reservation',
+      'delivery_monitor_eta_prefix': 'ETA',
+      'delivery_monitor_panel_summary_prefix': 'Panel monitoring',
+      'delivery_monitor_panel_summary_active_suffix': 'active',
+      'delivery_monitor_panel_summary_recent_suffix': 'recent',
+      'delivery_monitor_label_customer': 'Customer',
+      'delivery_monitor_label_email': 'Email',
+      'delivery_monitor_label_address': 'Address',
+      'delivery_monitor_label_zone': 'Zone',
+      'delivery_monitor_label_driver': 'Driver',
+      'delivery_monitor_label_phone': 'Phone',
+      'delivery_monitor_label_vehicle': 'Vehicle',
+      'delivery_monitor_label_updated': 'Updated',
+      'delivery_monitor_tracking_not_linked':
+          'This reservation does not have a linked delivery order yet.',
+      'delivery_monitor_embedded_tracking_title': 'Embedded tracking',
+      'delivery_monitor_loading_embedded_tracking':
+          'Loading embedded tracking...',
+      'delivery_monitor_route_loading': 'Loading suggested route...',
+      'delivery_monitor_route_simulated': 'simulated',
+      'delivery_monitor_route_road_prefix': 'Route',
+      'courier_services_title': 'Courier services',
+      'courier_services_search_label':
+          'Search by code, customer, or city',
+      'courier_services_tab_available': 'Available',
+      'courier_services_tab_mine': 'My services',
+      'courier_services_empty_available':
+          'There are no open services for this filter.',
+      'courier_services_empty_mine':
+          'You have no assigned services right now.',
+      'courier_services_service_prefix': 'Service',
+      'courier_services_pickup_point_prefix': 'Pickup point',
+      'courier_services_destination_prefix': 'Destination',
+      'courier_services_eta_prefix': 'Current ETA',
+      'courier_services_vehicle_prefix': 'Vehicle',
+      'courier_services_load_failed_prefix':
+          'Could not load courier services',
+      'courier_services_claim_success_prefix': 'You claimed service',
+      'courier_services_tracking_updated_prefix':
+          'Tracking updated for',
+      'courier_services_vehicle_type_label': 'Vehicle type',
+      'courier_services_plate_or_code_label': 'Plate or code',
+      'courier_services_loading_route': 'Loading suggested route...',
+      'courier_services_route_simulated': 'simulated',
+      'courier_services_route_prefix': 'Route',
+      'courier_services_status_new': 'New status',
+      'courier_services_latitude': 'Latitude',
+      'courier_services_longitude': 'Longitude',
+      'courier_services_reading_gps': 'Reading GPS...',
+      'courier_services_use_my_gps': 'Use my GPS',
+      'courier_services_eta_minutes_label': 'ETA in minutes',
+      'courier_services_operational_message_label': 'Operational message',
+      'courier_services_operational_message_hint':
+          'e.g. Arrived at hotel / luggage verified',
+      'courier_services_location_permission_denied':
+          'Location permission was not granted.',
+      'warehouse_detail_title': 'Warehouse detail',
+      'warehouse_detail_not_found': 'We could not find this warehouse.',
+      'warehouse_detail_city_prefix': 'Location in',
+      'warehouse_detail_schedule_prefix': 'Schedule',
+      'warehouse_detail_capacity_available_prefix': 'Available capacity',
+      'warehouse_detail_price_from_prefix': 'Price from',
+      'warehouse_detail_score_prefix': 'Score',
+      'warehouse_detail_extra_services_title': 'Extra services',
+      'warehouse_detail_tourism_highlight_prefix': 'Tourism highlight',
+      'warehouse_detail_load_failed_prefix': 'Could not load detail',
+      'admin_warehouses_title': 'Warehouse management',
+      'admin_warehouses_empty_filter':
+          'There are no warehouses for this filter.',
+      'admin_warehouses_load_failed_prefix': 'Could not load warehouses',
+      'admin_warehouses_stock_sites': 'Sites',
+      'admin_warehouses_stock_total_capacity': 'Total capacity',
+      'admin_warehouses_stock_occupied': 'Occupied',
+      'admin_warehouses_stock_available': 'Available',
+      'admin_warehouses_search_label': 'Search by name, address, or city',
+      'admin_warehouses_status_active': 'Active',
+      'admin_warehouses_status_inactive': 'Inactive',
+      'admin_warehouses_registry_board': 'Registry board',
+      'admin_warehouses_swipe_right_hint':
+          'Swipe right to see more columns.',
+      'verify_email_back_tooltip': 'Back',
+      'verify_email_mock_code_prefix': 'Mock code',
+      'verify_email_verify_failed_prefix': 'Could not verify',
+      'verify_email_resend_failed_prefix': 'Could not resend',
       'amount': 'Amount',
       'schedule': 'Schedule',
       'payment': 'Payment',

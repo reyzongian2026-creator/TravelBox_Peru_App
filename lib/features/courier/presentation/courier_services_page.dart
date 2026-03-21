@@ -12,6 +12,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/geo_route_provider.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 class CourierServicesPage extends ConsumerStatefulWidget {
@@ -62,7 +63,7 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
       }
     }
     return AppShellScaffold(
-      title: 'Servicios courier',
+      title: context.l10n.t('courier_services_title'),
       currentRoute: '/courier/services',
       child: DefaultTabController(
         length: 2,
@@ -78,19 +79,25 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                       setState(() => _query = value.trim());
                       _loadData();
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar por codigo, cliente o ciudad',
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('courier_services_search_label'),
+                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
                   const SizedBox(height: 10),
                   if (responsive.width < 920)
                     Column(
                       children: [
-                        const TabBar(
+                        TabBar(
                           tabs: [
-                            Tab(text: 'Disponibles'),
-                            Tab(text: 'Mis servicios'),
+                            Tab(
+                              text: context.l10n.t(
+                                'courier_services_tab_available',
+                              ),
+                            ),
+                            Tab(
+                              text: context.l10n.t('courier_services_tab_mine'),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -123,11 +130,19 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                   else
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: TabBar(
                             tabs: [
-                              Tab(text: 'Disponibles'),
-                              Tab(text: 'Mis servicios'),
+                              Tab(
+                                text: context.l10n.t(
+                                  'courier_services_tab_available',
+                                ),
+                              ),
+                              Tab(
+                                text: context.l10n.t(
+                                  'courier_services_tab_mine',
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -167,15 +182,17 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                         _buildList(
                           context,
                           items: _availableItems,
-                          emptyMessage:
-                              'No hay servicios libres para este filtro.',
+                          emptyMessage: context.l10n.t(
+                            'courier_services_empty_available',
+                          ),
                           showClaimAction: true,
                         ),
                         _buildList(
                           context,
                           items: _myItems,
-                          emptyMessage:
-                              'No tienes servicios asignados en este momento.',
+                          emptyMessage: context.l10n.t(
+                            'courier_services_empty_mine',
+                          ),
                           showClaimAction: false,
                         ),
                       ],
@@ -222,7 +239,9 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       Chip(
-                        label: Text(item.deliveryStatusLabel),
+                        label: Text(
+                          deliveryStatusLabel(context, item.deliveryStatus),
+                        ),
                         side: BorderSide(color: item.statusColor),
                       ),
                       if (busy)
@@ -238,18 +257,27 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                     '${item.customerName} - ${item.cityName}\n${item.warehouseName}',
                   ),
                   const SizedBox(height: 4),
-                  Text('Servicio: ${item.deliveryTypeLabel}'),
+                  Text(
+                    '${context.l10n.t('courier_services_service_prefix')}: '
+                    '${_deliveryTypeLabel(context, item.deliveryType)}',
+                  ),
                   Text(
                     item.deliveryType.toUpperCase() == 'PICKUP'
-                        ? 'Punto de recojo: ${item.address}'
-                        : 'Destino: ${item.address}',
+                        ? '${context.l10n.t('courier_services_pickup_point_prefix')}: '
+                              '${item.address}'
+                        : '${context.l10n.t('courier_services_destination_prefix')}: '
+                              '${item.address}',
                   ),
-                  Text('ETA actual: ${item.etaMinutes} min'),
+                  Text(
+                    '${context.l10n.t('courier_services_eta_prefix')}: '
+                    '${item.etaMinutes} ${context.l10n.t('min')}',
+                  ),
                   if (!showClaimAction)
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Vehiculo: ${item.vehicleType} ${item.vehiclePlate}',
+                        '${context.l10n.t('courier_services_vehicle_prefix')}: '
+                        '${item.vehicleType} ${item.vehiclePlate}',
                       ),
                     ),
                   const SizedBox(height: 12),
@@ -363,7 +391,8 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
       setState(() {
         _loading = false;
         _error =
-            'No se pudieron cargar servicios courier: ${AppErrorFormatter.readable(error)}';
+            '${context.l10n.t('courier_services_load_failed_prefix')}: '
+            '${AppErrorFormatter.readable(error)}';
       });
     }
   }
@@ -384,7 +413,12 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
       await _loadData();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tomaste el servicio ${item.reservationCode}.')),
+        SnackBar(
+          content: Text(
+            '${context.l10n.t('courier_services_claim_success_prefix')} '
+            '${item.reservationCode}.',
+          ),
+        ),
       );
     });
   }
@@ -410,7 +444,10 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Tracking actualizado para ${item.reservationCode}.'),
+          content: Text(
+            '${context.l10n.t('courier_services_tracking_updated_prefix')} '
+            '${item.reservationCode}.',
+          ),
         ),
       );
     });
@@ -429,6 +466,17 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
       if (mounted) {
         setState(() => _busyOrderId = null);
       }
+    }
+  }
+
+  String _deliveryTypeLabel(BuildContext context, String rawType) {
+    switch (rawType.trim().toUpperCase()) {
+      case 'PICKUP':
+        return context.l10n.t('request_pickup');
+      case 'DELIVERY':
+        return context.l10n.t('request_delivery');
+      default:
+        return rawType;
     }
   }
 }
@@ -530,9 +578,9 @@ class CourierDeliveryItem {
       reservationCode: json['reservationCode']?.toString() ?? '-',
       deliveryType: json['deliveryType']?.toString() ?? 'DELIVERY',
       deliveryStatus: json['deliveryStatus']?.toString() ?? 'REQUESTED',
-      warehouseName: json['warehouseName']?.toString() ?? 'Sin almacen',
+      warehouseName: json['warehouseName']?.toString() ?? 'Warehouse',
       cityName: json['cityName']?.toString() ?? '-',
-      customerName: json['customerName']?.toString() ?? 'Cliente',
+      customerName: json['customerName']?.toString() ?? 'Customer',
       address: json['address']?.toString() ?? '-',
       vehicleType: json['vehicleType']?.toString() ?? '-',
       vehiclePlate: json['vehiclePlate']?.toString() ?? '-',
@@ -588,12 +636,16 @@ class _CourierClaimDialogState extends State<_CourierClaimDialog> {
         children: [
           TextField(
             controller: _vehicleTypeController,
-            decoration: InputDecoration(labelText: 'Tipo de vehiculo'),
+            decoration: InputDecoration(
+              labelText: context.l10n.t('courier_services_vehicle_type_label'),
+            ),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _vehiclePlateController,
-            decoration: const InputDecoration(labelText: 'Placa o codigo'),
+            decoration: InputDecoration(
+              labelText: context.l10n.t('courier_services_plate_or_code_label'),
+            ),
           ),
         ],
       ),
@@ -826,8 +878,11 @@ class _CourierProgressDialogState
                   alignment: Alignment.centerLeft,
                   child: Text(
                     route == null
-                        ? 'Cargando ruta sugerida...'
-                        : 'Ruta ${route.fallbackUsed ? 'simulada' : route.provider.toUpperCase()} - ${(route.distanceMeters / 1000).toStringAsFixed(1)} km',
+                        ? context.l10n.t('courier_services_loading_route')
+                        : '${context.l10n.t('courier_services_route_prefix')} '
+                              '${route.fallbackUsed ? context.l10n.t('courier_services_route_simulated') : route.provider.toUpperCase()} '
+                              '- '
+                              '${(route.distanceMeters / 1000).toStringAsFixed(1)} km',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -836,7 +891,9 @@ class _CourierProgressDialogState
                   initialValue: statuses.contains(_status)
                       ? _status
                       : statuses.first,
-                  decoration: const InputDecoration(labelText: 'Nuevo estado'),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t('courier_services_status_new'),
+                  ),
                   items: statuses
                       .map(
                         (status) => DropdownMenuItem(
@@ -861,7 +918,9 @@ class _CourierProgressDialogState
                           decimal: true,
                           signed: true,
                         ),
-                        decoration: const InputDecoration(labelText: 'Latitud'),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.t('courier_services_latitude'),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -872,8 +931,10 @@ class _CourierProgressDialogState
                           decimal: true,
                           signed: true,
                         ),
-                        decoration: const InputDecoration(
-                          labelText: 'Longitud',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.t(
+                            'courier_services_longitude',
+                          ),
                         ),
                       ),
                     ),
@@ -892,7 +953,9 @@ class _CourierProgressDialogState
                             : _useBrowserLocation,
                         icon: const Icon(Icons.my_location_outlined),
                         label: Text(
-                          _gettingLocation ? 'Leyendo GPS...' : 'Usar mi GPS',
+                          _gettingLocation
+                              ? context.l10n.t('courier_services_reading_gps')
+                              : context.l10n.t('courier_services_use_my_gps'),
                         ),
                       ),
                       OutlinedButton.icon(
@@ -922,31 +985,41 @@ class _CourierProgressDialogState
                 TextField(
                   controller: _etaController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'ETA en minutos',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t(
+                      'courier_services_eta_minutes_label',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _vehicleTypeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de vehiculo',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t(
+                      'courier_services_vehicle_type_label',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _vehiclePlateController,
-                  decoration: const InputDecoration(
-                    labelText: 'Placa o codigo',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t(
+                      'courier_services_plate_or_code_label',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _messageController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Mensaje operativo',
-                    hintText: 'Ej. Llegue al hotel / equipaje verificado',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t(
+                      'courier_services_operational_message_label',
+                    ),
+                    hintText: context.l10n.t(
+                      'courier_services_operational_message_hint',
+                    ),
                   ),
                 ),
               ],
@@ -1007,7 +1080,9 @@ class _CourierProgressDialogState
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         setState(() {
-          _locationError = 'No se concedio permiso de ubicacion.';
+          _locationError = context.l10n.t(
+            'courier_services_location_permission_denied',
+          );
           _gettingLocation = false;
         });
         return;

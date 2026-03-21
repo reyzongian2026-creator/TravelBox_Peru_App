@@ -108,7 +108,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
           ReservationTimelineEvent(
             status: ReservationStatus.confirmed,
             timestamp: now,
-            message: 'Reserva confirmada y QR generado.',
+            message:
+                '__L10N__:reservation_timeline_reservation_confirmed_qr_generated',
           ),
         ],
         pickupRequested: draft.pickupRequested,
@@ -193,7 +194,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
           ((data['availableInRange'] as num?)?.toInt() ?? 0) > 0;
       if (!hasAvailability) {
         throw StateError(
-          'No hay disponibilidad para el rango horario seleccionado.',
+          'No availability for the selected time range.',
         );
       }
     } on DioException catch (error) {
@@ -288,7 +289,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         data['status']?.toString().toUpperCase() ??
         '';
     if (paymentStatus == 'FAILED' || paymentStatus == 'REJECTED') {
-      throw StateError('El pago fue rechazado por la pasarela.');
+      throw StateError('The payment was rejected by the gateway.');
     }
   }
 
@@ -502,7 +503,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     }
     final normalizedReason = _truncate(
       reason.trim().isEmpty
-          ? 'Cancelacion solicitada desde app.'
+          ? 'Cancellation requested from the app.'
           : reason.trim(),
       240,
     );
@@ -537,7 +538,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     if (requiresRefund) {
       if (paymentIntentId == null || paymentIntentId.isEmpty) {
         throw StateError(
-          'El pago confirmado no tiene paymentIntentId para ejecutar el reembolso.',
+          'Confirmed payment has no paymentIntentId for refund execution.',
         );
       }
       await _dio.post<void>(
@@ -607,8 +608,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
         message: message?.trim().isNotEmpty == true
             ? message!.trim()
             : normalizedType == 'PICKUP'
-            ? 'Recojo solicitado hacia almacen.'
-            : 'Delivery solicitado hacia destino.',
+            ? '__L10N__:reservation_timeline_pickup_requested'
+            : '__L10N__:reservation_timeline_delivery_requested',
       );
     } on DioException catch (error) {
       if (!AppEnv.useMockFallback) {
@@ -623,8 +624,8 @@ class ReservationRepositoryImpl implements ReservationRepository {
         message: message?.trim().isNotEmpty == true
             ? message!.trim()
             : normalizedType == 'PICKUP'
-            ? 'Recojo solicitado hacia almacen.'
-            : 'Delivery solicitado hacia destino.',
+            ? '__L10N__:reservation_timeline_pickup_requested'
+            : '__L10N__:reservation_timeline_delivery_requested',
       );
     }
   }
@@ -645,7 +646,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
           '/reservations/$parsedReservationId/cancel',
           data: {
             'reason': message.trim().isEmpty
-                ? 'Cancelada desde frontend'
+                ? '__L10N__:reservation_timeline_frontend_cancelled'
                 : message.trim(),
           },
         );
@@ -747,11 +748,11 @@ class ReservationRepositoryImpl implements ReservationRepository {
       'name':
           reservationJson['warehouseName'] ??
           fallbackWarehouse?.name ??
-          'Almacen',
+          'Warehouse',
       'address':
           reservationJson['warehouseAddress'] ??
           fallbackWarehouse?.address ??
-          'Direccion pendiente',
+          'Address pending',
       'city':
           reservationJson['cityName'] ??
           fallbackWarehouse?.city ??
@@ -816,7 +817,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
   String _resolveDeliveryAddress(String message) {
     final trimmed = message.trim();
     if (trimmed.isEmpty) {
-      return 'Direccion por confirmar en app';
+      return 'Address pending confirmation in app';
     }
     return _truncate(trimmed, 220);
   }
@@ -855,7 +856,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         .read(reservationStoreProvider.notifier)
         .findById(reservationId);
     if (current == null) {
-      throw StateError('Reserva no encontrada: $reservationId');
+      throw StateError('Reservation not found: $reservationId');
     }
     final updated = current.copyWith(
       status: status,

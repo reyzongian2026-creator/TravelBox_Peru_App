@@ -220,7 +220,8 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo preparar la reserva: $error',
+          message:
+              '${context.l10n.t('reservation_prepare_failed_prefix')}: $error',
           onRetry: () =>
               ref.invalidate(warehouseDetailProvider(widget.warehouseId)),
         ),

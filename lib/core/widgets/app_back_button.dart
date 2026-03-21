@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
+
 class AppBackButton extends StatelessWidget {
   const AppBackButton({
     super.key,
@@ -14,7 +16,7 @@ class AppBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      tooltip: 'Volver',
+      tooltip: context.l10n.t('back'),
       icon: const Icon(Icons.arrow_back),
       onPressed: () {
         if (preferFallback) {

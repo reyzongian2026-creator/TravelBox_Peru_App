@@ -1,3 +1,5 @@
+import '../../core/l10n/localization_runtime.dart';
+
 class CountryDialingInfo {
   const CountryDialingInfo({
     required this.countryName,
@@ -29,7 +31,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '999888777',
   ),
   CountryDialingInfo(
-    countryName: 'Alemania',
+    countryName: 'Germany',
     iso2: 'DE',
     dialCode: '+49',
     phoneMinDigits: 10,
@@ -38,7 +40,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '15123456789',
   ),
   CountryDialingInfo(
-    countryName: 'Espana',
+    countryName: 'Spain',
     iso2: 'ES',
     dialCode: '+34',
     phoneMinDigits: 9,
@@ -47,7 +49,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '612345678',
   ),
   CountryDialingInfo(
-    countryName: 'Estados Unidos',
+    countryName: 'United States',
     iso2: 'US',
     dialCode: '+1',
     phoneMinDigits: 10,
@@ -56,7 +58,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '4155551234',
   ),
   CountryDialingInfo(
-    countryName: 'Reino Unido',
+    countryName: 'United Kingdom',
     iso2: 'GB',
     dialCode: '+44',
     phoneMinDigits: 10,
@@ -65,7 +67,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '7700900123',
   ),
   CountryDialingInfo(
-    countryName: 'Francia',
+    countryName: 'France',
     iso2: 'FR',
     dialCode: '+33',
     phoneMinDigits: 9,
@@ -74,7 +76,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '612345678',
   ),
   CountryDialingInfo(
-    countryName: 'Italia',
+    countryName: 'Italy',
     iso2: 'IT',
     dialCode: '+39',
     phoneMinDigits: 9,
@@ -83,7 +85,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '3123456789',
   ),
   CountryDialingInfo(
-    countryName: 'Brasil',
+    countryName: 'Brazil',
     iso2: 'BR',
     dialCode: '+55',
     phoneMinDigits: 10,
@@ -128,7 +130,7 @@ const countryDialingCatalog = <CountryDialingInfo>[
     phoneHint: '91123456789',
   ),
   CountryDialingInfo(
-    countryName: 'Japon',
+    countryName: 'Japan',
     iso2: 'JP',
     dialCode: '+81',
     phoneMinDigits: 10,
@@ -139,9 +141,9 @@ const countryDialingCatalog = <CountryDialingInfo>[
 ];
 
 CountryDialingInfo resolveCountryDialingByName(String? countryName) {
-  final normalized = countryName?.trim().toLowerCase() ?? '';
+  final normalized = _normalizeCountryName(countryName);
   for (final item in countryDialingCatalog) {
-    if (item.countryName.toLowerCase() == normalized) {
+    if (_normalizeCountryName(item.countryName) == normalized) {
       return item;
     }
   }
@@ -187,7 +189,29 @@ String? validateInternationalPhone({
   final digits = localNumber.replaceAll(RegExp(r'\D'), '');
   if (digits.length < country.phoneMinDigits ||
       digits.length > country.phoneMaxDigits) {
-    return 'Ingresa $label para ${country.countryName} (${country.dialCode}).';
+    if (LocalizationRuntime.isSpanish) {
+      return 'Ingresa un telefono valido para ${country.countryName} '
+          '(${country.dialCode}).';
+    }
+    return 'Enter a valid phone number for ${country.countryName} '
+        '(${country.dialCode}).';
   }
   return null;
+}
+
+String _normalizeCountryName(String? raw) {
+  final value = (raw ?? '').trim().toLowerCase();
+  return switch (value) {
+    'alemania' => 'germany',
+    'espana' => 'spain',
+    'españa' => 'spain',
+    'estados unidos' => 'united states',
+    'reino unido' => 'united kingdom',
+    'francia' => 'france',
+    'italia' => 'italy',
+    'brasil' => 'brazil',
+    'japon' => 'japan',
+    'japón' => 'japan',
+    _ => value,
+  };
 }

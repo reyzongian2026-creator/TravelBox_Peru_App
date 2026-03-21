@@ -59,7 +59,7 @@ class FirebaseClientAuthService {
   Future<FirebaseSocialSignInResult> signIn(SocialAuthProvider provider) async {
     if (!isConfigured) {
       throw UnsupportedError(
-        'Firebase no esta configurado aun. Falta cargar las llaves del proyecto.',
+        'Firebase is not configured yet. Project keys are missing.',
       );
     }
     await TravelBoxFirebase.initializeIfConfigured();
@@ -69,7 +69,7 @@ class FirebaseClientAuthService {
       case SocialAuthProvider.facebook:
         if (!AppEnv.firebaseFacebookProviderEnabled) {
           throw UnsupportedError(
-            'El acceso con Facebook esta deshabilitado en esta compilacion.',
+            'Facebook access is disabled in this build.',
           );
         }
         return _signInWithFacebook();
@@ -109,7 +109,7 @@ class FirebaseClientAuthService {
         return _signInWithGoogleCredentialFlow();
       default:
         throw UnsupportedError(
-          'Google Firebase solo esta habilitado en web, Android e iOS.',
+          'Google Firebase is only enabled on web, Android, and iOS.',
         );
     }
   }
@@ -123,14 +123,14 @@ class FirebaseClientAuthService {
       final auth = account.authentication;
       if (auth.idToken == null || auth.idToken!.trim().isEmpty) {
         throw UnsupportedError(
-          'Google no devolvio idToken. Configura FIREBASE_GOOGLE_SERVER_CLIENT_ID para Android.',
+          'Google did not return idToken. Configure FIREBASE_GOOGLE_SERVER_CLIENT_ID for Android.',
         );
       }
       final credential = GoogleAuthProvider.credential(idToken: auth.idToken);
       return _auth.signInWithCredential(credential);
     } on MissingPluginException {
       throw UnsupportedError(
-        'Google Sign-In no esta disponible en este build/dispositivo.',
+        'Google Sign-In is not available in this build/device.',
       );
     }
   }
@@ -138,7 +138,7 @@ class FirebaseClientAuthService {
   Future<FirebaseSocialSignInResult> _signInWithFacebook() async {
     if (!_supportsFacebookPlugin) {
       throw UnsupportedError(
-        'Facebook Firebase solo esta habilitado en web, Android e iOS.',
+        'Facebook Firebase is only enabled on web, Android, and iOS.',
       );
     }
     await _initializeFacebookWebIfNeeded();
@@ -171,12 +171,12 @@ class FirebaseClientAuthService {
           loginResult.accessToken == null) {
         final reason = loginResult.message?.trim().isNotEmpty == true
             ? loginResult.message!.trim()
-            : 'No se pudo autenticar con Facebook.';
+            : 'Could not authenticate with Facebook.';
         if (_looksLikeFacebookAppInactive(reason)) {
           throw UnsupportedError(
-            'Facebook Login bloqueado: la app esta en modo desarrollo/inactiva '
-            'o faltan dominios/redirect URI. Activa la app en Meta for Developers '
-            'y agrega el dominio web de produccion.',
+            'Facebook Login blocked: app is inactive or in development mode, '
+            'or domains/redirect URI are missing. Activate the app in Meta for Developers '
+            'and add the production web domain.',
           );
         }
         throw Exception(reason);
@@ -187,7 +187,7 @@ class FirebaseClientAuthService {
       return _auth.signInWithCredential(credential);
     } on MissingPluginException {
       throw UnsupportedError(
-        'Facebook Sign-In no esta disponible en este build/dispositivo.',
+        'Facebook Sign-In is not available in this build/device.',
       );
     }
   }
@@ -212,7 +212,7 @@ class FirebaseClientAuthService {
     final user = userCredential.user;
     final idToken = await user?.getIdToken(true);
     if (idToken == null || idToken.trim().isEmpty) {
-      throw Exception('Firebase no devolvio un token valido.');
+      throw Exception('Firebase did not return a valid token.');
     }
     return FirebaseSocialSignInResult(
       idToken: idToken,
@@ -256,7 +256,7 @@ class FirebaseClientAuthService {
     final appId = AppEnv.firebaseFacebookAppId.trim();
     if (appId.isEmpty) {
       throw UnsupportedError(
-        'Falta FIREBASE_FACEBOOK_APP_ID para inicializar Facebook en web.',
+        'Missing FIREBASE_FACEBOOK_APP_ID to initialize Facebook on web.',
       );
     }
     final version = AppEnv.firebaseFacebookSdkVersion.trim().isEmpty

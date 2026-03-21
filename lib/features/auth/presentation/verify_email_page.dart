@@ -45,7 +45,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: _loading ? null : _exitToLogin,
-                  tooltip: 'Volver',
+                  tooltip: l10n.t('verify_email_back_tooltip'),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -77,7 +77,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: SelectableText(
-                  'Codigo mock: ${session.pendingVerificationCode}',
+                  '${l10n.t('verify_email_mock_code_prefix')}: '
+                  '${session.pendingVerificationCode}',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -136,7 +137,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo verificar: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('verify_email_verify_failed_prefix')}: '
+            '${AppErrorFormatter.readable(error)}',
           ),
         ),
       );
@@ -169,7 +171,8 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo reenviar: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('verify_email_resend_failed_prefix')}: '
+            '${AppErrorFormatter.readable(error)}',
           ),
         ),
       );

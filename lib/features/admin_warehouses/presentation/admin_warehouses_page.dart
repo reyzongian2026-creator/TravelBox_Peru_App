@@ -101,7 +101,7 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
     final warehouses = ref.watch(adminWarehousesProvider);
     final activeFilter = ref.watch(adminWarehouseActiveFilterProvider);
     return AppShellScaffold(
-      title: 'Gestion de almacenes',
+      title: context.l10n.t('admin_warehouses_title'),
       currentRoute: '/admin/warehouses',
       child: Column(
         children: [
@@ -114,8 +114,8 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
             child: warehouses.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return const EmptyStateView(
-                    message: 'No hay almacenes para este filtro.',
+                  return EmptyStateView(
+                    message: context.l10n.t('admin_warehouses_empty_filter'),
                   );
                 }
 
@@ -145,25 +145,31 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                       minItemWidth: 170,
                       children: [
                         _StockCard(
-                          title: 'Sedes',
+                          title: context.l10n.t('admin_warehouses_stock_sites'),
                           value: '${items.length}',
                           colorA: const Color(0xFF0B8B8C),
                           colorB: const Color(0xFF2AAAC2),
                         ),
                         _StockCard(
-                          title: 'Capacidad total',
+                          title: context.l10n.t(
+                            'admin_warehouses_stock_total_capacity',
+                          ),
                           value: '$totalCapacity',
                           colorA: const Color(0xFF1F6E8C),
                           colorB: const Color(0xFF3F9AC1),
                         ),
                         _StockCard(
-                          title: 'Ocupado',
+                          title: context.l10n.t(
+                            'admin_warehouses_stock_occupied',
+                          ),
                           value: '$totalOccupied',
                           colorA: const Color(0xFFC43D3D),
                           colorB: const Color(0xFFDE7060),
                         ),
                         _StockCard(
-                          title: 'Disponible',
+                          title: context.l10n.t(
+                            'admin_warehouses_stock_available',
+                          ),
                           value: '$totalAvailable',
                           colorA: const Color(0xFF168F64),
                           colorB: const Color(0xFF2DAE7B),
@@ -187,7 +193,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
               },
               loading: () => const LoadingStateView(),
               error: (error, _) => ErrorStateView(
-                message: 'No se pudo cargar almacenes: $error',
+                message:
+                    '${context.l10n.t('admin_warehouses_load_failed_prefix')}: '
+                    '$error',
                 onRetry: () => ref.invalidate(adminWarehousesProvider),
               ),
             ),
@@ -208,9 +216,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
         onChanged: (value) {
           ref.read(adminWarehouseSearchProvider.notifier).state = value;
         },
-        decoration: const InputDecoration(
-          labelText: 'Buscar por nombre, direccion o ciudad',
-          prefixIcon: Icon(Icons.search),
+        decoration: InputDecoration(
+          labelText: l10n.t('admin_warehouses_search_label'),
+          prefixIcon: const Icon(Icons.search),
         ),
       );
     }
@@ -1505,7 +1513,15 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
                         DataCell(Text(item.longitude.toStringAsFixed(5))),
                         DataCell(
                           Chip(
-                            label: Text(item.active ? 'Activo' : 'Inactivo'),
+                            label: Text(
+                              item.active
+                                  ? context.l10n.t(
+                                      'admin_warehouses_status_active',
+                                    )
+                                  : context.l10n.t(
+                                      'admin_warehouses_status_inactive',
+                                    ),
+                            ),
                             visualDensity: VisualDensity.compact,
                           ),
                         ),
@@ -1519,14 +1535,14 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tablero de registros',
+                  context.l10n.t('admin_warehouses_registry_board'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: responsive.itemGap / 2),
                 Text(
-                  'Desliza hacia la derecha para ver mas columnas.',
+                  context.l10n.t('admin_warehouses_swipe_right_hint'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 SizedBox(height: responsive.itemGap),

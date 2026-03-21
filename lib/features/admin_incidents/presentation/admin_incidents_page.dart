@@ -624,6 +624,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
   }
 
   String _buildResolvedHtml(List<AdminIncidentItem> items) {
+    final l10n = context.l10n;
     final escape = HtmlEscape();
     final rows = items.map((item) {
       return '''
@@ -639,18 +640,18 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     }).join();
 
     return '''
-<h1>Incidencias resueltas</h1>
-<p class="meta">Generado el ${escape.convert(_exportGeneratedAt())}</p>
-<p class="meta">Cantidad exportada: ${items.length}</p>
+<h1>${escape.convert(l10n.t('admin_incidents_resolved_title'))}</h1>
+<p class="meta">${escape.convert(l10n.t('admin_incidents_generated_on_label'))} ${escape.convert(_exportGeneratedAt())}</p>
+<p class="meta">${escape.convert(l10n.t('admin_incidents_exported_count_label'))}: ${items.length}</p>
 <table>
   <thead>
     <tr>
-      <th>Ticket</th>
-      <th>Reserva</th>
-      <th>Almacen</th>
-      <th>Cliente</th>
-      <th>Detalle</th>
-      <th>Resolucion</th>
+      <th>${escape.convert(l10n.t('admin_incidents_col_ticket'))}</th>
+      <th>${escape.convert(l10n.t('admin_incidents_col_reservation'))}</th>
+      <th>${escape.convert(l10n.t('admin_incidents_col_warehouse'))}</th>
+      <th>${escape.convert(l10n.t('admin_incidents_col_client'))}</th>
+      <th>${escape.convert(l10n.t('admin_incidents_col_detail'))}</th>
+      <th>${escape.convert(l10n.t('admin_incidents_col_resolution'))}</th>
     </tr>
   </thead>
   <tbody>

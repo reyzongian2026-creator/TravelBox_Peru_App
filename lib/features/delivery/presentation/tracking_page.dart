@@ -306,7 +306,8 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                 leading: CircleAvatar(child: Text('${event.sequence}')),
                 title: Text(deliveryStatusLabel(context, event.status)),
                 subtitle: Text(
-                  '${event.message}\n${_formatDate(event.createdAt)}',
+                  '${timelineMessageLabel(context, event.message)}\n'
+                  '${_formatDate(event.createdAt)}',
                 ),
                 trailing: Text('${event.etaMinutes} ${context.l10n.t('min')}'),
               ),

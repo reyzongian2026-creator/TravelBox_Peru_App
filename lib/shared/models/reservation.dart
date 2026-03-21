@@ -415,29 +415,32 @@ ReservationStatus reservationStatusFromCode(String code) {
 String _defaultStatusMessage(ReservationStatus status, {String? cancelReason}) {
   switch (status) {
     case ReservationStatus.pendingPayment:
-      return 'Reserva creada, pendiente de pago.';
+      return _timelineMessageToken('reservation_timeline_pending_payment');
     case ReservationStatus.confirmed:
-      return 'Pago confirmado.';
+      return _timelineMessageToken('reservation_timeline_confirmed');
     case ReservationStatus.checkinPending:
-      return 'Check-in pendiente.';
+      return _timelineMessageToken('reservation_timeline_checkin_pending');
     case ReservationStatus.stored:
-      return 'Equipaje almacenado.';
+      return _timelineMessageToken('reservation_timeline_stored');
     case ReservationStatus.readyForPickup:
-      return 'Listo para recojo.';
+      return _timelineMessageToken('reservation_timeline_ready_for_pickup');
     case ReservationStatus.outForDelivery:
-      return 'En ruta de delivery.';
+      return _timelineMessageToken('reservation_timeline_out_for_delivery');
     case ReservationStatus.completed:
-      return 'Reserva completada.';
+      return _timelineMessageToken('reservation_timeline_completed');
     case ReservationStatus.cancelled:
       return cancelReason?.trim().isNotEmpty == true
-          ? 'Cancelada: ${cancelReason!.trim()}'
-          : 'Reserva cancelada.';
+          ? _timelineMessageToken(
+              'reservation_timeline_cancelled_reason_prefix',
+              cancelReason!.trim(),
+            )
+          : _timelineMessageToken('reservation_timeline_cancelled');
     case ReservationStatus.incident:
-      return 'Incidencia reportada.';
+      return _timelineMessageToken('reservation_timeline_incident');
     case ReservationStatus.expired:
-      return 'Reserva expirada.';
+      return _timelineMessageToken('reservation_timeline_expired');
     case ReservationStatus.draft:
-      return 'Borrador de reserva.';
+      return _timelineMessageToken('reservation_timeline_draft');
   }
 }
 
@@ -449,8 +452,8 @@ Map<String, dynamic> _warehouseFromFlatReservation(Map<String, dynamic> json) {
       : null;
   return <String, dynamic>{
     'id': json['warehouseId'] ?? json['warehouse_id'],
-    'name': json['warehouseName'] ?? json['warehouse_name'] ?? 'Almacen',
-    'address': json['warehouseAddress'] ?? json['address'] ?? 'Sin direccion',
+    'name': json['warehouseName'] ?? json['warehouse_name'] ?? 'Warehouse',
+    'address': json['warehouseAddress'] ?? json['address'] ?? 'No address',
     'city': json['cityName'] ?? json['city'] ?? '',
     'district': json['zoneName'] ?? json['district'] ?? '',
     'latitude': json['warehouseLat'] ?? json['lat'] ?? json['latitude'] ?? 0,
@@ -468,4 +471,11 @@ Map<String, dynamic> _warehouseFromFlatReservation(Map<String, dynamic> json) {
         json['image'] ??
         json['imagen'],
   };
+}
+
+String _timelineMessageToken(String key, [String? argument]) {
+  if (argument == null || argument.trim().isEmpty) {
+    return '__L10N__:$key';
+  }
+  return '__L10N__:$key|${argument.trim()}';
 }

@@ -94,6 +94,103 @@ String operationalStageLabel(BuildContext context, String rawStage) {
   };
 }
 
+String timelineMessageLabel(BuildContext context, String rawMessage) {
+  final value = rawMessage.trim();
+  if (value.isEmpty) {
+    return '';
+  }
+
+  const prefix = '__L10N__:';
+  if (value.startsWith(prefix)) {
+    final payload = value.substring(prefix.length);
+    final separator = payload.indexOf('|');
+    if (separator > 0) {
+      final key = payload.substring(0, separator);
+      final argument = payload.substring(separator + 1).trim();
+      final translated = context.l10n.t(key);
+      if (argument.isEmpty) {
+        return translated;
+      }
+      return '$translated: $argument';
+    }
+    return context.l10n.t(payload);
+  }
+
+  final normalized = value.toLowerCase();
+  if (normalized == 'reserva creada, pendiente de pago.' ||
+      normalized == 'reservation created, pending payment.') {
+    return context.l10n.t('reservation_timeline_pending_payment');
+  }
+  if (normalized == 'pago confirmado.' || normalized == 'payment confirmed.') {
+    return context.l10n.t('reservation_timeline_confirmed');
+  }
+  if (normalized == 'check-in pendiente.' ||
+      normalized == 'check-in pending.') {
+    return context.l10n.t('reservation_timeline_checkin_pending');
+  }
+  if (normalized == 'equipaje almacenado.' || normalized == 'luggage stored.') {
+    return context.l10n.t('reservation_timeline_stored');
+  }
+  if (normalized == 'listo para recojo.' ||
+      normalized == 'ready for pickup.') {
+    return context.l10n.t('reservation_timeline_ready_for_pickup');
+  }
+  if (normalized == 'en ruta de delivery.' ||
+      normalized == 'out for delivery.') {
+    return context.l10n.t('reservation_timeline_out_for_delivery');
+  }
+  if (normalized == 'reserva completada.' ||
+      normalized == 'reservation completed.') {
+    return context.l10n.t('reservation_timeline_completed');
+  }
+  if (normalized == 'reserva cancelada.' ||
+      normalized == 'reservation cancelled.') {
+    return context.l10n.t('reservation_timeline_cancelled');
+  }
+  if (normalized == 'incidencia reportada.' ||
+      normalized == 'incident reported.') {
+    return context.l10n.t('reservation_timeline_incident');
+  }
+  if (normalized == 'reserva expirada.' ||
+      normalized == 'reservation expired.') {
+    return context.l10n.t('reservation_timeline_expired');
+  }
+  if (normalized == 'borrador de reserva.' ||
+      normalized == 'reservation draft.') {
+    return context.l10n.t('reservation_timeline_draft');
+  }
+  if (normalized == 'recojo solicitado hacia almacen.' ||
+      normalized == 'pickup requested.') {
+    return context.l10n.t('reservation_timeline_pickup_requested');
+  }
+  if (normalized == 'delivery solicitado hacia destino.' ||
+      normalized == 'delivery requested.') {
+    return context.l10n.t('reservation_timeline_delivery_requested');
+  }
+  if (normalized == 'cancelacion solicitada desde la app.' ||
+      normalized == 'cancellation requested from the app.') {
+    return context.l10n.t('reservation_timeline_cancel_requested_app');
+  }
+  if (normalized == 'cancelacion con reembolso solicitada desde la app.' ||
+      normalized == 'cancellation with refund requested from the app.') {
+    return context.l10n.t('reservation_timeline_cancel_requested_refund_app');
+  }
+  if (normalized == 'cancelada desde frontend' ||
+      normalized == 'cancelled from frontend') {
+    return context.l10n.t('reservation_timeline_frontend_cancelled');
+  }
+  if (normalized.startsWith('cancelada:') ||
+      normalized.startsWith('cancelled:')) {
+    final reason = value.split(':').skip(1).join(':').trim();
+    final prefixLabel = context.l10n.t(
+      'reservation_timeline_cancelled_reason_prefix',
+    );
+    return reason.isEmpty ? prefixLabel : '$prefixLabel: $reason';
+  }
+
+  return rawMessage;
+}
+
 String _reservationStatusKey(String statusCode) {
   final normalized = statusCode.trim().toUpperCase();
   return switch (normalized) {

@@ -405,8 +405,8 @@ class ReservationDetailPage extends ConsumerWidget {
     required bool requiresRefund,
   }) async {
     final reason = requiresRefund
-        ? 'Cancelacion con reembolso solicitada desde la app.'
-        : 'Cancelacion solicitada desde la app.';
+        ? context.l10n.t('reservation_timeline_cancel_requested_refund_app')
+        : context.l10n.t('reservation_timeline_cancel_requested_app');
     try {
       await ref
           .read(reservationRepositoryProvider)
@@ -456,7 +456,8 @@ class _TimelineTile extends StatelessWidget {
         leading: CircleAvatar(backgroundColor: event.status.color),
         title: Text(event.status.localizedLabel(context)),
         subtitle: Text(
-          '${event.message}\n${PeruTime.formatDateTime(event.timestamp)}',
+          '${timelineMessageLabel(context, event.message)}\n'
+          '${PeruTime.formatDateTime(event.timestamp)}',
         ),
       ),
     );

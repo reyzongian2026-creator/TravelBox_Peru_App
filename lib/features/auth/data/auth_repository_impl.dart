@@ -89,7 +89,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final statusCode = error.response?.statusCode ?? 0;
       if (statusCode == 404 || statusCode == 405 || statusCode == 501) {
         throw UnsupportedError(
-          'El backend actual no expone registro publico. Usa credenciales demo o habilita /auth/register.',
+          'Current backend does not expose public registration. Use demo credentials or enable /auth/register.',
         );
       }
       if (!_canUseMockFallbackForError(error)) {
@@ -209,7 +209,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final data = response.data ?? <String, dynamic>{};
       return EmailVerificationResult(
         emailVerified: data['emailVerified'] as bool? ?? true,
-        message: data['message']?.toString() ?? 'Correo verificado.',
+        message: data['message']?.toString() ?? 'Email verified.',
         verificationCodePreview: data['verificationCodePreview']?.toString(),
       );
     } on DioException catch (error) {
@@ -219,7 +219,7 @@ class AuthRepositoryImpl implements AuthRepository {
       _warnMockFallback('verifyEmail', error);
       return const EmailVerificationResult(
         emailVerified: true,
-        message: 'Correo verificado en modo mock.',
+        message: 'Email verified in mock mode.',
       );
     } catch (error) {
       if (!_allowStrictMockFallback) {
@@ -228,7 +228,7 @@ class AuthRepositoryImpl implements AuthRepository {
       _warnMockFallback('verifyEmail', error);
       return const EmailVerificationResult(
         emailVerified: true,
-        message: 'Correo verificado en modo mock.',
+        message: 'Email verified in mock mode.',
       );
     }
   }
@@ -242,7 +242,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final data = response.data ?? <String, dynamic>{};
       return EmailVerificationResult(
         emailVerified: data['emailVerified'] as bool? ?? false,
-        message: data['message']?.toString() ?? 'Se envio un nuevo codigo.',
+        message: data['message']?.toString() ?? 'A new code was sent.',
         verificationCodePreview: data['verificationCodePreview']?.toString(),
       );
     } on DioException catch (error) {
@@ -252,7 +252,7 @@ class AuthRepositoryImpl implements AuthRepository {
       _warnMockFallback('resendVerification', error);
       return const EmailVerificationResult(
         emailVerified: false,
-        message: 'Codigo reenviado en modo mock.',
+        message: 'Code resent in mock mode.',
         verificationCodePreview: '123456',
       );
     } catch (error) {
@@ -262,7 +262,7 @@ class AuthRepositoryImpl implements AuthRepository {
       _warnMockFallback('resendVerification', error);
       return const EmailVerificationResult(
         emailVerified: false,
-        message: 'Codigo reenviado en modo mock.',
+        message: 'Code resent in mock mode.',
         verificationCodePreview: '123456',
       );
     }
@@ -281,7 +281,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return PasswordResetResult(
         message:
             data['message']?.toString() ??
-            'Si el correo existe, se envio un codigo de recuperacion.',
+            'If the email exists, a recovery code was sent.',
         resetCodePreview: data['resetCodePreview']?.toString(),
         expiresAtIso: data['expiresAt']?.toString(),
       );
@@ -291,7 +291,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       _warnMockFallback('requestPasswordReset', error);
       return const PasswordResetResult(
-        message: 'Codigo de recuperacion generado en modo mock.',
+        message: 'Recovery code generated in mock mode.',
         resetCodePreview: '123456',
       );
     } catch (error) {
@@ -300,7 +300,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       _warnMockFallback('requestPasswordReset', error);
       return const PasswordResetResult(
-        message: 'Codigo de recuperacion generado en modo mock.',
+        message: 'Recovery code generated in mock mode.',
         resetCodePreview: '123456',
       );
     }
@@ -327,7 +327,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return PasswordResetResult(
         message:
             data['message']?.toString() ??
-            'Contrasena actualizada correctamente.',
+            'Password updated successfully.',
       );
     } on DioException catch (error) {
       if (!_canUseMockFallbackForError(error)) {
@@ -335,7 +335,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       _warnMockFallback('confirmPasswordReset', error);
       return const PasswordResetResult(
-        message: 'Contrasena actualizada en modo mock.',
+        message: 'Password updated in mock mode.',
       );
     } catch (error) {
       if (!_allowStrictMockFallback) {
@@ -343,7 +343,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       _warnMockFallback('confirmPasswordReset', error);
       return const PasswordResetResult(
-        message: 'Contrasena actualizada en modo mock.',
+        message: 'Password updated in mock mode.',
       );
     }
   }
@@ -363,7 +363,7 @@ class AuthRepositoryImpl implements AuthRepository {
     if (normalizedAccessToken.isEmpty || normalizedRefreshToken.isEmpty) {
       if (!_allowStrictMockFallback) {
         throw StateError(
-          'Respuesta de autenticacion invalida: faltan accessToken/refreshToken.',
+          'Invalid auth response: missing accessToken/refreshToken.',
         );
       }
       _warnMockFallback(
@@ -404,11 +404,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   String _nameFromEmail(String? email) {
     if (email == null || email.trim().isEmpty) {
-      return 'Usuario TravelBox';
+      return 'TravelBox User';
     }
     final username = email.split('@').first.trim();
     if (username.isEmpty) {
-      return 'Usuario TravelBox';
+      return 'TravelBox User';
     }
     return username[0].toUpperCase() + username.substring(1);
   }
@@ -436,7 +436,7 @@ class AuthRepositoryImpl implements AuthRepository {
     return AuthSession(
       user: AppUser(
         id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
-        name: name ?? 'Usuario TravelBox',
+        name: name ?? 'TravelBox User',
         email: email,
         role: role,
         firstName: firstName ?? '',
@@ -486,8 +486,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   void _warnMockFallback(String flow, Object error) {
     debugPrint(
-      '[AuthRepositoryImpl] Mock fallback activo en $flow. '
-      'Revisa backend/config para evitar ocultar fallos reales. Error: $error',
+      '[AuthRepositoryImpl] Mock fallback active in $flow. '
+      'Review backend/config to avoid hiding real failures. Error: $error',
     );
   }
 }

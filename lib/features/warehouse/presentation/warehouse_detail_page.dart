@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';
@@ -29,11 +29,11 @@ class WarehouseDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final warehouseAsync = ref.watch(warehouseDetailProvider(warehouseId));
     return AppShellScaffold(
-      title: 'Detalle de sede',
+      title: context.l10n.t('warehouse_detail_title'),
       currentRoute: '/discovery',
       actions: [
         IconButton(
-          tooltip: 'Volver',
+          tooltip: context.l10n.t('back'),
           onPressed: () => context.go('/discovery'),
           icon: const Icon(Icons.arrow_back),
         ),
@@ -42,8 +42,8 @@ class WarehouseDetailPage extends ConsumerWidget {
         data: (warehouse) {
           if (warehouse == null) {
             return EmptyStateView(
-              message: 'No encontramos este almacén.',
-              actionLabel: 'Volver',
+              message: context.l10n.t('warehouse_detail_not_found'),
+              actionLabel: context.l10n.t('back'),
               onAction: () => context.go('/discovery'),
             );
           }
@@ -53,7 +53,8 @@ class WarehouseDetailPage extends ConsumerWidget {
             padding: const EdgeInsets.all(16),
             children: [
               Text(
-                'Sede en ${warehouse.city}',
+                '${context.l10n.t('warehouse_detail_city_prefix')} '
+                '${warehouse.city}',
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -112,12 +113,22 @@ class WarehouseDetailPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Horario: ${warehouse.openingHours}'),
-                      Text('Capacidad disponible: ${warehouse.availableSlots}'),
                       Text(
-                        'Precio desde: S/${warehouse.priceFromPerHour.toStringAsFixed(2)}/hora',
+                        '${context.l10n.t('warehouse_detail_schedule_prefix')}: '
+                        '${warehouse.openingHours}',
                       ),
-                      Text('Score: ${warehouse.score.toStringAsFixed(1)}'),
+                      Text(
+                        '${context.l10n.t('warehouse_detail_capacity_available_prefix')}: '
+                        '${warehouse.availableSlots}',
+                      ),
+                      Text(
+                        '${context.l10n.t('warehouse_detail_price_from_prefix')}: '
+                        'S/${warehouse.priceFromPerHour.toStringAsFixed(2)}/hora',
+                      ),
+                      Text(
+                        '${context.l10n.t('warehouse_detail_score_prefix')}: '
+                        '${warehouse.score.toStringAsFixed(1)}',
+                      ),
                     ],
                   ),
                 ),
@@ -131,7 +142,7 @@ class WarehouseDetailPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Servicios extra',
+                context.l10n.t('warehouse_detail_extra_services_title'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
@@ -166,7 +177,8 @@ class WarehouseDetailPage extends ConsumerWidget {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar el detalle: $error',
+          message:
+              '${context.l10n.t('warehouse_detail_load_failed_prefix')}: $error',
           onRetry: () => ref.invalidate(warehouseDetailProvider(warehouseId)),
         ),
       ),
@@ -186,7 +198,8 @@ class _TourismInfoBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Turismo destacado: ${tourism.heroLandmark}',
+          '${context.l10n.t('warehouse_detail_tourism_highlight_prefix')}: '
+          '${tourism.heroLandmark}',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -205,4 +218,3 @@ class _TourismInfoBlock extends StatelessWidget {
     );
   }
 }
-

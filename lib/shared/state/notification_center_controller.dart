@@ -343,13 +343,13 @@ class NotificationCenterController
       } else {
         state = state.copyWith(
           loading: false,
-          error: error.message ?? 'No se pudo consultar notificaciones.',
+          error: error.message ?? 'Could not fetch notifications.',
         );
       }
     } catch (error) {
       state = state.copyWith(
         loading: false,
-        error: 'No se pudo consultar notificaciones: $error',
+        error: 'Could not fetch notifications: $error',
       );
     } finally {
       _isFetching = false;
@@ -533,12 +533,12 @@ class NotificationCenterController
         return;
       }
       state = previous.copyWith(
-        error: error.message ?? 'No se pudo eliminar la notificacion.',
+        error: error.message ?? 'Could not delete notification.',
       );
       await refreshNow();
     } catch (error) {
       state = previous.copyWith(
-        error: 'No se pudo eliminar la notificacion: $error',
+        error: 'Could not delete notification: $error',
       );
       await refreshNow();
     }
@@ -563,12 +563,12 @@ class NotificationCenterController
         return;
       }
       state = previous.copyWith(
-        error: error.message ?? 'No se pudieron eliminar las notificaciones.',
+        error: error.message ?? 'Could not delete notifications.',
       );
       await refreshNow();
     } catch (error) {
       state = previous.copyWith(
-        error: 'No se pudieron eliminar las notificaciones: $error',
+        error: 'Could not delete notifications: $error',
       );
       await refreshNow();
     }

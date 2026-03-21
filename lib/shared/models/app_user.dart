@@ -18,20 +18,37 @@ extension UserRoleX on UserRole {
     }
   }
 
+  String get localizationKey {
+    switch (this) {
+      case UserRole.client:
+        return 'user_role_client';
+      case UserRole.courier:
+        return 'user_role_courier';
+      case UserRole.operator:
+        return 'user_role_operator';
+      case UserRole.citySupervisor:
+        return 'user_role_city_supervisor';
+      case UserRole.admin:
+        return 'user_role_admin';
+      case UserRole.support:
+        return 'user_role_support';
+    }
+  }
+
   String get displayLabel {
     switch (this) {
       case UserRole.client:
-        return 'Cliente';
+        return 'Client';
       case UserRole.courier:
         return 'Courier';
       case UserRole.operator:
-        return 'Operador';
+        return 'Operator';
       case UserRole.citySupervisor:
-        return 'Supervisor de ciudad';
+        return 'City supervisor';
       case UserRole.admin:
-        return 'Administrador';
+        return 'Administrator';
       case UserRole.support:
-        return 'Soporte';
+        return 'Support';
     }
   }
 

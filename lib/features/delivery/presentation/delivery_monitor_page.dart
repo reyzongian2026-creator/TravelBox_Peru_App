@@ -100,7 +100,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
       currentRoute: widget.currentRoute,
       actions: [
         IconButton(
-          tooltip: 'Recargar',
+          tooltip: context.l10n.t('delivery_monitor_reload_tooltip'),
           onPressed: () => ref.invalidate(deliveryMonitorProvider),
           icon: const Icon(Icons.refresh),
         ),
@@ -110,7 +110,8 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
           message:
-              'No se pudo cargar monitoreo logistico: ${_errorMessage(error)}',
+              '${context.l10n.t('delivery_monitor_load_failed_prefix')}: '
+              '${_errorMessage(error)}',
           onRetry: () => ref.invalidate(deliveryMonitorProvider),
         ),
       ),
@@ -179,7 +180,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Monitoreo logistico en vivo',
+                  context.l10n.t('delivery_monitor_live_title'),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -187,7 +188,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Actualizacion automatica por eventos. Selecciona una orden para ver mapa, ruta y eventos dentro del mismo panel.',
+                  context.l10n.t('delivery_monitor_live_subtitle'),
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
                 ),
                 const SizedBox(height: 14),
@@ -216,12 +217,13 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                                       .state =
                                   value;
                             },
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.white,
-                              prefixIcon: Icon(Icons.search),
-                              hintText:
-                                  'Buscar por reserva, cliente, ciudad o chofer',
+                              prefixIcon: const Icon(Icons.search),
+                              hintText: context.l10n.t(
+                                'delivery_monitor_search_hint',
+                              ),
                             ),
                           ),
                         ),
@@ -252,7 +254,10 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                           },
                         ),
                         Chip(
-                          label: Text('${items.length} ordenes'),
+                          label: Text(
+                            '${items.length} '
+                            '${context.l10n.t('delivery_monitor_orders_suffix')}',
+                          ),
                           backgroundColor: Colors.white.withValues(alpha: 0.92),
                         ),
                       ],
@@ -293,7 +298,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
         child: Padding(
           padding: EdgeInsets.all(24),
           child: EmptyStateView(
-            message: 'No hay ordenes de delivery para el filtro actual.',
+            message: context.l10n.t('delivery_monitor_empty_filter'),
           ),
         ),
       );
@@ -345,7 +350,11 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                       const SizedBox(height: 6),
                       Text('${item.customerName} - ${item.customerEmail}'),
                       Text(
-                        '${item.cityName} | ETA ${item.etaLabel} | Reserva ${item.reservationCode}',
+                        '${item.cityName} | '
+                        '${context.l10n.t('delivery_monitor_eta_prefix')} '
+                        '${item.etaLabel} | '
+                        '${context.l10n.t('delivery_monitor_reservation_prefix')} '
+                        '${item.reservationCode}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -370,8 +379,8 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
           padding: const EdgeInsets.all(24),
           child: EmptyStateView(
             message: activeOnly
-                ? 'No hay deliveries activos para monitorear ahora.'
-                : 'No hay deliveries recientes disponibles.',
+                ? context.l10n.t('delivery_monitor_no_active')
+                : context.l10n.t('delivery_monitor_no_recent'),
           ),
         ),
       );
@@ -389,7 +398,8 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  'Reserva ${item.reservationCode}',
+                  '${context.l10n.t('delivery_monitor_reservation_prefix')} '
+                  '${item.reservationCode}',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -403,41 +413,65 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                   labelStyle: TextStyle(color: item.statusColor),
                 ),
                 Chip(
-                  label: Text('ETA ${item.etaLabel}'),
+                  label: Text(
+                    '${context.l10n.t('delivery_monitor_eta_prefix')} '
+                    '${item.etaLabel}',
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Panel monitoreando $totalCount ordenes ${activeOnly ? 'activas' : 'recientes'}.',
+              '${context.l10n.t('delivery_monitor_panel_summary_prefix')} '
+              '$totalCount '
+              '${context.l10n.t('delivery_monitor_orders_suffix')} '
+              '${activeOnly ? context.l10n.t('delivery_monitor_panel_summary_active_suffix') : context.l10n.t('delivery_monitor_panel_summary_recent_suffix')}.',
             ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
-                _InfoBlock(title: 'Almacen', value: item.warehouseName),
-                _InfoBlock(title: 'Ciudad', value: item.cityName),
-                _InfoBlock(title: 'Cliente', value: item.customerName),
-                _InfoBlock(title: 'Correo', value: item.customerEmail),
-                _InfoBlock(title: 'Direccion', value: item.address),
-                _InfoBlock(title: 'Zona', value: item.zone),
-                _InfoBlock(title: 'Chofer', value: item.driverName),
-                _InfoBlock(title: 'Telefono', value: item.driverPhone),
+                _InfoBlock(title: context.l10n.t('almacen'), value: item.warehouseName),
+                _InfoBlock(title: context.l10n.t('ciudad'), value: item.cityName),
                 _InfoBlock(
-                  title: 'Unidad',
+                  title: context.l10n.t('delivery_monitor_label_customer'),
+                  value: item.customerName,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('delivery_monitor_label_email'),
+                  value: item.customerEmail,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('delivery_monitor_label_address'),
+                  value: item.address,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('delivery_monitor_label_zone'),
+                  value: item.zone,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('delivery_monitor_label_driver'),
+                  value: item.driverName,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('delivery_monitor_label_phone'),
+                  value: item.driverPhone,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('delivery_monitor_label_vehicle'),
                   value: '${item.vehicleType} ${item.vehiclePlate}',
                 ),
                 _InfoBlock(
-                  title: 'Reserva',
+                  title: context.l10n.t('delivery_monitor_reservation_prefix'),
                   value: reservationStatusCodeLabel(
                     context,
                     item.reservationStatus,
                   ),
                 ),
                 _InfoBlock(
-                  title: 'Actualizado',
+                  title: context.l10n.t('delivery_monitor_label_updated'),
                   value: _formatDate(item.updatedAt),
                 ),
               ],
@@ -520,8 +554,8 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
               child: ListTile(
                 leading: const Icon(Icons.route_outlined),
                 title: Text(context.l10n.t('no_hay_tracking_disponible')),
-                subtitle: const Text(
-                  'La reserva todavia no tiene una orden de delivery asociada.',
+                subtitle: Text(
+                  context.l10n.t('delivery_monitor_tracking_not_linked'),
                 ),
               ),
             ),
@@ -531,7 +565,7 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tracking embebido',
+              context.l10n.t('delivery_monitor_embedded_tracking_title'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -550,9 +584,12 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
                         ),
                         title: Text(_statusLabel(context, event.status)),
                         subtitle: Text(
-                          '${event.message}\n${_formatDate(event.createdAt)}',
+                          '${timelineMessageLabel(context, event.message)}\n'
+                          '${_formatDate(event.createdAt)}',
                         ),
-                        trailing: Text('${event.etaMinutes} min'),
+                        trailing: Text(
+                          '${event.etaMinutes} ${context.l10n.t('min')}',
+                        ),
                       ),
                     )
                     .toList(),
@@ -561,10 +598,12 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
           ],
         );
       },
-      loading: () => const Card(
+      loading: () => Card(
         child: Padding(
-          padding: EdgeInsets.all(18),
-          child: LoadingStateView(message: 'Cargando tracking embebido...'),
+          padding: const EdgeInsets.all(18),
+          child: LoadingStateView(
+            message: context.l10n.t('delivery_monitor_loading_embedded_tracking'),
+          ),
         ),
       ),
       error: (error, _) => Card(
@@ -688,8 +727,9 @@ class _EmbeddedTrackingMap extends ConsumerWidget {
                 attributions: [
                   TextSourceAttribution(
                     route.fallbackUsed
-                        ? 'Ruta simulada'
-                        : 'Ruta vial ${route.provider.toUpperCase()}',
+                        ? context.l10n.t('delivery_monitor_route_simulated')
+                        : '${context.l10n.t('delivery_monitor_route_road_prefix')} '
+                              '${route.provider.toUpperCase()}',
                   ),
                 ],
               ),
@@ -874,13 +914,13 @@ class DeliveryMonitorItem {
       reservationCode: json['reservationCode']?.toString() ?? '-',
       reservationStatus: json['reservationStatus']?.toString() ?? '-',
       deliveryStatus: json['deliveryStatus']?.toString() ?? '-',
-      warehouseName: json['warehouseName']?.toString() ?? 'Sin almacen',
+      warehouseName: json['warehouseName']?.toString() ?? 'Warehouse',
       cityName: json['cityName']?.toString() ?? '-',
-      customerName: json['customerName']?.toString() ?? 'Cliente',
+      customerName: json['customerName']?.toString() ?? 'Customer',
       customerEmail: json['customerEmail']?.toString() ?? '-',
       address: json['address']?.toString() ?? '-',
       zone: json['zone']?.toString() ?? '-',
-      driverName: json['driverName']?.toString() ?? 'Sin asignar',
+      driverName: json['driverName']?.toString() ?? 'Unassigned',
       driverPhone: json['driverPhone']?.toString() ?? '-',
       vehicleType: json['vehicleType']?.toString() ?? '-',
       vehiclePlate: json['vehiclePlate']?.toString() ?? '-',

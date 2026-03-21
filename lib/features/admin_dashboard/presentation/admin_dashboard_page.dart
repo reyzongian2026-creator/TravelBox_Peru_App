@@ -71,7 +71,7 @@ final adminDashboardProvider =
         }
       }
 
-      throw lastError ?? StateError('No se pudo cargar dashboard admin');
+      throw lastError ?? StateError('Could not load admin dashboard');
     });
 
 class AdminDashboardPage extends ConsumerWidget {
