@@ -9,6 +9,7 @@ import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/data/reservation_repository_impl.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
@@ -151,7 +152,9 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                       ?.copyWith(fontWeight: FontWeight.w700),
                                 ),
                                 Chip(
-                                  label: Text(item.status.label),
+                                  label: Text(
+                                    item.status.localizedLabel(context),
+                                  ),
                                   visualDensity: VisualDensity.compact,
                                 ),
                                 if (isBusy)
@@ -360,7 +363,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${context.l10n.t('admin_reservation_status_updated')}: ${item.code} -> ${status.label}.',
+            '${context.l10n.t('admin_reservation_status_updated')}: '
+            '${item.code} -> ${status.localizedLabel(context)}.',
           ),
         ),
       );
@@ -481,7 +485,7 @@ class _StatusFilterBar extends StatelessWidget {
         (status) => FilterChip(
           selected: selectedStatus == status,
           visualDensity: VisualDensity.compact,
-          label: Text(status.label),
+          label: Text(status.localizedLabel(context)),
           onSelected: (_) => onStatusSelected(status),
         ),
       ),

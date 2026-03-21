@@ -14,6 +14,7 @@ import '../../../shared/models/delivery_tracking.dart';
 import '../../../shared/models/geo_route.dart';
 import '../../../shared/state/geo_route_provider.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 final deliveryMonitorSearchProvider = StateProvider.autoDispose<String>(
@@ -329,7 +330,9 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           Chip(
-                            label: Text(item.deliveryStatusLabel),
+                            label: Text(
+                              deliveryStatusLabel(context, item.deliveryStatus),
+                            ),
                             backgroundColor: item.statusColor.withValues(
                               alpha: 0.12,
                             ),
@@ -392,7 +395,9 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                   ),
                 ),
                 Chip(
-                  label: Text(item.deliveryStatusLabel),
+                  label: Text(
+                    deliveryStatusLabel(context, item.deliveryStatus),
+                  ),
                   backgroundColor: item.statusColor.withValues(alpha: 0.12),
                   side: BorderSide(color: item.statusColor),
                   labelStyle: TextStyle(color: item.statusColor),
@@ -426,7 +431,10 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                 ),
                 _InfoBlock(
                   title: 'Reserva',
-                  value: item.reservationStatusLabel,
+                  value: reservationStatusCodeLabel(
+                    context,
+                    item.reservationStatus,
+                  ),
                 ),
                 _InfoBlock(
                   title: 'Actualizado',
@@ -540,7 +548,7 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
                           backgroundColor: const Color(0xFFDBEEF3),
                           child: Text('${event.sequence}'),
                         ),
-                        title: Text(_statusLabel(event.status)),
+                        title: Text(_statusLabel(context, event.status)),
                         subtitle: Text(
                           '${event.message}\n${_formatDate(event.createdAt)}',
                         ),
@@ -580,20 +588,20 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
     );
   }
 
-  static String _statusLabel(String raw) {
+  static String _statusLabel(BuildContext context, String raw) {
     switch (raw.toUpperCase()) {
       case 'REQUESTED':
-        return 'Solicitado';
+        return deliveryStatusLabel(context, 'REQUESTED');
       case 'ASSIGNED':
-        return 'Asignado';
+        return deliveryStatusLabel(context, 'ASSIGNED');
       case 'IN_TRANSIT':
-        return 'En tránsito';
+        return deliveryStatusLabel(context, 'IN_TRANSIT');
       case 'DELIVERED':
-        return 'Entregado';
+        return deliveryStatusLabel(context, 'DELIVERED');
       case 'CANCELLED':
-        return 'Cancelado';
+        return deliveryStatusLabel(context, 'CANCELLED');
       default:
-        return raw;
+        return deliveryStatusLabel(context, raw);
     }
   }
 

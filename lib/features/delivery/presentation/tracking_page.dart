@@ -14,6 +14,7 @@ import '../../../shared/models/geo_route.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/geo_route_provider.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 class TrackingPage extends ConsumerStatefulWidget {
@@ -220,7 +221,10 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
         children: [
           ListTile(
             leading: const Icon(Icons.route_outlined),
-            title: Text('Estado: ${_statusLabel(tracking.status)}'),
+            title: Text(
+              '${context.l10n.t('reservation_current_status')}: '
+              '${deliveryStatusLabel(context, tracking.status)}',
+            ),
             subtitle: Text('ETA: ${tracking.etaMinutes} min\n$etaNote'),
             trailing: IconButton(
               onPressed: _loadTracking,
@@ -259,7 +263,10 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             Text(
               '${reservation.warehouse.name} - ${reservation.warehouse.city}',
             ),
-            Text('Estado reserva: ${reservation.status.label}'),
+            Text(
+              '${context.l10n.t('reservation_status')}: '
+              '${reservation.status.localizedLabel(context)}',
+            ),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -291,7 +298,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             .map(
               (event) => ListTile(
                 leading: CircleAvatar(child: Text('${event.sequence}')),
-                title: Text(_statusLabel(event.status)),
+                title: Text(deliveryStatusLabel(context, event.status)),
                 subtitle: Text(
                   '${event.message}\n${_formatDate(event.createdAt)}',
                 ),
@@ -345,23 +352,6 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
         _deliveryMissing = false;
         _loading = false;
       });
-    }
-  }
-
-  String _statusLabel(String raw) {
-    switch (raw.toUpperCase()) {
-      case 'REQUESTED':
-        return 'Solicitado';
-      case 'ASSIGNED':
-        return 'Asignado';
-      case 'IN_TRANSIT':
-        return 'En tránsito';
-      case 'DELIVERED':
-        return 'Entregado';
-      case 'CANCELLED':
-        return 'Cancelado';
-      default:
-        return raw;
     }
   }
 

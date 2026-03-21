@@ -13,6 +13,7 @@ import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/incident_i18n_codec.dart';
 import '../../../shared/utils/incident_translation_service.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 import '../data/evidence_picker.dart';
@@ -134,7 +135,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                 title: Text(context.l10n.t('reserva_vinculada')),
                 subtitle: Text(
                   'ID ${reservation.id} - ${reservation.warehouse.name}\n'
-                  '${context.l10n.t('incident_current_status')}: ${reservation.status.label}',
+                  '${context.l10n.t('incident_current_status')}: ${reservation.status.localizedLabel(context)}',
                 ),
                 trailing: OutlinedButton(
                   onPressed: () => context.go('/reservation/${reservation.id}'),

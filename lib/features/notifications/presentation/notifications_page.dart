@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/notification_center_controller.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../domain/app_notification.dart';
 
 class NotificationsPage extends ConsumerStatefulWidget {
@@ -30,11 +31,13 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
     final notifications = ref.watch(notificationCenterControllerProvider);
 
     return AppShellScaffold(
-      title: 'Notificaciones',
+      title: context.l10n.t('notifications'),
       currentRoute: '/notifications',
       actions: [
         TextButton.icon(
-          onPressed: notifications.items.isEmpty ? null : _clearAllNotifications,
+          onPressed: notifications.items.isEmpty
+              ? null
+              : _clearAllNotifications,
           icon: const Icon(Icons.delete_sweep_outlined),
           label: Text(context.l10n.t('eliminar_todo')),
         ),
@@ -48,32 +51,37 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
           label: Text(context.l10n.t('marcar_leidas')),
         ),
       ],
-      child: _buildBody(notifications),
+      child: _buildBody(context, notifications),
     );
   }
 
-  Widget _buildBody(NotificationCenterState notifications) {
+  Widget _buildBody(
+    BuildContext context,
+    NotificationCenterState notifications,
+  ) {
     if (notifications.loading && notifications.items.isEmpty) {
       return LoadingStateView();
     }
 
     if (notifications.error != null && notifications.items.isEmpty) {
       return ErrorStateView(
-        message: 'No se pudieron cargar notificaciones: ${notifications.error}',
-        onRetry: () =>
-            ref.read(notificationCenterControllerProvider.notifier).refreshNow(),
+        message:
+            '${context.l10n.t('notifications_load_failed')}: ${notifications.error}',
+        onRetry: () => ref
+            .read(notificationCenterControllerProvider.notifier)
+            .refreshNow(),
       );
     }
 
     if (notifications.items.isEmpty) {
-      return const EmptyStateView(
-        message: 'No tienes notificaciones recientes.',
-      );
+      return EmptyStateView(message: context.l10n.t('notifications_empty'));
     }
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(notificationCenterControllerProvider.notifier).refreshNow();
+        await ref
+            .read(notificationCenterControllerProvider.notifier)
+            .refreshNow();
       },
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
@@ -89,7 +97,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
             notification: item,
             isUnread: isUnread,
             onTap: () {
-              ref.read(notificationCenterControllerProvider.notifier).markSeen(item.id);
+              ref
+                  .read(notificationCenterControllerProvider.notifier)
+                  .markSeen(item.id);
               final route = item.route;
               if (route != null && route.isNotEmpty) {
                 context.push(route);
@@ -117,9 +127,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(context.l10n.t('eliminar_notificaciones')),
-        content: Text(
-          'Se eliminaran todas tus notificaciones de este usuario.',
-        ),
+        content: Text(context.l10n.t('notifications_clear_confirmation')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -163,8 +171,10 @@ class _UnreadSummary extends StatelessWidget {
             Expanded(
               child: Text(
                 unreadCount <= 0
-                    ? 'Sin notificaciones nuevas.'
-                    : 'Tienes $unreadCount notificacion(es) nuevas.',
+                    ? context.l10n.t('notifications_unread_none')
+                    : '${context.l10n.t('notifications_unread_prefix')} '
+                          '$unreadCount '
+                          '${context.l10n.t('notifications_unread_suffix')}',
               ),
             ),
           ],
@@ -205,11 +215,13 @@ class _NotificationCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          '${notification.message}\n${notification.whenLabel} • ${notification.status}',
+          '${notification.message}\n'
+          '${notification.whenLabel} - '
+          '${notificationStatusLabel(context, notification.status)}',
         ),
         isThreeLine: true,
         trailing: PopupMenuButton<String>(
-          tooltip: 'Opciones',
+          tooltip: context.l10n.t('settings_options'),
           onSelected: (value) {
             if (value == 'delete') {
               onDelete();
@@ -226,4 +238,3 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 }
-

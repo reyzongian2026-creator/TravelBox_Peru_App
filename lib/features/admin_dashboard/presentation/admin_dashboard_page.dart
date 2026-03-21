@@ -15,6 +15,8 @@ import '../../../shared/utils/peru_time.dart';
 
 enum AdminDashboardPeriodOption { week, month, year }
 
+enum AdminDashboardViewTab { overview, analytics }
+
 extension AdminDashboardPeriodOptionX on AdminDashboardPeriodOption {
   String get code => switch (this) {
     AdminDashboardPeriodOption.week => 'week',
@@ -31,6 +33,10 @@ extension AdminDashboardPeriodOptionX on AdminDashboardPeriodOption {
 
 final adminDashboardPeriodProvider = StateProvider<AdminDashboardPeriodOption>(
   (ref) => AdminDashboardPeriodOption.month,
+);
+
+final adminDashboardViewTabProvider = StateProvider<AdminDashboardViewTab>(
+  (ref) => AdminDashboardViewTab.overview,
 );
 
 final adminDashboardProvider =
@@ -101,6 +107,9 @@ class _DashboardContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selectedTab = ref.watch(adminDashboardViewTabProvider);
+    final showOverview = selectedTab == AdminDashboardViewTab.overview;
+    final showAnalytics = selectedTab == AdminDashboardViewTab.analytics;
     final summary = _asMap(stats['summary']);
     final topWarehouses = _asList(stats['topWarehouses']);
     final topCities = _asList(stats['topCities']);
@@ -181,7 +190,7 @@ class _DashboardContent extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Operación central',
+                context.l10n.t('admin_dashboard_operations_hub'),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -189,7 +198,9 @@ class _DashboardContent extends ConsumerWidget {
               ),
               SizedBox(height: itemGap / 2),
               Text(
-                '${stats['periodLabel'] ?? 'Periodo actual'} - actualizado ${_formattedDate(stats['generatedAt'])}',
+                '${stats['periodLabel'] ?? context.l10n.t('admin_dashboard_current_period')} '
+                '- ${context.l10n.t('admin_dashboard_updated_prefix')} '
+                '${_formattedDate(stats['generatedAt'])}',
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
               ),
               SizedBox(height: sectionGap),
@@ -208,339 +219,380 @@ class _DashboardContent extends ConsumerWidget {
                       selection.first;
                 },
               ),
+              SizedBox(height: itemGap),
+              SegmentedButton<AdminDashboardViewTab>(
+                segments: [
+                  ButtonSegment(
+                    value: AdminDashboardViewTab.overview,
+                    label: Text(context.l10n.t('admin_dashboard_tab_overview')),
+                  ),
+                  ButtonSegment(
+                    value: AdminDashboardViewTab.analytics,
+                    label: Text(
+                      context.l10n.t('admin_dashboard_tab_analytics'),
+                    ),
+                  ),
+                ],
+                selected: {selectedTab},
+                onSelectionChanged: (selection) {
+                  ref.read(adminDashboardViewTabProvider.notifier).state =
+                      selection.first;
+                },
+              ),
             ],
           ),
         ),
         SizedBox(height: sectionGap),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final spacing = itemGap;
-            final columns = _kpiColumnsForWidth(constraints.maxWidth);
-            final totalSpacing = spacing * (columns - 1);
-            final cardWidth =
-                (constraints.maxWidth - totalSpacing) / columns - 0.1;
+        if (showOverview)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final spacing = itemGap;
+              final columns = _kpiColumnsForWidth(constraints.maxWidth);
+              final totalSpacing = spacing * (columns - 1);
+              final cardWidth =
+                  (constraints.maxWidth - totalSpacing) / columns - 0.1;
 
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: kpiCards
-                  .map(
-                    (kpi) => SizedBox(
-                      width: cardWidth,
-                      child: _KpiCard(
-                        title: kpi.title,
-                        value: kpi.value,
-                        subtitle: kpi.subtitle,
-                        colors: kpi.colors,
-                        compact: isMobile,
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: kpiCards
+                    .map(
+                      (kpi) => SizedBox(
+                        width: cardWidth,
+                        child: _KpiCard(
+                          title: kpi.title,
+                          value: kpi.value,
+                          subtitle: kpi.subtitle,
+                          colors: kpi.colors,
+                          compact: isMobile,
+                        ),
                       ),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
-        ),
-        SizedBox(height: sectionGap),
-        Card(
-          child: Padding(
-            padding: EdgeInsets.all(cardPadding),
-            child: Wrap(
-              spacing: itemGap,
-              runSpacing: itemGap,
-              children: [
-                FilledButton.icon(
-                  onPressed: () => context.go('/admin/tracking'),
-                  icon: const Icon(Icons.route_outlined),
-                  label: Text(context.l10n.t('tracking_logistico')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/admin/incidents'),
-                  icon: Icon(Icons.support_agent_outlined),
-                  label: Text(context.l10n.t('soporte')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/admin/reservations'),
-                  icon: Icon(Icons.luggage_outlined),
-                  label: Text(context.l10n.t('reservas')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/ops/qr-handoff'),
-                  icon: Icon(Icons.qr_code_scanner_outlined),
-                  label: Text(context.l10n.t('qr_y_pin')),
-                ),
-              ],
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        if (showOverview) SizedBox(height: sectionGap),
+        if (showOverview)
+          Card(
+            child: Padding(
+              padding: EdgeInsets.all(cardPadding),
+              child: Wrap(
+                spacing: itemGap,
+                runSpacing: itemGap,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => context.go('/admin/tracking'),
+                    icon: const Icon(Icons.route_outlined),
+                    label: Text(context.l10n.t('tracking_logistico')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go('/admin/incidents'),
+                    icon: Icon(Icons.support_agent_outlined),
+                    label: Text(context.l10n.t('soporte')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go('/admin/reservations'),
+                    icon: Icon(Icons.luggage_outlined),
+                    label: Text(context.l10n.t('reservas')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => context.go('/ops/qr-handoff'),
+                    icon: Icon(Icons.qr_code_scanner_outlined),
+                    label: Text(context.l10n.t('qr_y_pin')),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        SizedBox(height: sectionGap),
-        if (bestWarehouse.isNotEmpty)
+        if (showOverview) SizedBox(height: sectionGap),
+        if (showOverview && bestWarehouse.isNotEmpty)
           Card(
             child: ListTile(
               leading: const Icon(Icons.emoji_events_outlined),
               title: Text(
-                'Mejor almacén: ${bestWarehouse['warehouseName'] ?? '-'}',
+                '${context.l10n.t('admin_dashboard_best_warehouse_prefix')}: '
+                '${bestWarehouse['warehouseName'] ?? '-'}',
               ),
               subtitle: Text(
-                '${bestWarehouse['city'] ?? '-'} - ${_asInt(bestWarehouse['interactionCount'])} interacciones - ${formatter.format(_asDouble(bestWarehouse['confirmedRevenue']))}',
+                '${bestWarehouse['city'] ?? '-'} - '
+                '${_asInt(bestWarehouse['interactionCount'])} '
+                '${context.l10n.t('dashboard_interactions')} - '
+                '${formatter.format(_asDouble(bestWarehouse['confirmedRevenue']))}',
               ),
             ),
           ),
-        SizedBox(height: sectionGap),
-        Card(
-          child: Padding(
-            padding: EdgeInsets.all(cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Evolucion del periodo',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+        if (showAnalytics) SizedBox(height: sectionGap),
+        if (showAnalytics)
+          Card(
+            child: Padding(
+              padding: EdgeInsets.all(cardPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.t('admin_dashboard_period_trend_title'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                SizedBox(height: sectionGap),
-                _TrendChart(
-                  points: trend,
-                  selectedPeriod: selectedPeriod,
-                  formatter: formatter,
-                ),
-              ],
+                  SizedBox(height: sectionGap),
+                  _TrendChart(
+                    points: trend,
+                    selectedPeriod: selectedPeriod,
+                    formatter: formatter,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        SizedBox(height: sectionGap),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final spacing = sectionGap;
-            final columns = _rankingColumnsForWidth(constraints.maxWidth);
-            final totalSpacing = spacing * (columns - 1);
-            final cardWidth =
-                (constraints.maxWidth - totalSpacing) / columns - 0.1;
+        if (showAnalytics) SizedBox(height: sectionGap),
+        if (showAnalytics)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final spacing = sectionGap;
+              final columns = _rankingColumnsForWidth(constraints.maxWidth);
+              final totalSpacing = spacing * (columns - 1);
+              final cardWidth =
+                  (constraints.maxWidth - totalSpacing) / columns - 0.1;
 
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: [
-                SizedBox(
-                  width: cardWidth,
-                  child: _RankingCard(
-                    title: context.l10n.t('dashboard_top_warehouses'),
-                    minHeight: rankingMinHeight,
-                    padding: cardPadding,
-                    spacing: itemGap,
-                    children: topWarehouses.isEmpty
-                        ? [
-                            Text(
-                              context.l10n.t(
-                                'aun_no_hay_data_para_este_periodo',
-                              ),
-                            ),
-                          ]
-                        : topWarehouses.take(5).map((item) {
-                            return _RankingTile(
-                              title: item['warehouseName']?.toString() ?? '-',
-                              subtitle:
-                                  '${item['city'] ?? '-'} - ${_asInt(item['interactionCount'])} ${context.l10n.t('dashboard_interactions')}',
-                              trailing: formatter.format(
-                                _asDouble(item['confirmedRevenue']),
-                              ),
-                              progress: _ratio(
-                                _asDouble(item['interactionCount']),
-                                _maxValue(topWarehouses, 'interactionCount'),
-                              ),
-                            );
-                          }).toList(),
-                  ),
-                ),
-                SizedBox(
-                  width: cardWidth,
-                  child: _RankingCard(
-                    title: context.l10n.t('dashboard_top_cities'),
-                    minHeight: rankingMinHeight,
-                    padding: cardPadding,
-                    spacing: itemGap,
-                    children: topCities.isEmpty
-                        ? [
-                            Text(
-                              context.l10n.t(
-                                'aun_no_hay_data_para_este_periodo',
-                              ),
-                            ),
-                          ]
-                        : topCities.take(5).map((item) {
-                            return _RankingTile(
-                              title: item['city']?.toString() ?? '-',
-                              subtitle:
-                                  '${_asInt(item['interactionCount'])} ${context.l10n.t('reservas')} - ${_asInt(item['incidentCount'])} ${context.l10n.t('incidencias')}',
-                              trailing: formatter.format(
-                                _asDouble(item['confirmedRevenue']),
-                              ),
-                              progress: _ratio(
-                                _asDouble(item['interactionCount']),
-                                _maxValue(topCities, 'interactionCount'),
-                              ),
-                            );
-                          }).toList(),
-                  ),
-                ),
-                SizedBox(
-                  width: cardWidth,
-                  child: _RankingCard(
-                    title: context.l10n.t('dashboard_top_couriers'),
-                    minHeight: rankingMinHeight,
-                    padding: cardPadding,
-                    spacing: itemGap,
-                    children: topCouriers.isEmpty
-                        ? const [
-                            Text(
-                              'Aún no hay entregas suficientes en este periodo.',
-                            ),
-                          ]
-                        : topCouriers.take(5).map((item) {
-                            return _RankingTile(
-                              title: item['fullName']?.toString() ?? '-',
-                              subtitle:
-                                  '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} ${context.l10n.t('dashboard_active')}',
-                              trailing:
-                                  '${_asInt(item['deliveryCompletedCount'])} ${context.l10n.t('dashboard_completed')}',
-                              progress: _ratio(
-                                _asDouble(item['deliveryCompletedCount']),
-                                _maxValue(
-                                  topCouriers,
-                                  'deliveryCompletedCount',
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  SizedBox(
+                    width: cardWidth,
+                    child: _RankingCard(
+                      title: context.l10n.t('dashboard_top_warehouses'),
+                      minHeight: rankingMinHeight,
+                      padding: cardPadding,
+                      spacing: itemGap,
+                      children: topWarehouses.isEmpty
+                          ? [
+                              Text(
+                                context.l10n.t(
+                                  'aun_no_hay_data_para_este_periodo',
                                 ),
                               ),
-                            );
-                          }).toList(),
+                            ]
+                          : topWarehouses.take(5).map((item) {
+                              return _RankingTile(
+                                title: item['warehouseName']?.toString() ?? '-',
+                                subtitle:
+                                    '${item['city'] ?? '-'} - ${_asInt(item['interactionCount'])} ${context.l10n.t('dashboard_interactions')}',
+                                trailing: formatter.format(
+                                  _asDouble(item['confirmedRevenue']),
+                                ),
+                                progress: _ratio(
+                                  _asDouble(item['interactionCount']),
+                                  _maxValue(topWarehouses, 'interactionCount'),
+                                ),
+                              );
+                            }).toList(),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: cardWidth,
-                  child: _RankingCard(
-                    title: context.l10n.t('dashboard_top_operators'),
-                    minHeight: rankingMinHeight,
-                    padding: cardPadding,
-                    spacing: itemGap,
-                    children: topOperators.isEmpty
-                        ? const [
-                            Text(
-                              'Aún no hay operadores con servicios generados.',
-                            ),
-                          ]
-                        : topOperators.take(5).map((item) {
-                            return _RankingTile(
-                              title: item['fullName']?.toString() ?? '-',
-                              subtitle:
-                                  '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} ${context.l10n.t('dashboard_active')}',
-                              trailing:
-                                  '${_asInt(item['deliveryCreatedCount'])} ${context.l10n.t('dashboard_created')}',
-                              progress: _ratio(
-                                _asDouble(item['deliveryCreatedCount']),
-                                _maxValue(topOperators, 'deliveryCreatedCount'),
+                  SizedBox(
+                    width: cardWidth,
+                    child: _RankingCard(
+                      title: context.l10n.t('dashboard_top_cities'),
+                      minHeight: rankingMinHeight,
+                      padding: cardPadding,
+                      spacing: itemGap,
+                      children: topCities.isEmpty
+                          ? [
+                              Text(
+                                context.l10n.t(
+                                  'aun_no_hay_data_para_este_periodo',
+                                ),
                               ),
-                            );
-                          }).toList(),
+                            ]
+                          : topCities.take(5).map((item) {
+                              return _RankingTile(
+                                title: item['city']?.toString() ?? '-',
+                                subtitle:
+                                    '${_asInt(item['interactionCount'])} ${context.l10n.t('reservas')} - ${_asInt(item['incidentCount'])} ${context.l10n.t('incidencias')}',
+                                trailing: formatter.format(
+                                  _asDouble(item['confirmedRevenue']),
+                                ),
+                                progress: _ratio(
+                                  _asDouble(item['interactionCount']),
+                                  _maxValue(topCities, 'interactionCount'),
+                                ),
+                              );
+                            }).toList(),
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-        SizedBox(height: sectionGap),
-        Card(
-          child: Padding(
-            padding: EdgeInsets.all(cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.t('dashboard_reservation_status'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  SizedBox(
+                    width: cardWidth,
+                    child: _RankingCard(
+                      title: context.l10n.t('dashboard_top_couriers'),
+                      minHeight: rankingMinHeight,
+                      padding: cardPadding,
+                      spacing: itemGap,
+                      children: topCouriers.isEmpty
+                          ? [
+                              Text(
+                                context.l10n.t(
+                                  'admin_dashboard_no_courier_data',
+                                ),
+                              ),
+                            ]
+                          : topCouriers.take(5).map((item) {
+                              return _RankingTile(
+                                title: item['fullName']?.toString() ?? '-',
+                                subtitle:
+                                    '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} ${context.l10n.t('dashboard_active')}',
+                                trailing:
+                                    '${_asInt(item['deliveryCompletedCount'])} ${context.l10n.t('dashboard_completed')}',
+                                progress: _ratio(
+                                  _asDouble(item['deliveryCompletedCount']),
+                                  _maxValue(
+                                    topCouriers,
+                                    'deliveryCompletedCount',
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                    ),
                   ),
-                ),
-                SizedBox(height: itemGap),
-                Wrap(
-                  spacing: itemGap,
-                  runSpacing: itemGap,
-                  children: statusBreakdown
-                      .map(
-                        (item) => Chip(
-                          label: Text(
-                            '${item['label'] ?? item['status']}: ${_asInt(item['count'])}',
+                  SizedBox(
+                    width: cardWidth,
+                    child: _RankingCard(
+                      title: context.l10n.t('dashboard_top_operators'),
+                      minHeight: rankingMinHeight,
+                      padding: cardPadding,
+                      spacing: itemGap,
+                      children: topOperators.isEmpty
+                          ? [
+                              Text(
+                                context.l10n.t(
+                                  'admin_dashboard_no_operator_data',
+                                ),
+                              ),
+                            ]
+                          : topOperators.take(5).map((item) {
+                              return _RankingTile(
+                                title: item['fullName']?.toString() ?? '-',
+                                subtitle:
+                                    '${item['email'] ?? '-'} | ${_asInt(item['activeDeliveryCount'])} ${context.l10n.t('dashboard_active')}',
+                                trailing:
+                                    '${_asInt(item['deliveryCreatedCount'])} ${context.l10n.t('dashboard_created')}',
+                                progress: _ratio(
+                                  _asDouble(item['deliveryCreatedCount']),
+                                  _maxValue(
+                                    topOperators,
+                                    'deliveryCreatedCount',
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        if (showAnalytics) SizedBox(height: sectionGap),
+        if (showAnalytics)
+          Card(
+            child: Padding(
+              padding: EdgeInsets.all(cardPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.t('dashboard_reservation_status'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: itemGap),
+                  Wrap(
+                    spacing: itemGap,
+                    runSpacing: itemGap,
+                    children: statusBreakdown
+                        .map(
+                          (item) => Chip(
+                            label: Text(
+                              '${item['label'] ?? item['status']}: ${_asInt(item['count'])}',
+                            ),
                           ),
-                        ),
-                      )
-                      .toList(),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (showOverview) SizedBox(height: sectionGap),
+        if (showOverview)
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.warehouse_outlined),
+                  title: Text(context.l10n.t('operacion_de_almacenes')),
+                  subtitle: Text(
+                    context.l10n.t('checkin_etiquetado_y_entrega'),
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => context.go('/admin/warehouses'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.assignment_outlined),
+                  title: Text(context.l10n.t('reservas')),
+                  subtitle: Text(
+                    context.l10n.t('busqueda_y_cambios_de_estado'),
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => context.go('/admin/reservations'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.point_of_sale_outlined),
+                  title: Text(context.l10n.t('pagos_en_caja')),
+                  subtitle: Text(
+                    context.l10n.t('dashboard_cash_validation_subtitle'),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go('/admin/cash-payments'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.warning_amber_outlined),
+                  title: Text(context.l10n.t('incidencias')),
+                  subtitle: Text(context.l10n.t('seguimiento_y_resolucion')),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => context.go('/admin/incidents'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: Text(context.l10n.t('historial_de_pagos')),
+                  subtitle: Text(
+                    context.l10n.t('trazabilidad_completa_de_cobros'),
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => context.go('/admin/payments-history'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.manage_accounts_outlined),
+                  title: Text(context.l10n.t('usuarios_y_roles')),
+                  subtitle: Text(
+                    context.l10n.t('accesos_roles_y_estados_de_cuenta'),
+                  ),
+                  trailing: Icon(Icons.chevron_right),
+                  onTap: () => context.go('/admin/users'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.qr_code_scanner_outlined),
+                  title: Text(context.l10n.t('operacion_qr_y_pin')),
+                  subtitle: Text(
+                    context.l10n.t('admin_dashboard_qr_pin_subtitle'),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.go('/ops/qr-handoff'),
                 ),
               ],
             ),
           ),
-        ),
-        SizedBox(height: sectionGap),
-        Card(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.warehouse_outlined),
-                title: Text(context.l10n.t('operacion_de_almacenes')),
-                subtitle: Text(context.l10n.t('checkin_etiquetado_y_entrega')),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () => context.go('/admin/warehouses'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.assignment_outlined),
-                title: Text(context.l10n.t('reservas')),
-                subtitle: Text(context.l10n.t('busqueda_y_cambios_de_estado')),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () => context.go('/admin/reservations'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.point_of_sale_outlined),
-                title: Text(context.l10n.t('pagos_en_caja')),
-                subtitle: Text(
-                  context.l10n.t('dashboard_cash_validation_subtitle'),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go('/admin/cash-payments'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.warning_amber_outlined),
-                title: Text(context.l10n.t('incidencias')),
-                subtitle: Text(context.l10n.t('seguimiento_y_resolucion')),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () => context.go('/admin/incidents'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.receipt_long_outlined),
-                title: Text(context.l10n.t('historial_de_pagos')),
-                subtitle: Text(
-                  context.l10n.t('trazabilidad_completa_de_cobros'),
-                ),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () => context.go('/admin/payments-history'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.manage_accounts_outlined),
-                title: Text(context.l10n.t('usuarios_y_roles')),
-                subtitle: Text(
-                  context.l10n.t('accesos_roles_y_estados_de_cuenta'),
-                ),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () => context.go('/admin/users'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.qr_code_scanner_outlined),
-                title: Text(context.l10n.t('operacion_qr_y_pin')),
-                subtitle: Text(
-                  'Escaneo, etiqueta de maleta, validación presencial y delivery seguro',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go('/ops/qr-handoff'),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

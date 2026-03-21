@@ -23,7 +23,7 @@ class ProfilePage extends ConsumerWidget {
     final user = session.user;
 
     return AppShellScaffold(
-      title: 'Perfil',
+      title: context.l10n.t('profile'),
       currentRoute: '/profile',
       actions: user?.canSelfEditProfile == true
           ? [
@@ -57,9 +57,11 @@ class ProfilePage extends ConsumerWidget {
                   ),
                 ),
               ),
-              title: Text(user?.name ?? 'Sin usuario'),
+              title: Text(user?.name ?? context.l10n.t('profile_no_user')),
               subtitle: Text(
-                '${user?.email ?? 'No disponible'}\nRol: ${user?.role.displayLabel ?? '-'}',
+                '${user?.email ?? context.l10n.t('profile_not_available')}\n'
+                '${context.l10n.t('profile_role_prefix')}: '
+                '${user?.role.displayLabel ?? '-'}',
               ),
               trailing: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -80,8 +82,8 @@ class ProfilePage extends ConsumerWidget {
                 title: Text(
                   context.l10n.t('perfil_administrado_por_travelbox'),
                 ),
-                subtitle: const Text(
-                  'Los usuarios internos solo pueden ser editados por un administrador desde la plataforma.',
+                subtitle: Text(
+                  context.l10n.t('profile_internal_edit_admin_only'),
                 ),
               ),
             ),
@@ -90,27 +92,30 @@ class ProfilePage extends ConsumerWidget {
           Card(
             child: Column(
               children: [
-                _ProfileRow('Teléfono', user?.phone ?? '-'),
                 _ProfileRow(
-                  'Dirección',
+                  context.l10n.t('profile_phone_number'),
+                  user?.phone ?? '-',
+                ),
+                _ProfileRow(
+                  context.l10n.t('address'),
                   user?.address.isNotEmpty == true ? user!.address : '-',
                 ),
                 _ProfileRow(
-                  'Ciudad',
+                  context.l10n.t('city'),
                   user?.city.isNotEmpty == true ? user!.city : '-',
                 ),
                 _ProfileRow(
-                  'País',
+                  context.l10n.t('country'),
                   user?.country.isNotEmpty == true ? user!.country : '-',
                 ),
                 _ProfileRow(
-                  'Documento',
+                  context.l10n.t('profile_document_type'),
                   user?.documentType != null && user?.documentNumber != null
                       ? '${user!.documentType} ${user.documentNumber}'
                       : '-',
                 ),
                 _ProfileRow(
-                  'Emergencia',
+                  context.l10n.t('profile_emergency_contact'),
                   user?.emergencyContactName != null
                       ? '${user!.emergencyContactName} (${user.emergencyContactPhone ?? '-'})'
                       : '-',
@@ -131,8 +136,8 @@ class ProfilePage extends ConsumerWidget {
                   title: Text(context.l10n.t('estado_de_correo')),
                   subtitle: Text(
                     (user?.emailVerified ?? true)
-                        ? 'Verificado'
-                        : 'Pendiente de verificación',
+                        ? context.l10n.t('profile_email_verified')
+                        : context.l10n.t('profile_email_pending_verification'),
                   ),
                   trailing: !(user?.emailVerified ?? true)
                       ? TextButton(

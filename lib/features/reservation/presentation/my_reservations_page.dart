@@ -7,6 +7,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../../../shared/utils/status_localizer.dart';
 import 'reservation_providers.dart';
 
 class MyReservationsPage extends ConsumerStatefulWidget {
@@ -231,7 +232,7 @@ class _LatestReservationHero extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _HeroChip(label: reservation.status.label),
+              _HeroChip(label: reservation.status.localizedLabel(context)),
               _HeroChip(
                 label:
                     '${reservation.bagCount} ${l10n.t('my_reservations_bags')}',
@@ -308,7 +309,7 @@ class _ReservationCard extends StatelessWidget {
                     ),
                   ),
                   Chip(
-                    label: Text(reservation.status.label),
+                    label: Text(reservation.status.localizedLabel(context)),
                     visualDensity: VisualDensity.compact,
                     side: BorderSide(color: reservation.status.color),
                   ),

@@ -135,6 +135,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final user = ref.watch(sessionControllerProvider).user;
     if (user == null) {
       return const SizedBox.shrink();
@@ -142,7 +143,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     if (!user.canSelfEditProfile && !widget.forceComplete) {
       return AppShellScaffold(
-        title: 'Perfil administrado',
+        title: l10n.t('profile_managed_title'),
         currentRoute: '/profile/edit',
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -152,9 +153,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               child: ListTile(
                 leading: const Icon(Icons.admin_panel_settings_outlined),
                 title: Text(context.l10n.t('edicion_bloqueada')),
-                subtitle: const Text(
-                  'Los usuarios internos solo pueden ser editados por un administrador desde el modulo de usuarios.',
-                ),
+                subtitle: Text(l10n.t('profile_internal_edit_admin_only')),
               ),
             ),
             SizedBox(height: 16),
@@ -168,7 +167,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     }
 
     return AppShellScaffold(
-      title: widget.forceComplete ? 'Completa tu perfil' : 'Editar perfil',
+      title: widget.forceComplete
+          ? l10n.t('profile_complete_title')
+          : l10n.t('profile_edit_title'),
       currentRoute: widget.forceComplete
           ? '/profile/complete'
           : '/profile/edit',
@@ -197,7 +198,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   leading: Icon(Icons.lock_outline),
                   title: Text(context.l10n.t('cambio_sensible_detectado')),
                   subtitle: Text(
-                    'Si cambias correo, telefono o documento debes confirmar tu contrasena actual antes de guardar.',
+                    context.l10n.t('profile_sensitive_changes_password_notice'),
                   ),
                 ),
               ),
@@ -205,7 +206,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               SizedBox(height: 12),
             TextFormField(
               controller: _firstNameController,
-              decoration: const InputDecoration(labelText: 'Nombres'),
+              decoration: InputDecoration(
+                labelText: l10n.t('profile_first_name'),
+              ),
               textInputAction: TextInputAction.next,
               validator: (value) =>
                   FormValidators.requiredText(value, label: 'los nombres'),
@@ -213,7 +216,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _lastNameController,
-              decoration: const InputDecoration(labelText: 'Apellidos'),
+              decoration: InputDecoration(
+                labelText: l10n.t('profile_last_name'),
+              ),
               textInputAction: TextInputAction.next,
               validator: (value) =>
                   FormValidators.requiredText(value, label: 'los apellidos'),
@@ -222,9 +227,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             TextFormField(
               controller: _emailController,
               decoration: InputDecoration(
-                labelText: 'Correo',
+                labelText: l10n.t('email'),
                 helperText:
-                    'Te quedan ${user.emailChangeRemaining} cambios para este campo.',
+                    '${l10n.t('profile_remaining_changes_prefix')} '
+                    '${user.emailChangeRemaining} '
+                    '${l10n.t('profile_remaining_changes_suffix')}',
               ),
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
@@ -236,16 +243,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               key: ValueKey(_dialingCountry.dialCode),
               initialValue: _dialingCountry.dialCode,
               enabled: false,
-              decoration: const InputDecoration(labelText: 'Prefijo'),
+              decoration: InputDecoration(labelText: l10n.t('profile_prefix')),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _phoneLocalNumberController,
               decoration: InputDecoration(
-                labelText: 'Numero celular',
+                labelText: l10n.t('profile_phone_number'),
                 hintText: _dialingCountry.phoneHint,
                 helperText:
-                    'Te quedan ${user.phoneChangeRemaining} cambios. Formato ${_dialingCountry.countryName}: ${_dialingCountry.phoneMinDigits}-${_dialingCountry.phoneMaxDigits} digitos',
+                    '${l10n.t('profile_remaining_changes_prefix')} '
+                    '${user.phoneChangeRemaining}. '
+                    '${l10n.t('profile_format_prefix')} '
+                    '${_dialingCountry.countryName}: '
+                    '${_dialingCountry.phoneMinDigits}-'
+                    '${_dialingCountry.phoneMaxDigits} '
+                    '${l10n.t('profile_digits')}',
               ),
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
@@ -259,7 +272,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _nationality,
-              decoration: const InputDecoration(labelText: 'Nacionalidad'),
+              decoration: InputDecoration(labelText: l10n.t('nationality')),
               items: countryDialingCatalog
                   .map(
                     (item) => DropdownMenuItem(
@@ -281,7 +294,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _preferredLanguage,
-              decoration: const InputDecoration(labelText: 'Idioma'),
+              decoration: InputDecoration(labelText: l10n.t('language')),
               items: _languageOptions.entries
                   .map(
                     (item) => DropdownMenuItem(
@@ -297,28 +310,30 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _addressController,
-              decoration: const InputDecoration(labelText: 'Direccion'),
+              decoration: InputDecoration(labelText: l10n.t('address')),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _cityController,
-              decoration: const InputDecoration(labelText: 'Ciudad'),
+              decoration: InputDecoration(labelText: l10n.t('city')),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _countryController,
-              decoration: const InputDecoration(labelText: 'Pais'),
+              decoration: InputDecoration(labelText: l10n.t('country')),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _documentType,
               decoration: InputDecoration(
-                labelText: 'Tipo documento',
+                labelText: l10n.t('profile_document_type'),
                 helperText:
-                    'Te quedan ${user.documentChangeRemaining} cambios para este campo.',
+                    '${l10n.t('profile_remaining_changes_prefix')} '
+                    '${user.documentChangeRemaining} '
+                    '${l10n.t('profile_remaining_changes_suffix')}',
               ),
               items: [
                 DropdownMenuItem(
@@ -353,7 +368,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             SizedBox(height: 12),
             TextFormField(
               controller: _documentNumberController,
-              decoration: const InputDecoration(labelText: 'Numero documento'),
+              decoration: InputDecoration(
+                labelText: l10n.t('profile_document_number'),
+              ),
               textInputAction: TextInputAction.next,
               onChanged: (_) => setState(() {}),
               validator: (value) => FormValidators.documentNumber(
@@ -364,16 +381,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             TextFormField(
               controller: _secondaryDocumentNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Documento secundario (opcional)',
+              decoration: InputDecoration(
+                labelText: l10n.t('profile_secondary_document_optional'),
               ),
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _emergencyNameController,
-              decoration: const InputDecoration(
-                labelText: 'Contacto de emergencia',
+              decoration: InputDecoration(
+                labelText: l10n.t('profile_emergency_contact'),
               ),
               textInputAction: TextInputAction.next,
             ),
@@ -381,7 +398,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             TextFormField(
               controller: _emergencyPhoneController,
               decoration: InputDecoration(
-                labelText: 'Telefono de emergencia',
+                labelText: l10n.t('profile_emergency_phone'),
                 hintText: _dialingCountry.phoneHint,
               ),
               keyboardType: TextInputType.phone,
@@ -404,7 +421,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 controller: _currentPasswordController,
                 obscureText: !_currentPasswordVisible,
                 decoration: InputDecoration(
-                  labelText: context.l10n.t('current_password_sensitive_changes'),
+                  labelText: context.l10n.t(
+                    'current_password_sensitive_changes',
+                  ),
                   suffixIcon: IconButton(
                     tooltip: _currentPasswordVisible
                         ? context.l10n.t('hide_password')
@@ -432,7 +451,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _loading ? null : _save,
-              child: Text(_loading ? 'Guardando...' : 'Guardar perfil'),
+              child: Text(
+                _loading
+                    ? l10n.t('profile_saving')
+                    : l10n.t('profile_save_button'),
+              ),
             ),
           ],
         ),
@@ -444,9 +467,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     if (!_storageUploadsEnabled) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'La foto de perfil seguira con imagen por defecto hasta habilitar Firebase Storage.',
+            context.l10n.t('profile_photo_storage_disabled_notice'),
           ),
         ),
       );
@@ -514,7 +537,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'No se pudo guardar: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('profile_save_failed')}: '
+            '${AppErrorFormatter.readable(error)}',
           ),
         ),
       );
@@ -638,17 +662,23 @@ class _ProfilePhotoCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Foto de perfil',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                      Text(
+                        context.l10n.t('profile_photo_title'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         uploadsEnabled
                             ? selectedPhoto != null
-                                  ? 'Nueva foto lista para subirse a Firebase Storage.'
-                                  : 'La imagen se carga por red desde Firebase Storage.'
-                            : 'Firebase Storage aun no esta disponible. Se usara la imagen por defecto.',
+                                  ? context.l10n.t(
+                                      'profile_photo_ready_to_upload',
+                                    )
+                                  : context.l10n.t(
+                                      'profile_photo_loaded_from_storage',
+                                    )
+                            : context.l10n.t(
+                                'profile_photo_storage_not_available',
+                              ),
                       ),
                     ],
                   ),
@@ -683,9 +713,9 @@ class _RemainingChangesCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Limites de actualizacion',
-              style: TextStyle(fontWeight: FontWeight.w600),
+            Text(
+              context.l10n.t('profile_update_limits_title'),
+              style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -693,15 +723,15 @@ class _RemainingChangesCard extends StatelessWidget {
               runSpacing: 10,
               children: [
                 _RemainingChip(
-                  label: 'Correo',
+                  label: context.l10n.t('email'),
                   remaining: user.emailChangeRemaining,
                 ),
                 _RemainingChip(
-                  label: 'Telefono',
+                  label: context.l10n.t('profile_phone_number'),
                   remaining: user.phoneChangeRemaining,
                 ),
                 _RemainingChip(
-                  label: 'Documento',
+                  label: context.l10n.t('profile_document_number'),
                   remaining: user.documentChangeRemaining,
                 ),
               ],

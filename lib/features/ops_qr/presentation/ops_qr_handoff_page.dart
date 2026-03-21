@@ -13,6 +13,7 @@ import '../../../shared/state/qr_handoff_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/internal_message_translator.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/operation_guide.dart';
 import '../../incidents/data/evidence_picker.dart';
 import '../../incidents/data/selected_evidence_image.dart';
@@ -707,7 +708,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                       ),
                     ),
                     Chip(
-                      label: Text(item.status.label),
+                      label: Text(_approvalStatusLabel(context, item.status)),
                       visualDensity: VisualDensity.compact,
                     ),
                     if (isRelated)
@@ -1058,7 +1059,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       return 'Selecciona entre 1 y 20 bultos para generar la etiqueta.';
     }
     if (_isReservationClosed(reservation.status)) {
-      return 'No puedes registrar maleta para una reserva ${reservation.status.label.toLowerCase()}.';
+      return '${context.l10n.t('ops_qr_bag_tag_not_allowed_prefix')} '
+          '${reservation.status.localizedLabel(context).toLowerCase()}.';
     }
     if (reservation.status == ReservationStatus.pendingPayment ||
         reservation.status == ReservationStatus.draft) {
@@ -1082,7 +1084,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     }
     if (reservation.status != ReservationStatus.confirmed &&
         reservation.status != ReservationStatus.checkinPending) {
-      return 'No se puede registrar en almacén con estado ${reservation.status.label}.';
+      return '${context.l10n.t('ops_qr_store_not_allowed_prefix')} '
+          '${reservation.status.localizedLabel(context)}.';
     }
     return null;
   }
@@ -1099,7 +1102,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     }
     if (reservation.status != ReservationStatus.stored &&
         reservation.status != ReservationStatus.readyForPickup) {
-      return 'No se puede generar PIN de recojo con estado ${reservation.status.label}.';
+      return '${context.l10n.t('ops_qr_pickup_pin_not_allowed_prefix')} '
+          '${reservation.status.localizedLabel(context)}.';
     }
     return null;
   }
@@ -1146,6 +1150,17 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   }
 }
 
+String _approvalStatusLabel(BuildContext context, OpsApprovalStatus status) {
+  switch (status) {
+    case OpsApprovalStatus.pending:
+      return context.l10n.t('ops_qr_approval_status_pending');
+    case OpsApprovalStatus.approved:
+      return context.l10n.t('ops_qr_approval_status_approved');
+    case OpsApprovalStatus.rejected:
+      return context.l10n.t('ops_qr_approval_status_rejected');
+  }
+}
+
 class _ReservationContextCard extends StatelessWidget {
   _ReservationContextCard({
     required this.reservation,
@@ -1174,7 +1189,10 @@ class _ReservationContextCard extends StatelessWidget {
               '${reservation.warehouse.name} - ${reservation.warehouse.city}',
             ),
             Text('Bultos: ${reservation.bagCount}'),
-            Text('Estado reserva: ${reservation.status.label}'),
+            Text(
+              '${context.l10n.t('reservation_status')}: '
+              '${reservation.status.localizedLabel(context)}',
+            ),
             Text('Estado QR/PIN: $stageLabel'),
           ],
         ),

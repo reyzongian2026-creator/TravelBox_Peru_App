@@ -13,6 +13,7 @@ import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/data/reservation_repository_impl.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
@@ -150,7 +151,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                     subtitle: Text(
                       '${reservation.warehouse.name}\n'
                       '${l10n.t('reservation_current_status')}: '
-                      '${reservation.status.label}',
+                      '${reservation.status.localizedLabel(context)}',
                     ),
                   ),
                 ),
@@ -184,7 +185,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                   subtitle: Text(
                     '${reservation.warehouse.name}\n'
                     '${l10n.t('reservation_current_status')}: '
-                    '${reservation.status.label}',
+                    '${reservation.status.localizedLabel(context)}',
                   ),
                 ),
               ),

@@ -12,6 +12,7 @@ import '../../../core/widgets/state_views.dart';
 import '../../notifications/domain/app_notification.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/notification_center_controller.dart';
+import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import 'reservation_providers.dart';
 
@@ -145,7 +146,9 @@ class ReservationSuccessPage extends ConsumerWidget {
                 Card(
                   child: ListTile(
                     leading: Icon(Icons.info_outline),
-                    title: Text(context.l10n.t('como_dejar_de_estar_pendiente')),
+                    title: Text(
+                      context.l10n.t('como_dejar_de_estar_pendiente'),
+                    ),
                     subtitle: Text(
                       '1. Paga en caja o al encargado.\n'
                       '2. El operador debe aprobar el cobro en su panel.\n'
@@ -159,7 +162,7 @@ class ReservationSuccessPage extends ConsumerWidget {
                 child: ListTile(
                   title: Text(item.warehouse.name),
                   subtitle: Text(
-                    '${item.warehouse.address}\nEstado: ${item.status.label}',
+                    '${item.warehouse.address}\n${context.l10n.t('reservation_status')}: ${item.status.localizedLabel(context)}',
                   ),
                   trailing: Text('S/${item.totalPrice.toStringAsFixed(2)}'),
                 ),
@@ -299,5 +302,3 @@ String? _latestNotificationPayloadValue(
   }
   return null;
 }
-
-
