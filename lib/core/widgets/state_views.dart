@@ -105,7 +105,7 @@ String _resolveUiMessage(BuildContext context, String raw) {
       return context.l10n.t('loading');
     case 'Reintentar':
       return context.l10n.t('reintentar');
-    case 'Sin datos por ahora':
+    case context.l10n.t('state_view_no_data'):
       return context.l10n.t('empty');
     default:
       return raw;

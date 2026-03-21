@@ -12,6 +12,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
 import '../../incidents/data/selected_evidence_image.dart';
@@ -22,6 +23,7 @@ final adminUsersLatestOnlyProvider = StateProvider<bool>((ref) => true);
 final adminUsersLoadRequestedProvider = StateProvider<bool>((ref) => false);
 
 final adminUsersProvider = FutureProvider<List<AdminUserItem>>((ref) async {
+  ref.watch(realtimeAppEventCursorProvider);
   final shouldLoad = ref.watch(adminUsersLoadRequestedProvider);
   if (!shouldLoad) {
     return const [];
@@ -47,6 +49,7 @@ final adminUsersProvider = FutureProvider<List<AdminUserItem>>((ref) async {
 final adminUsersSummaryProvider = FutureProvider<AdminUsersSummaryData?>((
   ref,
 ) async {
+  ref.watch(realtimeAppEventCursorProvider);
   final shouldLoad = ref.watch(adminUsersLoadRequestedProvider);
   if (!shouldLoad) {
     return null;
@@ -1055,8 +1058,12 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     decoration: InputDecoration(
                       labelText: context.l10n.t('admin_users_full_name'),
                     ),
-                    validator: (value) =>
-                        FormValidators.requiredText(value, label: 'nombre'),
+                    validator: (value) => FormValidators.requiredText(
+                      value,
+                      label: context.l10n
+                          .t('admin_users_full_name')
+                          .toLowerCase(),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -1106,7 +1113,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     ),
                     validator: (value) => FormValidators.requiredText(
                       value,
-                      label: 'nacionalidad',
+                      label: context.l10n.t('nationality_label'),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1148,7 +1155,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                       if (_requiresWorkerDocument) {
                         return FormValidators.requiredText(
                           value,
-                          label: 'numero de documento',
+                          label: context.l10n.t('document_number_label'),
                         );
                       }
                       return null;
@@ -1190,7 +1197,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                       if (_selectedRoles.contains('COURIER')) {
                         return FormValidators.requiredText(
                           value,
-                          label: 'la placa del vehiculo',
+                          label: context.l10n.t('vehicle_plate_label'),
                         );
                       }
                       return null;

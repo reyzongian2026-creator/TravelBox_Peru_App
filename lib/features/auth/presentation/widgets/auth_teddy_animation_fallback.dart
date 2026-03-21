@@ -49,4 +49,3 @@ class AuthTeddyAnimation extends StatelessWidget {
     );
   }
 }
-

@@ -32,7 +32,9 @@ class FormValidators {
   static String? email(String? value, {bool required = true}) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return required ? _msg('Ingresa un correo valido.', 'Enter a valid email.') : null;
+      return required
+          ? _msg('Ingresa un correo valido.', 'Enter a valid email.')
+          : null;
     }
     if (!_emailPattern.hasMatch(text)) {
       return _msg('Ingresa un correo valido.', 'Enter a valid email.');
@@ -71,7 +73,8 @@ class FormValidators {
         'Password must be at least 8 characters.',
       );
     }
-    if (!_passwordHasLetter.hasMatch(text) || !_passwordHasDigit.hasMatch(text)) {
+    if (!_passwordHasLetter.hasMatch(text) ||
+        !_passwordHasDigit.hasMatch(text)) {
       return _msg(
         'La contrasena debe incluir letras y numeros.',
         'Password must include letters and numbers.',
@@ -111,10 +114,7 @@ class FormValidators {
       return _msg('Confirma tu contrasena.', 'Confirm your password.');
     }
     if (text != password) {
-      return _msg(
-        'Las contrasenas no coinciden.',
-        'Passwords do not match.',
-      );
+      return _msg('Las contrasenas no coinciden.', 'Passwords do not match.');
     }
     return null;
   }

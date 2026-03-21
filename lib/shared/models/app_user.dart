@@ -183,10 +183,8 @@ class AppUser {
       profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
       emailVerified: emailVerified ?? this.emailVerified,
       profileCompleted: profileCompleted ?? this.profileCompleted,
-      emailChangeRemaining:
-          emailChangeRemaining ?? this.emailChangeRemaining,
-      phoneChangeRemaining:
-          phoneChangeRemaining ?? this.phoneChangeRemaining,
+      emailChangeRemaining: emailChangeRemaining ?? this.emailChangeRemaining,
+      phoneChangeRemaining: phoneChangeRemaining ?? this.phoneChangeRemaining,
       documentChangeRemaining:
           documentChangeRemaining ?? this.documentChangeRemaining,
       birthDate: birthDate ?? this.birthDate,
@@ -200,8 +198,7 @@ class AppUser {
           secondaryDocumentType ?? this.secondaryDocumentType,
       secondaryDocumentNumber:
           secondaryDocumentNumber ?? this.secondaryDocumentNumber,
-      emergencyContactName:
-          emergencyContactName ?? this.emergencyContactName,
+      emergencyContactName: emergencyContactName ?? this.emergencyContactName,
       emergencyContactPhone:
           emergencyContactPhone ?? this.emergencyContactPhone,
       assignedWarehouseIds: assignedWarehouseIds ?? this.assignedWarehouseIds,
@@ -253,10 +250,10 @@ class AppUser {
     final lastName = _readString(json, ['lastName']);
     final resolvedName =
         _readString(json, ['fullName', 'name']) ??
-        [firstName, lastName]
-            .where((value) => value != null && value.isNotEmpty)
-            .join(' ')
-            .trim();
+        [
+          firstName,
+          lastName,
+        ].where((value) => value != null && value.isNotEmpty).join(' ').trim();
 
     return AppUser(
       id: json['id']?.toString() ?? '',
@@ -267,43 +264,25 @@ class AppUser {
       lastName: lastName ?? '',
       phone: _readString(json, ['phone']) ?? '',
       nationality: _readString(json, ['nationality']) ?? '',
-      preferredLanguage:
-          _readString(json, ['preferredLanguage']) ?? 'es',
+      preferredLanguage: _readString(json, ['preferredLanguage']) ?? 'es',
       authProvider: _readString(json, ['authProvider']) ?? 'LOCAL',
-      managedByAdmin: _readBool(
-        json,
-        ['managedByAdmin'],
-        fallback: false,
-      ),
-      canSelfEditProfile: _readBool(
-        json,
-        ['canSelfEditProfile'],
-        fallback: _parseUserRole(roleValue) == UserRole.client,
-      ),
+      managedByAdmin: _readBool(json, ['managedByAdmin'], fallback: false),
+      canSelfEditProfile: _readBool(json, [
+        'canSelfEditProfile',
+      ], fallback: _parseUserRole(roleValue) == UserRole.client),
       vehiclePlate: _readString(json, ['vehiclePlate']),
-      profilePhotoPath:
-          _readString(json, ['profilePhotoPath', 'photoPath']),
+      profilePhotoPath: _readString(json, ['profilePhotoPath', 'photoPath']),
       emailVerified: _readBool(json, ['emailVerified'], fallback: true),
-      profileCompleted: _readBool(
-        json,
-        ['profileCompleted'],
-        fallback: true,
-      ),
-      emailChangeRemaining: _readInt(
-        json,
-        ['emailChangeRemaining'],
-        fallback: 3,
-      ),
-      phoneChangeRemaining: _readInt(
-        json,
-        ['phoneChangeRemaining'],
-        fallback: 3,
-      ),
-      documentChangeRemaining: _readInt(
-        json,
-        ['documentChangeRemaining'],
-        fallback: 3,
-      ),
+      profileCompleted: _readBool(json, ['profileCompleted'], fallback: true),
+      emailChangeRemaining: _readInt(json, [
+        'emailChangeRemaining',
+      ], fallback: 3),
+      phoneChangeRemaining: _readInt(json, [
+        'phoneChangeRemaining',
+      ], fallback: 3),
+      documentChangeRemaining: _readInt(json, [
+        'documentChangeRemaining',
+      ], fallback: 3),
       birthDate: _readDate(json, ['birthDate']),
       gender: _readString(json, ['gender']),
       address: _readString(json, ['address', 'addressLine']) ?? '',
@@ -312,10 +291,7 @@ class AppUser {
       documentType: _readString(json, ['documentType']),
       documentNumber: _readString(json, ['documentNumber']),
       secondaryDocumentType: _readString(json, ['secondaryDocumentType']),
-      secondaryDocumentNumber: _readString(
-        json,
-        ['secondaryDocumentNumber'],
-      ),
+      secondaryDocumentNumber: _readString(json, ['secondaryDocumentNumber']),
       emergencyContactName: _readString(json, ['emergencyContactName']),
       emergencyContactPhone: _readString(json, ['emergencyContactPhone']),
       assignedWarehouseIds: _readStringList(json, [

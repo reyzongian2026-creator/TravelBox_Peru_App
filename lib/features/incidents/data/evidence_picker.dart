@@ -5,4 +5,3 @@ import 'evidence_picker_stub.dart'
 
 Future<SelectedEvidenceImage?> pickEvidenceImage() =>
     picker.pickEvidenceImage();
-

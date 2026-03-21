@@ -407,7 +407,7 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       builder: (context) => AlertDialog(
         title: Text(context.l10n.t('desactivar_almacen')),
         content: Text(
-          'Se desactivara "${warehouse.name}" y dejara de aparecer en el mapa publico. Continuar?',
+          context.l10n.t('warehouse_deactivation_confirmation').replaceAll('{name}', warehouse.name),
         ),
         actions: [
           TextButton(
@@ -738,7 +738,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   validator: (value) {
                     final required = FormValidators.requiredText(
                       value,
-                      label: 'el nombre del almacen',
+                      label: context.l10n.t('warehouse_name_label'),
                       minLength: 4,
                     );
                     if (required != null) return required;
@@ -759,7 +759,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   validator: (value) {
                     final required = FormValidators.requiredText(
                       value,
-                      label: 'la direccion',
+                      label: context.l10n.t('address_label'),
                       minLength: 6,
                     );
                     if (required != null) return required;
@@ -937,7 +937,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                       ),
                       validator: (value) => FormValidators.positiveInt(
                         value,
-                        label: 'La capacidad',
+                        label: context.l10n.t('capacity_label'),
                       ),
                     ),
                     TextFormField(
@@ -949,7 +949,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                         ),
                       ),
                       validator: (value) =>
-                          FormValidators.hour(value, label: 'La apertura'),
+                          FormValidators.hour(value, label: context.l10n.t('opening_time_label')),
                     ),
                     TextFormField(
                       controller: _closeHourController,
@@ -962,7 +962,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                       validator: (value) {
                         final base = FormValidators.hour(
                           value,
-                          label: 'El cierre',
+                          label: context.l10n.t('closing_time_label'),
                         );
                         if (base != null) return base;
                         return FormValidators.hourRange(

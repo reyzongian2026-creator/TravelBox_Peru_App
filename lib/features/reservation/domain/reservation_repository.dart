@@ -65,6 +65,13 @@ abstract class ReservationRepository {
     int size = 50,
   });
 
+  Future<ReservationPagedResult> getAllReservationsPage({
+    ReservationStatus? status,
+    String? query,
+    int page = 0,
+    int size = 5,
+  });
+
   Future<Reservation?> getReservationById(String reservationId);
 
   Future<Reservation> updateStatus({
@@ -89,3 +96,22 @@ abstract class ReservationRepository {
   });
 }
 
+class ReservationPagedResult {
+  const ReservationPagedResult({
+    required this.items,
+    required this.page,
+    required this.size,
+    required this.totalPages,
+    required this.totalItems,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  final List<Reservation> items;
+  final int page;
+  final int size;
+  final int totalPages;
+  final int totalItems;
+  final bool hasNext;
+  final bool hasPrevious;
+}

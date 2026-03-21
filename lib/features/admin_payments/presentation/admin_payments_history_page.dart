@@ -11,24 +11,57 @@ import '../../../shared/utils/status_localizer.dart';
 final paymentHistoryStatusFilterProvider = StateProvider<String>(
   (ref) => 'ALL',
 );
+final paymentHistoryPageProvider = StateProvider<int>((ref) => 0);
+final paymentHistoryPageSizeProvider = Provider<int>((ref) => 5);
 
-final adminPaymentHistoryProvider =
-    FutureProvider<List<AdminPaymentHistoryItem>>((ref) async {
-      ref.watch(realtimeAppEventCursorProvider);
-      final dio = ref.read(dioProvider);
-      final response = await dio.get<Map<String, dynamic>>(
-        '/payments/history',
-        queryParameters: {'page': 0, 'size': 100},
-      );
-      final data = response.data ?? <String, dynamic>{};
-      final items = data['items'] as List<dynamic>? ?? const [];
-      return items
-          .map(
-            (item) =>
-                AdminPaymentHistoryItem.fromJson(item as Map<String, dynamic>),
-          )
-          .toList();
-    });
+final adminPaymentHistoryProvider = FutureProvider<AdminPaymentHistoryPage>((
+  ref,
+) async {
+  ref.watch(realtimeAppEventCursorProvider);
+  final status = ref.watch(paymentHistoryStatusFilterProvider);
+  final page = ref.watch(paymentHistoryPageProvider);
+  final size = ref.watch(paymentHistoryPageSizeProvider);
+  final dio = ref.read(dioProvider);
+  final response = await dio.get<Map<String, dynamic>>(
+    '/payments/history',
+    queryParameters: {
+      'page': page,
+      'size': size,
+      if (status != 'ALL') 'status': status,
+    },
+  );
+  final data = response.data ?? <String, dynamic>{};
+  final items = data['items'] as List<dynamic>? ?? const [];
+  final mapped = items
+      .map(
+        (item) =>
+            AdminPaymentHistoryItem.fromJson(item as Map<String, dynamic>),
+      )
+      .toList();
+  return AdminPaymentHistoryPage(
+    items: mapped,
+    page: (data['page'] as num?)?.toInt() ?? page,
+    totalPages: (data['totalPages'] as num?)?.toInt() ?? 0,
+    hasNext: data['hasNext'] as bool? ?? false,
+    hasPrevious: data['hasPrevious'] as bool? ?? page > 0,
+  );
+});
+
+class AdminPaymentHistoryPage {
+  const AdminPaymentHistoryPage({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  final List<AdminPaymentHistoryItem> items;
+  final int page;
+  final int totalPages;
+  final bool hasNext;
+  final bool hasPrevious;
+}
 
 class AdminPaymentsHistoryPage extends ConsumerWidget {
   AdminPaymentsHistoryPage({super.key});
@@ -42,10 +75,12 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
       title: context.l10n.t('payments_history_title'),
       currentRoute: '/admin/payments-history',
       child: historyAsync.when(
-        data: (items) {
-          final filtered = filter == 'ALL'
-              ? items
-              : items.where((item) => item.paymentStatus == filter).toList();
+        data: (pageData) {
+          final items = pageData.items;
+          void applyFilter(String value) {
+            ref.read(paymentHistoryStatusFilterProvider.notifier).state = value;
+            ref.read(paymentHistoryPageProvider.notifier).state = 0;
+          }
 
           return Column(
             children: [
@@ -58,61 +93,31 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
                       label: context.l10n.t('todos'),
                       value: 'ALL',
                       current: filter,
-                      onSelected: (value) =>
-                          ref
-                                  .read(
-                                    paymentHistoryStatusFilterProvider.notifier,
-                                  )
-                                  .state =
-                              value,
+                      onSelected: applyFilter,
                     ),
                     _StatusChip(
                       label: paymentStatusLabel(context, 'PENDING'),
                       value: 'PENDING',
                       current: filter,
-                      onSelected: (value) =>
-                          ref
-                                  .read(
-                                    paymentHistoryStatusFilterProvider.notifier,
-                                  )
-                                  .state =
-                              value,
+                      onSelected: applyFilter,
                     ),
                     _StatusChip(
                       label: paymentStatusLabel(context, 'CONFIRMED'),
                       value: 'CONFIRMED',
                       current: filter,
-                      onSelected: (value) =>
-                          ref
-                                  .read(
-                                    paymentHistoryStatusFilterProvider.notifier,
-                                  )
-                                  .state =
-                              value,
+                      onSelected: applyFilter,
                     ),
                     _StatusChip(
                       label: paymentStatusLabel(context, 'FAILED'),
                       value: 'FAILED',
                       current: filter,
-                      onSelected: (value) =>
-                          ref
-                                  .read(
-                                    paymentHistoryStatusFilterProvider.notifier,
-                                  )
-                                  .state =
-                              value,
+                      onSelected: applyFilter,
                     ),
                     _StatusChip(
                       label: paymentStatusLabel(context, 'REFUNDED'),
                       value: 'REFUNDED',
                       current: filter,
-                      onSelected: (value) =>
-                          ref
-                                  .read(
-                                    paymentHistoryStatusFilterProvider.notifier,
-                                  )
-                                  .state =
-                              value,
+                      onSelected: applyFilter,
                     ),
                     OutlinedButton.icon(
                       onPressed: () =>
@@ -125,18 +130,78 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: filtered.isEmpty
+                child: items.isEmpty
                     ? EmptyStateView(
                         message: context.l10n.t(
                           'payments_history_empty_filtered',
                         ),
+                        actionLabel: pageData.hasPrevious
+                            ? context.l10n.t('previous')
+                            : context.l10n.t('recargar'),
+                        onAction: pageData.hasPrevious
+                            ? () {
+                                final notifier = ref.read(
+                                  paymentHistoryPageProvider.notifier,
+                                );
+                                if (notifier.state > 0) {
+                                  notifier.state = notifier.state - 1;
+                                }
+                              }
+                            : () => ref.invalidate(adminPaymentHistoryProvider),
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        itemCount: filtered.length,
+                        itemCount: items.length + 1,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final item = filtered[index];
+                          if (index == items.length) {
+                            final totalPages = pageData.totalPages <= 0
+                                ? 1
+                                : pageData.totalPages;
+                            return Align(
+                              alignment: Alignment.centerRight,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    '${context.l10n.t('my_reservations_page')} ${pageData.page + 1} ${context.l10n.t('my_reservations_of')} $totalPages',
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: pageData.hasPrevious
+                                        ? () {
+                                            final notifier = ref.read(
+                                              paymentHistoryPageProvider
+                                                  .notifier,
+                                            );
+                                            if (notifier.state > 0) {
+                                              notifier.state =
+                                                  notifier.state - 1;
+                                            }
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.chevron_left),
+                                    label: Text(context.l10n.t('previous')),
+                                  ),
+                                  FilledButton.icon(
+                                    onPressed: pageData.hasNext
+                                        ? () {
+                                            final notifier = ref.read(
+                                              paymentHistoryPageProvider
+                                                  .notifier,
+                                            );
+                                            notifier.state = notifier.state + 1;
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.chevron_right),
+                                    label: Text(context.l10n.t('next')),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          final item = items[index];
                           return Card(
                             child: ListTile(
                               leading: const Icon(Icons.receipt_long_outlined),

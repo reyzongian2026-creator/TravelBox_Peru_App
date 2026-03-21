@@ -109,4 +109,3 @@ class _TeddyEyesController extends FlareController {
     _eyesNode!.x = _baseEyesX + (_current * _maxEyesShiftX);
   }
 }
-

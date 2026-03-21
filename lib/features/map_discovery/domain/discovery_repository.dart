@@ -10,4 +10,3 @@ abstract class DiscoveryRepository {
 
   Future<Warehouse?> getWarehouseById(String warehouseId);
 }
-

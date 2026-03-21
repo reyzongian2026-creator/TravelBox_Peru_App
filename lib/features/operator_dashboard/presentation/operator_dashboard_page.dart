@@ -63,7 +63,7 @@ class OperatorDashboardPage extends ConsumerWidget {
     final incidentReservations = reservationItems
         .where((item) => item.status == ReservationStatus.incident)
         .length;
-    final pendingCashCount = pendingCash.valueOrNull?.length ?? 0;
+    final pendingCashCount = pendingCash.valueOrNull?.items.length ?? 0;
     final operatorGuide = session.locale.languageCode.toLowerCase() == 'es'
         ? resolveOperationGuide('/operator/panel')
         : null;
@@ -268,7 +268,8 @@ class OperatorDashboardPage extends ConsumerWidget {
               ),
             if (pendingApprovals > 0) const SizedBox(height: 12),
             pendingCash.when(
-              data: (items) {
+              data: (pageResult) {
+                final items = pageResult.items;
                 if (items.isEmpty) {
                   return EmptyStateView(
                     message: l10n.t('operator_no_pending_cash'),

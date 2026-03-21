@@ -35,10 +35,7 @@ class PeruTime {
     return fromPeruClock(roundedPeru);
   }
 
-  static String formatDateTime(
-    DateTime value, {
-    bool includeYear = true,
-  }) {
+  static String formatDateTime(DateTime value, {bool includeYear = true}) {
     final peru = toPeruClock(value);
     final day = peru.day.toString().padLeft(2, '0');
     final month = peru.month.toString().padLeft(2, '0');

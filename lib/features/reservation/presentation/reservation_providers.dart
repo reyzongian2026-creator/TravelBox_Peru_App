@@ -5,6 +5,7 @@ import '../../../shared/state/reservation_store.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/state/session_controller.dart';
 import '../data/reservation_repository_impl.dart';
+import '../domain/reservation_repository.dart';
 
 final reservationRealtimeEventCursorProvider = Provider<int>((ref) {
   return ref.watch(realtimeAppEventCursorProvider);
@@ -76,20 +77,32 @@ final adminReservationStatusFilterProvider = StateProvider<ReservationStatus?>(
   (ref) => null,
 );
 
-final adminReservationListProvider = FutureProvider<List<Reservation>>((ref) {
-  ref.watch(reservationRealtimeEventCursorProvider);
-  final query = ref.watch(adminReservationSearchProvider).trim();
-  final status = ref.watch(adminReservationStatusFilterProvider);
-  return ref
-      .read(reservationRepositoryProvider)
-      .getAllReservations(
-        status: status,
-        query: query.isEmpty ? null : query,
-        size: 100,
-      );
+final adminReservationPageProvider = StateProvider<int>((ref) => 0);
+final adminReservationPageSizeProvider = Provider<int>((ref) => 5);
+
+final adminReservationPageResultProvider =
+    FutureProvider<ReservationPagedResult>((ref) {
+      ref.watch(reservationRealtimeEventCursorProvider);
+      final query = ref.watch(adminReservationSearchProvider).trim();
+      final status = ref.watch(adminReservationStatusFilterProvider);
+      final page = ref.watch(adminReservationPageProvider);
+      final size = ref.watch(adminReservationPageSizeProvider);
+      return ref
+          .read(reservationRepositoryProvider)
+          .getAllReservationsPage(
+            status: status,
+            query: query.isEmpty ? null : query,
+            page: page,
+            size: size,
+          );
+    });
+
+final adminReservationListProvider = Provider<List<Reservation>>((ref) {
+  final pageResult = ref.watch(adminReservationPageResultProvider);
+  return pageResult.valueOrNull?.items ?? const [];
 });
 
 final adminReservationsProvider = FutureProvider<List<Reservation>>((ref) {
   ref.watch(reservationRealtimeEventCursorProvider);
-  return ref.read(reservationRepositoryProvider).getAllReservations(size: 100);
+  return ref.read(reservationRepositoryProvider).getAllReservations(size: 5);
 });

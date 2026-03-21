@@ -14,7 +14,7 @@ final themeModeControllerProvider =
 
 class ThemeModeController extends StateNotifier<ThemeMode> {
   ThemeModeController(this._prefs)
-      : super(_decodeThemeMode(_prefs.getString(_themeModeKey)));
+    : super(_decodeThemeMode(_prefs.getString(_themeModeKey)));
 
   final SharedPreferences _prefs;
 

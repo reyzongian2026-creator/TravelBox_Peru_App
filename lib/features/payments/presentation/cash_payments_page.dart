@@ -9,44 +9,72 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
-final cashPendingPaymentsProvider =
-    FutureProvider.autoDispose<List<CashPendingPayment>>((ref) async {
-      ref.watch(reservationRealtimeEventCursorProvider);
-      final dio = ref.read(dioProvider);
-      final response = await dio.get<Map<String, dynamic>>(
-        '/payments/cash/pending',
-        queryParameters: {'page': 0, 'size': 20},
-      );
-      final data = response.data ?? <String, dynamic>{};
-      final items = data['items'] as List<dynamic>? ?? const [];
-      final pending = items
-          .map(
-            (item) => CashPendingPayment.fromJson(item as Map<String, dynamic>),
-          )
-          .toList();
-      if (pending.isNotEmpty) {
-        return pending;
-      }
+final cashPendingPaymentsProvider = FutureProvider.autoDispose<CashPendingPage>(
+  (ref) async {
+    ref.watch(reservationRealtimeEventCursorProvider);
+    final page = ref.watch(cashPendingPageProvider);
+    final dio = ref.read(dioProvider);
+    final response = await dio.get<Map<String, dynamic>>(
+      '/payments/cash/pending',
+      queryParameters: {'page': page, 'size': 5},
+    );
+    final data = response.data ?? <String, dynamic>{};
+    final items = data['items'] as List<dynamic>? ?? const [];
+    final pending = items
+        .map(
+          (item) => CashPendingPayment.fromJson(item as Map<String, dynamic>),
+        )
+        .toList();
+    final pageInfo = CashPendingPage(
+      items: pending,
+      page: (data['page'] as num?)?.toInt() ?? page,
+      totalPages: (data['totalPages'] as num?)?.toInt() ?? 1,
+      hasNext: data['hasNext'] as bool? ?? false,
+      hasPrevious: data['hasPrevious'] as bool? ?? page > 0,
+    );
+    if (pending.isNotEmpty) {
+      return pageInfo;
+    }
 
-      // Fallback defensivo: si por cualquier motivo el endpoint de caja retorna
-      // vacio, revisar historial y recuperar pendientes offline.
-      try {
-        final historyResponse = await dio.get<Map<String, dynamic>>(
-          '/payments/history',
-          queryParameters: {'page': 0, 'size': 100},
+    // Fallback defensivo: si por cualquier motivo el endpoint de caja retorna
+    // vacio, revisar historial y recuperar pendientes offline.
+    try {
+      final historyResponse = await dio.get<Map<String, dynamic>>(
+        '/payments/history',
+        queryParameters: {'page': 0, 'size': 100},
+      );
+      final historyData = historyResponse.data ?? <String, dynamic>{};
+      final historyItems = historyData['items'] as List<dynamic>? ?? const [];
+      final recovered = historyItems
+          .whereType<Map<String, dynamic>>()
+          .where(_isOfflinePendingFromHistory)
+          .map(CashPendingPayment.fromHistoryJson)
+          .toList();
+      final start = page * 5;
+      if (start >= recovered.length) {
+        return CashPendingPage(
+          items: const [],
+          page: page,
+          totalPages: recovered.isEmpty ? 0 : ((recovered.length - 1) ~/ 5) + 1,
+          hasNext: false,
+          hasPrevious: page > 0,
         );
-        final historyData = historyResponse.data ?? <String, dynamic>{};
-        final historyItems = historyData['items'] as List<dynamic>? ?? const [];
-        final recovered = historyItems
-            .whereType<Map<String, dynamic>>()
-            .where(_isOfflinePendingFromHistory)
-            .map(CashPendingPayment.fromHistoryJson)
-            .toList();
-        return recovered;
-      } on DioException {
-        return pending;
       }
-    });
+      final end = (start + 5).clamp(0, recovered.length);
+      return CashPendingPage(
+        items: recovered.sublist(start, end),
+        page: page,
+        totalPages: recovered.isEmpty ? 0 : ((recovered.length - 1) ~/ 5) + 1,
+        hasNext: end < recovered.length,
+        hasPrevious: page > 0,
+      );
+    } on DioException {
+      return pageInfo;
+    }
+  },
+);
+
+final cashPendingPageProvider = StateProvider<int>((ref) => 0);
 
 bool _isOfflinePendingFromHistory(Map<String, dynamic> item) {
   final paymentStatus = item['paymentStatus']?.toString().toUpperCase() ?? '';
@@ -87,7 +115,9 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
       currentRoute: widget.currentRoute,
       child: pendingPayments.when(
         data: (items) {
-          if (items.isEmpty) {
+          final pageInfo = items;
+          final rows = pageInfo.items;
+          if (rows.isEmpty) {
             return EmptyStateView(
               message: context.l10n.t('cash_pending_empty'),
               actionLabel: context.l10n.t('cash_pending_refresh_now'),
@@ -99,10 +129,54 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
                 ref.refresh(cashPendingPaymentsProvider.future),
             child: ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: items.length,
+              itemCount: rows.length + 1,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
-                final payment = items[index];
+                if (index == rows.length) {
+                  final totalPages = pageInfo.totalPages <= 0
+                      ? 1
+                      : pageInfo.totalPages;
+                  return Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${context.l10n.t('my_reservations_page')} ${pageInfo.page + 1} ${context.l10n.t('my_reservations_of')} $totalPages',
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: pageInfo.hasPrevious
+                              ? () {
+                                  final notifier = ref.read(
+                                    cashPendingPageProvider.notifier,
+                                  );
+                                  if (notifier.state > 0) {
+                                    notifier.state = notifier.state - 1;
+                                  }
+                                }
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                          label: Text(context.l10n.t('previous')),
+                        ),
+                        FilledButton.icon(
+                          onPressed: pageInfo.hasNext
+                              ? () {
+                                  final notifier = ref.read(
+                                    cashPendingPageProvider.notifier,
+                                  );
+                                  notifier.state = notifier.state + 1;
+                                }
+                              : null,
+                          icon: const Icon(Icons.chevron_right),
+                          label: Text(context.l10n.t('next')),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                final payment = rows[index];
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(14),
@@ -183,6 +257,7 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
               : context.l10n.t('cash_payment_reason_rejected'),
         },
       );
+      ref.read(cashPendingPageProvider.notifier).state = 0;
       ref.invalidate(cashPendingPaymentsProvider);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -269,4 +344,20 @@ class CashPendingPayment {
       endAt: createdAt,
     );
   }
+}
+
+class CashPendingPage {
+  const CashPendingPage({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  final List<CashPendingPayment> items;
+  final int page;
+  final int totalPages;
+  final bool hasNext;
+  final bool hasPrevious;
 }

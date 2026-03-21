@@ -210,8 +210,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 labelText: l10n.t('profile_first_name'),
               ),
               textInputAction: TextInputAction.next,
-              validator: (value) =>
-                  FormValidators.requiredText(value, label: 'los nombres'),
+              validator: (value) => FormValidators.requiredText(
+                value,
+                label: l10n.t('first_name').toLowerCase(),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -220,8 +222,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 labelText: l10n.t('profile_last_name'),
               ),
               textInputAction: TextInputAction.next,
-              validator: (value) =>
-                  FormValidators.requiredText(value, label: 'los apellidos'),
+              validator: (value) => FormValidators.requiredText(
+                value,
+                label: l10n.t('last_name').toLowerCase(),
+              ),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -266,7 +270,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               validator: (value) => validateInternationalPhone(
                 country: _dialingCountry,
                 localNumber: value ?? '',
-                label: 'un telefono valido',
+                label: context.l10n.t('valid_phone_label'),
               ),
             ),
             const SizedBox(height: 12),
@@ -411,7 +415,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 return validateInternationalPhone(
                   country: _dialingCountry,
                   localNumber: rawValue,
-                  label: 'un telefono de emergencia valido',
+                  label: context.l10n.t('valid_emergency_phone_label'),
                 );
               },
             ),
@@ -442,7 +446,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     _requiresSensitiveReauth && _requiresLocalPasswordReauth
                     ? FormValidators.requiredText(
                         value,
-                        label: 'tu contrasena actual',
+                        label: context.l10n.t('current_password_label'),
                         minLength: 8,
                       )
                     : null,

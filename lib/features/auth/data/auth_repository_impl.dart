@@ -326,8 +326,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final data = response.data ?? <String, dynamic>{};
       return PasswordResetResult(
         message:
-            data['message']?.toString() ??
-            'Password updated successfully.',
+            data['message']?.toString() ?? 'Password updated successfully.',
       );
     } on DioException catch (error) {
       if (!_canUseMockFallbackForError(error)) {

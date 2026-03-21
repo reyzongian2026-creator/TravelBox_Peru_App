@@ -131,8 +131,7 @@ String timelineMessageLabel(BuildContext context, String rawMessage) {
   if (normalized == 'equipaje almacenado.' || normalized == 'luggage stored.') {
     return context.l10n.t('reservation_timeline_stored');
   }
-  if (normalized == 'listo para recojo.' ||
-      normalized == 'ready for pickup.') {
+  if (normalized == 'listo para recojo.' || normalized == 'ready for pickup.') {
     return context.l10n.t('reservation_timeline_ready_for_pickup');
   }
   if (normalized == 'en ruta de delivery.' ||

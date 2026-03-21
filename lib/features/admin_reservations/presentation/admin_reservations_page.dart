@@ -53,7 +53,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
     final sectionGap = responsive.sectionGap;
     final cardPadding = responsive.cardPadding;
     final selectedStatus = ref.watch(adminReservationStatusFilterProvider);
-    final reservations = ref.watch(adminReservationListProvider);
+    final reservations = ref.watch(adminReservationPageResultProvider);
     return AppShellScaffold(
       title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
@@ -71,6 +71,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                 TextField(
                   controller: _searchController,
                   onChanged: (value) {
+                    ref.read(adminReservationPageProvider.notifier).state = 0;
                     ref.read(adminReservationSearchProvider.notifier).state =
                         value;
                     setState(() {});
@@ -93,6 +94,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                   itemGap: itemGap,
                   mobile: responsive.isMobile,
                   onStatusSelected: (status) {
+                    ref.read(adminReservationPageProvider.notifier).state = 0;
                     ref
                             .read(adminReservationStatusFilterProvider.notifier)
                             .state =
@@ -119,7 +121,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
           SizedBox(height: itemGap),
           Expanded(
             child: reservations.when(
-              data: (items) {
+              data: (pageResult) {
+                final items = pageResult.items;
                 if (items.isEmpty) {
                   return EmptyStateView(
                     message: _searchController.text.trim().isEmpty
@@ -129,10 +132,41 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                 }
                 return ListView.separated(
                   padding: responsive.pageInsets(top: 0, bottom: sectionGap),
-                  itemCount: items.length,
+                  itemCount: items.length + 1,
                   separatorBuilder: (context, index) =>
                       SizedBox(height: itemGap),
                   itemBuilder: (context, index) {
+                    if (index == items.length) {
+                      final totalPages = pageResult.totalPages <= 0
+                          ? 1
+                          : pageResult.totalPages;
+                      return Align(
+                        alignment: Alignment.centerRight,
+                        child: Wrap(
+                          spacing: itemGap,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              '${context.l10n.t('my_reservations_page')} ${pageResult.page + 1} ${context.l10n.t('my_reservations_of')} $totalPages',
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: pageResult.hasPrevious
+                                  ? _goToPreviousPage
+                                  : null,
+                              icon: const Icon(Icons.chevron_left),
+                              label: Text(context.l10n.t('previous')),
+                            ),
+                            FilledButton.icon(
+                              onPressed: pageResult.hasNext
+                                  ? _goToNextPage
+                                  : null,
+                              icon: const Icon(Icons.chevron_right),
+                              label: Text(context.l10n.t('next')),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
                     final item = items[index];
                     final isBusy = _busyReservationId == item.id;
                     return Card(
@@ -322,6 +356,25 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                     icon: Icon(Icons.route_outlined),
                                     label: Text(context.l10n.t('tracking')),
                                   ),
+                                OutlinedButton.icon(
+                                  onPressed: isBusy
+                                      ? null
+                                      : () => context.go(
+                                          '/incidents?reservationId=${item.id}',
+                                        ),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(0, 40),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  icon: const Icon(
+                                    Icons.report_problem_outlined,
+                                  ),
+                                  label: Text(
+                                    context.l10n.t(
+                                      'reservation_report_incident',
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -436,15 +489,29 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
   }
 
   void _refreshReservations() {
-    ref.invalidate(adminReservationListProvider);
+    ref.invalidate(adminReservationPageResultProvider);
     ref.invalidate(adminReservationsProvider);
   }
 
   void _clearSearch() {
     _searchController.clear();
+    ref.read(adminReservationPageProvider.notifier).state = 0;
     ref.read(adminReservationSearchProvider.notifier).state = '';
     _refreshReservations();
     setState(() {});
+  }
+
+  void _goToPreviousPage() {
+    final notifier = ref.read(adminReservationPageProvider.notifier);
+    if (notifier.state <= 0) {
+      return;
+    }
+    notifier.state = notifier.state - 1;
+  }
+
+  void _goToNextPage() {
+    final notifier = ref.read(adminReservationPageProvider.notifier);
+    notifier.state = notifier.state + 1;
   }
 
   String _trackingRoute(String reservationId) {

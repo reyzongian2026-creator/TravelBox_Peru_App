@@ -5,16 +5,9 @@ class PaymentConstants {
   static const methodCounter = 'counter';
   static const methodCash = 'cash';
 
-  static const digitalMethods = <String>{
-    methodCard,
-    methodYape,
-    methodWallet,
-  };
+  static const digitalMethods = <String>{methodCard, methodYape, methodWallet};
 
-  static const offlineMethods = <String>{
-    methodCounter,
-    methodCash,
-  };
+  static const offlineMethods = <String>{methodCounter, methodCash};
 
   static bool isOffline(String method) =>
       offlineMethods.contains(method.trim().toLowerCase());

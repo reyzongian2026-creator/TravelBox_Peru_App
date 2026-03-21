@@ -11,4 +11,3 @@ class SelectedEvidenceImage {
   final String mimeType;
   final Uint8List bytes;
 }
-

@@ -99,7 +99,9 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
           fit: BoxFit.cover,
           errorBuilder: (_, error) {
             return Center(
-              child: Text('${context.l10n.t('qr_scan_open_camera_failed')}: $error'),
+              child: Text(
+                '${context.l10n.t('qr_scan_open_camera_failed')}: $error',
+              ),
             );
           },
         ),
@@ -193,9 +195,7 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
       return;
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${context.l10n.t('qr_scan_detected')}: $value')),
     );
     context.go('/reservations');
@@ -206,4 +206,3 @@ class _QrScanPageState extends ConsumerState<QrScanPage> {
     setState(() {});
   }
 }
-

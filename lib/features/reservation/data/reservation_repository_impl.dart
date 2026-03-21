@@ -193,9 +193,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
           data['hasAvailability'] as bool? ??
           ((data['availableInRange'] as num?)?.toInt() ?? 0) > 0;
       if (!hasAvailability) {
-        throw StateError(
-          'No availability for the selected time range.',
-        );
+        throw StateError('No availability for the selected time range.');
       }
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode ?? 0;
@@ -419,6 +417,89 @@ class ReservationRepositoryImpl implements ReservationRepository {
                 _matchesReservationQuery(item, normalizedQuery),
           )
           .toList();
+    }
+  }
+
+  @override
+  Future<ReservationPagedResult> getAllReservationsPage({
+    ReservationStatus? status,
+    String? query,
+    int page = 0,
+    int size = 5,
+  }) async {
+    final normalizedQuery = query?.trim();
+    final normalizedPage = page < 0 ? 0 : page;
+    final normalizedSize = size <= 0 ? 5 : size;
+
+    try {
+      final response = await _dio.get<dynamic>(
+        '/reservations/page',
+        queryParameters: {
+          'page': normalizedPage,
+          'size': normalizedSize,
+          if (status != null) 'status': status.code,
+          if (normalizedQuery != null && normalizedQuery.isNotEmpty)
+            'query': normalizedQuery,
+        },
+      );
+      final raw = response.data;
+      final items = _extractList(raw)
+          .map((item) => _mapReservation(item as Map<String, dynamic>))
+          .map(_applyMemoryLuggagePhotos)
+          .toList();
+      return ReservationPagedResult(
+        items: items,
+        page: _extractInt(raw, 'page', fallback: normalizedPage),
+        size: _extractInt(raw, 'size', fallback: normalizedSize),
+        totalPages: _extractInt(raw, 'totalPages'),
+        totalItems: _extractInt(raw, 'totalItems'),
+        hasNext: _extractBool(raw, 'hasNext'),
+        hasPrevious: _extractBool(raw, 'hasPrevious'),
+      );
+    } catch (error) {
+      if (!AppEnv.useMockFallback) {
+        if (error is DioException) {
+          throw AppException.fromDioError(error);
+        }
+        throw AppException.fromError(error);
+      }
+      final localItems =
+          _ref
+              .read(reservationStoreProvider)
+              .map(_applyMemoryLuggagePhotos)
+              .where(
+                (item) =>
+                    (status == null || item.status == status) &&
+                    _matchesReservationQuery(item, normalizedQuery),
+              )
+              .toList()
+            ..sort((a, b) => b.startAt.compareTo(a.startAt));
+      final start = normalizedPage * normalizedSize;
+      if (start >= localItems.length) {
+        return ReservationPagedResult(
+          items: const [],
+          page: normalizedPage,
+          size: normalizedSize,
+          totalPages: localItems.isEmpty
+              ? 0
+              : ((localItems.length - 1) ~/ normalizedSize) + 1,
+          totalItems: localItems.length,
+          hasNext: false,
+          hasPrevious: normalizedPage > 0,
+        );
+      }
+      final endExclusive = (start + normalizedSize).clamp(0, localItems.length);
+      return ReservationPagedResult(
+        items: localItems.sublist(start, endExclusive),
+        page: normalizedPage,
+        size: normalizedSize,
+        totalPages: localItems.isEmpty
+            ? 0
+            : ((localItems.length - 1) ~/ normalizedSize) + 1,
+        totalItems: localItems.length,
+        hasNext: endExclusive < localItems.length,
+        hasPrevious: normalizedPage > 0,
+      );
     }
   }
 
@@ -812,6 +893,20 @@ class ReservationRepositoryImpl implements ReservationRepository {
       return data[key] as bool? ?? false;
     }
     return false;
+  }
+
+  int _extractInt(dynamic data, String key, {int fallback = 0}) {
+    if (data is! Map<String, dynamic>) {
+      return fallback;
+    }
+    final raw = data[key];
+    if (raw is int) {
+      return raw;
+    }
+    if (raw is num) {
+      return raw.toInt();
+    }
+    return int.tryParse(raw?.toString() ?? '') ?? fallback;
   }
 
   String _resolveDeliveryAddress(String message) {

@@ -142,12 +142,12 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        'Tarifa ${size.toUpperCase()}: S/${warehouse.rateForSize(size).toStringAsFixed(2)} por hora por bulto',
+                        'Tarifa ${size.toUpperCase()}: S/${warehouse.rateForSize(size).toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_hour_per_package')}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),
                       _DateSelector(
-                        label: 'Inicio',
+                        label: context.l10n.t('start_date_label'),
                         value: startAt,
                         onTap: () async {
                           final picked = await _pickDateTime(context, startAt);
@@ -163,7 +163,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                       ),
                       const SizedBox(height: 8),
                       _DateSelector(
-                        label: 'Fin',
+                        label: context.l10n.t('end_date_label'),
                         value: endAt,
                         onTap: () async {
                           final picked = await _pickDateTime(context, endAt);
@@ -184,7 +184,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                         },
                         title: Text(context.l10n.t('additional_insurance')),
                         subtitle: Text(
-                          'S/${warehouse.insuranceFee.toStringAsFixed(2)} por reserva',
+                          'S/${warehouse.insuranceFee.toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_reservation')}',
                         ),
                       ),
                       SwitchListTile(
@@ -196,7 +196,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                         },
                         title: Text(context.l10n.t('home_pickup')),
                         subtitle: Text(
-                          'S/${warehouse.pickupFee.toStringAsFixed(2)} por orden',
+                          'S/${warehouse.pickupFee.toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_order')}',
                         ),
                       ),
                       SwitchListTile(
@@ -208,7 +208,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                         },
                         title: Text(context.l10n.t('home_delivery')),
                         subtitle: Text(
-                          'S/${warehouse.dropoffFee.toStringAsFixed(2)} por orden',
+                          'S/${warehouse.dropoffFee.toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_order')}',
                         ),
                       ),
                     ],
@@ -220,7 +220,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                 child: ListTile(
                   title: Text(context.l10n.t('estimated_total')),
                   subtitle: Text(
-                    '${draft.billableHours()} hora(s) - ${draft.bagCount} bulto(s)',
+                    '${draft.billableHours()} ${context.l10n.t('hours_unit')} - ${draft.bagCount} ${context.l10n.t('packages_unit')}',
                   ),
                   trailing: Text(
                     'S/${draft.estimatePrice().toStringAsFixed(2)}',

@@ -23,25 +23,59 @@ import '../../reservation/presentation/reservation_providers.dart';
 
 final adminIncidentsSearchProvider = StateProvider<String>((ref) => '');
 final adminIncidentsStatusProvider = StateProvider<String>((ref) => 'OPEN');
+final adminIncidentsPageProvider = StateProvider<int>((ref) => 0);
+final adminIncidentsPageSizeProvider = Provider<int>((ref) => 5);
 
-final adminIncidentsProvider = FutureProvider<List<AdminIncidentItem>>((
+final adminIncidentsProvider = FutureProvider<AdminIncidentsPageResult>((
   ref,
 ) async {
   ref.watch(reservationRealtimeEventCursorProvider);
   final dio = ref.read(dioProvider);
   final query = ref.watch(adminIncidentsSearchProvider).trim();
   final status = ref.watch(adminIncidentsStatusProvider);
-  final response = await dio.get<List<dynamic>>(
-    '/incidents',
+  final page = ref.watch(adminIncidentsPageProvider);
+  final size = ref.watch(adminIncidentsPageSizeProvider);
+  final response = await dio.get<Map<String, dynamic>>(
+    '/incidents/page',
     queryParameters: {
+      'page': page,
+      'size': size,
       if (query.isNotEmpty) 'query': query,
       if (status != 'ALL') 'status': status,
     },
   );
-  return (response.data ?? const [])
+  final data = response.data ?? const <String, dynamic>{};
+  final itemsRaw = data['items'] as List<dynamic>? ?? const [];
+  final items = itemsRaw
       .map((item) => AdminIncidentItem.fromJson(item as Map<String, dynamic>))
       .toList();
+  return AdminIncidentsPageResult(
+    items: items,
+    page: (data['page'] as num?)?.toInt() ?? page,
+    totalPages: (data['totalPages'] as num?)?.toInt() ?? 0,
+    totalElements: (data['totalElements'] as num?)?.toInt() ?? items.length,
+    hasNext: data['hasNext'] as bool? ?? false,
+    hasPrevious: data['hasPrevious'] as bool? ?? page > 0,
+  );
 });
+
+class AdminIncidentsPageResult {
+  const AdminIncidentsPageResult({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.totalElements,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  final List<AdminIncidentItem> items;
+  final int page;
+  final int totalPages;
+  final int totalElements;
+  final bool hasNext;
+  final bool hasPrevious;
+}
 
 class AdminIncidentsPage extends ConsumerStatefulWidget {
   AdminIncidentsPage({
@@ -102,9 +136,11 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                   width: responsive.isMobile ? double.infinity : 360,
                   child: TextField(
                     controller: _searchController,
-                    onChanged: (value) =>
-                        ref.read(adminIncidentsSearchProvider.notifier).state =
-                            value,
+                    onChanged: (value) {
+                      ref.read(adminIncidentsSearchProvider.notifier).state =
+                          value;
+                      ref.read(adminIncidentsPageProvider.notifier).state = 0;
+                    },
                     decoration: InputDecoration(
                       labelText: context.l10n.t('incident_admin_search_label'),
                       prefixIcon: Icon(Icons.search),
@@ -131,6 +167,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                     if (value != null) {
                       ref.read(adminIncidentsStatusProvider.notifier).state =
                           value;
+                      ref.read(adminIncidentsPageProvider.notifier).state = 0;
                     }
                   },
                 ),
@@ -151,7 +188,8 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
           SizedBox(height: itemGap),
           Expanded(
             child: incidentsAsync.when(
-              data: (items) {
+              data: (pageData) {
+                final items = pageData.items;
                 final openCount = items
                     .where((item) => item.status == 'OPEN')
                     .length;
@@ -164,6 +202,19 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                 if (items.isEmpty) {
                   return EmptyStateView(
                     message: context.l10n.t('incident_admin_empty_for_filter'),
+                    actionLabel: pageData.hasPrevious
+                        ? context.l10n.t('previous')
+                        : context.l10n.t('recargar'),
+                    onAction: pageData.hasPrevious
+                        ? () {
+                            final notifier = ref.read(
+                              adminIncidentsPageProvider.notifier,
+                            );
+                            if (notifier.state > 0) {
+                              notifier.state = notifier.state - 1;
+                            }
+                          }
+                        : () => ref.invalidate(adminIncidentsProvider),
                   );
                 }
                 return ListView(
@@ -190,7 +241,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                         ),
                         _IncidentKpi(
                           title: context.l10n.t('todos'),
-                          value: '${items.length}',
+                          value: '${pageData.totalElements}',
                           color: const Color(0xFF1F6E8C),
                         ),
                       ],
@@ -439,6 +490,46 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                         ),
                       );
                     }),
+                    SizedBox(height: itemGap),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${context.l10n.t('my_reservations_page')} ${pageData.page + 1} ${context.l10n.t('my_reservations_of')} ${pageData.totalPages <= 0 ? 1 : pageData.totalPages}',
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: pageData.hasPrevious
+                                ? () {
+                                    final notifier = ref.read(
+                                      adminIncidentsPageProvider.notifier,
+                                    );
+                                    if (notifier.state > 0) {
+                                      notifier.state = notifier.state - 1;
+                                    }
+                                  }
+                                : null,
+                            icon: const Icon(Icons.chevron_left),
+                            label: Text(context.l10n.t('previous')),
+                          ),
+                          FilledButton.icon(
+                            onPressed: pageData.hasNext
+                                ? () {
+                                    final notifier = ref.read(
+                                      adminIncidentsPageProvider.notifier,
+                                    );
+                                    notifier.state = notifier.state + 1;
+                                  }
+                                : null,
+                            icon: const Icon(Icons.chevron_right),
+                            label: Text(context.l10n.t('next')),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               },
@@ -501,6 +592,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                   onPressed: () {
                     ref.read(adminIncidentsStatusProvider.notifier).state =
                         'RESOLVED';
+                    ref.read(adminIncidentsPageProvider.notifier).state = 0;
                   },
                 )
               : null,
@@ -869,9 +961,9 @@ class AdminIncidentItem {
       reservationId: json['reservationId']?.toString() ?? '',
       reservationCode: json['reservationCode']?.toString() ?? '-',
       reservationStatus: json['reservationStatus']?.toString() ?? '-',
-      warehouseName: json['warehouseName']?.toString() ?? 'No warehouse',
+      warehouseName: json['warehouseName']?.toString() ?? '-',
       warehouseAddress: json['warehouseAddress']?.toString() ?? '-',
-      openedByName: json['openedByName']?.toString() ?? 'User',
+      openedByName: json['openedByName']?.toString() ?? '-',
       openedByEmail: json['openedByEmail']?.toString() ?? '-',
       customerName: json['customerName']?.toString() ?? '',
       customerEmail: json['customerEmail']?.toString() ?? '',

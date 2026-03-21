@@ -171,14 +171,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               _textLineField(
                 controller: _firstNameController,
                 hint: l10n.t('first_name'),
-                validator: (value) =>
-                    FormValidators.requiredText(value, label: 'nombres'),
+                validator: (value) => FormValidators.requiredText(
+                  value,
+                  label: l10n.t('first_name').toLowerCase(),
+                ),
               ),
               _textLineField(
                 controller: _lastNameController,
                 hint: l10n.t('last_name'),
-                validator: (value) =>
-                    FormValidators.requiredText(value, label: 'apellidos'),
+                validator: (value) => FormValidators.requiredText(
+                  value,
+                  label: l10n.t('last_name').toLowerCase(),
+                ),
               ),
             ),
             const SizedBox(height: 10),

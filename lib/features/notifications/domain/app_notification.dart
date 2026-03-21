@@ -21,7 +21,8 @@ class AppNotification {
   final DateTime createdAt;
   final Map<String, dynamic> payload;
 
-  String get whenLabel => PeruTime.formatDateTime(createdAt, includeYear: false);
+  String get whenLabel =>
+      PeruTime.formatDateTime(createdAt, includeYear: false);
 
   String? get reservationId {
     final value = payload['reservationId'];
@@ -56,7 +57,7 @@ class AppNotification {
     return AppNotification(
       id: json['id']?.toString() ?? '',
       type: json['type']?.toString() ?? 'GENERAL',
-      title: json['title']?.toString() ?? 'Notificacion',
+      title: json['title']?.toString() ?? 'Notification',
       message: json['message']?.toString() ?? '',
       status: json['status']?.toString() ?? '-',
       createdAt:
@@ -86,4 +87,3 @@ class AppNotification {
     }
   }
 }
-

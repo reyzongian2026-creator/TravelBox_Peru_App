@@ -60,4 +60,3 @@ String _mimeTypeFromName(String filename) {
   }
   return 'image/png';
 }
-

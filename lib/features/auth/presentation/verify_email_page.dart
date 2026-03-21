@@ -189,4 +189,3 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
     context.go('/login');
   }
 }
-

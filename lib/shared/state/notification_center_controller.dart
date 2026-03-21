@@ -8,23 +8,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/env/app_env.dart';
 import '../../core/network/api_client.dart';
 import '../../features/notifications/domain/app_notification.dart';
+import '../models/app_user.dart';
 import '../realtime/notification_live_events.dart';
 import '../realtime/notification_live_events_client.dart';
+import '../services/mobile_push_service.dart';
 import 'session_controller.dart';
 
 const _maxNotificationItems = 150;
 const _seenIdsMax = 500;
-const _streamBatchSize = 80;
+const _streamBatchSize = 5;
 const _seenKeyPrefix = 'travelbox.notifications.seen.';
 const _liveRefreshDebounceWindow = Duration(milliseconds: 450);
-const _cursorAffectingEventTags = {
-  'reservation',
-  'payment',
-  'delivery',
-  'incident',
-  'inventory',
-  'ops',
-};
+const _periodicRefreshWindow = Duration(seconds: 10);
 
 final notificationCenterControllerProvider =
     StateNotifierProvider<
@@ -120,11 +115,14 @@ class NotificationCenterController
   bool _seededFromServer = false;
   String? _activeUserId;
   String? _activeAccessToken;
+  UserRole? _activeRole;
   Timer? _refreshDebounceTimer;
+  Timer? _periodicRefreshTimer;
 
   @override
   void dispose() {
     _refreshDebounceTimer?.cancel();
+    _periodicRefreshTimer?.cancel();
     _disconnectLiveEvents();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -132,11 +130,14 @@ class NotificationCenterController
 
   void onSessionChanged(SessionState session) {
     final userId = session.user?.id;
+    _activeRole = session.user?.role;
     if (!session.isAuthenticated || userId == null || userId.isEmpty) {
       _refreshDebounceTimer?.cancel();
+      _periodicRefreshTimer?.cancel();
       _disconnectLiveEvents();
       _activeUserId = null;
       _activeAccessToken = null;
+      _activeRole = null;
       _seededFromServer = false;
       _announcedIds.clear();
       state = NotificationCenterState.initial();
@@ -145,9 +146,11 @@ class NotificationCenterController
 
     if (_activeUserId != userId) {
       _refreshDebounceTimer?.cancel();
+      _periodicRefreshTimer?.cancel();
       _activeUserId = userId;
       _seededFromServer = false;
       _announcedIds.clear();
+      state = NotificationCenterState.initial();
       unawaited(_restoreSeenIdsForActiveUser());
     }
 
@@ -160,6 +163,7 @@ class NotificationCenterController
       session.accessToken,
       lastEventId: state.cursor,
     );
+    _ensurePeriodicRefresh();
     unawaited(refreshNow(showLoading: state.items.isEmpty));
   }
 
@@ -173,6 +177,7 @@ class NotificationCenterController
     if (shouldPause) {
       _isAppForeground = false;
       _refreshDebounceTimer?.cancel();
+      _periodicRefreshTimer?.cancel();
       _disconnectLiveEvents();
       return;
     }
@@ -187,6 +192,7 @@ class NotificationCenterController
       lastEventId: this.state.cursor,
       forceReconnect: true,
     );
+    _ensurePeriodicRefresh();
     unawaited(refreshNow());
   }
 
@@ -241,8 +247,7 @@ class NotificationCenterController
   void _applyLiveNotification(AppNotification incoming) {
     final visible = _isVisibleNotification(incoming);
     final cursorCandidate = int.tryParse(incoming.id) ?? state.cursor;
-    final shouldAdvanceCursor = _shouldAdvanceCursorForEvent(incoming);
-    final nextCursor = shouldAdvanceCursor && cursorCandidate > state.cursor
+    final nextCursor = cursorCandidate > state.cursor
         ? cursorCandidate
         : state.cursor;
 
@@ -255,6 +260,15 @@ class NotificationCenterController
 
     final fresh = !_announcedIds.contains(incoming.id);
     _announcedIds.add(incoming.id);
+    if (fresh) {
+      unawaited(
+        MobilePushService.instance.show(
+          title: incoming.title,
+          body: incoming.message,
+          payload: incoming.route,
+        ),
+      );
+    }
     state = state.copyWith(
       items: _mergeItemsNewestFirst(state.items, [incoming]),
       popupQueue: fresh ? [...state.popupQueue, incoming] : state.popupQueue,
@@ -278,33 +292,18 @@ class NotificationCenterController
     return parsed;
   }
 
-  bool _shouldAdvanceCursorForEvent(AppNotification incoming) {
-    if (_isVisibleNotification(incoming)) {
-      return true;
+  void _ensurePeriodicRefresh() {
+    if (!_isAppForeground || _activeUserId == null || _activeUserId!.isEmpty) {
+      _periodicRefreshTimer?.cancel();
+      _periodicRefreshTimer = null;
+      return;
     }
-    final tags = _extractEventTags(incoming);
-    if (tags.isNotEmpty) {
-      return tags.any(_cursorAffectingEventTags.contains);
-    }
-    final normalizedType = incoming.type.trim().toUpperCase();
-    return normalizedType.contains('RESERVATION') ||
-        normalizedType.contains('PAYMENT') ||
-        normalizedType.contains('DELIVERY') ||
-        normalizedType.contains('INCIDENT') ||
-        normalizedType.contains('INVENTORY') ||
-        normalizedType.contains('OPS') ||
-        normalizedType.contains('QR');
-  }
-
-  Set<String> _extractEventTags(AppNotification incoming) {
-    final rawTags = incoming.payload['events'];
-    if (rawTags is! Iterable) {
-      return const <String>{};
-    }
-    return rawTags
-        .map((tag) => tag.toString().trim().toLowerCase())
-        .where((tag) => tag.isNotEmpty)
-        .toSet();
+    _periodicRefreshTimer ??= Timer.periodic(_periodicRefreshWindow, (_) {
+      if (!_isAppForeground) {
+        return;
+      }
+      unawaited(refreshNow());
+    });
   }
 
   void _scheduleRefreshDebounced() {
@@ -366,7 +365,10 @@ class NotificationCenterController
       _announcedIds.addAll(visibleIncoming.map((item) => item.id));
       _seededFromServer = true;
       state = state.copyWith(
-        items: _mergeItemsNewestFirst(state.items, visibleIncoming),
+        items: _mergeItemsNewestFirst(
+          const <AppNotification>[],
+          visibleIncoming,
+        ),
         cursor: snapshot.cursor,
       );
       return;
@@ -411,7 +413,10 @@ class NotificationCenterController
       _announcedIds.addAll(visibleIncoming.map((item) => item.id));
       _seededFromServer = true;
       state = state.copyWith(
-        items: _mergeItemsNewestFirst(state.items, visibleIncoming),
+        items: _mergeItemsNewestFirst(
+          const <AppNotification>[],
+          visibleIncoming,
+        ),
         cursor: maxIncomingId > state.cursor ? maxIncomingId : state.cursor,
       );
       return;
@@ -480,7 +485,29 @@ class NotificationCenterController
   }
 
   bool _isVisibleNotification(AppNotification item) {
-    return item.payload['silent'] != true;
+    if (item.payload['silent'] == true) {
+      return false;
+    }
+    if (_activeRole == UserRole.client && _isOperationalNotification(item)) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _isOperationalNotification(AppNotification item) {
+    final type = item.type.trim().toUpperCase();
+    if (type.endsWith('_FOR_WAREHOUSE')) {
+      return true;
+    }
+    final route = item.route?.trim().toLowerCase() ?? '';
+    if (route.isEmpty) {
+      return false;
+    }
+    return route.startsWith('/admin') ||
+        route.startsWith('/operator') ||
+        route.startsWith('/support') ||
+        route.startsWith('/courier') ||
+        route.startsWith('/ops');
   }
 
   void consumePopup(String notificationId) {
@@ -537,9 +564,7 @@ class NotificationCenterController
       );
       await refreshNow();
     } catch (error) {
-      state = previous.copyWith(
-        error: 'Could not delete notification: $error',
-      );
+      state = previous.copyWith(error: 'Could not delete notification: $error');
       await refreshNow();
     }
   }

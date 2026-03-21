@@ -10,4 +10,3 @@ class LoginPage extends StatelessWidget {
     return AuthPortalPage(initialMode: AuthPortalMode.login);
   }
 }
-

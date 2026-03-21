@@ -40,6 +40,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
   bool _preventAutoHideFromInput = false;
   int? _activePointerId;
   double? _lastPointerDy;
+  OverlayEntry? _notificationToastEntry;
 
   @override
   void initState() {
@@ -58,6 +59,8 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
 
   @override
   void dispose() {
+    _notificationToastEntry?.remove();
+    _notificationToastEntry = null;
     _mobileNavBehavior.removeListener(_onMobileNavBehaviorChanged);
     _mobileNavBehavior.dispose();
     super.dispose();
@@ -111,8 +114,31 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
           if (!context.mounted) return;
           notificationsController.consumePopup(next.id);
           final messenger = ScaffoldMessenger.of(context);
-          messenger.hideCurrentSnackBar();
           final targetRoute = _resolveNotificationRoute(next);
+          if (kIsWeb) {
+            _showTopRightNotificationToast(
+              context: context,
+              title: next.title,
+              message: next.message,
+              actionLabel: l10n.t('view'),
+              onTap: () {
+                if (!context.mounted) return;
+                if (targetRoute != null) {
+                  if (currentRoute == targetRoute ||
+                      currentRoute.startsWith('$targetRoute/')) {
+                    return;
+                  }
+                  context.push(targetRoute);
+                  return;
+                }
+                if (!currentRoute.startsWith('/notifications')) {
+                  context.push('/notifications');
+                }
+              },
+            );
+            return;
+          }
+          messenger.hideCurrentSnackBar();
           messenger.showSnackBar(
             SnackBar(
               content: Text('${next.title}: ${next.message}'),
@@ -501,6 +527,35 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
     _activePointerId = null;
     _lastPointerDy = null;
   }
+
+  void _showTopRightNotificationToast({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required String actionLabel,
+    required VoidCallback onTap,
+  }) {
+    _notificationToastEntry?.remove();
+    _notificationToastEntry = null;
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final topInset = MediaQuery.of(context).padding.top;
+    final entry = OverlayEntry(
+      builder: (overlayContext) => _TopRightNotificationToast(
+        title: title,
+        message: message,
+        actionLabel: actionLabel,
+        topInset: topInset,
+        onTap: onTap,
+        onDismissed: () {
+          _notificationToastEntry?.remove();
+          _notificationToastEntry = null;
+        },
+      ),
+    );
+    _notificationToastEntry = entry;
+    overlay.insert(entry);
+  }
 }
 
 String? _resolveNotificationRoute(AppNotification notification) {
@@ -524,6 +579,147 @@ class _NavItem {
   final String label;
   final IconData icon;
   final String route;
+}
+
+class _TopRightNotificationToast extends StatefulWidget {
+  const _TopRightNotificationToast({
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.topInset,
+    required this.onTap,
+    required this.onDismissed,
+  });
+
+  final String title;
+  final String message;
+  final String actionLabel;
+  final double topInset;
+  final VoidCallback onTap;
+  final VoidCallback onDismissed;
+
+  @override
+  State<_TopRightNotificationToast> createState() =>
+      _TopRightNotificationToastState();
+}
+
+class _TopRightNotificationToastState extends State<_TopRightNotificationToast>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    reverseDuration: const Duration(milliseconds: 180),
+  );
+  late final Animation<Offset> _slide =
+      Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(
+        CurvedAnimation(
+          parent: _controller,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        ),
+      );
+  late final Animation<double> _fade = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOut,
+    reverseCurve: Curves.easeIn,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward();
+    Future<void>.delayed(const Duration(seconds: 2), () async {
+      if (!mounted) {
+        return;
+      }
+      await _controller.reverse();
+      if (mounted) {
+        widget.onDismissed();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: widget.topInset + 12,
+      right: 16,
+      child: IgnorePointer(
+        ignoring: false,
+        child: FadeTransition(
+          opacity: _fade,
+          child: SlideTransition(
+            position: _slide,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: widget.onTap,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.96),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.24),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: DefaultTextStyle(
+                    style: const TextStyle(color: Colors.white),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.message,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFFE2E8F0),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.actionLabel,
+                          style: const TextStyle(
+                            color: Color(0xFF7DD3FC),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 String _resolveMobileCenterRoute() {

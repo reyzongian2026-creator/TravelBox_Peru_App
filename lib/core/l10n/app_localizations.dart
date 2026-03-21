@@ -106,7 +106,7 @@ class AppLocalizations {
     return true;
   }
 
-  static const Map<String, Map<String, String>> _runtimeOverrides = {
+  static final Map<String, Map<String, String>> _runtimeOverrides = {
     'es': {
       'operator_dashboard_title': 'Panel operativo',
       'operator_dashboard_intro':
@@ -355,6 +355,11 @@ class AppLocalizations {
       'admin_dashboard_updated_prefix': 'actualizado',
       'admin_dashboard_tab_overview': 'Resumen',
       'admin_dashboard_tab_analytics': 'Analitica',
+      'admin_dashboard_tab_admin_core': 'Admin core',
+      'admin_dashboard_tab_operator_ops': 'Operador',
+      'admin_dashboard_tab_incidents': 'Incidencias',
+      'admin_dashboard_latest_5_paged':
+          'Reservas operativas en paginado 5 en 5 (ultimas primero).',
       'admin_dashboard_best_warehouse_prefix': 'Mejor almacen',
       'admin_dashboard_period_trend_title': 'Evolucion del periodo',
       'admin_dashboard_no_courier_data':
@@ -793,6 +798,161 @@ class AppLocalizations {
       'photos': 'fotos',
       'tracking': 'Tracking',
       'tracking_courier': 'Tracking courier',
+      'incident_reservation_id_prefix': 'ID',
+      'operation_guide_steps_suffix': 'pasos',
+      'operation_guide_view_full': 'Ver guia completa',
+      'operation_guide_open_full_for_more':
+          'Abre la guia completa para ver el resto del flujo.',
+      'operation_guide_operator_route_title': 'Ruta sugerida del operador',
+      'operation_guide_operator_route_summary':
+          'Empieza por pagos, valida reservas activas, opera QR/PIN y solo despues cierra incidencias o seguimiento logistico.',
+      'operation_guide_operator_step_1_title': '1. Revisar cobros pendientes',
+      'operation_guide_operator_step_1_desc':
+          'Antes de recibir equipaje, confirma pagos pendientes para que el QR y la reserva queden habilitados.',
+      'operation_guide_operator_step_2_title': '2. Ubicar la reserva',
+      'operation_guide_operator_step_2_desc':
+          'Busca por codigo o cliente, revisa sede, horario Peru y si la reserva lleva recojo, entrega o atencion directa.',
+      'operation_guide_operator_step_3_title': '3. Ejecutar flujo QR/PIN',
+      'operation_guide_operator_step_3_desc':
+          'Escanea QR, genera ID de equipaje, registra fotos de bultos y luego genera PIN solo cuando corresponda.',
+      'operation_guide_operator_step_4_title': '4. Seguir recojos o deliveries',
+      'operation_guide_operator_step_4_desc':
+          'Si la reserva involucra courier, monitorea ETA, asignacion y cambios de estado desde tracking logistico.',
+      'operation_guide_operator_step_5_title': '5. Cerrar incidencias',
+      'operation_guide_operator_step_5_desc':
+          'Si algo no cuadra, abre incidencia y deja trazabilidad antes de mover el estado manualmente.',
+      'operation_guide_operator_warning':
+          'No saltes de QR a entrega sin registrar equipaje o validar el PIN. Ese es el punto mas sensible del flujo.',
+      'operation_guide_cash_title': 'Guia de cobro en caja',
+      'operation_guide_cash_summary':
+          'El objetivo es dejar el pago confirmado y la reserva lista para operar, sin aprobar montos o referencias incorrectas.',
+      'operation_guide_cash_step_1_title': '1. Verifica la reserva correcta',
+      'operation_guide_cash_step_1_desc':
+          'Confirma codigo, cliente, sede y monto esperado antes de aprobar el pago.',
+      'operation_guide_cash_step_2_title': '2. Revisa evidencia o referencia',
+      'operation_guide_cash_step_2_desc':
+          'Si el pago es caja, valida voucher, referencia o confirmacion fisica. Si no coincide, rechaza.',
+      'operation_guide_cash_step_3_title': '3. Aprueba y comprueba el estado',
+      'operation_guide_cash_step_3_desc':
+          'Tras aprobar, la reserva debe reflejarse confirmada y el cliente ya debe ver su QR sin refrescos manuales.',
+      'operation_guide_cash_warning':
+          'Si apruebas un pago equivocado, habilitas una reserva que todavia no debia operar.',
+      'operation_guide_reservations_title': 'Guia de reservas operativas',
+      'operation_guide_reservations_summary':
+          'Usa esta pantalla para ubicar la reserva, entender el caso y llevarla al modulo correcto sin saltarte validaciones.',
+      'operation_guide_reservations_step_1_title':
+          '1. Busca y confirma el caso',
+      'operation_guide_reservations_step_1_desc':
+          'Ubica la reserva por codigo, sede o cliente y revisa el estado actual antes de actuar.',
+      'operation_guide_reservations_step_2_title': '2. Decide el flujo',
+      'operation_guide_reservations_step_2_desc':
+          'Si el cliente llega presencialmente ve a QR/PIN. Si solicito courier, pasa a tracking o a solicitud logistica.',
+      'operation_guide_reservations_step_3_title': '3. Revisa trazabilidad',
+      'operation_guide_reservations_step_3_desc':
+          'Valida timeline, QR, ID de equipaje, PIN y estado de pago antes de mover la reserva.',
+      'operation_guide_qrpin_title': 'Guia del flujo QR y PIN',
+      'operation_guide_qrpin_summary':
+          'Este modulo cubre el momento mas delicado: recepcion, almacen, recojo presencial y entrega con courier.',
+      'operation_guide_qrpin_step_1_title': '1. Escanear y validar QR',
+      'operation_guide_qrpin_step_1_desc':
+          'Primero identifica la reserva correcta y el idioma del cliente antes de continuar.',
+      'operation_guide_qrpin_step_2_title': '2. Generar ID de equipaje',
+      'operation_guide_qrpin_step_2_desc':
+          'Crea el bag tag y confirma cantidad de bultos para evitar mezclar maletas.',
+      'operation_guide_qrpin_step_3_title': '3. Registrar ingreso con fotos',
+      'operation_guide_qrpin_step_3_desc':
+          'Al entrar a almacen debes guardar una foto por bulto. Despues ese registro ya no se puede editar.',
+      'operation_guide_qrpin_step_4_title': '4. Generar o validar PIN',
+      'operation_guide_qrpin_step_4_desc':
+          'El PIN solo se usa cuando el equipaje esta listo para entrega o recojo seguro.',
+      'operation_guide_qrpin_step_5_title': '5. Cerrar entrega segura',
+      'operation_guide_qrpin_step_5_desc':
+          'En delivery valida identidad, equipaje, aprobacion y finalmente el PIN antes de marcar completado.',
+      'operation_guide_qrpin_warning':
+          'Si falta foto, identidad, aprobacion o PIN, no cierres la entrega. El sistema esta pensado para bloquear justo esos huecos.',
+      'operation_guide_tracking_title': 'Guia de tracking logistico',
+      'operation_guide_tracking_summary':
+          'Usa tracking para seguir recojos y entregas, no para sustituir validaciones QR/PIN o incidencias.',
+      'operation_guide_tracking_step_1_title':
+          '1. Selecciona la orden correcta',
+      'operation_guide_tracking_step_1_desc':
+          'Verifica sede, cliente y tipo de servicio antes de contactar al courier.',
+      'operation_guide_tracking_step_2_title': '2. Revisa ETA y estado',
+      'operation_guide_tracking_step_2_desc':
+          'El ETA es estimado por ruta; si hay desvio operativo, deja nota o abre incidencia.',
+      'operation_guide_tracking_step_3_title': '3. Coordina si hay desvio',
+      'operation_guide_tracking_step_3_desc':
+          'Si el courier se atrasa o el punto no coincide, comunica al cliente y a soporte desde el mismo flujo.',
+      'operation_guide_incidents_title': 'Guia de incidencias y soporte',
+      'operation_guide_incidents_summary':
+          'Esta bandeja existe para que nada quede fuera de trazabilidad cuando el flujo normal falla.',
+      'operation_guide_incidents_step_1_title': '1. Entender el caso',
+      'operation_guide_incidents_step_1_desc':
+          'Abre la reserva, revisa tracking y contexto antes de responder o resolver.',
+      'operation_guide_incidents_step_2_title': '2. Contactar al cliente',
+      'operation_guide_incidents_step_2_desc':
+          'Usa WhatsApp o llamada si necesitas confirmar identidad, ubicacion o una diferencia operativa.',
+      'operation_guide_incidents_step_3_title': '3. Registrar resolucion',
+      'operation_guide_incidents_step_3_desc':
+          'Cierra el ticket solo cuando dejes constancia clara de la accion tomada.',
+
+        'admin_warehouse_required_name',
+      ),
+        'admin_warehouse_required_address',
+      ),
+        'admin_warehouse_required_capacity',
+      ),
+        'admin_warehouse_required_open_time',
+      ),
+        'admin_warehouse_required_close_time',
+      ),
+        'profile_current_password_required',
+      ),
+        'profile_emergency_phone_required',
+      ),
+        'admin_user_document_required',
+      ),
+        'admin_user_full_name_required',
+      ),
+        'admin_user_nationality_required',
+      ),
+        'warehouse_city_placeholder',
+      ),
+        'warehouse_label_placeholder',
+      ),
+        'warehouse_status_placeholder',
+      ),
+      'warehouse_interaction_count': 'Interacciones',
+      'warehouse_reservations': 'Reservas',
+    
+      'admin_shell_admin_incidents': 'Admin Incidencias',
+      'admin_shell_admin_reservations': 'Admin Reservas',
+      'admin_shell_admin_panel': 'Panel Admin',
+      'admin_shell_ops_incidents': 'Incidencias Operativas',
+      'admin_shell_ops_reservations': 'Reservas Operativas',
+      'admin_shell_ops_users': 'Usuarios Operativos',
+      'admin_shell_support_incidents': 'Incidencias de Soporte',
+      'admin_shell_cash_payments': 'Cobros en Caja',
+      'admin_shell_tracking_courier': 'Tracking Courier',
+      'admin_shell_tracking_logistics': 'Tracking Logistico',
+      'warehouse_deactivation_confirmation': 'Se desactivara "{name}" y dejara de aparecer en el mapa publico. Continuar?',
+      'warehouse_name_label': 'el nombre del almacen',
+      'address_label': 'la direccion',
+      'capacity_label': 'La capacidad',
+      'opening_time_label': 'La apertura',
+      'closing_time_label': 'El cierre',
+      'nationality_label': 'nacionalidad',
+      'document_number_label': 'numero de documento',
+      'vehicle_plate_label': 'la placa del vehiculo',
+      'valid_phone_label': 'un telefono valido',
+      'valid_emergency_phone_label': 'un telefono de emergencia valido',
+      'current_password_label': 'tu contrasena actual',
+      'price_suffix_per_reservation': 'por reserva',
+      'price_suffix_per_order': 'por orden',
+      'start_date_label': 'Inicio',
+      'end_date_label': 'Fin',
+      'hours_unit': 'hora(s)',
+      'packages_unit': 'bulto(s)',
     },
     'en': {
       'operator_dashboard_title': 'Operations panel',
@@ -1039,6 +1199,11 @@ class AppLocalizations {
       'admin_dashboard_updated_prefix': 'updated',
       'admin_dashboard_tab_overview': 'Overview',
       'admin_dashboard_tab_analytics': 'Analytics',
+      'admin_dashboard_tab_admin_core': 'Admin core',
+      'admin_dashboard_tab_operator_ops': 'Operator ops',
+      'admin_dashboard_tab_incidents': 'Incidents',
+      'admin_dashboard_latest_5_paged':
+          'Operational reservations are paged 5 by 5 (latest first).',
       'admin_dashboard_best_warehouse_prefix': 'Top warehouse',
       'admin_dashboard_period_trend_title': 'Period trend',
       'admin_dashboard_no_courier_data':
@@ -1504,6 +1669,153 @@ class AppLocalizations {
       'operacion_qr_y_pin': 'QR and PIN operations',
       'abrir_modulo_qrpin': 'Open QR/PIN module',
       'tracking_courier': 'Courier tracking',
+      'incident_reservation_id_prefix': 'ID',
+      'operation_guide_steps_suffix': 'steps',
+      'operation_guide_view_full': 'View full guide',
+      'operation_guide_open_full_for_more':
+          'Open the full guide to see the rest of the flow.',
+      'operation_guide_operator_route_title': 'Suggested operator route',
+      'operation_guide_operator_route_summary':
+          'Start with payments, validate active reservations, execute QR/PIN, and only then close incidents or logistics follow-up.',
+      'operation_guide_operator_step_1_title':
+          '1. Review pending cash approvals',
+      'operation_guide_operator_step_1_desc':
+          'Before receiving luggage, confirm pending payments so QR and reservation are enabled.',
+      'operation_guide_operator_step_2_title': '2. Locate the reservation',
+      'operation_guide_operator_step_2_desc':
+          'Search by code or customer, check warehouse, Peru schedule, and whether it includes pickup, delivery, or direct handoff.',
+      'operation_guide_operator_step_3_title': '3. Execute QR/PIN flow',
+      'operation_guide_operator_step_3_desc':
+          'Scan QR, generate luggage ID, register bag photos, and then generate PIN only when applicable.',
+      'operation_guide_operator_step_4_title':
+          '4. Follow pickups or deliveries',
+      'operation_guide_operator_step_4_desc':
+          'If reservation involves courier, monitor ETA, assignment, and status changes in logistics tracking.',
+      'operation_guide_operator_step_5_title': '5. Close incidents',
+      'operation_guide_operator_step_5_desc':
+          'If something does not match, open an incident and keep traceability before any manual status move.',
+      'operation_guide_operator_warning':
+          'Do not jump from QR to handoff without luggage evidence or PIN validation. This is the most sensitive flow point.',
+      'operation_guide_cash_title': 'Cash desk collection guide',
+      'operation_guide_cash_summary':
+          'Goal: leave payment confirmed and reservation ready for operations without approving wrong amounts or references.',
+      'operation_guide_cash_step_1_title': '1. Verify the correct reservation',
+      'operation_guide_cash_step_1_desc':
+          'Confirm code, customer, warehouse, and expected amount before approving payment.',
+      'operation_guide_cash_step_2_title': '2. Review evidence or reference',
+      'operation_guide_cash_step_2_desc':
+          'For cash desk payments, validate voucher, reference, or in-person confirmation. Reject if it does not match.',
+      'operation_guide_cash_step_3_title': '3. Approve and verify status',
+      'operation_guide_cash_step_3_desc':
+          'After approval, reservation must show as confirmed and customer should see QR without manual refresh.',
+      'operation_guide_cash_warning':
+          'If you approve the wrong payment, you enable a reservation that should not be operated yet.',
+      'operation_guide_reservations_title': 'Operational reservations guide',
+      'operation_guide_reservations_summary':
+          'Use this screen to locate reservation, understand the case, and route it correctly without skipping validations.',
+      'operation_guide_reservations_step_1_title':
+          '1. Find and confirm the case',
+      'operation_guide_reservations_step_1_desc':
+          'Locate reservation by code, warehouse, or customer and check current status before acting.',
+      'operation_guide_reservations_step_2_title': '2. Choose the flow',
+      'operation_guide_reservations_step_2_desc':
+          'If customer is in person, go to QR/PIN. If courier requested, go to tracking or logistics request.',
+      'operation_guide_reservations_step_3_title': '3. Review traceability',
+      'operation_guide_reservations_step_3_desc':
+          'Check timeline, QR, luggage ID, PIN, and payment status before moving reservation.',
+      'operation_guide_qrpin_title': 'QR and PIN flow guide',
+      'operation_guide_qrpin_summary':
+          'This module covers the most sensitive moment: intake, storage, in-person pickup, and courier handoff.',
+      'operation_guide_qrpin_step_1_title': '1. Scan and validate QR',
+      'operation_guide_qrpin_step_1_desc':
+          'First identify the correct reservation and customer language before continuing.',
+      'operation_guide_qrpin_step_2_title': '2. Generate luggage ID',
+      'operation_guide_qrpin_step_2_desc':
+          'Create bag tag and confirm bag count to avoid mixing luggage.',
+      'operation_guide_qrpin_step_3_title': '3. Register intake photos',
+      'operation_guide_qrpin_step_3_desc':
+          'When entering storage, save one photo per bag. Afterwards this record cannot be edited.',
+      'operation_guide_qrpin_step_4_title': '4. Generate or validate PIN',
+      'operation_guide_qrpin_step_4_desc':
+          'PIN is only used when luggage is ready for secure handoff or pickup.',
+      'operation_guide_qrpin_step_5_title': '5. Close secure handoff',
+      'operation_guide_qrpin_step_5_desc':
+          'In delivery, validate identity, luggage, approval, and finally PIN before marking completed.',
+      'operation_guide_qrpin_warning':
+          'If photo, identity, approval, or PIN is missing, do not close handoff.',
+      'operation_guide_tracking_title': 'Logistics tracking guide',
+      'operation_guide_tracking_summary':
+          'Use tracking to follow pickups and deliveries, not as a replacement for QR/PIN validations or incidents.',
+      'operation_guide_tracking_step_1_title': '1. Select the correct order',
+      'operation_guide_tracking_step_1_desc':
+          'Verify warehouse, customer, and service type before contacting courier.',
+      'operation_guide_tracking_step_2_title': '2. Review ETA and status',
+      'operation_guide_tracking_step_2_desc':
+          'ETA is route-estimated; if there is an operational deviation, add note or open incident.',
+      'operation_guide_tracking_step_3_title': '3. Coordinate on deviation',
+      'operation_guide_tracking_step_3_desc':
+          'If courier is delayed or destination mismatches, coordinate with customer and support from the same flow.',
+      'operation_guide_incidents_title': 'Incidents and support guide',
+      'operation_guide_incidents_summary':
+          'This queue exists so nothing is left without traceability when normal flow fails.',
+      'operation_guide_incidents_step_1_title': '1. Understand the case',
+      'operation_guide_incidents_step_1_desc':
+          'Open reservation, review tracking and context before answering or resolving.',
+      'operation_guide_incidents_step_2_title': '2. Contact customer',
+      'operation_guide_incidents_step_2_desc':
+          'Use WhatsApp or call when you need to confirm identity, location, or an operational mismatch.',
+      'operation_guide_incidents_step_3_title': '3. Register resolution',
+      'operation_guide_incidents_step_3_desc':
+          'Close ticket only when the action taken is clearly documented.',
+
+      'admin_warehouse_required_name': 'Warehouse name is required',
+      'admin_warehouse_required_address': 'Address is required',
+      'admin_warehouse_required_capacity': 'Capacity must be greater than zero',
+      'admin_warehouse_required_open_time': 'Opening time is required',
+      'admin_warehouse_required_close_time': 'Closing time is required',
+      'profile_current_password_required':
+          'Please enter your current password to save changes',
+      'profile_phone_required': 'Please enter a valid phone number',
+      'profile_emergency_phone_required':
+          'Please enter a valid emergency phone number',
+      'admin_user_document_required': 'Enter document number',
+      'admin_user_plate_required': 'Enter vehicle plate',
+      'admin_user_full_name_required': 'Enter full name',
+      'admin_user_nationality_required': 'Enter nationality',
+      'warehouse_city_placeholder': 'City...',
+      'warehouse_label_placeholder': 'Label...',
+      'warehouse_status_placeholder': 'Status...',
+      'warehouse_interaction_count': 'Interactions',
+      'warehouse_reservations': 'Reservations',
+    
+      'admin_shell_admin_incidents': 'Admin Incidents',
+      'admin_shell_admin_reservations': 'Admin Reservations',
+      'admin_shell_admin_panel': 'Admin Panel',
+      'admin_shell_ops_incidents': 'Operative Incidents',
+      'admin_shell_ops_reservations': 'Operative Reservations',
+      'admin_shell_ops_users': 'Operative Users',
+      'admin_shell_support_incidents': 'Support Incidents',
+      'admin_shell_cash_payments': 'Cash Payments',
+      'admin_shell_tracking_courier': 'Courier Tracking',
+      'admin_shell_tracking_logistics': 'Logistics Tracking',
+      'warehouse_deactivation_confirmation': 'Warehouse "{name}" will be deactivated and will no longer appear on the public map. Continue?',
+      'warehouse_name_label': 'warehouse name',
+      'address_label': 'address',
+      'capacity_label': 'capacity',
+      'opening_time_label': 'opening time',
+      'closing_time_label': 'closing time',
+      'nationality_label': 'nationality',
+      'document_number_label': 'document number',
+      'vehicle_plate_label': 'vehicle plate',
+      'valid_phone_label': 'valid phone number',
+      'valid_emergency_phone_label': 'valid emergency phone number',
+      'current_password_label': 'current password',
+      'price_suffix_per_reservation': 'per reservation',
+      'price_suffix_per_order': 'per order',
+      'start_date_label': 'Start',
+      'end_date_label': 'End',
+      'hours_unit': 'hour(s)',
+      'packages_unit': 'package(s)',
     },
     'pt': {
       'address': 'Endereco',
@@ -1631,6 +1943,11 @@ class AppLocalizations {
       'admin_dashboard_updated_prefix': 'atualizado',
       'admin_dashboard_tab_overview': 'Resumo',
       'admin_dashboard_tab_analytics': 'Analitica',
+      'admin_dashboard_tab_admin_core': 'Admin core',
+      'admin_dashboard_tab_operator_ops': 'Operador',
+      'admin_dashboard_tab_incidents': 'Incidentes',
+      'admin_dashboard_latest_5_paged':
+          'Reservas operacionais em paginacao de 5 em 5 (mais recentes primeiro).',
       'admin_dashboard_best_warehouse_prefix': 'Melhor armazem',
       'admin_dashboard_period_trend_title': 'Evolucao do periodo',
       'admin_dashboard_no_courier_data':
@@ -1727,12 +2044,16 @@ class AppLocalizations {
       'delivery_enable_gps': 'Activa el GPS para usar tu ubicación actual.',
       'delivery_location_permission_denied':
           'No hay permisos de ubicación para continuar.',
+      'delivery_location_permission_denied_forever':
+          'Permiso de ubicación bloqueado. Habilítalo desde configuración del navegador/dispositivo.',
       'delivery_browser_location_invalid':
           'El navegador no entregó una ubicación válida.',
       'delivery_device_location_invalid':
           'El dispositivo no devolvió coordenadas válidas.',
       'delivery_location_captured': 'Ubicación actual capturada',
       'delivery_location_failed': 'No se pudo obtener ubicación actual',
+      'delivery_share_current_location_required':
+          'Debes compartir tu ubicación actual antes de confirmar.',
       'delivery_location_pick_success': 'Ubicación seleccionada en mapa.',
       'delivery_status_changed_retry':
           'Esta reserva cambió de estado. Actualiza y vuelve a intentar la solicitud.',
@@ -1771,6 +2092,16 @@ class AppLocalizations {
       'reservation_refund_cancel_success':
           'Reembolso ejecutado y reserva cancelada.',
       'reservation_cancel_success': 'Reserva cancelada.',
+      'reservation_cancel_blocked_completed':
+          'No se puede cancelar porque la reserva ya fue finalizada.',
+      'reservation_cancel_blocked_cancelled':
+          'No se puede cancelar porque la reserva ya está cancelada.',
+      'reservation_cancel_blocked_expired':
+          'No se puede cancelar porque la reserva ya expiró.',
+      'reservation_cancel_blocked_in_operation':
+          'No se puede cancelar porque la reserva ya está en operación logística.',
+      'reservation_cancel_blocked_status':
+          'No se puede cancelar en el estado actual de la reserva.',
       'reservation_current_status': 'Estado actual',
       'reservation_operational_status': 'Estado operativo',
       'reservation_qr_pin_stage': 'Etapa QR/PIN',
@@ -1875,12 +2206,16 @@ class AppLocalizations {
       'delivery_enable_gps': 'Enable GPS to use your current location.',
       'delivery_location_permission_denied':
           'Location permissions are required to continue.',
+      'delivery_location_permission_denied_forever':
+          'Location permission is blocked. Enable it in your browser/device settings.',
       'delivery_browser_location_invalid':
           'Browser did not return a valid location.',
       'delivery_device_location_invalid':
           'Device did not return valid coordinates.',
       'delivery_location_captured': 'Current location captured',
       'delivery_location_failed': 'Could not get current location',
+      'delivery_share_current_location_required':
+          'You must share your current location before confirming.',
       'delivery_location_pick_success': 'Location selected on map.',
       'delivery_status_changed_retry':
           'Reservation status changed. Refresh and try again.',
@@ -1919,6 +2254,16 @@ class AppLocalizations {
       'reservation_refund_cancel_success':
           'Refund completed and reservation canceled.',
       'reservation_cancel_success': 'Reservation canceled.',
+      'reservation_cancel_blocked_completed':
+          'Cancellation is not available because this reservation is already completed.',
+      'reservation_cancel_blocked_cancelled':
+          'Cancellation is not available because this reservation is already canceled.',
+      'reservation_cancel_blocked_expired':
+          'Cancellation is not available because this reservation is already expired.',
+      'reservation_cancel_blocked_in_operation':
+          'Cancellation is not available because this reservation is already in active operation.',
+      'reservation_cancel_blocked_status':
+          'Cancellation is not available in the current reservation status.',
       'reservation_current_status': 'Current status',
       'reservation_operational_status': 'Operational status',
       'reservation_qr_pin_stage': 'QR/PIN stage',
@@ -1979,7 +2324,6 @@ class AppLocalizations {
       'timeline': 'Timeline',
       'loading': 'Cargando...',
       'retry': 'Reintentar',
-      'empty': 'Sin datos por ahora',
       'login_required': 'Necesitas iniciar sesión',
       'flow_guide': 'Guía de flujo',
       'notifications': 'Notificaciones',
@@ -2331,6 +2675,10 @@ class AppLocalizations {
           'No se selecciono ninguna imagen o no esta disponible.',
       'incident_invalid_reservation': 'Reserva invalida para abrir ticket.',
       'incident_comment_required': 'Describe el caso para continuar.',
+      'incident_comment_min_length':
+          'Describe mejor el caso (minimo 8 caracteres).',
+      'incident_image_required_when_enabled':
+          'Si activas evidencia fotografica debes seleccionar una imagen.',
       'incident_created_success': 'Incidencia registrada correctamente',
       'incident_support_created_success':
           'Ticket de soporte enviado correctamente',
@@ -2786,6 +3134,10 @@ class AppLocalizations {
           'No image was selected or selection is unavailable.',
       'incident_invalid_reservation': 'Invalid reservation to create ticket.',
       'incident_comment_required': 'Describe the case to continue.',
+      'incident_comment_min_length':
+          'Please provide more detail (minimum 8 characters).',
+      'incident_image_required_when_enabled':
+          'If photo evidence is enabled, you must select an image.',
       'incident_created_success': 'Incident created successfully',
       'incident_support_created_success': 'Support ticket sent successfully',
       'incident_send_failed': 'Failed to send ticket',

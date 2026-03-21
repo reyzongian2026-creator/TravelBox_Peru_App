@@ -80,7 +80,9 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                       _loadData();
                     },
                     decoration: InputDecoration(
-                      labelText: context.l10n.t('courier_services_search_label'),
+                      labelText: context.l10n.t(
+                        'courier_services_search_label',
+                      ),
                       prefixIcon: const Icon(Icons.search),
                     ),
                   ),
@@ -919,7 +921,9 @@ class _CourierProgressDialogState
                           signed: true,
                         ),
                         decoration: InputDecoration(
-                          labelText: context.l10n.t('courier_services_latitude'),
+                          labelText: context.l10n.t(
+                            'courier_services_latitude',
+                          ),
                         ),
                       ),
                     ),

@@ -19,20 +19,74 @@ import '../../reservation/presentation/reservation_providers.dart';
 import '../data/evidence_picker.dart';
 import '../data/selected_evidence_image.dart';
 
+class ReservationIncidentsQuery {
+  const ReservationIncidentsQuery({
+    required this.reservationId,
+    required this.page,
+    this.size = 5,
+  });
+
+  final String reservationId;
+  final int page;
+  final int size;
+
+  @override
+  bool operator ==(Object other) {
+    return other is ReservationIncidentsQuery &&
+        other.reservationId == reservationId &&
+        other.page == page &&
+        other.size == size;
+  }
+
+  @override
+  int get hashCode => Object.hash(reservationId, page, size);
+}
+
+class ReservationIncidentsPage {
+  const ReservationIncidentsPage({
+    required this.items,
+    required this.page,
+    required this.totalPages,
+    required this.hasNext,
+    required this.hasPrevious,
+  });
+
+  final List<ClientIncidentItem> items;
+  final int page;
+  final int totalPages;
+  final bool hasNext;
+  final bool hasPrevious;
+}
+
 final reservationIncidentsProvider =
-    FutureProvider.family<List<ClientIncidentItem>, String>((
+    FutureProvider.family<ReservationIncidentsPage, ReservationIncidentsQuery>((
       ref,
-      reservationId,
+      query,
     ) async {
       ref.watch(reservationRealtimeEventCursorProvider);
       final dio = ref.read(dioProvider);
-      final response = await dio.get<List<dynamic>>('/incidents');
-      return (response.data ?? const [])
+      final response = await dio.get<Map<String, dynamic>>(
+        '/incidents/page',
+        queryParameters: {
+          'reservationId': query.reservationId,
+          'page': query.page,
+          'size': query.size,
+        },
+      );
+      final data = response.data ?? const <String, dynamic>{};
+      final itemsRaw = data['items'] as List<dynamic>? ?? const [];
+      final items = itemsRaw
           .map(
             (item) => ClientIncidentItem.fromJson(item as Map<String, dynamic>),
           )
-          .where((item) => item.reservationId == reservationId)
           .toList();
+      return ReservationIncidentsPage(
+        items: items,
+        page: (data['page'] as num?)?.toInt() ?? query.page,
+        totalPages: (data['totalPages'] as num?)?.toInt() ?? 0,
+        hasNext: data['hasNext'] as bool? ?? false,
+        hasPrevious: data['hasPrevious'] as bool? ?? query.page > 0,
+      );
     });
 
 class IncidentsPage extends ConsumerStatefulWidget {
@@ -50,6 +104,9 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   bool includePhotos = true;
   bool submitting = false;
   SelectedEvidenceImage? _selectedImage;
+  int _incidentPage = 0;
+
+  static const int _incidentPageSize = 5;
 
   @override
   void dispose() {
@@ -74,8 +131,13 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
     final reservationAsync = ref.watch(
       reservationByIdProvider(widget.reservationId!),
     );
+    final incidentsQuery = ReservationIncidentsQuery(
+      reservationId: widget.reservationId!,
+      page: _incidentPage,
+      size: _incidentPageSize,
+    );
     final incidentsAsync = ref.watch(
-      reservationIncidentsProvider(widget.reservationId!),
+      reservationIncidentsProvider(incidentsQuery),
     );
 
     return Scaffold(
@@ -96,7 +158,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   Widget _buildBody(
     BuildContext context,
     Reservation? reservation,
-    AsyncValue<List<ClientIncidentItem>> incidentsAsync,
+    AsyncValue<ReservationIncidentsPage> incidentsAsync,
   ) {
     final session = ref.watch(sessionControllerProvider);
     final canAccessBackoffice = session.canAccessAdmin;
@@ -134,7 +196,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
               child: ListTile(
                 title: Text(context.l10n.t('reserva_vinculada')),
                 subtitle: Text(
-                  'ID ${reservation.id} - ${reservation.warehouse.name}\n'
+                  '${context.l10n.t('incident_reservation_id_prefix')} ${reservation.id} - ${reservation.warehouse.name}\n'
                   '${context.l10n.t('incident_current_status')}: ${reservation.status.localizedLabel(context)}',
                 ),
                 trailing: OutlinedButton(
@@ -264,7 +326,8 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
           ),
           const SizedBox(height: 10),
           incidentsAsync.when(
-            data: (items) {
+            data: (pageData) {
+              final items = pageData.items;
               if (items.isEmpty) {
                 return Card(
                   child: ListTile(
@@ -275,22 +338,63 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                     subtitle: Text(
                       context.l10n.t('incident_empty_history_hint'),
                     ),
+                    trailing: pageData.hasPrevious
+                        ? OutlinedButton.icon(
+                            onPressed: () => setState(
+                              () => _incidentPage = _incidentPage - 1,
+                            ),
+                            icon: const Icon(Icons.chevron_left),
+                            label: Text(context.l10n.t('previous')),
+                          )
+                        : null,
                   ),
                 );
               }
               return Column(
-                children: items
-                    .map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _TicketCard(
-                          item: item,
-                          viewerLanguage: session.locale.languageCode,
-                          backofficeMode: canAccessBackoffice,
-                        ),
+                children: [
+                  ...items.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _TicketCard(
+                        item: item,
+                        viewerLanguage: session.locale.languageCode,
+                        backofficeMode: canAccessBackoffice,
                       ),
-                    )
-                    .toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '${context.l10n.t('my_reservations_page')} ${pageData.page + 1} ${context.l10n.t('my_reservations_of')} ${pageData.totalPages <= 0 ? 1 : pageData.totalPages}',
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: pageData.hasPrevious
+                              ? () => setState(
+                                  () => _incidentPage = _incidentPage - 1,
+                                )
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                          label: Text(context.l10n.t('previous')),
+                        ),
+                        FilledButton.icon(
+                          onPressed: pageData.hasNext
+                              ? () => setState(
+                                  () => _incidentPage = _incidentPage + 1,
+                                )
+                              : null,
+                          icon: const Icon(Icons.chevron_right),
+                          label: Text(context.l10n.t('next')),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
             loading: () => Card(
@@ -310,7 +414,13 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                 subtitle: Text(error.toString()),
                 trailing: OutlinedButton(
                   onPressed: () => ref.invalidate(
-                    reservationIncidentsProvider(widget.reservationId!),
+                    reservationIncidentsProvider(
+                      ReservationIncidentsQuery(
+                        reservationId: widget.reservationId!,
+                        page: _incidentPage,
+                        size: _incidentPageSize,
+                      ),
+                    ),
                   ),
                   child: Text(context.l10n.t('reintentar')),
                 ),
@@ -354,6 +464,14 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
       _showSnackBar(context.l10n.t('incident_comment_required'));
       return;
     }
+    if (comment.length < 8) {
+      _showSnackBar(context.l10n.t('incident_comment_min_length'));
+      return;
+    }
+    if (includePhotos && _selectedImage == null) {
+      _showSnackBar(context.l10n.t('incident_image_required_when_enabled'));
+      return;
+    }
 
     setState(() => submitting = true);
     try {
@@ -395,7 +513,16 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
       ref.invalidate(myReservationsProvider);
       ref.invalidate(adminReservationsProvider);
       ref.invalidate(adminReservationListProvider);
-      ref.invalidate(reservationIncidentsProvider(widget.reservationId!));
+      setState(() => _incidentPage = 0);
+      ref.invalidate(
+        reservationIncidentsProvider(
+          ReservationIncidentsQuery(
+            reservationId: widget.reservationId!,
+            page: 0,
+            size: _incidentPageSize,
+          ),
+        ),
+      );
 
       if (!mounted) return;
       setState(() {
@@ -564,7 +691,7 @@ class _TicketCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Ticket #${item.id}',
+                    '${context.l10n.t('incident_ticket')}: #${item.id}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),

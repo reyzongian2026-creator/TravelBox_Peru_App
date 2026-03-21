@@ -17,10 +17,27 @@ Frontend completo en Flutter para plataforma de almacenamiento turistico:
   - `docs\deployment-qa-multiplatform-manual.md`
 - Flujo QR + PIN (presencial y delivery):
   - `docs\qr-pin-handoff-workflow.md`
+- Casos de uso + secuencias + happy/unhappy + pantallazos:
+  - `docs\TRAVELBOX_CASOS_DE_USO_Y_SECUENCIAS.docx`
 - Manual operativo backend:
   - `..\TravelBox_Peru_Backend\docs\operation-simulation-manual.md`
 - Mapa central de secretos (front + back):
   - `..\VAULT_SECRETS_MAP.txt`
+
+## Actualizacion 2026-03 (homologacion)
+
+- Realtime sin refresh manual en vistas operativas principales:
+  - SSE + stream de notificaciones
+  - invalidacion local por mutaciones (`POST/PUT/PATCH/DELETE`) para refresco inmediato de providers
+- Notificaciones por audiencia/rol sin cruce entre sesiones de usuarios.
+- Toast web de notificaciones en esquina superior derecha (animado, auto-dismiss 2s).
+- Notificacion local en Android/iOS para eventos en app (`flutter_local_notifications`).
+- Paginado latest-first 5 en 5 en modulos criticos:
+  - reservas operativas
+  - pagos en caja
+  - historial de pagos
+  - incidencias (admin/support/operator y cliente por reserva)
+- Limpieza i18n en guias operativas y formularios con textos sueltos.
 
 ## Stack
 - Flutter 3.41.4 (via Puro)

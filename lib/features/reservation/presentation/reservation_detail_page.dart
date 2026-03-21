@@ -12,6 +12,7 @@ import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/luggage_photo_memory_store.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/app_smart_image.dart';
@@ -233,6 +234,17 @@ class ReservationDetailPage extends ConsumerWidget {
                   error: (error, _) => const SizedBox.shrink(),
                 ),
                 if (paymentStatus.hasValue) SizedBox(height: 12),
+                if (!canCancelReservation)
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.info_outline),
+                      title: Text(context.l10n.t('reservation_cancel')),
+                      subtitle: Text(
+                        _cancelBlockedReason(context, reservation.status),
+                      ),
+                    ),
+                  ),
+                if (!canCancelReservation) const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -416,10 +428,11 @@ class ReservationDetailPage extends ConsumerWidget {
           );
     } catch (error) {
       if (!context.mounted) return;
+      final readable = AppErrorFormatter.readable(error);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${context.l10n.t('reservation_cancel_failed')}: $error',
+            '${context.l10n.t('reservation_cancel_failed')}: $readable',
           ),
         ),
       );
@@ -819,6 +832,27 @@ bool _requiresRefundForCancellation(Map<String, dynamic>? payment) {
       method == 'YAPE' ||
       method == 'PLIN' ||
       method == 'WALLET';
+}
+
+String _cancelBlockedReason(BuildContext context, ReservationStatus status) {
+  switch (status) {
+    case ReservationStatus.completed:
+      return context.l10n.t('reservation_cancel_blocked_completed');
+    case ReservationStatus.cancelled:
+      return context.l10n.t('reservation_cancel_blocked_cancelled');
+    case ReservationStatus.expired:
+      return context.l10n.t('reservation_cancel_blocked_expired');
+    case ReservationStatus.stored:
+    case ReservationStatus.readyForPickup:
+    case ReservationStatus.outForDelivery:
+      return context.l10n.t('reservation_cancel_blocked_in_operation');
+    case ReservationStatus.draft:
+    case ReservationStatus.pendingPayment:
+    case ReservationStatus.confirmed:
+    case ReservationStatus.checkinPending:
+    case ReservationStatus.incident:
+      return context.l10n.t('reservation_cancel_blocked_status');
+  }
 }
 
 String _operationalStageLabel(

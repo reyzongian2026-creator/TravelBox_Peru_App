@@ -94,6 +94,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
   bool _addressAutofilled = true;
   bool _zoneAutofilled = true;
   bool _programmaticFieldChange = false;
+  bool _currentLocationCaptured = false;
 
   @override
   void initState() {
@@ -248,7 +249,9 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                         ],
                         selected: {_locationMode},
                         onSelectionChanged: (selection) {
-                          setState(() => _locationMode = selection.first);
+                          setState(() {
+                            _locationMode = selection.first;
+                          });
                         },
                       ),
                       SizedBox(height: 10),
@@ -288,11 +291,15 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                           runSpacing: 8,
                           children: [
                             _CoordinatePill(
-                              label: 'Lat',
+                              label: context.l10n.t(
+                                'courier_services_latitude',
+                              ),
                               value: servicePoint.latitude.toStringAsFixed(6),
                             ),
                             _CoordinatePill(
-                              label: 'Lng',
+                              label: context.l10n.t(
+                                'courier_services_longitude',
+                              ),
                               value: servicePoint.longitude.toStringAsFixed(6),
                             ),
                           ],
@@ -465,9 +472,14 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied) {
         _showMessage(context.l10n.t('delivery_location_permission_denied'));
+        return;
+      }
+      if (permission == LocationPermission.deniedForever) {
+        _showMessage(
+          context.l10n.t('delivery_location_permission_denied_forever'),
+        );
         return;
       }
 
@@ -481,7 +493,10 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       }
       final point = LatLng(position.latitude, position.longitude);
       if (!mounted) return;
-      setState(() => _selectedPoint = point);
+      setState(() {
+        _selectedPoint = point;
+        _currentLocationCaptured = true;
+      });
       _prefillAddressFromPoint(point, reservation, currentLocation: true);
       _showMessage(
         '${context.l10n.t('delivery_location_captured')} '
@@ -508,7 +523,10 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
           _DeliveryLocationPickerDialog(initialPoint: initialPoint),
     );
     if (selected == null || !mounted) return;
-    setState(() => _selectedPoint = selected);
+    setState(() {
+      _selectedPoint = selected;
+      _currentLocationCaptured = false;
+    });
     _prefillAddressFromPoint(selected, reservation, currentLocation: false);
     _showMessage(context.l10n.t('delivery_location_pick_success'));
   }
@@ -567,6 +585,17 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
         SnackBar(
           content: Text(
             context.l10n.t('ingresa_la_zona_o_ciudad_del_servicio'),
+          ),
+        ),
+      );
+      return;
+    }
+    if (_locationMode == DeliveryLocationMode.currentLocation &&
+        !_currentLocationCaptured) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.t('delivery_share_current_location_required'),
           ),
         ),
       );
@@ -813,11 +842,11 @@ class _DeliveryLocationPickerDialogState
                 runSpacing: 10,
                 children: [
                   _CoordinatePill(
-                    label: 'Lat',
+                    label: context.l10n.t('courier_services_latitude'),
                     value: _selectedPoint.latitude.toStringAsFixed(6),
                   ),
                   _CoordinatePill(
-                    label: 'Lng',
+                    label: context.l10n.t('courier_services_longitude'),
                     value: _selectedPoint.longitude.toStringAsFixed(6),
                   ),
                 ],

@@ -3,6 +3,7 @@ import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/app_user.dart';
+import '../../shared/state/local_realtime_mutation_tick_provider.dart';
 import '../../shared/state/session_controller.dart';
 import '../env/app_env.dart';
 
@@ -56,6 +57,14 @@ final dioProvider = Provider<Dio>((ref) {
         options.headers['X-Correlation-Id'] ??=
             'flutter-${DateTime.now().microsecondsSinceEpoch}';
         handler.next(options);
+      },
+      onResponse: (response, handler) {
+        if (_shouldBumpRealtimeTick(response.requestOptions)) {
+          final notifier = ref.read(localRealtimeMutationTickProvider.notifier);
+          final current = notifier.state;
+          notifier.state = current >= 900000 ? 0 : current + 1;
+        }
+        handler.next(response);
       },
       onError: (error, handler) async {
         final statusCode = error.response?.statusCode;
@@ -143,6 +152,21 @@ bool _shouldSkipRetry(RequestOptions request) {
     return true;
   }
   return false;
+}
+
+bool _shouldBumpRealtimeTick(RequestOptions request) {
+  final method = request.method.trim().toUpperCase();
+  if (method != 'POST' &&
+      method != 'PUT' &&
+      method != 'PATCH' &&
+      method != 'DELETE') {
+    return false;
+  }
+  final path = request.path.toLowerCase();
+  if (path.startsWith('/auth/')) {
+    return false;
+  }
+  return true;
 }
 
 AppUser _resolveUserFromRefresh({

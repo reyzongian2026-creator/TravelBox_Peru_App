@@ -79,4 +79,3 @@ abstract class AuthRepository {
     required String confirmPassword,
   });
 }
-

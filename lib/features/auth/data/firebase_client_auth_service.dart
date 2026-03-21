@@ -68,9 +68,7 @@ class FirebaseClientAuthService {
         return _signInWithGoogle();
       case SocialAuthProvider.facebook:
         if (!AppEnv.firebaseFacebookProviderEnabled) {
-          throw UnsupportedError(
-            'Facebook access is disabled in this build.',
-          );
+          throw UnsupportedError('Facebook access is disabled in this build.');
         }
         return _signInWithFacebook();
     }
