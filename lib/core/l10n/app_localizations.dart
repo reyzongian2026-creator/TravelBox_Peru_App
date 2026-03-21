@@ -2728,7 +2728,7 @@ class AppLocalizations {
           'Validacion de pagos cash/counter pendientes',
       'period_week': 'Semana',
       'period_month': 'Mes',
-      'period_year': 'Anio',
+      'period_year': 'Año',
     },
     'en': {
       'app_name': 'TravelBox',
@@ -3552,6 +3552,9 @@ class AppLocalizations {
       'xl': 'XL',
       'como_dejar_de_estar_pendiente': 'Wie man nicht mehr ausstehend ist',
       'reservar_ahora': 'Jetzt buchen',
+      'period_week': 'Woche',
+      'period_month': 'Monat',
+      'period_year': 'Jahr',
     },
     'fr': {
       'app_name': 'TravelBox',
@@ -3916,6 +3919,9 @@ class AppLocalizations {
       'xl': 'XL',
       'como_dejar_de_estar_pendiente': 'Comment ne plus etre en attente',
       'reservar_ahora': 'Reserver maintenant',
+      'period_week': 'Semaine',
+      'period_month': 'Mois',
+      'period_year': 'Annee',
     },
     'it': {
       'app_name': 'TravelBox',
@@ -4279,6 +4285,9 @@ class AppLocalizations {
       'xl': 'XL',
       'como_dejar_de_estar_pendiente': 'Come smettere di essere in attesa',
       'reservar_ahora': 'Prenota ora',
+      'period_week': 'Settimana',
+      'period_month': 'Mese',
+      'period_year': 'Anno',
     },
     'pt': {
       'app_name': 'TravelBox',
@@ -4642,6 +4651,9 @@ class AppLocalizations {
       'xl': 'XL',
       'como_dejar_de_estar_pendiente': 'Como deixar de estar pendente',
       'reservar_ahora': 'Reservar agora',
+      'period_week': 'Semana',
+      'period_month': 'Mes',
+      'period_year': 'Ano',
     },
   };
 }

@@ -22,10 +22,11 @@ extension AdminDashboardPeriodOptionX on AdminDashboardPeriodOption {
     AdminDashboardPeriodOption.year => 'year',
   };
 
+  // Note: label getter deprecated - use _periodLabel(context) function instead for i18n support
   String get label => switch (this) {
-    AdminDashboardPeriodOption.week => 'Semana',
-    AdminDashboardPeriodOption.month => 'Mes',
-    AdminDashboardPeriodOption.year => 'Anio',
+    AdminDashboardPeriodOption.week => 'period_week',
+    AdminDashboardPeriodOption.month => 'period_month',
+    AdminDashboardPeriodOption.year => 'period_year',
   };
 }
 
