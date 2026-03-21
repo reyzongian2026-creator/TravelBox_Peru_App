@@ -156,10 +156,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/login', builder: (context, state) => LoginPage()),
-      GoRoute(
-        path: '/register',
-        builder: (context, state) => RegisterPage(),
-      ),
+      GoRoute(path: '/register', builder: (context, state) => RegisterPage()),
       GoRoute(
         path: '/password-reset',
         builder: (context, state) => PasswordResetPage(),
@@ -232,7 +229,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/tracking',
         builder: (context, state) => DeliveryMonitorPage(
-          title: 'Tracking logistico',
+          title: 'tracking_logistico',
           currentRoute: '/admin/tracking',
         ),
       ),
@@ -240,7 +237,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/admin/tracking/:reservationId',
         builder: (_, state) => TrackingPage(
           reservationId: state.pathParameters['reservationId'] ?? '',
-          title: 'Tracking logistico',
+          title: 'tracking_logistico',
           currentRoute: '/admin/tracking',
           backofficeMode: true,
         ),
@@ -251,10 +248,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           reservationId: state.uri.queryParameters['reservationId'],
         ),
       ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => ProfilePage(),
-      ),
+      GoRoute(path: '/profile', builder: (context, state) => ProfilePage()),
       GoRoute(
         path: '/profile/edit',
         builder: (context, state) => EditProfilePage(),
@@ -273,10 +267,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           initialScannedValue: state.uri.queryParameters['scan'],
         ),
       ),
-      GoRoute(
-        path: '/qr-scan',
-        builder: (context, state) => QrScanPage(),
-      ),
+      GoRoute(path: '/qr-scan', builder: (context, state) => QrScanPage()),
       GoRoute(
         path: '/admin/dashboard',
         builder: (context, state) => AdminDashboardPage(),
@@ -312,35 +303,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/operator/cash-payments',
         builder: (context, state) => CashPaymentsPage(
-          title: 'Cobros en caja',
+          title: 'cobros_en_caja',
           currentRoute: '/operator/cash-payments',
         ),
       ),
       GoRoute(
         path: '/operator/reservations',
         builder: (context, state) => AdminReservationsPage(
-          title: 'Reservas operativas',
+          title: 'reservas_operativas',
           currentRoute: '/operator/reservations',
         ),
       ),
       GoRoute(
         path: '/operator/incidents',
         builder: (context, state) => AdminIncidentsPage(
-          title: 'Incidencias operativas',
+          title: 'admin_incidents_operator_title',
           currentRoute: '/operator/incidents',
         ),
       ),
       GoRoute(
         path: '/support/incidents',
         builder: (context, state) => AdminIncidentsPage(
-          title: 'Incidencias de soporte',
+          title: 'admin_incidents_support_title',
           currentRoute: '/support/incidents',
         ),
       ),
       GoRoute(
         path: '/operator/tracking',
         builder: (context, state) => DeliveryMonitorPage(
-          title: 'Tracking logistico',
+          title: 'tracking_logistico',
           currentRoute: '/operator/tracking',
         ),
       ),
@@ -348,7 +339,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/operator/tracking/:reservationId',
         builder: (_, state) => TrackingPage(
           reservationId: state.pathParameters['reservationId'] ?? '',
-          title: 'Tracking logistico',
+          title: 'tracking_logistico',
           currentRoute: '/operator/tracking',
           backofficeMode: true,
         ),
@@ -365,7 +356,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/courier/tracking/:reservationId',
         builder: (_, state) => TrackingPage(
           reservationId: state.pathParameters['reservationId'] ?? '',
-          title: 'Tracking courier',
+          title: 'tracking_courier',
           currentRoute: '/courier/services',
           backofficeMode: true,
         ),
@@ -375,9 +366,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return Scaffold(
         body: Builder(
           builder: (context) => Center(
-            child: Text(
-              '${context.l10n.t('route_not_found')}: ${state.uri}',
-            ),
+            child: Text('${context.l10n.t('route_not_found')}: ${state.uri}'),
           ),
         ),
       );

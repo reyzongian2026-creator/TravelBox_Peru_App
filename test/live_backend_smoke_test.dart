@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: '');
 const _smokeClientEmail =
-    String.fromEnvironment('SMOKE_CLIENT_EMAIL', defaultValue: 'client@travelbox.pe');
+    String.fromEnvironment('SMOKE_CLIENT_EMAIL', defaultValue: '');
 const _smokeClientPassword =
-    String.fromEnvironment('SMOKE_CLIENT_PASSWORD', defaultValue: 'Client123!');
+    String.fromEnvironment('SMOKE_CLIENT_PASSWORD', defaultValue: '');
 
 void main() {
   test('live backend smoke auth + warehouses + reservations page', () async {
@@ -15,6 +15,16 @@ void main() {
       // Allows local `flutter test` without external backend configuration.
       return;
     }
+    expect(
+      _smokeClientEmail.isNotEmpty,
+      true,
+      reason: 'Missing SMOKE_CLIENT_EMAIL dart-define (must come from real secret).',
+    );
+    expect(
+      _smokeClientPassword.isNotEmpty,
+      true,
+      reason: 'Missing SMOKE_CLIENT_PASSWORD dart-define (must come from real secret).',
+    );
 
     final login = await _requestJson(
       method: 'POST',

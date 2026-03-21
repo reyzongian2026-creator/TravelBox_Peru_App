@@ -15,7 +15,7 @@ import '../../reservation/presentation/reservation_providers.dart';
 class AdminReservationsPage extends ConsumerStatefulWidget {
   AdminReservationsPage({
     super.key,
-    this.title = 'Admin reservas',
+    this.title = 'admin_reservations_title',
     this.currentRoute = '/admin/reservations',
   });
 
@@ -54,7 +54,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
     final selectedStatus = ref.watch(adminReservationStatusFilterProvider);
     final reservations = ref.watch(adminReservationListProvider);
     return AppShellScaffold(
-      title: widget.title,
+      title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
       child: Column(
         children: [
@@ -236,8 +236,9 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                             item: item,
                                             status: ReservationStatus
                                                 .readyForPickup,
-                                            message:
-                                                'Reserva lista para recojo en almacen.',
+                                            message: context.l10n.t(
+                                              'admin_reservation_ready_pickup_msg',
+                                            ),
                                           ),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size(0, 40),
@@ -278,8 +279,9 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                         : () => _changeStatus(
                                             item: item,
                                             status: ReservationStatus.completed,
-                                            message:
-                                                'Reserva finalizada desde el panel operativo.',
+                                            message: context.l10n.t(
+                                              'admin_reservation_completed_from_panel_msg',
+                                            ),
                                           ),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size(0, 40),
@@ -385,7 +387,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
           .read(reservationRepositoryProvider)
           .refundAndCancelReservation(
             reservationId: item.id,
-            reason: 'Cancelacion solicitada desde panel operativo/admin.',
+            reason: context.l10n.t('admin_reservation_cancel_requested_msg'),
           );
       _refreshReservations();
       if (!mounted) return;

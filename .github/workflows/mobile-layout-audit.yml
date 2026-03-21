@@ -8,41 +8,19 @@ on:
     paths:
       - "lib/**"
       - "web/**"
-      - "tools/mobile_layout_audit.cjs"
-      - "package.json"
-      - "package-lock.json"
-      - ".github/workflows/mobile-layout-audit.yml"
-  pull_request:
-    branches:
-      - main
-    paths:
-      - "lib/**"
-      - "web/**"
-      - "tools/mobile_layout_audit.cjs"
+      - "tools/mobile_layout_audit_live.cjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/mobile-layout-audit.yml"
 
 jobs:
-  mobile-layout-audit:
+  mobile-layout-audit-live:
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Flutter pub get
-        run: flutter pub get
-
-      - name: Build web bundle
-        run: flutter build web --release
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -56,27 +34,41 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium webkit
 
-      - name: Serve web build
-        run: |
-          python3 -m http.server 8088 --directory build/web &
-          echo $! > /tmp/travelbox_web_pid
-
-      - name: Run mobile layout audit
+      - name: Validate required live secrets
         env:
-          BASE_URL: http://127.0.0.1:8088
-        run: node tools/mobile_layout_audit.cjs
+          BASE_URL: ${{ secrets.LIVE_FRONTEND_BASE_URL }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          assert_real_secret() {
+            local key="$1"
+            local value="$2"
+            local normalized="${value,,}"
+            normalized="${normalized// /}"
+            [[ -n "$value" ]] || (echo "Missing secret ${key}" && exit 1)
+            case "$normalized" in
+              changeme|change-me|replace-me|replace_me|placeholder|dummy|todo|tbd|__pending_meta__)
+                echo "Secret ${key} still looks like a placeholder" >&2
+                exit 1
+                ;;
+            esac
+          }
+          assert_real_secret "LIVE_FRONTEND_BASE_URL" "${BASE_URL}"
+          assert_real_secret "E2E_ADMIN_EMAIL" "${E2E_ADMIN_EMAIL}"
+          assert_real_secret "E2E_ADMIN_PASSWORD" "${E2E_ADMIN_PASSWORD}"
+
+      - name: Run live mobile layout audit
+        env:
+          BASE_URL: ${{ secrets.LIVE_FRONTEND_BASE_URL }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: node tools/mobile_layout_audit_live.cjs
 
       - name: Upload layout screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-layout-audit
-          path: artifacts/mobile-layout-audit-*/
+          name: mobile-layout-audit-live
+          path: artifacts/mobile-layout-audit-live-*/
           if-no-files-found: error
-
-      - name: Stop web server
-        if: always()
-        run: |
-          if [ -f /tmp/travelbox_web_pid ]; then
-            kill "$(cat /tmp/travelbox_web_pid)" || true
-          fi

@@ -10,43 +10,43 @@ import '../../../core/widgets/state_views.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 final cashPendingPaymentsProvider =
-    FutureProvider.autoDispose<List<CashPendingPayment>>((
-  ref,
-) async {
-  ref.watch(reservationRealtimeEventCursorProvider);
-  final dio = ref.read(dioProvider);
-  final response = await dio.get<Map<String, dynamic>>(
-    '/payments/cash/pending',
-    queryParameters: {'page': 0, 'size': 20},
-  );
-  final data = response.data ?? <String, dynamic>{};
-  final items = data['items'] as List<dynamic>? ?? const [];
-  final pending = items
-      .map((item) => CashPendingPayment.fromJson(item as Map<String, dynamic>))
-      .toList();
-  if (pending.isNotEmpty) {
-    return pending;
-  }
+    FutureProvider.autoDispose<List<CashPendingPayment>>((ref) async {
+      ref.watch(reservationRealtimeEventCursorProvider);
+      final dio = ref.read(dioProvider);
+      final response = await dio.get<Map<String, dynamic>>(
+        '/payments/cash/pending',
+        queryParameters: {'page': 0, 'size': 20},
+      );
+      final data = response.data ?? <String, dynamic>{};
+      final items = data['items'] as List<dynamic>? ?? const [];
+      final pending = items
+          .map(
+            (item) => CashPendingPayment.fromJson(item as Map<String, dynamic>),
+          )
+          .toList();
+      if (pending.isNotEmpty) {
+        return pending;
+      }
 
-  // Fallback defensivo: si por cualquier motivo el endpoint de caja retorna
-  // vacio, revisar historial y recuperar pendientes offline.
-  try {
-    final historyResponse = await dio.get<Map<String, dynamic>>(
-      '/payments/history',
-      queryParameters: {'page': 0, 'size': 100},
-    );
-    final historyData = historyResponse.data ?? <String, dynamic>{};
-    final historyItems = historyData['items'] as List<dynamic>? ?? const [];
-    final recovered = historyItems
-        .whereType<Map<String, dynamic>>()
-        .where(_isOfflinePendingFromHistory)
-        .map(CashPendingPayment.fromHistoryJson)
-        .toList();
-    return recovered;
-  } on DioException {
-    return pending;
-  }
-});
+      // Fallback defensivo: si por cualquier motivo el endpoint de caja retorna
+      // vacio, revisar historial y recuperar pendientes offline.
+      try {
+        final historyResponse = await dio.get<Map<String, dynamic>>(
+          '/payments/history',
+          queryParameters: {'page': 0, 'size': 100},
+        );
+        final historyData = historyResponse.data ?? <String, dynamic>{};
+        final historyItems = historyData['items'] as List<dynamic>? ?? const [];
+        final recovered = historyItems
+            .whereType<Map<String, dynamic>>()
+            .where(_isOfflinePendingFromHistory)
+            .map(CashPendingPayment.fromHistoryJson)
+            .toList();
+        return recovered;
+      } on DioException {
+        return pending;
+      }
+    });
 
 bool _isOfflinePendingFromHistory(Map<String, dynamic> item) {
   final paymentStatus = item['paymentStatus']?.toString().toUpperCase() ?? '';
@@ -65,7 +65,7 @@ bool _isOfflinePendingFromHistory(Map<String, dynamic> item) {
 class CashPaymentsPage extends ConsumerStatefulWidget {
   CashPaymentsPage({
     super.key,
-    this.title = 'Pagos en caja',
+    this.title = 'pagos_en_caja',
     this.currentRoute = '/admin/cash-payments',
   });
 
@@ -83,7 +83,7 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
   Widget build(BuildContext context) {
     final pendingPayments = ref.watch(cashPendingPaymentsProvider);
     return AppShellScaffold(
-      title: widget.title,
+      title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
       child: pendingPayments.when(
         data: (items) {
@@ -253,7 +253,8 @@ class CashPendingPayment {
 
   factory CashPendingPayment.fromHistoryJson(Map<String, dynamic> json) {
     final createdAt =
-        DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now();
+        DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+        DateTime.now();
     final userEmail = json['userEmail']?.toString() ?? '-';
     return CashPendingPayment(
       paymentIntentId: json['paymentIntentId']?.toString() ?? '',
@@ -267,4 +268,3 @@ class CashPendingPayment {
     );
   }
 }
-

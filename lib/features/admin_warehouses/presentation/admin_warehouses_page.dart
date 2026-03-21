@@ -7,7 +7,9 @@ import 'package:http_parser/http_parser.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/env/app_env.dart';
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
@@ -93,6 +95,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final sectionGap = responsive.sectionGap;
     final warehouses = ref.watch(adminWarehousesProvider);
     final activeFilter = ref.watch(adminWarehouseActiveFilterProvider);
     return AppShellScaffold(
@@ -101,142 +106,10 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 900;
-                if (!compact) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            ref
-                                    .read(adminWarehouseSearchProvider.notifier)
-                                    .state =
-                                value;
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Buscar por nombre, direccion o ciudad',
-                            prefixIcon: Icon(Icons.search),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      FilledButton.icon(
-                        onPressed: _saving ? null : _createWarehouse,
-                        icon: const Icon(Icons.add),
-                        label: Text(context.l10n.t('nuevo')),
-                      ),
-                      SizedBox(width: 8),
-                      DropdownButton<String>(
-                        value: activeFilter,
-                        items: [
-                          DropdownMenuItem(
-                            value: 'ACTIVE',
-                            child: Text(context.l10n.t('activos')),
-                          ),
-                          DropdownMenuItem(
-                            value: 'ALL',
-                            child: Text(context.l10n.t('todos')),
-                          ),
-                          DropdownMenuItem(
-                            value: 'INACTIVE',
-                            child: Text(context.l10n.t('inactivos')),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            ref
-                                    .read(
-                                      adminWarehouseActiveFilterProvider
-                                          .notifier,
-                                    )
-                                    .state =
-                                value;
-                          }
-                        },
-                      ),
-                      SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        onPressed: _saving
-                            ? null
-                            : () => ref.invalidate(adminWarehousesProvider),
-                        icon: const Icon(Icons.refresh),
-                        label: Text(context.l10n.t('recargar')),
-                      ),
-                    ],
-                  );
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _searchController,
-                      onChanged: (value) {
-                        ref.read(adminWarehouseSearchProvider.notifier).state =
-                            value;
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Buscar por nombre, direccion o ciudad',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.icon(
-                          onPressed: _saving ? null : _createWarehouse,
-                          icon: const Icon(Icons.add),
-                          label: Text(context.l10n.t('nuevo')),
-                        ),
-                        DropdownButton<String>(
-                          value: activeFilter,
-                          items: [
-                            DropdownMenuItem(
-                              value: 'ACTIVE',
-                              child: Text(context.l10n.t('activos')),
-                            ),
-                            DropdownMenuItem(
-                              value: 'ALL',
-                              child: Text(context.l10n.t('todos')),
-                            ),
-                            DropdownMenuItem(
-                              value: 'INACTIVE',
-                              child: Text(context.l10n.t('inactivos')),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              ref
-                                      .read(
-                                        adminWarehouseActiveFilterProvider
-                                            .notifier,
-                                      )
-                                      .state =
-                                  value;
-                            }
-                          },
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: _saving
-                              ? null
-                              : () => ref.invalidate(adminWarehousesProvider),
-                          icon: Icon(Icons.refresh),
-                          label: Text(context.l10n.t('recargar')),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
+            padding: responsive.pageInsets(top: responsive.verticalPadding),
+            child: _buildToolbar(context, activeFilter: activeFilter),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: itemGap),
           Expanded(
             child: warehouses.when(
               data: (items) {
@@ -260,11 +133,16 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                 );
 
                 return ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   children: [
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                    AdaptiveWrapGrid(
+                      spacing: itemGap,
+                      runSpacing: itemGap,
+                      mobileColumns: 1,
+                      tabletColumns: 2,
+                      desktopSmallColumns: 4,
+                      desktopColumns: 4,
+                      minItemWidth: 170,
                       children: [
                         _StockCard(
                           title: 'Sedes',
@@ -292,24 +170,17 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _WarehouseRegistryTable(items: items),
-                    const SizedBox(height: 12),
-                    ...items.map(
-                      (warehouse) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _WarehouseCard(
-                          warehouse: warehouse,
-                          onEdit: _saving
-                              ? null
-                              : () => _editWarehouse(warehouse),
-                          onDelete: _saving
-                              ? null
-                              : () => warehouse.active
-                                    ? _deleteWarehouse(warehouse)
-                                    : _reactivateWarehouse(warehouse),
-                        ),
-                      ),
+                    SizedBox(height: sectionGap),
+                    _WarehouseRegistryTable(
+                      items: items,
+                      saving: _saving,
+                      onEdit: _editWarehouse,
+                      onToggleActive: (warehouse) {
+                        if (warehouse.active) {
+                          return _deleteWarehouse(warehouse);
+                        }
+                        return _reactivateWarehouse(warehouse);
+                      },
                     ),
                   ],
                 );
@@ -323,6 +194,119 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildToolbar(BuildContext context, {required String activeFilter}) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final l10n = context.l10n;
+
+    Widget buildSearchField() {
+      return TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          ref.read(adminWarehouseSearchProvider.notifier).state = value;
+        },
+        decoration: const InputDecoration(
+          labelText: 'Buscar por nombre, direccion o ciudad',
+          prefixIcon: Icon(Icons.search),
+        ),
+      );
+    }
+
+    Widget buildStatusFilter() {
+      return DropdownButtonFormField<String>(
+        isExpanded: true,
+        initialValue: activeFilter,
+        decoration: InputDecoration(
+          labelText: l10n.t('estado'),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+        ),
+        items: [
+          DropdownMenuItem(value: 'ACTIVE', child: Text(l10n.t('activos'))),
+          DropdownMenuItem(value: 'ALL', child: Text(l10n.t('todos'))),
+          DropdownMenuItem(value: 'INACTIVE', child: Text(l10n.t('inactivos'))),
+        ],
+        onChanged: (value) {
+          if (value != null) {
+            ref.read(adminWarehouseActiveFilterProvider.notifier).state = value;
+          }
+        },
+      );
+    }
+
+    Widget buildCreateButton() {
+      return FilledButton.icon(
+        onPressed: _saving ? null : _createWarehouse,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(0, 40),
+          visualDensity: VisualDensity.compact,
+        ),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.t('nuevo')),
+      );
+    }
+
+    Widget buildRefreshButton() {
+      return OutlinedButton.icon(
+        onPressed: _saving
+            ? null
+            : () => ref.invalidate(adminWarehousesProvider),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 40),
+          visualDensity: VisualDensity.compact,
+        ),
+        icon: const Icon(Icons.refresh),
+        label: Text(l10n.t('recargar')),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wideRow = constraints.maxWidth >= 1080;
+        if (wideRow) {
+          final statusWidth = (constraints.maxWidth * 0.2)
+              .clamp(180.0, 260.0)
+              .toDouble();
+          return Row(
+            children: [
+              Expanded(child: buildSearchField()),
+              SizedBox(width: itemGap),
+              SizedBox(width: statusWidth, child: buildStatusFilter()),
+              SizedBox(width: itemGap),
+              buildCreateButton(),
+              SizedBox(width: itemGap),
+              buildRefreshButton(),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            buildSearchField(),
+            SizedBox(height: itemGap),
+            AdaptiveWrapGrid(
+              spacing: itemGap,
+              runSpacing: itemGap,
+              mobileColumns: 1,
+              tabletColumns: 2,
+              desktopSmallColumns: 3,
+              desktopColumns: 3,
+              minItemWidth: 170,
+              children: [
+                SizedBox(width: double.infinity, child: buildCreateButton()),
+                buildStatusFilter(),
+                SizedBox(width: double.infinity, child: buildRefreshButton()),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -819,32 +803,32 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                       Text(context.l10n.t('no_se_pudieron_cargar_zonas')),
                 ),
                 SizedBox(height: 10),
-                Row(
+                AdaptiveWrapGrid(
+                  spacing: 10,
+                  runSpacing: 10,
+                  mobileColumns: 1,
+                  tabletColumns: 2,
+                  desktopSmallColumns: 2,
+                  desktopColumns: 2,
+                  minItemWidth: 170,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _latitudeController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: true,
-                        ),
-                        decoration: const InputDecoration(labelText: 'Latitud'),
-                        validator: FormValidators.latitude,
+                    TextFormField(
+                      controller: _latitudeController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
                       ),
+                      decoration: const InputDecoration(labelText: 'Latitud'),
+                      validator: FormValidators.latitude,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _longitudeController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                          signed: true,
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: 'Longitud',
-                        ),
-                        validator: FormValidators.longitude,
+                    TextFormField(
+                      controller: _longitudeController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
                       ),
+                      decoration: const InputDecoration(labelText: 'Longitud'),
+                      validator: FormValidators.longitude,
                     ),
                   ],
                 ),
@@ -895,51 +879,46 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   error: (_, _) => const SizedBox.shrink(),
                 ),
                 const SizedBox(height: 10),
-                Row(
+                AdaptiveWrapGrid(
+                  spacing: 10,
+                  runSpacing: 10,
+                  mobileColumns: 1,
+                  tabletColumns: 2,
+                  desktopSmallColumns: 3,
+                  desktopColumns: 3,
+                  minItemWidth: 150,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _capacityController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Capacidad',
-                        ),
-                        validator: (value) => FormValidators.positiveInt(
+                    TextFormField(
+                      controller: _capacityController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Capacidad'),
+                      validator: (value) => FormValidators.positiveInt(
+                        value,
+                        label: 'La capacidad',
+                      ),
+                    ),
+                    TextFormField(
+                      controller: _openHourController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: 'Apertura'),
+                      validator: (value) =>
+                          FormValidators.hour(value, label: 'La apertura'),
+                    ),
+                    TextFormField(
+                      controller: _closeHourController,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(labelText: 'Cierre'),
+                      validator: (value) {
+                        final base = FormValidators.hour(
                           value,
-                          label: 'La capacidad',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _openHourController,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          labelText: 'Apertura',
-                        ),
-                        validator: (value) =>
-                            FormValidators.hour(value, label: 'La apertura'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _closeHourController,
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(labelText: 'Cierre'),
-                        validator: (value) {
-                          final base = FormValidators.hour(
-                            value,
-                            label: 'El cierre',
-                          );
-                          if (base != null) return base;
-                          return FormValidators.hourRange(
-                            _openHourController.text,
-                            value,
-                          );
-                        },
-                      ),
+                          label: 'El cierre',
+                        );
+                        if (base != null) return base;
+                        return FormValidators.hourRange(
+                          _openHourController.text,
+                          value,
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -961,63 +940,44 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
+                      AdaptiveWrapGrid(
+                        spacing: 10,
+                        runSpacing: 10,
+                        mobileColumns: 1,
+                        tabletColumns: 2,
+                        desktopSmallColumns: 2,
+                        desktopColumns: 3,
+                        minItemWidth: 170,
                         children: [
-                          Expanded(
-                            child: _MoneyField(
-                              controller: _pricePerHourSmallController,
-                              label: 'Tarifa S/h',
-                            ),
+                          _MoneyField(
+                            controller: _pricePerHourSmallController,
+                            label: 'Tarifa S/h',
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _MoneyField(
-                              controller: _pricePerHourMediumController,
-                              label: 'Tarifa M/h',
-                            ),
+                          _MoneyField(
+                            controller: _pricePerHourMediumController,
+                            label: 'Tarifa M/h',
+                          ),
+                          _MoneyField(
+                            controller: _pricePerHourLargeController,
+                            label: 'Tarifa L/h',
+                          ),
+                          _MoneyField(
+                            controller: _pricePerHourExtraLargeController,
+                            label: 'Tarifa XL/h',
+                          ),
+                          _MoneyField(
+                            controller: _pickupFeeController,
+                            label: 'Recojo delivery',
+                          ),
+                          _MoneyField(
+                            controller: _dropoffFeeController,
+                            label: 'Entrega delivery',
+                          ),
+                          _MoneyField(
+                            controller: _insuranceFeeController,
+                            label: 'Seguro adicional',
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _MoneyField(
-                              controller: _pricePerHourLargeController,
-                              label: 'Tarifa L/h',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _MoneyField(
-                              controller: _pricePerHourExtraLargeController,
-                              label: 'Tarifa XL/h',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _MoneyField(
-                              controller: _pickupFeeController,
-                              label: 'Recojo delivery',
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _MoneyField(
-                              controller: _dropoffFeeController,
-                              label: 'Entrega delivery',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _MoneyField(
-                        controller: _insuranceFeeController,
-                        label: 'Seguro adicional',
                       ),
                     ],
                   ),
@@ -1265,19 +1225,18 @@ class _WarehousePhotoPreview extends StatelessWidget {
     this.selectedBytes,
     required this.warehouseName,
     required this.cityName,
-    this.height = 180,
   });
 
   final String? imageUrl;
   final Uint8List? selectedBytes;
   final String warehouseName;
   final String cityName;
-  final double height;
 
   @override
   Widget build(BuildContext context) {
+    const previewHeight = 180.0;
     final fallback = Container(
-      height: height,
+      height: previewHeight,
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -1331,7 +1290,7 @@ class _WarehousePhotoPreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Image.memory(
           selectedBytes!,
-          height: height,
+          height: previewHeight,
           width: double.infinity,
           fit: BoxFit.cover,
         ),
@@ -1339,187 +1298,23 @@ class _WarehousePhotoPreview extends StatelessWidget {
     } else {
       child = AppSmartImage(
         source: imageUrl,
-        height: height,
+        height: previewHeight,
         width: double.infinity,
         borderRadius: BorderRadius.circular(16),
         fallback: fallback,
       );
     }
 
-    return SizedBox(height: height, width: double.infinity, child: child);
-  }
-}
-
-class _WarehouseCard extends StatelessWidget {
-  const _WarehouseCard({
-    required this.warehouse,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final AdminWarehouse warehouse;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final usage = warehouse.capacity == 0
-        ? 0.0
-        : (warehouse.occupied / warehouse.capacity).clamp(0, 1).toDouble();
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _WarehousePhotoPreview(
-            imageUrl: warehouse.imageUrl,
-            warehouseName: warehouse.name,
-            cityName: warehouse.cityName,
-            height: 190,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        warehouse.name,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    Chip(
-                      label: Text(warehouse.active ? 'Activo' : 'Inactivo'),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(warehouse.address),
-                Text(
-                  '${warehouse.cityName} - ${warehouse.zoneName ?? 'Sin zona'}',
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoPill(
-                      label: 'Capacidad',
-                      value: '${warehouse.capacity}',
-                    ),
-                    _InfoPill(label: 'Ocupado', value: '${warehouse.occupied}'),
-                    _InfoPill(
-                      label: 'Disponible',
-                      value: '${warehouse.available}',
-                    ),
-                    _InfoPill(
-                      label: 'Horario',
-                      value: '${warehouse.openHour} - ${warehouse.closeHour}',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _InfoPill(
-                      label: 'S/h',
-                      value:
-                          'S/${warehouse.pricePerHourSmall.toStringAsFixed(2)}',
-                    ),
-                    _InfoPill(
-                      label: 'M/h',
-                      value:
-                          'S/${warehouse.pricePerHourMedium.toStringAsFixed(2)}',
-                    ),
-                    _InfoPill(
-                      label: 'L/h',
-                      value:
-                          'S/${warehouse.pricePerHourLarge.toStringAsFixed(2)}',
-                    ),
-                    _InfoPill(
-                      label: 'XL/h',
-                      value:
-                          'S/${warehouse.pricePerHourExtraLarge.toStringAsFixed(2)}',
-                    ),
-                    _InfoPill(
-                      label: 'Recojo',
-                      value: 'S/${warehouse.pickupFee.toStringAsFixed(2)}',
-                    ),
-                    _InfoPill(
-                      label: 'Entrega',
-                      value: 'S/${warehouse.dropoffFee.toStringAsFixed(2)}',
-                    ),
-                    _InfoPill(
-                      label: 'Seguro',
-                      value: 'S/${warehouse.insuranceFee.toStringAsFixed(2)}',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                LinearProgressIndicator(value: usage, minHeight: 7),
-                const SizedBox(height: 6),
-                Text('Uso ${(usage * 100).toStringAsFixed(0)}%'),
-                if (warehouse.rules != null &&
-                    warehouse.rules!.trim().isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      'Reglas: ${warehouse.rules}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-                if (!warehouse.active)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      'Este almacen esta inactivo y no aparece en el mapa publico.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFFB26A00),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: onEdit,
-                      icon: const Icon(Icons.edit_outlined),
-                      label: Text(context.l10n.t('editar')),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: onDelete,
-                      icon: Icon(
-                        warehouse.active
-                            ? Icons.delete_outline
-                            : Icons.restore_from_trash_outlined,
-                      ),
-                      label: Text(
-                        warehouse.active ? 'Desactivar' : 'Reactivar',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return SizedBox(
+      height: previewHeight,
+      width: double.infinity,
+      child: child,
     );
   }
 }
 
 class _StockCard extends StatelessWidget {
-  _StockCard({
+  const _StockCard({
     required this.title,
     required this.value,
     required this.colorA,
@@ -1533,54 +1328,33 @@ class _StockCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 210,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [colorA, colorB]),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoPill extends StatelessWidget {
-  const _InfoPill({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      constraints: const BoxConstraints(minHeight: 92),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FA),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(colors: [colorA, colorB]),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Text('$label: $value'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1612,9 +1386,17 @@ class _MoneyField extends StatelessWidget {
 }
 
 class _WarehouseRegistryTable extends StatefulWidget {
-  const _WarehouseRegistryTable({required this.items});
+  const _WarehouseRegistryTable({
+    required this.items,
+    required this.saving,
+    required this.onEdit,
+    required this.onToggleActive,
+  });
 
   final List<AdminWarehouse> items;
+  final bool saving;
+  final Future<void> Function(AdminWarehouse warehouse) onEdit;
+  final Future<void> Function(AdminWarehouse warehouse) onToggleActive;
 
   @override
   State<_WarehouseRegistryTable> createState() =>
@@ -1632,93 +1414,138 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tablero de registros',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Desliza hacia la derecha para ver mas columnas.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            Scrollbar(
-              controller: _horizontalScrollController,
-              thumbVisibility: true,
-              trackVisibility: true,
-              notificationPredicate: (notification) =>
-                  notification.metrics.axis == Axis.horizontal,
-              child: SingleChildScrollView(
-                controller: _horizontalScrollController,
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(label: Text(context.l10n.t('id'))),
-                    DataColumn(label: Text(context.l10n.t('almacen'))),
-                    DataColumn(label: Text(context.l10n.t('ciudad'))),
-                    DataColumn(label: Text(context.l10n.t('mh'))),
-                    DataColumn(label: Text(context.l10n.t('recojo'))),
-                    DataColumn(label: Text(context.l10n.t('entrega'))),
-                    DataColumn(label: Text(context.l10n.t('seguro'))),
-                    DataColumn(label: Text(context.l10n.t('cap'))),
-                    DataColumn(label: Text(context.l10n.t('ocup'))),
-                    DataColumn(label: Text(context.l10n.t('disp'))),
-                    DataColumn(label: Text(context.l10n.t('lat'))),
-                    DataColumn(label: Text(context.l10n.t('lng'))),
-                    DataColumn(label: Text(context.l10n.t('estado'))),
-                  ],
-                  rows: widget.items
-                      .map(
-                        (item) => DataRow(
-                          cells: [
-                            DataCell(Text(item.id)),
-                            DataCell(Text(item.name)),
-                            DataCell(
-                              Text('${item.cityName}/${item.zoneName ?? '-'}'),
-                            ),
-                            DataCell(
-                              Text(
-                                'S/${item.pricePerHourMedium.toStringAsFixed(2)}',
+        padding: EdgeInsets.all(responsive.cardPadding),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 760;
+            final table = DataTable(
+              columnSpacing: compact ? 16 : 22,
+              horizontalMargin: compact ? 10 : 12,
+              dataRowMinHeight: compact ? 44 : 48,
+              dataRowMaxHeight: compact ? 58 : 62,
+              columns: [
+                const DataColumn(label: SizedBox.shrink()),
+                DataColumn(label: Text(context.l10n.t('id'))),
+                DataColumn(label: Text(context.l10n.t('almacen'))),
+                DataColumn(label: Text(context.l10n.t('ciudad'))),
+                DataColumn(label: Text(context.l10n.t('mh'))),
+                DataColumn(label: Text(context.l10n.t('recojo'))),
+                DataColumn(label: Text(context.l10n.t('entrega'))),
+                DataColumn(label: Text(context.l10n.t('seguro'))),
+                DataColumn(label: Text(context.l10n.t('cap'))),
+                DataColumn(label: Text(context.l10n.t('ocup'))),
+                DataColumn(label: Text(context.l10n.t('disp'))),
+                DataColumn(label: Text(context.l10n.t('lat'))),
+                DataColumn(label: Text(context.l10n.t('lng'))),
+                DataColumn(label: Text(context.l10n.t('estado'))),
+              ],
+              rows: widget.items
+                  .map(
+                    (item) => DataRow(
+                      cells: [
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: widget.saving
+                                    ? null
+                                    : () => widget.onEdit(item),
+                                tooltip: context.l10n.t('editar'),
+                                icon: const Icon(Icons.edit_outlined),
+                                visualDensity: VisualDensity.compact,
                               ),
-                            ),
-                            DataCell(
-                              Text('S/${item.pickupFee.toStringAsFixed(2)}'),
-                            ),
-                            DataCell(
-                              Text('S/${item.dropoffFee.toStringAsFixed(2)}'),
-                            ),
-                            DataCell(
-                              Text('S/${item.insuranceFee.toStringAsFixed(2)}'),
-                            ),
-                            DataCell(Text('${item.capacity}')),
-                            DataCell(Text('${item.occupied}')),
-                            DataCell(Text('${item.available}')),
-                            DataCell(Text(item.latitude.toStringAsFixed(5))),
-                            DataCell(Text(item.longitude.toStringAsFixed(5))),
-                            DataCell(
-                              Chip(
-                                label: Text(
-                                  item.active ? 'Activo' : 'Inactivo',
+                              IconButton(
+                                onPressed: widget.saving
+                                    ? null
+                                    : () => widget.onToggleActive(item),
+                                tooltip: item.active
+                                    ? context.l10n.t('desactivar')
+                                    : null,
+                                icon: Icon(
+                                  item.active
+                                      ? Icons.delete_outline
+                                      : Icons.restart_alt_outlined,
                                 ),
                                 visualDensity: VisualDensity.compact,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      )
-                      .toList(),
+                        DataCell(Text(item.id)),
+                        DataCell(Text(item.name)),
+                        DataCell(
+                          Text('${item.cityName}/${item.zoneName ?? '-'}'),
+                        ),
+                        DataCell(
+                          Text(
+                            'S/${item.pricePerHourMedium.toStringAsFixed(2)}',
+                          ),
+                        ),
+                        DataCell(
+                          Text('S/${item.pickupFee.toStringAsFixed(2)}'),
+                        ),
+                        DataCell(
+                          Text('S/${item.dropoffFee.toStringAsFixed(2)}'),
+                        ),
+                        DataCell(
+                          Text('S/${item.insuranceFee.toStringAsFixed(2)}'),
+                        ),
+                        DataCell(Text('${item.capacity}')),
+                        DataCell(Text('${item.occupied}')),
+                        DataCell(Text('${item.available}')),
+                        DataCell(Text(item.latitude.toStringAsFixed(5))),
+                        DataCell(Text(item.longitude.toStringAsFixed(5))),
+                        DataCell(
+                          Chip(
+                            label: Text(item.active ? 'Activo' : 'Inactivo'),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                  .toList(),
+            );
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tablero de registros',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ),
-          ],
+                SizedBox(height: responsive.itemGap / 2),
+                Text(
+                  'Desliza hacia la derecha para ver mas columnas.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                SizedBox(height: responsive.itemGap),
+                Scrollbar(
+                  controller: _horizontalScrollController,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  notificationPredicate: (notification) =>
+                      notification.metrics.axis == Axis.horizontal,
+                  child: SingleChildScrollView(
+                    controller: _horizontalScrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                      ),
+                      child: table,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

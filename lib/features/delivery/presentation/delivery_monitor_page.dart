@@ -95,7 +95,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
     final activeOnly = ref.watch(deliveryMonitorActiveOnlyProvider);
 
     return AppShellScaffold(
-      title: widget.title,
+      title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
       actions: [
         IconButton(
@@ -123,30 +123,44 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
   ) {
     final responsive = context.responsive;
     final selected = _resolveSelection(items);
-    final width = MediaQuery.of(context).size.width;
-    final searchFieldWidth = (width - 72).clamp(220.0, 360.0).toDouble();
     final list = _buildList(context, items, selected);
     final detail = _buildDetail(context, selected, items.length, activeOnly);
 
-    final content = width >= 1180
-        ? Padding(
-            padding: const EdgeInsets.all(16),
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 1180) {
+          final listPaneWidth = (constraints.maxWidth * 0.34)
+              .clamp(320.0, 520.0)
+              .toDouble();
+          return Padding(
+            padding: EdgeInsets.all(responsive.horizontalPadding),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(width: 420, child: SingleChildScrollView(child: list)),
-                const SizedBox(width: 16),
+                SizedBox(
+                  width: listPaneWidth,
+                  child: SingleChildScrollView(child: list),
+                ),
+                SizedBox(width: responsive.sectionGap),
                 Expanded(child: SingleChildScrollView(child: detail)),
               ],
             ),
-          )
-        : ListView(
-            padding: responsive.pageInsets(
-              top: responsive.verticalPadding,
-              bottom: 24,
-            ),
-            children: [list, const SizedBox(height: 16), detail],
           );
+        }
+
+        return ListView(
+          padding: responsive.pageInsets(
+            top: responsive.verticalPadding,
+            bottom: 24,
+          ),
+          children: [
+            list,
+            SizedBox(height: responsive.sectionGap),
+            detail,
+          ],
+        );
+      },
+    );
 
     return Column(
       children: [
@@ -176,59 +190,73 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
                 ),
                 const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: searchFieldWidth,
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (value) {
-                          ref
-                                  .read(deliveryMonitorSearchProvider.notifier)
-                                  .state =
-                              value;
-                        },
-                        decoration: const InputDecoration(
-                          filled: true,
-                          fillColor: Colors.white,
-                          prefixIcon: Icon(Icons.search),
-                          hintText:
-                              'Buscar por reserva, cliente, ciudad o chofer',
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 760;
+                    final searchWidth = compact
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth * 0.42)
+                              .clamp(260.0, 420.0)
+                              .toDouble();
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: searchWidth,
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) {
+                              ref
+                                      .read(
+                                        deliveryMonitorSearchProvider.notifier,
+                                      )
+                                      .state =
+                                  value;
+                            },
+                            decoration: const InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              prefixIcon: Icon(Icons.search),
+                              hintText:
+                                  'Buscar por reserva, cliente, ciudad o chofer',
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    FilterChip(
-                      selected: activeOnly,
-                      label: Text(context.l10n.t('solo_activas')),
-                      onSelected: (_) {
-                        ref
-                                .read(
-                                  deliveryMonitorActiveOnlyProvider.notifier,
-                                )
-                                .state =
-                            true;
-                      },
-                    ),
-                    FilterChip(
-                      selected: !activeOnly,
-                      label: Text(context.l10n.t('recientes')),
-                      onSelected: (_) {
-                        ref
-                                .read(
-                                  deliveryMonitorActiveOnlyProvider.notifier,
-                                )
-                                .state =
-                            false;
-                      },
-                    ),
-                    Chip(
-                      label: Text('${items.length} ordenes'),
-                      backgroundColor: Colors.white.withValues(alpha: 0.92),
-                    ),
-                  ],
+                        FilterChip(
+                          selected: activeOnly,
+                          label: Text(context.l10n.t('solo_activas')),
+                          onSelected: (_) {
+                            ref
+                                    .read(
+                                      deliveryMonitorActiveOnlyProvider
+                                          .notifier,
+                                    )
+                                    .state =
+                                true;
+                          },
+                        ),
+                        FilterChip(
+                          selected: !activeOnly,
+                          label: Text(context.l10n.t('recientes')),
+                          onSelected: (_) {
+                            ref
+                                    .read(
+                                      deliveryMonitorActiveOnlyProvider
+                                          .notifier,
+                                    )
+                                    .state =
+                                false;
+                          },
+                        ),
+                        Chip(
+                          label: Text('${items.length} ordenes'),
+                          backgroundColor: Colors.white.withValues(alpha: 0.92),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

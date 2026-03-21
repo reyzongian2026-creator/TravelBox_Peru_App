@@ -42,6 +42,7 @@ class OperatorDashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final responsive = context.responsive;
     final pendingCash = ref.watch(cashPendingPaymentsProvider);
     final reservations = ref.watch(adminReservationsProvider);
@@ -64,7 +65,7 @@ class OperatorDashboardPage extends ConsumerWidget {
     final operatorGuide = resolveOperationGuide('/operator/panel');
 
     return AppShellScaffold(
-      title: 'Panel operativo',
+      title: l10n.t('operator_dashboard_title'),
       currentRoute: '/operator/panel',
       child: RefreshIndicator(
         onRefresh: () async {
@@ -87,7 +88,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Text(
-                'Atención diaria: cobros en caja, control de reservas y seguimiento de incidencias.',
+                l10n.t('operator_dashboard_intro'),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(color: Colors.white),
@@ -106,7 +107,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         child: _KpiCard(
-                          title: 'Cobros pendientes',
+                          title: l10n.t('operator_kpi_pending_cash'),
                           value: '$pendingCashCount',
                           colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
                         ),
@@ -115,7 +116,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         child: _KpiCard(
-                          title: 'Reservas activas',
+                          title: l10n.t('operator_kpi_active_reservations'),
                           value: '$activeReservations',
                           colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
                         ),
@@ -124,7 +125,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         child: _KpiCard(
-                          title: 'Incidencias',
+                          title: l10n.t('operator_kpi_incidents'),
                           value: '$incidentReservations',
                           colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
                         ),
@@ -139,7 +140,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: _KpiCard(
-                              title: 'Cobros pendientes',
+                              title: l10n.t('operator_kpi_pending_cash'),
                               value: '$pendingCashCount',
                               colors: const [
                                 Color(0xFF1F6E8C),
@@ -150,7 +151,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: _KpiCard(
-                              title: 'Reservas activas',
+                              title: l10n.t('operator_kpi_active_reservations'),
                               value: '$activeReservations',
                               colors: const [
                                 Color(0xFF0B8B8C),
@@ -164,7 +165,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       SizedBox(
                         width: double.infinity,
                         child: _KpiCard(
-                          title: 'Incidencias',
+                          title: l10n.t('operator_kpi_incidents'),
                           value: '$incidentReservations',
                           colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
                         ),
@@ -176,7 +177,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _KpiCard(
-                        title: 'Cobros pendientes',
+                        title: l10n.t('operator_kpi_pending_cash'),
                         value: '$pendingCashCount',
                         colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
                       ),
@@ -184,7 +185,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _KpiCard(
-                        title: 'Reservas activas',
+                        title: l10n.t('operator_kpi_active_reservations'),
                         value: '$activeReservations',
                         colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
                       ),
@@ -192,7 +193,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: _KpiCard(
-                        title: 'Incidencias',
+                        title: l10n.t('operator_kpi_incidents'),
                         value: '$incidentReservations',
                         colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
                       ),
@@ -207,46 +208,38 @@ class OperatorDashboardPage extends ConsumerWidget {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.point_of_sale_outlined),
-                    title: Text(context.l10n.t('cobros_en_caja')),
+                    title: Text(l10n.t('cobros_en_caja')),
                     subtitle: Text(
-                      context.l10n.t('aprobar_o_rechazar_pagos_pendientes'),
+                      l10n.t('aprobar_o_rechazar_pagos_pendientes'),
                     ),
-                    trailing: Icon(Icons.chevron_right),
+                    trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/cash-payments'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.assignment_outlined),
-                    title: Text(context.l10n.t('reservas_operativas')),
-                    subtitle: Text(
-                      'Búsqueda por código, cambios de estado y trazabilidad',
-                    ),
+                    title: Text(l10n.t('reservas_operativas')),
+                    subtitle: Text(l10n.t('operator_reservations_subtitle')),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/reservations'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.warning_amber_outlined),
-                    title: Text(context.l10n.t('incidencias')),
-                    subtitle: Text(
-                      context.l10n.t('monitoreo_y_atencion_de_casos'),
-                    ),
-                    trailing: Icon(Icons.chevron_right),
+                    title: Text(l10n.t('incidencias')),
+                    subtitle: Text(l10n.t('monitoreo_y_atencion_de_casos')),
+                    trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/incidents'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.route_outlined),
-                    title: Text(context.l10n.t('tracking_logistico')),
-                    subtitle: Text(
-                      context.l10n.t('seguimiento_de_deliveries_en_vivo'),
-                    ),
-                    trailing: Icon(Icons.chevron_right),
+                    title: Text(l10n.t('tracking_logistico')),
+                    subtitle: Text(l10n.t('seguimiento_de_deliveries_en_vivo')),
+                    trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/operator/tracking'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.qr_code_scanner_outlined),
-                    title: Text(context.l10n.t('qr_y_pin_operativo')),
-                    subtitle: Text(
-                      'Escanear reserva, etiquetar maleta y cerrar entrega con PIN',
-                    ),
+                    title: Text(l10n.t('qr_y_pin_operativo')),
+                    subtitle: Text(l10n.t('operator_qr_subtitle')),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.go('/ops/qr-handoff'),
                   ),
@@ -259,13 +252,13 @@ class OperatorDashboardPage extends ConsumerWidget {
                 color: const Color(0xFFFFF7E8),
                 child: ListTile(
                   leading: const Icon(Icons.notifications_active_outlined),
-                  title: Text('$pendingApprovals aprobaciones pendientes'),
-                  subtitle: const Text(
-                    'Hay entregas de delivery esperando validación de operador/admin.',
+                  title: Text(
+                    '$pendingApprovals ${l10n.t('operator_pending_approvals_suffix')}',
                   ),
+                  subtitle: Text(l10n.t('operator_pending_approvals_subtitle')),
                   trailing: FilledButton.tonal(
                     onPressed: () => context.go('/ops/qr-handoff'),
-                    child: Text(context.l10n.t('revisar')),
+                    child: Text(l10n.t('revisar')),
                   ),
                 ),
               ),
@@ -273,8 +266,8 @@ class OperatorDashboardPage extends ConsumerWidget {
             pendingCash.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return const EmptyStateView(
-                    message: 'No hay cobros pendientes por validar.',
+                  return EmptyStateView(
+                    message: l10n.t('operator_no_pending_cash'),
                   );
                 }
                 return Card(
@@ -284,7 +277,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Pendientes recientes',
+                          l10n.t('operator_recent_pending_title'),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
@@ -295,7 +288,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                               (item) => ListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: Text(
-                                  'Intento #${item.paymentIntentId} - Reserva #${item.reservationId}',
+                                  '${l10n.t('operator_attempt')} #${item.paymentIntentId} - ${l10n.t('operator_reservation')} #${item.reservationId}',
                                 ),
                                 subtitle: Text(
                                   '${item.userName} - S/${item.amount.toStringAsFixed(2)}',
@@ -309,7 +302,8 @@ class OperatorDashboardPage extends ConsumerWidget {
               },
               loading: () => const LoadingStateView(),
               error: (error, _) => ErrorStateView(
-                message: 'No se pudo cargar cobros pendientes: $error',
+                message:
+                    '${l10n.t('operator_pending_cash_load_failed')}: $error',
                 onRetry: () => ref.invalidate(cashPendingPaymentsProvider),
               ),
             ),

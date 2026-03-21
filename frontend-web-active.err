@@ -1,11 +1,2 @@
-127.0.0.1 - - [18/Mar/2026 05:46:53] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /flutter_bootstrap.js HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /manifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /main.dart.js HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /icons/Icon-192.png HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /assets/FontManifest.json HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /assets/fonts/MaterialIcons-Regular.otf HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /assets/packages/cupertino_icons/assets/CupertinoIcons.ttf HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /assets/AssetManifest.bin.json HTTP/1.1" 200 -
-127.0.0.1 - - [18/Mar/2026 05:54:40] "GET /assets/assets/branding/teddy.flr HTTP/1.1" 200 -
+Error: SDK root directory not found: ../../../.puro/envs/stable/flutter/bin/cache/flutter_web_sdk/.
+Failed to compile application.

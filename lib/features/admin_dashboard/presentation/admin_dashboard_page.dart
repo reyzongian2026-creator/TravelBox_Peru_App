@@ -77,7 +77,7 @@ class AdminDashboardPage extends ConsumerWidget {
     final dashboard = ref.watch(adminDashboardProvider(selectedPeriod));
 
     return AppShellScaffold(
-      title: 'Panel admin',
+      title: context.l10n.t('admin_dashboard_title'),
       currentRoute: '/admin/dashboard',
       child: dashboard.when(
         data: (stats) =>
@@ -132,7 +132,7 @@ class _DashboardContent extends ConsumerWidget {
       _KpiStat(
         title: l10n.t('dashboard_clients'),
         value: '${_asInt(summary['uniqueClients'])}',
-        subtitle: 'Clientes únicos',
+        subtitle: l10n.t('admin_dashboard_unique_clients'),
         colors: const [Color(0xFF475569), Color(0xFF64748B)],
       ),
       _KpiStat(

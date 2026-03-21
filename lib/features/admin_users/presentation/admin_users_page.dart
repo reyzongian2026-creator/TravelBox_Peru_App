@@ -9,6 +9,7 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/utils/app_error_formatter.dart';
@@ -107,9 +108,10 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final usersAsync = ref.watch(adminUsersProvider);
     final summaryAsync = ref.watch(adminUsersSummaryProvider);
     final loadRequested = ref.watch(adminUsersLoadRequestedProvider);
+    final l10n = context.l10n;
 
     return AppShellScaffold(
-      title: 'Usuarios operativos',
+      title: l10n.t('admin_users_title'),
       currentRoute: '/admin/users',
       child: Column(
         children: [
@@ -130,8 +132,8 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                     controller: _searchController,
                     onChanged: (_) => _scheduleFilterApplyFromTyping(),
                     onSubmitted: (_) => _applyUserFilters(),
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar usuario, correo o telefono',
+                    decoration: InputDecoration(
+                      labelText: l10n.t('admin_users_search_label'),
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),
@@ -256,15 +258,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               data: (items) {
                 if (!loadRequested) {
                   return EmptyStateView(
-                    message:
-                        'Presiona "Ver usuarios" para cargar segun tu filtro.',
-                    actionLabel: 'Cargar ahora',
+                    message: l10n.t('admin_users_press_load_hint'),
+                    actionLabel: l10n.t('admin_users_load_now'),
                     onAction: _applyUserFilters,
                   );
                 }
                 if (items.isEmpty) {
-                  return const EmptyStateView(
-                    message: 'No hay usuarios para este filtro.',
+                  return EmptyStateView(
+                    message: l10n.t('admin_users_empty_filter'),
                   );
                 }
                 return ListView(
@@ -294,7 +295,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               loading: () => const LoadingStateView(),
               error: (error, _) => ErrorStateView(
                 message:
-                    'No se pudieron cargar usuarios: ${AppErrorFormatter.readable(error)}',
+                    '${l10n.t('admin_users_load_failed')}: ${AppErrorFormatter.readable(error)}',
                 onRetry: () => ref.invalidate(adminUsersProvider),
               ),
             ),
@@ -344,17 +345,25 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
 
   Future<void> _toggleActive(AdminUserItem user, bool active) async {
     if (user.isAdmin && !active) {
-      _showSnack('Un usuario ADMIN no puede quedar inactivo.', isError: true);
+      _showSnack(
+        context.l10n.t('admin_users_admin_cannot_be_inactive'),
+        isError: true,
+      );
       return;
     }
-    await _runAdminAction(() async {
-      await ref
-          .read(dioProvider)
-          .patch<Map<String, dynamic>>(
-            '/admin/users/${user.id}/active',
-            data: {'active': active},
-          );
-    }, successMessage: active ? 'Usuario activado.' : 'Usuario desactivado.');
+    await _runAdminAction(
+      () async {
+        await ref
+            .read(dioProvider)
+            .patch<Map<String, dynamic>>(
+              '/admin/users/${user.id}/active',
+              data: {'active': active},
+            );
+      },
+      successMessage: context.l10n.t(
+        active ? 'admin_users_activated' : 'admin_users_deactivated',
+      ),
+    );
   }
 
   Future<void> _openCreateDialog({Set<String> presetRoles = const {}}) async {
@@ -363,8 +372,8 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final payload = await showDialog<_AdminUserFormData>(
       context: context,
       builder: (context) => _AdminUserFormDialog(
-        title: 'Crear usuario operativo',
-        submitLabel: 'Crear usuario',
+        title: context.l10n.t('admin_users_create_title'),
+        submitLabel: context.l10n.t('admin_users_create_submit'),
         presetRoles: presetRoles,
         includePassword: true,
         warehouseOptions: warehouseOptions,
@@ -388,7 +397,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               uploadedDocumentPhotoPath: uploadedDocumentPhotoPath,
             ),
           );
-    }, successMessage: 'Usuario creado correctamente.');
+    }, successMessage: context.l10n.t('admin_users_created_ok'));
   }
 
   Future<void> _openEditDialog(AdminUserItem user) async {
@@ -397,8 +406,8 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final payload = await showDialog<_AdminUserFormData>(
       context: context,
       builder: (context) => _AdminUserFormDialog(
-        title: 'Editar usuario',
-        submitLabel: 'Guardar cambios',
+        title: context.l10n.t('admin_users_edit_title'),
+        submitLabel: context.l10n.t('admin_users_save_changes'),
         initialUser: user,
         warehouseOptions: warehouseOptions,
       ),
@@ -421,7 +430,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               uploadedDocumentPhotoPath: uploadedDocumentPhotoPath,
             ),
           );
-    }, successMessage: 'Usuario actualizado.');
+    }, successMessage: context.l10n.t('admin_users_updated_ok'));
   }
 
   Future<void> _openPasswordDialog(AdminUserItem user) async {
@@ -439,7 +448,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
             '/admin/users/${user.id}/password',
             data: {'password': newPassword},
           );
-    }, successMessage: 'Credenciales actualizadas.');
+    }, successMessage: context.l10n.t('admin_users_credentials_updated'));
   }
 
   Future<void> _deleteUser(AdminUserItem user) async {
@@ -448,7 +457,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       builder: (context) => AlertDialog(
         title: Text(context.l10n.t('eliminar_usuario')),
         content: Text(
-          'Se eliminara ${user.fullName}. Si ya tiene operaciones vinculadas, el sistema bloqueara la eliminacion.',
+          '${context.l10n.t('admin_users_delete_warning_prefix')} ${user.fullName}. ${context.l10n.t('admin_users_delete_warning_suffix')}',
         ),
         actions: [
           TextButton(
@@ -468,7 +477,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     }
     await _runAdminAction(() async {
       await ref.read(dioProvider).delete<void>('/admin/users/${user.id}');
-    }, successMessage: 'Usuario eliminado.');
+    }, successMessage: context.l10n.t('admin_users_deleted_ok'));
   }
 
   Future<String> _uploadDocumentPhoto(SelectedEvidenceImage file) async {
@@ -488,7 +497,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final data = response.data ?? const <String, dynamic>{};
     final url = data['url']?.toString().trim() ?? '';
     if (url.isEmpty) {
-      throw StateError('No se recibio URL de la foto de documento.');
+      throw StateError(context.l10n.t('admin_users_missing_document_url'));
     }
     return url;
   }
@@ -540,7 +549,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
         );
     } catch (error) {
       _showSnack(
-        'No se pudo cargar sedes: ${AppErrorFormatter.readable(error)}',
+        '${context.l10n.t('admin_users_warehouses_load_failed')}: ${AppErrorFormatter.readable(error)}',
         isError: true,
       );
       return const [];
@@ -557,6 +566,7 @@ class _AdminUsersSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
+    final l10n = context.l10n;
     final totalUsers = summary?.totalUsers ?? items.length;
     final activeCount =
         summary?.activeUsers ?? items.where((item) => item.active).length;
@@ -568,21 +578,38 @@ class _AdminUsersSummary extends StatelessWidget {
         summary?.completedDeliveries ??
         items.fold<int>(0, (sum, item) => sum + item.deliveryCompletedCount);
 
-    return Wrap(
+    return AdaptiveWrapGrid(
       spacing: responsive.itemGap,
       runSpacing: responsive.itemGap,
+      mobileColumns: 1,
+      tabletColumns: 2,
+      desktopSmallColumns: 3,
+      desktopColumns: 4,
+      minItemWidth: 160,
       children: [
-        _SummaryCard(title: 'Usuarios', value: '$totalUsers'),
-        _SummaryCard(title: 'Activos', value: '$activeCount'),
-        _SummaryCard(title: 'Operadores', value: '$operatorCount'),
-        _SummaryCard(title: 'Couriers', value: '$courierCount'),
         _SummaryCard(
-          title: 'Entregas completadas',
+          title: l10n.t('admin_users_summary_users'),
+          value: '$totalUsers',
+        ),
+        _SummaryCard(
+          title: l10n.t('admin_users_summary_active'),
+          value: '$activeCount',
+        ),
+        _SummaryCard(
+          title: l10n.t('admin_users_summary_operators'),
+          value: '$operatorCount',
+        ),
+        _SummaryCard(
+          title: l10n.t('admin_users_summary_couriers'),
+          value: '$courierCount',
+        ),
+        _SummaryCard(
+          title: l10n.t('admin_users_summary_completed_deliveries'),
           value: '$completedDeliveries',
         ),
         if (summary != null && items.isNotEmpty && totalUsers > items.length)
           _SummaryCard(
-            title: 'Mostrando',
+            title: l10n.t('admin_users_summary_showing'),
             value: '${items.length} de $totalUsers',
           ),
       ],
@@ -626,28 +653,24 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    final width = responsive.isMobile ? 150.0 : 180.0;
     final height = responsive.isMobile ? 96.0 : 108.0;
     return SizedBox(
-      width: width,
-      child: SizedBox(
-        height: height,
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(responsive.cardPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                const Spacer(),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+      height: height,
+      child: Card(
+        child: Padding(
+          padding: EdgeInsets.all(responsive.cardPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
+              const Spacer(),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -702,8 +725,10 @@ class _AdminUserCard extends StatelessWidget {
                 ),
                 Tooltip(
                   message: user.isAdmin
-                      ? 'ADMIN no se puede desactivar.'
-                      : 'Cambiar estado del usuario',
+                      ? context.l10n.t(
+                          'admin_users_admin_cannot_disable_tooltip',
+                        )
+                      : context.l10n.t('admin_users_toggle_user_status'),
                   child: Switch(
                     value: user.active,
                     onChanged: (saving || user.isAdmin) ? null : onToggleActive,
@@ -723,7 +748,9 @@ class _AdminUserCard extends StatelessWidget {
                   ),
                 ),
                 Chip(
-                  label: Text('Auth ${user.authProvider}'),
+                  label: Text(
+                    '${context.l10n.t('admin_users_auth')} ${user.authProvider}',
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
                 if (user.managedByAdmin)
@@ -733,7 +760,9 @@ class _AdminUserCard extends StatelessWidget {
                   ),
                 if (user.preferredLanguage.isNotEmpty)
                   Chip(
-                    label: Text('Idioma ${user.preferredLanguage}'),
+                    label: Text(
+                      '${context.l10n.t('language')} ${user.preferredLanguage}',
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
                 if (user.nationality.isNotEmpty)
@@ -758,7 +787,9 @@ class _AdminUserCard extends StatelessWidget {
                 if (user.vehiclePlate?.trim().isNotEmpty == true)
                   Chip(
                     avatar: Icon(Icons.local_shipping_outlined, size: 16),
-                    label: Text('Placa ${user.vehiclePlate}'),
+                    label: Text(
+                      '${context.l10n.t('admin_users_plate')} ${user.vehiclePlate}',
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
                 ...user.warehouseNames.map(
@@ -787,22 +818,26 @@ class _AdminUserCard extends StatelessWidget {
                 if (user.deliveryCreatedCount > 0)
                   _MetricBadge(
                     icon: Icons.add_task_outlined,
-                    label: 'Servicios creados ${user.deliveryCreatedCount}',
+                    label:
+                        '${context.l10n.t('admin_users_services_created')} ${user.deliveryCreatedCount}',
                   ),
                 if (user.deliveryAssignedCount > 0)
                   _MetricBadge(
                     icon: Icons.assignment_ind_outlined,
-                    label: 'Asignados ${user.deliveryAssignedCount}',
+                    label:
+                        '${context.l10n.t('admin_users_assigned')} ${user.deliveryAssignedCount}',
                   ),
                 if (user.deliveryCompletedCount > 0)
                   _MetricBadge(
                     icon: Icons.check_circle_outline,
-                    label: 'Completados ${user.deliveryCompletedCount}',
+                    label:
+                        '${context.l10n.t('admin_users_completed')} ${user.deliveryCompletedCount}',
                   ),
                 if (user.activeDeliveryCount > 0)
                   _MetricBadge(
                     icon: Icons.route_outlined,
-                    label: 'Activos ${user.activeDeliveryCount}',
+                    label:
+                        '${context.l10n.t('admin_users_active')} ${user.activeDeliveryCount}',
                   ),
               ],
             ),
@@ -831,8 +866,10 @@ class _AdminUserCard extends StatelessWidget {
                 ),
                 Tooltip(
                   message: user.isAdmin
-                      ? 'ADMIN no se puede eliminar desde este panel.'
-                      : 'Eliminar usuario',
+                      ? context.l10n.t(
+                          'admin_users_admin_cannot_delete_tooltip',
+                        )
+                      : context.l10n.t('eliminar_usuario'),
                   child: OutlinedButton.icon(
                     onPressed: (saving || user.isAdmin) ? null : onDelete,
                     style: OutlinedButton.styleFrom(
@@ -1015,8 +1052,8 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                 children: [
                   TextFormField(
                     controller: _fullNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre completo',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('admin_users_full_name'),
                     ),
                     validator: (value) =>
                         FormValidators.requiredText(value, label: 'nombre'),
@@ -1024,21 +1061,27 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Correo'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('admin_users_email'),
+                    ),
                     keyboardType: TextInputType.emailAddress,
                     validator: FormValidators.email,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Telefono'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('admin_users_phone'),
+                    ),
                     keyboardType: TextInputType.phone,
                     validator: FormValidators.phone,
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: _preferredLanguage,
-                    decoration: InputDecoration(labelText: 'Idioma'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('language'),
+                    ),
                     items: [
                       DropdownMenuItem(
                         value: 'es',
@@ -1058,8 +1101,8 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   SizedBox(height: 12),
                   TextFormField(
                     controller: _nationalityController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nacionalidad',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('admin_users_nationality'),
                     ),
                     validator: (value) => FormValidators.requiredText(
                       value,
@@ -1070,10 +1113,10 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   DropdownButtonFormField<String>(
                     initialValue: _documentType,
                     decoration: InputDecoration(
-                      labelText: 'Tipo de documento',
+                      labelText: context.l10n.t('admin_users_document_type'),
                       helperText: _requiresWorkerDocument
-                          ? 'Obligatorio para operadores, couriers y soporte.'
-                          : 'Opcional para este rol.',
+                          ? context.l10n.t('admin_users_document_required_hint')
+                          : context.l10n.t('admin_users_optional_for_role'),
                     ),
                     items: [
                       DropdownMenuItem(
@@ -1098,8 +1141,8 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   SizedBox(height: 12),
                   TextFormField(
                     controller: _documentNumberController,
-                    decoration: const InputDecoration(
-                      labelText: 'Numero de documento',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('admin_users_document_number'),
                     ),
                     validator: (value) {
                       if (_requiresWorkerDocument) {
@@ -1135,10 +1178,12 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   TextFormField(
                     controller: _vehiclePlateController,
                     decoration: InputDecoration(
-                      labelText: 'Placa del vehiculo',
+                      labelText: context.l10n.t('admin_users_vehicle_plate'),
                       helperText: _selectedRoles.contains('COURIER')
-                          ? 'Obligatoria para usuarios courier.'
-                          : 'Solo aplica para courier.',
+                          ? context.l10n.t(
+                              'admin_users_vehicle_required_courier',
+                            )
+                          : context.l10n.t('admin_users_vehicle_only_courier'),
                     ),
                     textCapitalization: TextCapitalization.characters,
                     validator: (value) {
@@ -1217,7 +1262,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Roles',
+                      context.l10n.t('admin_users_roles'),
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
@@ -1242,29 +1287,29 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     ),
                   ),
                   if (_selectedRoles.isEmpty)
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Debes seleccionar al menos un rol.',
-                        style: TextStyle(color: Color(0xFFC43D3D)),
+                        context.l10n.t('admin_users_select_one_role'),
+                        style: const TextStyle(color: Color(0xFFC43D3D)),
                       ),
                     ),
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Sedes asignadas',
+                      context.l10n.t('admin_users_assigned_warehouses'),
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
                   const SizedBox(height: 4),
                   if (_requiresWarehouseScope &&
                       widget.warehouseOptions.isEmpty)
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'No hay sedes activas. Crea o activa una sede antes de guardar este usuario.',
-                        style: TextStyle(color: Color(0xFFC43D3D)),
+                        context.l10n.t('admin_users_no_active_warehouses'),
+                        style: const TextStyle(color: Color(0xFFC43D3D)),
                       ),
                     ),
                   ...widget.warehouseOptions.map(
@@ -1273,7 +1318,9 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(warehouse.label),
                       subtitle: warehouse.cityName.isNotEmpty
-                          ? Text('Ciudad: ${warehouse.cityName}')
+                          ? Text(
+                              '${context.l10n.t('ciudad')}: ${warehouse.cityName}',
+                            )
                           : null,
                       onChanged: (checked) {
                         setState(() {
@@ -1287,11 +1334,13 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     ),
                   ),
                   if (_requiresWarehouseScope && _selectedWarehouseIds.isEmpty)
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Debes seleccionar al menos una sede para estos roles.',
-                        style: TextStyle(color: Color(0xFFC43D3D)),
+                        context.l10n.t(
+                          'admin_users_select_warehouse_for_roles',
+                        ),
+                        style: const TextStyle(color: Color(0xFFC43D3D)),
                       ),
                     ),
                 ],
@@ -1438,7 +1487,9 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      title: Text('Actualizar credenciales de ${widget.user.fullName}'),
+      title: Text(
+        '${context.l10n.t('admin_users_update_credentials_of')} ${widget.user.fullName}',
+      ),
       content: SizedBox(
         width: maxDialogWidth,
         child: ConstrainedBox(

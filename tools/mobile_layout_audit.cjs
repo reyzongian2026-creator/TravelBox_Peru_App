@@ -4,6 +4,7 @@ const path = require('path');
 const { chromium, webkit, devices } = require('playwright');
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:8088';
+const AUDIT_ONLY_ROUTE = (process.env.AUDIT_ONLY_ROUTE || '').trim();
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
 const OUTPUT_DIR =
   process.env.OUTPUT_DIR ||
@@ -129,6 +130,11 @@ const dashboardPayload = {
     },
   ],
 };
+
+const auditJwtAccessToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJBRE1JTiJdLCJzdWIiOiJhZG1pbi0wMDEifQ.signature';
+const auditJwtRefreshToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoicmVmcmVzaCIsInN1YiI6ImFkbWluLTAwMSJ9.signature';
 
 const warehouseItems = [
   {
@@ -1102,19 +1108,29 @@ async function runProfile(profile) {
       emailVerified: true,
       profileCompleted: true,
     },
-    accessToken: 'local-token-seeded-admin',
-    refreshToken: 'local-refresh-seeded-admin',
+    accessToken: auditJwtAccessToken,
+    refreshToken: auditJwtRefreshToken,
     pendingVerificationCode: null,
     onboardingCompleted: true,
   };
 
   await context.addInitScript((sessionState) => {
-    const sessionKey = 'flutter.travelbox.session.v2';
-    const onboardingKey = 'flutter.travelbox.onboarding.completed.users.v1';
+    const sessionKeys = [
+      'travelbox.session.v2',
+      'flutter.travelbox.session.v2',
+    ];
+    const onboardingKeys = [
+      'travelbox.onboarding.completed.users.v1',
+      'flutter.travelbox.onboarding.completed.users.v1',
+    ];
     const encodedSession = JSON.stringify(JSON.stringify(sessionState));
     const encodedOnboardingUsers = JSON.stringify([sessionState.user.id]);
-    window.localStorage.setItem(sessionKey, encodedSession);
-    window.localStorage.setItem(onboardingKey, encodedOnboardingUsers);
+    for (const key of sessionKeys) {
+      window.localStorage.setItem(key, encodedSession);
+    }
+    for (const key of onboardingKeys) {
+      window.localStorage.setItem(key, encodedOnboardingUsers);
+    }
   }, seededSession);
 
   await context.route('**/api/v1/**', (route) => handleApiRoute(route, unknownApiRequests));
@@ -1125,20 +1141,30 @@ async function runProfile(profile) {
     await page.goto(`${BASE_URL}/#/admin/dashboard`, { waitUntil: 'domcontentloaded' });
     await page.waitForURL(/#\/admin\/dashboard/, { timeout: 20000 });
     await waitForUi(page, 1400);
-    await openAndCapture(page, '/admin/dashboard', 'dashboard', profileDir);
-    await openAndCapture(page, '/discovery', 'mapa-lista', profileDir);
-    await resetDiscoveryTop(page);
-    await activateMapMode(page);
-    if (!/#\/discovery/.test(page.url())) {
+    if (AUDIT_ONLY_ROUTE) {
+      const routeLabel =
+        AUDIT_ONLY_ROUTE
+          .replace(/^\/+/, '')
+          .replace(/[^a-zA-Z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '') || 'ruta';
+      await openAndCapture(page, AUDIT_ONLY_ROUTE, routeLabel, profileDir);
+    } else {
+      await openAndCapture(page, '/admin/dashboard', 'dashboard', profileDir);
+      await openAndCapture(page, '/discovery', 'mapa-lista', profileDir);
       await resetDiscoveryTop(page);
       await activateMapMode(page);
-    }
-    await waitForUi(page, 900);
-    await captureStates(page, 'mapa-mapa', profileDir);
+      if (!/#\/discovery/.test(page.url())) {
+        await resetDiscoveryTop(page);
+        await activateMapMode(page);
+      }
+      await waitForUi(page, 900);
+      await captureStates(page, 'mapa-mapa', profileDir);
 
-    await openAndCapture(page, '/admin/reservations', 'reservas', profileDir);
-    await openAndCapture(page, '/admin/incidents', 'tickets', profileDir);
-    await openAndCapture(page, '/admin/users', 'usuarios', profileDir);
+      await openAndCapture(page, '/admin/reservations', 'reservas', profileDir);
+      await openAndCapture(page, '/admin/incidents', 'tickets', profileDir);
+      await openAndCapture(page, '/admin/users', 'usuarios', profileDir);
+      await openAndCapture(page, '/admin/warehouses', 'almacenes', profileDir);
+    }
 
     const report = {
       profile: profile.name,
@@ -1179,6 +1205,16 @@ async function main() {
       name: 'android-chrome',
       engine: chromium,
       device: devices['Pixel 7'],
+    },
+    {
+      name: 'windows-chrome',
+      engine: chromium,
+      device: {
+        viewport: { width: 1366, height: 900 },
+        deviceScaleFactor: 1,
+        isMobile: false,
+        hasTouch: false,
+      },
     },
   ];
 

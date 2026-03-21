@@ -22,6 +22,7 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final syncState = ref.watch(myReservationsProvider);
     ref.watch(myReservationIdsSignatureProvider);
     final reservationIds = ref.read(myReservationIdsProvider);
@@ -33,7 +34,7 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
     );
 
     return AppShellScaffold(
-      title: 'Mis reservas',
+      title: l10n.t('my_reservations_title'),
       currentRoute: '/reservations',
       child: content,
     );
@@ -44,19 +45,20 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
     required AsyncValue<List<Reservation>> syncState,
     required List<String> reservationIds,
   }) {
+    final l10n = context.l10n;
     if (syncState.isLoading && reservationIds.isEmpty) {
       return const LoadingStateView();
     }
     if (syncState.hasError && reservationIds.isEmpty) {
       return ErrorStateView(
-        message: 'No se pudieron cargar reservas: ${syncState.error}',
+        message: '${l10n.t('my_reservations_load_failed')}: ${syncState.error}',
         onRetry: () => ref.invalidate(myReservationsProvider),
       );
     }
     if (reservationIds.isEmpty) {
       return EmptyStateView(
-        message: 'Aun no tienes reservas.',
-        actionLabel: 'Buscar almacenes',
+        message: l10n.t('my_reservations_empty'),
+        actionLabel: l10n.t('my_reservations_browse_warehouses'),
         onAction: () => context.go('/discovery'),
       );
     }
@@ -93,13 +95,13 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
               children: [
                 Expanded(
                   child: Text(
-                    'Historial de reservas',
+                    l10n.t('my_reservations_history_title'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 if (totalHistoryPages > 1)
                   Text(
-                    'Pagina ${effectiveHistoryPage + 1} de $totalHistoryPages',
+                    '${l10n.t('my_reservations_page')} ${effectiveHistoryPage + 1} ${l10n.t('my_reservations_of')} $totalHistoryPages',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
               ],
@@ -122,15 +124,15 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
                           ? null
                           : () => setState(() => _historyPage -= 1),
                       icon: const Icon(Icons.chevron_left),
-                      label: Text(context.l10n.t('previous')),
+                      label: Text(l10n.t('previous')),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     FilledButton.icon(
                       onPressed: effectiveHistoryPage >= totalHistoryPages - 1
                           ? null
                           : () => setState(() => _historyPage += 1),
                       icon: const Icon(Icons.chevron_right),
-                      label: Text(context.l10n.t('next')),
+                      label: Text(l10n.t('next')),
                     ),
                   ],
                 ),
@@ -140,7 +142,7 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Esta es tu reserva mas actual. Aun no tienes historial adicional.',
+                  l10n.t('my_reservations_latest_only'),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -192,6 +194,7 @@ class _LatestReservationHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -204,7 +207,7 @@ class _LatestReservationHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Reserva mas actual',
+            l10n.t('my_reservations_latest_title'),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -229,7 +232,10 @@ class _LatestReservationHero extends StatelessWidget {
             runSpacing: 8,
             children: [
               _HeroChip(label: reservation.status.label),
-              _HeroChip(label: '${reservation.bagCount} bultos'),
+              _HeroChip(
+                label:
+                    '${reservation.bagCount} ${l10n.t('my_reservations_bags')}',
+              ),
               _HeroChip(
                 label: PeruTime.formatDateRange(
                   reservation.startAt,
@@ -237,7 +243,8 @@ class _LatestReservationHero extends StatelessWidget {
                 ),
               ),
               _HeroChip(
-                label: 'Total S/${reservation.totalPrice.toStringAsFixed(2)}',
+                label:
+                    '${l10n.t('my_reservations_total_prefix')} S/${reservation.totalPrice.toStringAsFixed(2)}',
               ),
             ],
           ),
@@ -249,7 +256,7 @@ class _LatestReservationHero extends StatelessWidget {
             ),
             onPressed: () => context.push('/reservation/${reservation.id}'),
             icon: const Icon(Icons.receipt_long_outlined),
-            label: Text(context.l10n.t('view_detail')),
+            label: Text(l10n.t('view_detail')),
           ),
         ],
       ),
@@ -282,6 +289,7 @@ class _ReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -307,14 +315,16 @@ class _ReservationCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Codigo ${reservation.code}'),
+              Text(
+                '${l10n.t('my_reservations_code_prefix')} ${reservation.code}',
+              ),
               Text(
                 '${PeruTime.formatDateTime(reservation.startAt)} -> ${PeruTime.formatDateTime(reservation.endAt)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
               Text(
-                'Total S/${reservation.totalPrice.toStringAsFixed(2)}',
+                '${l10n.t('my_reservations_total_prefix')} S/${reservation.totalPrice.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ],

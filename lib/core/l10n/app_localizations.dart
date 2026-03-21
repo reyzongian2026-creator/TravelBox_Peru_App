@@ -25,6 +25,11 @@ class AppLocalizations {
 
   String t(String key) {
     final languageCode = locale.languageCode.toLowerCase();
+    final override = _runtimeOverrides[languageCode]?[key];
+    if (_isUsableLocalizedValue(override, key)) {
+      return override!;
+    }
+
     final localPriority = _priorityTranslations[languageCode]?[key];
     if (_isUsableLocalizedValue(localPriority, key)) {
       return localPriority!;
@@ -33,6 +38,11 @@ class AppLocalizations {
     final localValue = _translations[languageCode]?[key];
     if (_isUsableLocalizedValue(localValue, key)) {
       return localValue!;
+    }
+
+    final englishOverride = _runtimeOverrides['en']?[key];
+    if (languageCode != 'en' && _isUsableLocalizedValue(englishOverride, key)) {
+      return englishOverride!;
     }
 
     final englishPriority = _priorityTranslations['en']?[key];
@@ -70,6 +80,238 @@ class AppLocalizations {
     }
     return true;
   }
+
+  static const Map<String, Map<String, String>> _runtimeOverrides = {
+    'es': {
+      'operator_dashboard_title': 'Panel operativo',
+      'operator_dashboard_intro':
+          'Atencion diaria: cobros en caja, control de reservas y seguimiento de incidencias.',
+      'operator_kpi_pending_cash': 'Cobros pendientes',
+      'operator_kpi_active_reservations': 'Reservas activas',
+      'operator_kpi_incidents': 'Incidencias',
+      'operator_reservations_subtitle':
+          'Busqueda por codigo, cambios de estado y trazabilidad',
+      'operator_qr_subtitle':
+          'Escanear reserva, etiquetar maleta y cerrar entrega con PIN',
+      'operator_pending_approvals_suffix': 'aprobaciones pendientes',
+      'operator_pending_approvals_subtitle':
+          'Hay entregas de delivery esperando validacion de operador/admin.',
+      'operator_no_pending_cash': 'No hay cobros pendientes por validar.',
+      'operator_recent_pending_title': 'Pendientes recientes',
+      'operator_attempt': 'Intento',
+      'operator_reservation': 'Reserva',
+      'operator_pending_cash_load_failed':
+          'No se pudo cargar cobros pendientes',
+      'my_reservations_title': 'Mis reservas',
+      'my_reservations_load_failed': 'No se pudieron cargar reservas',
+      'my_reservations_empty': 'Aun no tienes reservas.',
+      'my_reservations_browse_warehouses': 'Buscar almacenes',
+      'my_reservations_history_title': 'Historial de reservas',
+      'my_reservations_page': 'Pagina',
+      'my_reservations_of': 'de',
+      'my_reservations_latest_only':
+          'Esta es tu reserva mas actual. Aun no tienes historial adicional.',
+      'my_reservations_latest_title': 'Reserva mas actual',
+      'my_reservations_bags': 'bultos',
+      'my_reservations_total_prefix': 'Total',
+      'my_reservations_code_prefix': 'Codigo',
+      'admin_users_title': 'Usuarios operativos',
+      'admin_users_search_label': 'Buscar usuario, correo o telefono',
+      'admin_users_press_load_hint':
+          'Presiona "Ver usuarios" para cargar segun tu filtro.',
+      'admin_users_load_now': 'Cargar ahora',
+      'admin_users_empty_filter': 'No hay usuarios para este filtro.',
+      'admin_users_load_failed': 'No se pudieron cargar usuarios',
+      'admin_users_admin_cannot_be_inactive':
+          'Un usuario ADMIN no puede quedar inactivo.',
+      'admin_users_activated': 'Usuario activado.',
+      'admin_users_deactivated': 'Usuario desactivado.',
+      'admin_users_create_title': 'Crear usuario operativo',
+      'admin_users_create_submit': 'Crear usuario',
+      'admin_users_created_ok': 'Usuario creado correctamente.',
+      'admin_users_edit_title': 'Editar usuario',
+      'admin_users_save_changes': 'Guardar cambios',
+      'admin_users_updated_ok': 'Usuario actualizado.',
+      'admin_users_credentials_updated': 'Credenciales actualizadas.',
+      'admin_users_delete_warning_prefix': 'Se eliminara',
+      'admin_users_delete_warning_suffix':
+          'Si ya tiene operaciones vinculadas, el sistema bloqueara la eliminacion.',
+      'admin_users_deleted_ok': 'Usuario eliminado.',
+      'admin_users_missing_document_url':
+          'No se recibio URL de la foto de documento.',
+      'admin_users_warehouses_load_failed': 'No se pudo cargar sedes',
+      'admin_users_summary_users': 'Usuarios',
+      'admin_users_summary_active': 'Activos',
+      'admin_users_summary_operators': 'Operadores',
+      'admin_users_summary_couriers': 'Couriers',
+      'admin_users_summary_completed_deliveries': 'Entregas completadas',
+      'admin_users_summary_showing': 'Mostrando',
+      'admin_users_auth': 'Auth',
+      'admin_users_plate': 'Placa',
+      'admin_users_services_created': 'Servicios creados',
+      'admin_users_assigned': 'Asignados',
+      'admin_users_completed': 'Completados',
+      'admin_users_active': 'Activos',
+      'admin_users_admin_cannot_disable_tooltip':
+          'ADMIN no se puede desactivar.',
+      'admin_users_toggle_user_status': 'Cambiar estado del usuario',
+      'admin_users_admin_cannot_delete_tooltip':
+          'ADMIN no se puede eliminar desde este panel.',
+      'admin_users_full_name': 'Nombre completo',
+      'admin_users_email': 'Correo',
+      'admin_users_phone': 'Telefono',
+      'admin_users_nationality': 'Nacionalidad',
+      'admin_users_document_type': 'Tipo de documento',
+      'admin_users_document_required_hint':
+          'Obligatorio para operadores, couriers y soporte.',
+      'admin_users_optional_for_role': 'Opcional para este rol.',
+      'admin_users_document_number': 'Numero de documento',
+      'admin_users_vehicle_plate': 'Placa del vehiculo',
+      'admin_users_vehicle_required_courier':
+          'Obligatoria para usuarios courier.',
+      'admin_users_vehicle_only_courier': 'Solo aplica para courier.',
+      'admin_users_roles': 'Roles',
+      'admin_users_select_one_role': 'Debes seleccionar al menos un rol.',
+      'admin_users_assigned_warehouses': 'Sedes asignadas',
+      'admin_users_no_active_warehouses':
+          'No hay sedes activas. Crea o activa una sede antes de guardar este usuario.',
+      'admin_users_select_warehouse_for_roles':
+          'Debes seleccionar al menos una sede para estos roles.',
+      'admin_users_update_credentials_of': 'Actualizar credenciales de',
+      'admin_reservations_title': 'Reservas admin',
+      'admin_reservation_ready_pickup_msg':
+          'Reserva lista para recojo en almacen.',
+      'admin_reservation_completed_from_panel_msg':
+          'Reserva finalizada desde el panel operativo.',
+      'admin_reservation_cancel_requested_msg':
+          'Cancelacion solicitada desde panel operativo/admin.',
+      'admin_incidents_title': 'Incidencias admin',
+      'admin_incidents_operator_title': 'Incidencias operativas',
+      'admin_incidents_support_title': 'Incidencias de soporte',
+      'admin_incidents_csv_generated': 'CSV de incidencias resueltas generado.',
+      'admin_incidents_pdf_title': 'Incidencias resueltas TravelBox',
+      'admin_incidents_print_preview_opened':
+          'Vista imprimible abierta. Desde el navegador puedes guardar como PDF.',
+      'admin_incidents_export_web_only':
+          'La exportacion solo esta disponible en la version web.',
+      'admin_dashboard_title': 'Panel admin',
+      'admin_dashboard_unique_clients': 'Clientes unicos',
+      'tracking_courier': 'Tracking courier',
+    },
+    'en': {
+      'operator_dashboard_title': 'Operations panel',
+      'operator_dashboard_intro':
+          'Daily operations: cash desk approvals, reservation control, and incident follow-up.',
+      'operator_kpi_pending_cash': 'Pending cash approvals',
+      'operator_kpi_active_reservations': 'Active reservations',
+      'operator_kpi_incidents': 'Incidents',
+      'operator_reservations_subtitle':
+          'Search by code, status updates, and traceability',
+      'operator_qr_subtitle':
+          'Scan reservation, tag luggage, and close delivery with PIN',
+      'operator_pending_approvals_suffix': 'pending approvals',
+      'operator_pending_approvals_subtitle':
+          'There are delivery handoffs waiting for operator/admin validation.',
+      'operator_no_pending_cash': 'There are no pending cash approvals.',
+      'operator_recent_pending_title': 'Recent pending items',
+      'operator_attempt': 'Attempt',
+      'operator_reservation': 'Reservation',
+      'operator_pending_cash_load_failed':
+          'Could not load pending cash approvals',
+      'my_reservations_title': 'My reservations',
+      'my_reservations_load_failed': 'Could not load reservations',
+      'my_reservations_empty': 'You do not have reservations yet.',
+      'my_reservations_browse_warehouses': 'Browse warehouses',
+      'my_reservations_history_title': 'Reservation history',
+      'my_reservations_page': 'Page',
+      'my_reservations_of': 'of',
+      'my_reservations_latest_only':
+          'This is your latest reservation. There is no additional history yet.',
+      'my_reservations_latest_title': 'Latest reservation',
+      'my_reservations_bags': 'bags',
+      'my_reservations_total_prefix': 'Total',
+      'my_reservations_code_prefix': 'Code',
+      'admin_users_title': 'Operations users',
+      'admin_users_search_label': 'Search by user, email, or phone',
+      'admin_users_press_load_hint':
+          'Press "View users" to load results by your filters.',
+      'admin_users_load_now': 'Load now',
+      'admin_users_empty_filter': 'No users match this filter.',
+      'admin_users_load_failed': 'Could not load users',
+      'admin_users_admin_cannot_be_inactive':
+          'An ADMIN user cannot be set as inactive.',
+      'admin_users_activated': 'User activated.',
+      'admin_users_deactivated': 'User deactivated.',
+      'admin_users_create_title': 'Create operations user',
+      'admin_users_create_submit': 'Create user',
+      'admin_users_created_ok': 'User created successfully.',
+      'admin_users_edit_title': 'Edit user',
+      'admin_users_save_changes': 'Save changes',
+      'admin_users_updated_ok': 'User updated.',
+      'admin_users_credentials_updated': 'Credentials updated.',
+      'admin_users_delete_warning_prefix': 'You are deleting',
+      'admin_users_delete_warning_suffix':
+          'If there are linked operations, the system will block deletion.',
+      'admin_users_deleted_ok': 'User deleted.',
+      'admin_users_missing_document_url': 'No document photo URL was returned.',
+      'admin_users_warehouses_load_failed': 'Could not load warehouses',
+      'admin_users_summary_users': 'Users',
+      'admin_users_summary_active': 'Active',
+      'admin_users_summary_operators': 'Operators',
+      'admin_users_summary_couriers': 'Couriers',
+      'admin_users_summary_completed_deliveries': 'Completed deliveries',
+      'admin_users_summary_showing': 'Showing',
+      'admin_users_auth': 'Auth',
+      'admin_users_plate': 'Plate',
+      'admin_users_services_created': 'Created services',
+      'admin_users_assigned': 'Assigned',
+      'admin_users_completed': 'Completed',
+      'admin_users_active': 'Active',
+      'admin_users_admin_cannot_disable_tooltip': 'ADMIN cannot be disabled.',
+      'admin_users_toggle_user_status': 'Change user status',
+      'admin_users_admin_cannot_delete_tooltip':
+          'ADMIN cannot be deleted from this panel.',
+      'admin_users_full_name': 'Full name',
+      'admin_users_email': 'Email',
+      'admin_users_phone': 'Phone',
+      'admin_users_nationality': 'Nationality',
+      'admin_users_document_type': 'Document type',
+      'admin_users_document_required_hint':
+          'Required for operators, couriers, and support.',
+      'admin_users_optional_for_role': 'Optional for this role.',
+      'admin_users_document_number': 'Document number',
+      'admin_users_vehicle_plate': 'Vehicle plate',
+      'admin_users_vehicle_required_courier': 'Required for courier users.',
+      'admin_users_vehicle_only_courier': 'Only applies to courier.',
+      'admin_users_roles': 'Roles',
+      'admin_users_select_one_role': 'You must select at least one role.',
+      'admin_users_assigned_warehouses': 'Assigned warehouses',
+      'admin_users_no_active_warehouses':
+          'No active warehouses found. Create or activate one before saving this user.',
+      'admin_users_select_warehouse_for_roles':
+          'You must select at least one warehouse for these roles.',
+      'admin_users_update_credentials_of': 'Update credentials for',
+      'admin_reservations_title': 'Admin reservations',
+      'admin_reservation_ready_pickup_msg':
+          'Reservation ready for pickup at warehouse.',
+      'admin_reservation_completed_from_panel_msg':
+          'Reservation completed from operations panel.',
+      'admin_reservation_cancel_requested_msg':
+          'Cancellation requested from operations/admin panel.',
+      'admin_incidents_title': 'Admin incidents',
+      'admin_incidents_operator_title': 'Operations incidents',
+      'admin_incidents_support_title': 'Support incidents',
+      'admin_incidents_csv_generated': 'Resolved incidents CSV generated.',
+      'admin_incidents_pdf_title': 'Resolved incidents TravelBox',
+      'admin_incidents_print_preview_opened':
+          'Printable preview opened. You can save it as PDF from the browser.',
+      'admin_incidents_export_web_only':
+          'Export is available only in the web version.',
+      'admin_dashboard_title': 'Admin panel',
+      'admin_dashboard_unique_clients': 'Unique clients',
+      'tracking_courier': 'Courier tracking',
+    },
+  };
 
   static const Map<String, Map<String, String>> _priorityTranslations = {
     'es': {

@@ -20,7 +20,7 @@ class TrackingPage extends ConsumerStatefulWidget {
   TrackingPage({
     super.key,
     required this.reservationId,
-    this.title = 'Tracking',
+    this.title = 'tracking',
     this.currentRoute = '/tracking',
     this.backofficeMode = false,
   });
@@ -72,7 +72,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
     );
 
     return AppShellScaffold(
-      title: widget.title,
+      title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
       child: reservationAsync.when(
         data: (reservation) {

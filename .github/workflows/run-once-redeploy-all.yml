@@ -1,5 +1,5 @@
 name: Run Once - Redeploy Full + Build Clients
-# trigger: 2026-03-19 responsive-refactor deploy
+# trigger: 2026-03-20 full-front-back-sync deploy
 
 on:
   push:

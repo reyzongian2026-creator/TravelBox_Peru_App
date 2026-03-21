@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/app_user.dart';
@@ -45,7 +46,7 @@ final adminIncidentsProvider = FutureProvider<List<AdminIncidentItem>>((
 class AdminIncidentsPage extends ConsumerStatefulWidget {
   AdminIncidentsPage({
     super.key,
-    this.title = 'Admin incidencias',
+    this.title = 'admin_incidents_title',
     this.currentRoute = '/admin/incidents',
   });
 
@@ -82,7 +83,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
         session.user?.role == UserRole.support;
 
     return AppShellScaffold(
-      title: widget.title,
+      title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
       child: Column(
         children: [
@@ -168,9 +169,14 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                 return ListView(
                   padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   children: [
-                    Wrap(
+                    AdaptiveWrapGrid(
                       spacing: itemGap,
                       runSpacing: itemGap,
+                      mobileColumns: 1,
+                      tabletColumns: 2,
+                      desktopSmallColumns: 3,
+                      desktopColumns: 3,
+                      minItemWidth: 160,
                       children: [
                         _IncidentKpi(
                           title: context.l10n.t('abiertos'),
@@ -547,20 +553,19 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     if (!mounted) return;
     _showExportFeedback(
       success: success,
-      successMessage: 'CSV de incidencias resueltas generado.',
+      successMessage: context.l10n.t('admin_incidents_csv_generated'),
     );
   }
 
   Future<void> _exportResolvedPdf(List<AdminIncidentItem> items) async {
     final success = await openPrintPreview(
-      title: 'Incidencias resueltas TravelBox',
+      title: context.l10n.t('admin_incidents_pdf_title'),
       htmlContent: _buildResolvedHtml(items),
     );
     if (!mounted) return;
     _showExportFeedback(
       success: success,
-      successMessage:
-          'Vista imprimible abierta. Desde el navegador puedes guardar como PDF.',
+      successMessage: context.l10n.t('admin_incidents_print_preview_opened'),
     );
   }
 
@@ -573,7 +578,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
         content: Text(
           success
               ? successMessage
-              : 'La exportacion solo esta disponible en la version web.',
+              : context.l10n.t('admin_incidents_export_web_only'),
         ),
       ),
     );
@@ -681,30 +686,26 @@ class _IncidentKpi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    final width = responsive.isMobile ? 150.0 : 180.0;
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: EdgeInsets.all(responsive.cardPadding),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title),
-            SizedBox(height: responsive.itemGap),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: color,
-              ),
+    return Container(
+      padding: EdgeInsets.all(responsive.cardPadding),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title),
+          SizedBox(height: responsive.itemGap),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

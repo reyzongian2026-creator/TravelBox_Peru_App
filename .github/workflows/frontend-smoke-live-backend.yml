@@ -27,16 +27,41 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Run smoke test against live backend
-        if: ${{ secrets.SMOKE_API_BASE_URL != '' }}
+      - name: Validate required live smoke secrets
+        env:
+          SMOKE_API_BASE_URL: ${{ secrets.SMOKE_API_BASE_URL }}
+          SMOKE_CLIENT_EMAIL: ${{ secrets.SMOKE_CLIENT_EMAIL }}
+          SMOKE_CLIENT_PASSWORD: ${{ secrets.SMOKE_CLIENT_PASSWORD }}
+          SMOKE_ADMIN_EMAIL: ${{ secrets.SMOKE_ADMIN_EMAIL }}
+          SMOKE_ADMIN_PASSWORD: ${{ secrets.SMOKE_ADMIN_PASSWORD }}
         run: |
-          flutter test test/live_backend_smoke_test.dart \
+          set -euo pipefail
+          assert_real_secret() {
+            local key="$1"
+            local value="$2"
+            local normalized="${value,,}"
+            normalized="${normalized// /}"
+            [[ -n "$value" ]] || (echo "Missing secret ${key}" && exit 1)
+            case "$normalized" in
+              changeme|change-me|replace-me|replace_me|placeholder|dummy|todo|tbd|__pending_meta__)
+                echo "Secret ${key} still looks like a placeholder" >&2
+                exit 1
+                ;;
+            esac
+          }
+          assert_real_secret "SMOKE_API_BASE_URL" "${SMOKE_API_BASE_URL}"
+          assert_real_secret "SMOKE_CLIENT_EMAIL" "${SMOKE_CLIENT_EMAIL}"
+          assert_real_secret "SMOKE_CLIENT_PASSWORD" "${SMOKE_CLIENT_PASSWORD}"
+          assert_real_secret "SMOKE_ADMIN_EMAIL" "${SMOKE_ADMIN_EMAIL}"
+          assert_real_secret "SMOKE_ADMIN_PASSWORD" "${SMOKE_ADMIN_PASSWORD}"
+
+      - name: Run smoke tests against live backend (client + admin)
+        run: |
+          flutter test \
+            test/live_backend_smoke_test.dart \
+            test/live_backend_admin_smoke_test.dart \
             --dart-define=API_BASE_URL=${{ secrets.SMOKE_API_BASE_URL }} \
             --dart-define=SMOKE_CLIENT_EMAIL=${{ secrets.SMOKE_CLIENT_EMAIL }} \
-            --dart-define=SMOKE_CLIENT_PASSWORD=${{ secrets.SMOKE_CLIENT_PASSWORD }}
-
-      - name: Skip smoke test if secrets are missing
-        if: ${{ secrets.SMOKE_API_BASE_URL == '' }}
-        run: |
-          echo "Skipping live smoke test."
-          echo "Set GitHub Secrets: SMOKE_API_BASE_URL, SMOKE_CLIENT_EMAIL, SMOKE_CLIENT_PASSWORD."
+            --dart-define=SMOKE_CLIENT_PASSWORD=${{ secrets.SMOKE_CLIENT_PASSWORD }} \
+            --dart-define=SMOKE_ADMIN_EMAIL=${{ secrets.SMOKE_ADMIN_EMAIL }} \
+            --dart-define=SMOKE_ADMIN_PASSWORD=${{ secrets.SMOKE_ADMIN_PASSWORD }}
