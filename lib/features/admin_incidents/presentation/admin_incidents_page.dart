@@ -80,7 +80,7 @@ class AdminIncidentsPageResult {
 class AdminIncidentsPage extends ConsumerStatefulWidget {
   AdminIncidentsPage({
     super.key,
-    this.title = 'admin_incidents_title',
+    this.title = 'admin_incidents',
     this.currentRoute = '/admin/incidents',
   });
 

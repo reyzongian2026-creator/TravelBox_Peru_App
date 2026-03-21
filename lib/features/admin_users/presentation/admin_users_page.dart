@@ -114,7 +114,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final l10n = context.l10n;
 
     return AppShellScaffold(
-      title: l10n.t('admin_users_title'),
+      title: l10n.t('operations_users'),
       currentRoute: '/admin/users',
       child: Column(
         children: [

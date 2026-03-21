@@ -1125,7 +1125,7 @@ String _localizeShellTitle(String rawTitle, AppLocalizations l10n) {
     case 'admin reservas':
       return l10n.t('reservas');
     case 'usuarios operativos':
-      return l10n.t('usuarios_y_roles');
+      return l10n.t('users_and_roles');
     case 'perfil':
       return l10n.t('profile');
     default:
