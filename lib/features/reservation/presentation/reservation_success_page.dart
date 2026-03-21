@@ -58,7 +58,9 @@ class ReservationSuccessPage extends ConsumerWidget {
       body: reservation.when(
         data: (item) {
           if (item == null) {
-            return EmptyStateView(message: 'No encontramos la reserva.');
+            return EmptyStateView(
+              message: context.l10n.t('reservation_not_found'),
+            );
           }
           final notifications = ref.watch(notificationCenterControllerProvider);
           final pickupPin = _latestNotificationPayloadValue(
@@ -85,7 +87,7 @@ class ReservationSuccessPage extends ConsumerWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Codigo ${item.code}',
+                        '${context.l10n.t('my_reservations_code_prefix')} ${item.code}',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 12),
@@ -100,8 +102,12 @@ class ReservationSuccessPage extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Text(
                         pendingOffline
-                            ? 'Tu reserva existe, pero el QR de check-in aun no esta habilitado porque el pago sigue pendiente.'
-                            : 'Este QR solo sirve para check-in de equipaje. No es un QR de pago.',
+                            ? context.l10n.t(
+                                'reservation_success_qr_pending_message',
+                              )
+                            : context.l10n.t(
+                                'reservation_success_qr_checkin_only_message',
+                              ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -114,9 +120,11 @@ class ReservationSuccessPage extends ConsumerWidget {
                   leading: const Icon(Icons.qr_code_2_outlined),
                   title: Text(context.l10n.t('identification_data')),
                   subtitle: Text(
-                    'QR/ID reserva: ${item.code}\n'
-                    'ID maleta: ${bagTagId ?? 'Se asigna al ingresar equipaje'}\n'
-                    'PIN vigente: ${pickupPin ?? 'Pendiente de generacion o ya validado'}',
+                    '${context.l10n.t('reservation_qr_id_prefix')}: ${item.code}\n'
+                    '${context.l10n.t('reservation_bag_id')}: '
+                    '${bagTagId ?? context.l10n.t('reservation_bag_id_pending')}\n'
+                    '${context.l10n.t('reservation_pin_active_prefix')}: '
+                    '${pickupPin ?? context.l10n.t('reservation_pickup_pin_pending_or_validated')}',
                   ),
                 ),
               ),
@@ -130,11 +138,21 @@ class ReservationSuccessPage extends ConsumerWidget {
                       '-';
                   final flow = payment['paymentFlow']?.toString() ?? '-';
                   final method = payment['paymentMethod']?.toString() ?? '-';
+                  final paymentStateLabel = paymentStatusLabel(
+                    context,
+                    paymentState,
+                  );
+                  final methodLabel = paymentMethodLabel(context, method);
                   return Card(
                     child: ListTile(
                       leading: const Icon(Icons.payments_outlined),
-                      title: Text('Pago: $paymentState'),
-                      subtitle: Text('Flujo: $flow\nMetodo: $method'),
+                      title: Text(
+                        '${context.l10n.t('reservation_payment')}: $paymentStateLabel',
+                      ),
+                      subtitle: Text(
+                        '${context.l10n.t('reservation_flow_method')}: $flow\n'
+                        '${context.l10n.t('reservation_method')}: $methodLabel',
+                      ),
                     ),
                   );
                 },
@@ -150,9 +168,7 @@ class ReservationSuccessPage extends ConsumerWidget {
                       context.l10n.t('como_dejar_de_estar_pendiente'),
                     ),
                     subtitle: Text(
-                      '1. Paga en caja o al encargado.\n'
-                      '2. El operador debe aprobar el cobro en su panel.\n'
-                      '3. Cuando el pago pase a CONFIRMED, el QR se habilitara para check-in.',
+                      context.l10n.t('reservation_success_pending_steps'),
                     ),
                   ),
                 ),
@@ -177,8 +193,8 @@ class ReservationSuccessPage extends ConsumerWidget {
                       onPressed: () => context.push('/tracking/${item.id}'),
                       child: Text(
                         item.status == ReservationStatus.checkinPending
-                            ? 'Ver tracking de recojo'
-                            : 'Ver tracking',
+                            ? context.l10n.t('reservation_tracking_pickup')
+                            : context.l10n.t('tracking'),
                       ),
                     ),
                   if (!canTrackDelivery &&
@@ -215,7 +231,7 @@ class ReservationSuccessPage extends ConsumerWidget {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar ticket: $error',
+          message: '${context.l10n.t('reservation_load_failed')}: $error',
           onRetry: () => ref.invalidate(reservationByIdProvider(reservationId)),
         ),
       ),
@@ -243,8 +259,8 @@ class _PendingQrPlaceholder extends StatelessWidget {
         children: [
           const Icon(Icons.hourglass_top_rounded, size: 44),
           const SizedBox(height: 10),
-          const Text(
-            'QR pendiente',
+          Text(
+            context.l10n.t('reservation_success_qr_pending_label'),
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),

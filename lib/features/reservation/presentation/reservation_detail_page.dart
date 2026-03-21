@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http_parser/http_parser.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
+import '../../../shared/state/luggage_photo_memory_store.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/status_localizer.dart';
@@ -364,60 +364,22 @@ class ReservationDetailPage extends ConsumerWidget {
       return;
     }
 
-    final progress = ValueNotifier<double>(0);
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(context.l10n.t('reservation_uploading_evidence')),
-          content: ValueListenableBuilder<double>(
-            valueListenable: progress,
-            builder: (context, value, child) => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(value: value <= 0 ? null : value),
-                const SizedBox(height: 10),
-                Text(
-                  value <= 0
-                      ? context.l10n.t('reservation_preparing_file')
-                      : '${context.l10n.t('reservation_progress')} '
-                            '${(value * 100).toStringAsFixed(0)}%',
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
     try {
-      await ref
-          .read(dioProvider)
-          .post<Map<String, dynamic>>(
-            '/inventory/evidences/upload',
-            data: FormData.fromMap({
-              'reservationId': reservation.id,
-              'type': 'CLIENT_HANDOFF_PHOTO',
-              'observation': 'Foto inicial tomada por cliente.',
-              'file': MultipartFile.fromBytes(
-                selected.bytes,
-                filename: selected.filename,
-                contentType: MediaType.parse(selected.mimeType),
-              ),
-            }),
-            onSendProgress: (sent, total) {
-              if (total <= 0) {
-                return;
-              }
-              progress.value = (sent / total).clamp(0, 1);
-            },
+      final session = ref.read(sessionControllerProvider);
+      ref
+          .read(luggagePhotoMemoryStoreProvider.notifier)
+          .addClientHandoffPhoto(
+            reservation: reservation,
+            bytes: selected.bytes,
+            mimeType: selected.mimeType,
+            filename: selected.filename,
+            capturedByUserId: session.user?.id,
+            capturedByName: session.user?.name,
           );
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
       ref.invalidate(reservationByIdProvider(reservationId));
       ref.invalidate(myReservationsProvider);
+      ref.invalidate(adminReservationsProvider);
+      ref.invalidate(adminReservationListProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.t('reservation_photo_uploaded'))),
@@ -425,7 +387,6 @@ class ReservationDetailPage extends ConsumerWidget {
       }
     } catch (error) {
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -434,8 +395,6 @@ class ReservationDetailPage extends ConsumerWidget {
           ),
         );
       }
-    } finally {
-      progress.dispose();
     }
   }
 

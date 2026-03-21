@@ -9,6 +9,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/qr_handoff_controller.dart';
+import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/operation_guide.dart';
 import '../../payments/presentation/cash_payments_page.dart';
 import '../../reservation/presentation/reservation_providers.dart';
@@ -48,6 +49,7 @@ class OperatorDashboardPage extends ConsumerWidget {
     final reservations = ref.watch(adminReservationsProvider);
     final pendingApprovals =
         ref.watch(opsPendingApprovalsProvider).valueOrNull ?? 0;
+    final session = ref.watch(sessionControllerProvider);
 
     final reservationItems = reservations.valueOrNull ?? const <Reservation>[];
     final activeReservations = reservationItems
@@ -62,7 +64,9 @@ class OperatorDashboardPage extends ConsumerWidget {
         .where((item) => item.status == ReservationStatus.incident)
         .length;
     final pendingCashCount = pendingCash.valueOrNull?.length ?? 0;
-    final operatorGuide = resolveOperationGuide('/operator/panel');
+    final operatorGuide = session.locale.languageCode.toLowerCase() == 'es'
+        ? resolveOperationGuide('/operator/panel')
+        : null;
 
     return AppShellScaffold(
       title: l10n.t('operator_dashboard_title'),

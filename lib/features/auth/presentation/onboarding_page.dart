@@ -27,38 +27,35 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final session = ref.watch(sessionControllerProvider);
     final firstName = session.user?.firstName.trim();
     final safeName = (firstName == null || firstName.isEmpty)
-        ? 'cliente'
+        ? l10n.t('onboarding_guest_name')
         : firstName;
 
     final slides = [
       _TutorialSlide(
-        title: 'Bienvenido, $safeName',
-        subtitle:
-            'Esta guía rápida te muestra cómo reservar, pagar y recoger tu equipaje en TravelBox.',
+        title: '${l10n.t('onboarding_welcome_title_prefix')}, $safeName',
+        subtitle: l10n.t('onboarding_intro_subtitle'),
         icon: Icons.waving_hand_outlined,
         imageAsset: 'assets/onboarding/slide_reserva.png',
       ),
-      const _TutorialSlide(
-        title: '1. Elige sede y horario',
-        subtitle:
-            'Busca la sede en el mapa, revisa precio por hora y selecciona tu rango de tiempo.',
+      _TutorialSlide(
+        title: l10n.t('onboarding_slide_1_title'),
+        subtitle: l10n.t('onboarding_slide_1_subtitle'),
         icon: Icons.location_on_outlined,
         imageAsset: 'assets/onboarding/slide_reserva.png',
       ),
-      const _TutorialSlide(
-        title: '2. Paga y confirma',
-        subtitle:
-            'Confirma el pago para activar la reserva y recibir tu QR de atención.',
+      _TutorialSlide(
+        title: l10n.t('onboarding_slide_2_title'),
+        subtitle: l10n.t('onboarding_slide_2_subtitle'),
         icon: Icons.qr_code_2_outlined,
         imageAsset: 'assets/onboarding/slide_pago.png',
       ),
-      const _TutorialSlide(
-        title: '3. Entrega y recojo final',
-        subtitle:
-            'En sede validan tu QR, registran evidencias y luego completas el recojo de forma segura.',
+      _TutorialSlide(
+        title: l10n.t('onboarding_slide_3_title'),
+        subtitle: l10n.t('onboarding_slide_3_subtitle'),
         icon: Icons.luggage_outlined,
         imageAsset: 'assets/onboarding/slide_recojo.png',
       ),
@@ -142,8 +139,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                       ),
                       child: Text(
                         _completing
-                            ? 'Cargando...'
-                            : (isLast ? 'Empezar ahora' : 'Siguiente'),
+                            ? l10n.t('onboarding_loading')
+                            : (isLast
+                                  ? l10n.t('onboarding_start_now')
+                                  : l10n.t('next')),
                       ),
                     ),
                   ],
@@ -277,4 +276,3 @@ class _TutorialSlide {
   final IconData icon;
   final String imageAsset;
 }
-

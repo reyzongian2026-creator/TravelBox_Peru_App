@@ -1,14 +1,13 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http_parser/http_parser.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
+import '../../../shared/state/luggage_photo_memory_store.dart';
 import '../../../shared/state/qr_handoff_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
@@ -77,7 +76,8 @@ class OpsQrHandoffPage extends ConsumerStatefulWidget {
 class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   final _scanController = TextEditingController();
   final _deliveryCustomerMessageController = TextEditingController(
-    text: 'Hola, por favor presenta tu QR para validar tu reserva y maleta.',
+    text:
+        'Hello, please show your QR to validate your reservation and luggage.',
   );
   final _pickupPinInputController = TextEditingController();
   final _deliveryPinInputController = TextEditingController();
@@ -139,15 +139,14 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     final canApproveOperator = session.canAccessAdmin || session.isAdmin;
 
     return AppShellScaffold(
-      title: 'Operacion QR y PIN',
+      title: context.l10n.t('ops_qr_title'),
       currentRoute: widget.currentRoute,
       child: reservationsAsync.when(
         data: (reservations) {
           if (reservations.isEmpty) {
             return EmptyStateView(
-              message:
-                  'No hay reservas visibles para tu perfil. Crea una reserva o toma un servicio primero.',
-              actionLabel: 'Recargar',
+              message: context.l10n.t('ops_qr_empty_reservations'),
+              actionLabel: context.l10n.t('recargar'),
               onAction: () => ref.invalidate(opsReservationsProvider),
             );
           }
@@ -173,7 +172,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                       selectedCase: selectedCase,
                       compact: compactVerticalLayout,
                     ),
-                    if (!compactVerticalLayout)
+                    if (!compactVerticalLayout &&
+                        session.locale.languageCode.toLowerCase() == 'es')
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                         child: OperationGuideSummaryCard(
@@ -181,23 +181,23 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                           compact: true,
                         ),
                       ),
-                    const TabBar(
+                    TabBar(
                       tabs: [
                         Tab(
                           icon: Icon(Icons.qr_code_scanner),
-                          text: 'Escanear',
+                          text: context.l10n.t('ops_qr_tab_scan'),
                         ),
                         Tab(
                           icon: Icon(Icons.storefront_outlined),
-                          text: 'Presencial',
+                          text: context.l10n.t('ops_qr_tab_presential'),
                         ),
                         Tab(
                           icon: Icon(Icons.local_shipping_outlined),
-                          text: 'Delivery',
+                          text: context.l10n.t('delivery'),
                         ),
                         Tab(
                           icon: Icon(Icons.notifications_active_outlined),
-                          text: 'Aprobaciones',
+                          text: context.l10n.t('ops_qr_tab_approvals'),
                         ),
                       ],
                     ),
@@ -226,7 +226,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar módulo QR/PIN: $error',
+          message: '${context.l10n.t('ops_qr_load_failed')}: $error',
           onRetry: () => ref.invalidate(opsReservationsProvider),
         ),
       ),
@@ -253,7 +253,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'QR + Pin + validaciones de equipaje',
+            context.l10n.t('admin_dashboard_qr_pin_subtitle'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -263,8 +263,10 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           const SizedBox(height: 8),
           Text(
             selectedReservation == null
-                ? 'Escanea o ingresa un QR para vincular una reserva y continuar.'
-                : 'Reserva seleccionada: ${selectedReservation.code} - ${selectedCase?.stage.label ?? 'sin etapa'}',
+                ? context.l10n.t('ops_qr_header_hint_empty')
+                : '${context.l10n.t('ops_qr_header_selected_prefix')}: '
+                      '${selectedReservation.code} - '
+                      '${_stageLabel(context, selectedCase?.stage)}',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.94)),
           ),
         ],
@@ -295,9 +297,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       children: [
         TextField(
           controller: _scanController,
-          decoration: const InputDecoration(
-            labelText: 'Escanear QR o código',
-            hintText: 'Ejemplo: TRAVELBOX|RESERVATION|TBX-12345 o TBX-12345',
+          decoration: InputDecoration(
+            labelText: context.l10n.t('ops_qr_scan_input_label'),
+            hintText: context.l10n.t('ops_qr_scan_input_hint'),
             prefixIcon: Icon(Icons.qr_code_scanner),
           ),
         ),
@@ -325,8 +327,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         SizedBox(height: 14),
         DropdownButtonFormField<String>(
           initialValue: _customerLanguage,
-          decoration: const InputDecoration(
-            labelText: 'Idioma del cliente para mensajes',
+          decoration: InputDecoration(
+            labelText: context.l10n.t('ops_qr_customer_language_for_messages'),
           ),
           items: languageEntries.entries
               .map(
@@ -344,35 +346,33 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         ),
         const SizedBox(height: 14),
         if (selectedReservation == null)
-          const Card(
+          Card(
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Text(
-                'Aún no hay reserva seleccionada. Escanea el QR del cliente para continuar.',
+                context.l10n.t('ops_qr_no_selected_reservation_hint'),
               ),
             ),
           )
         else ...[
           _ReservationContextCard(
             reservation: selectedReservation,
-            stageLabel: selectedCase?.stage.label ?? 'Sin etapa',
+            stageLabel: _stageLabel(context, selectedCase?.stage),
           ),
           const SizedBox(height: 12),
           _QrPairCard(
-            title: 'QR cliente',
-            subtitle: 'Se usa para ubicar reserva y validar identidad inicial.',
+            title: context.l10n.t('ops_qr_customer_qr_title'),
+            subtitle: context.l10n.t('ops_qr_customer_qr_subtitle'),
             payload:
                 selectedCase?.customerQrPayload ??
                 'TRAVELBOX|RESERVATION|${selectedReservation.code}',
           ),
           const SizedBox(height: 12),
           _QrPairCard(
-            title: 'QR maleta',
-            subtitle:
-                'Etiqueta operativa para pegar a la maleta y hacer match con la reserva.',
+            title: context.l10n.t('ops_qr_bag_qr_title'),
+            subtitle: context.l10n.t('ops_qr_bag_qr_subtitle'),
             payload: selectedCase?.bagTagQrPayload,
-            emptyLabel:
-                'Aún no hay ID de maleta. Genera etiqueta para registrar custodia.',
+            emptyLabel: context.l10n.t('ops_qr_bag_qr_empty'),
           ),
           const SizedBox(height: 12),
           Row(
@@ -429,7 +429,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
             LinearProgressIndicator(value: _storeUploadProgress),
             const SizedBox(height: 6),
             Text(
-              'Subiendo fotos: ${((_storeUploadProgress ?? 0) * 100).toStringAsFixed(0)}%',
+              '${context.l10n.t('ops_qr_uploading_photos_prefix')}: '
+              '${((_storeUploadProgress ?? 0) * 100).toStringAsFixed(0)}%',
             ),
           ],
         ],
@@ -443,13 +444,12 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   ) {
     if (selectedReservation == null || selectedCase == null) {
       return EmptyStateView(
-        message: 'Selecciona una reserva en la pestaña Escanear.',
+        message: context.l10n.t('ops_qr_select_reservation_scan_tab'),
       );
     }
 
     final translatedPreview = translateAdminMessage(
-      messageInSpanish:
-          'Tu reserva está lista para recojo. Presenta tu QR y PIN de seguridad.',
+      messageInSpanish: context.l10n.t('ops_qr_customer_ready_for_pickup_msg'),
       targetLanguage: selectedCase.customerLanguage,
     );
 
@@ -458,7 +458,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       children: [
         _ReservationContextCard(
           reservation: selectedReservation,
-          stageLabel: selectedCase.stage.label,
+          stageLabel: _stageLabel(context, selectedCase.stage),
         ),
         const SizedBox(height: 12),
         Card(
@@ -468,17 +468,24 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Flujo presencial',
+                  context.l10n.t('ops_qr_presential_flow_title'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text('ID maleta: ${selectedCase.bagTagId ?? 'No generado'}'),
-                Text('PIN activo: ${selectedCase.pickupPin ?? 'No generado'}'),
+                Text(
+                  '${context.l10n.t('reservation_bag_id')}: '
+                  '${selectedCase.bagTagId ?? context.l10n.t('ops_qr_not_generated')}',
+                ),
+                Text(
+                  '${context.l10n.t('reservation_pin_active_prefix')}: '
+                  '${selectedCase.pickupPin ?? context.l10n.t('ops_qr_not_generated')}',
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  'Mensaje cliente (${selectedCase.customerLanguage.toUpperCase()}): $translatedPreview',
+                  '${context.l10n.t('ops_qr_customer_message_prefix')} '
+                  '(${selectedCase.customerLanguage.toUpperCase()}): $translatedPreview',
                 ),
               ],
             ),
@@ -513,9 +520,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         TextField(
           controller: _pickupPinInputController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'PIN entregado por cliente',
-            hintText: 'Ingresa el PIN para confirmar entrega presencial',
+          decoration: InputDecoration(
+            labelText: context.l10n.t('ops_qr_pin_from_customer_label'),
+            hintText: context.l10n.t('ops_qr_pin_from_customer_hint'),
           ),
         ),
         const SizedBox(height: 12),
@@ -536,7 +543,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   ) {
     if (selectedReservation == null || selectedCase == null) {
       return EmptyStateView(
-        message: 'Selecciona una reserva en la pestaña Escanear.',
+        message: context.l10n.t('ops_qr_select_reservation_scan_tab'),
       );
     }
 
@@ -551,7 +558,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       children: [
         _ReservationContextCard(
           reservation: selectedReservation,
-          stageLabel: selectedCase.stage.label,
+          stageLabel: _stageLabel(context, selectedCase.stage),
         ),
         const SizedBox(height: 12),
         SwitchListTile(
@@ -567,9 +574,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                       );
                 }),
           title: Text(context.l10n.t('validar_identidad_de_quien_recibe')),
-          subtitle: Text(
-            'El courier verifica nombre/documento antes de entregar.',
-          ),
+          subtitle: Text(context.l10n.t('ops_qr_delivery_identity_hint')),
         ),
         SwitchListTile(
           value: selectedCase.luggageMatched,
@@ -584,7 +589,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                       );
                 }),
           title: Text(context.l10n.t('validar_que_maleta_e_id_coincidan')),
-          subtitle: Text('ID esperado: ${selectedCase.bagTagId ?? '-'}'),
+          subtitle: Text(
+            '${context.l10n.t('ops_qr_expected_id_prefix')}: ${selectedCase.bagTagId ?? '-'}',
+          ),
         ),
         SizedBox(height: 10),
         TextField(
@@ -593,16 +600,16 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           maxLines: 4,
           decoration: InputDecoration(
             labelText:
-                'Mensaje de cliente (${languageLabel(_messageSourceLanguage)})',
-            hintText:
-                'Ej. Hello, please show your QR to validate your reservation and luggage.',
+                '${context.l10n.t('ops_qr_customer_message_label')} '
+                '(${languageLabel(_messageSourceLanguage)})',
+            hintText: context.l10n.t('ops_qr_customer_message_hint'),
           ),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _messageSourceLanguage,
-          decoration: const InputDecoration(
-            labelText: 'Idioma original del mensaje',
+          decoration: InputDecoration(
+            labelText: context.l10n.t('ops_qr_message_source_language_label'),
           ),
           items: const ['es', 'en', 'de', 'fr', 'it', 'pt']
               .map(
@@ -623,8 +630,11 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Text(
-              'Vista operador (ES):\n${translation.messageInSpanish}\n\n'
-              'Vista cliente (${selectedCase.customerLanguage.toUpperCase()}):\n${translation.messageForCustomerLanguage}',
+              '${context.l10n.t('ops_qr_operator_view_prefix')} (ES):\n'
+              '${translation.messageInSpanish}\n\n'
+              '${context.l10n.t('ops_qr_customer_view_prefix')} '
+              '(${selectedCase.customerLanguage.toUpperCase()}):\n'
+              '${translation.messageForCustomerLanguage}',
             ),
           ),
         ),
@@ -644,8 +654,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
             title: Text(context.l10n.t('pin_para_cierre_delivery')),
             subtitle: Text(
               selectedCase.operatorApprovalGranted
-                  ? 'PIN aprobado: ${selectedCase.pickupPin ?? '-'}'
-                  : 'Aún no aprobado por operador/admin.',
+                  ? '${context.l10n.t('ops_qr_pin_approved_prefix')}: '
+                        '${selectedCase.pickupPin ?? '-'}'
+                  : context.l10n.t('ops_qr_pin_not_approved_yet'),
             ),
           ),
         ),
@@ -653,9 +664,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         TextField(
           controller: _deliveryPinInputController,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'PIN confirmado por cliente',
-            hintText: 'Courier valida el PIN recibido para cerrar entrega',
+          decoration: InputDecoration(
+            labelText: context.l10n.t('ops_qr_pin_confirmed_by_customer_label'),
+            hintText: context.l10n.t('ops_qr_pin_confirmed_by_customer_hint'),
           ),
         ),
         const SizedBox(height: 12),
@@ -680,7 +691,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
 
     if (notifications.isEmpty) {
       return EmptyStateView(
-        message: 'No hay solicitudes de aprobación pendientes.',
+        message: context.l10n.t('ops_qr_no_pending_approvals'),
       );
     }
 
@@ -719,10 +730,14 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                   ],
                 ),
                 SizedBox(height: 6),
-                Text('Operador: ${item.messageForOperator}'),
+                Text(
+                  '${context.l10n.t('ops_qr_operator_message_prefix')}: '
+                  '${item.messageForOperator}',
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  'Cliente (traducido): ${item.messageForCustomerTranslated}',
+                  '${context.l10n.t('ops_qr_customer_translated_prefix')}: '
+                  '${item.messageForCustomerTranslated}',
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -797,7 +812,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   }) async {
     final scanned = _scanController.text.trim();
     if (scanned.isEmpty) {
-      _showMessage('Ingresa o escanea un código QR primero.');
+      _showMessage(context.l10n.t('ops_qr_scan_or_enter_code_first'));
       return;
     }
     final controller = ref.read(qrHandoffControllerProvider.notifier);
@@ -806,7 +821,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       reservations: reservations,
     );
     if (reservation == null) {
-      _showMessage('No se encontro reserva para el QR ingresado.');
+      _showMessage(context.l10n.t('ops_qr_reservation_not_found_for_qr'));
       return;
     }
     await _runAction(() async {
@@ -820,7 +835,10 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         _bagUnits = reservation.bagCount.clamp(1, 10);
         _messageSourceLanguage = caseItem.customerLanguage;
       });
-      _showMessage('Reserva ${reservation.code} vinculada por QR.');
+      _showMessage(
+        '${context.l10n.t('ops_qr_reservation_linked_prefix')} '
+        '${reservation.code}.',
+      );
     });
   }
 
@@ -849,43 +867,38 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       setState(() {
         _storeUploadProgress = 0;
       });
-      final response = await ref
-          .read(dioProvider)
-          .post<Map<String, dynamic>>(
-            '/ops/qr-handoff/reservations/${reservation.id}/store-with-photos',
-            data: FormData.fromMap({
-              'notes': 'Ingreso a almacén con fotos por bulto.',
-              'files': bagPhotos
-                  .map(
-                    (image) => MultipartFile.fromBytes(
-                      image.bytes,
-                      filename: image.filename,
-                      contentType: MediaType.parse(image.mimeType),
-                    ),
-                  )
-                  .toList(),
-            }),
-            onSendProgress: (sent, total) {
-              if (!mounted || total <= 0) {
-                return;
-              }
-              setState(() {
-                _storeUploadProgress = (sent / total).clamp(0, 1);
-              });
-            },
+      final session = ref.read(sessionControllerProvider);
+      ref
+          .read(luggagePhotoMemoryStoreProvider.notifier)
+          .addWarehouseBagPhotos(
+            reservation: reservation,
+            photos: bagPhotos
+                .map(
+                  (image) => MemoryBagPhotoInput(
+                    bytes: image.bytes,
+                    mimeType: image.mimeType,
+                    filename: image.filename,
+                  ),
+                )
+                .toList(growable: false),
+            capturedByUserId: session.user?.id,
+            capturedByName: session.user?.name,
           );
-      final payload = response.data ?? const <String, dynamic>{};
-      if (payload.isNotEmpty) {
-        await ref
-            .read(qrHandoffControllerProvider.notifier)
-            .syncCase(reservation.id);
-      }
+      setState(() {
+        _storeUploadProgress = 0.65;
+      });
+      await ref
+          .read(qrHandoffControllerProvider.notifier)
+          .markStoredAtWarehouse(reservation.id);
       ref.invalidate(opsReservationsProvider);
       ref.invalidate(reservationByIdProvider(reservation.id));
       ref.invalidate(myReservationsProvider);
       ref.invalidate(adminReservationsProvider);
       ref.invalidate(adminReservationListProvider);
-      _showMessage('Reserva ${reservation.code} registrada en almacén.');
+      _showMessage(
+        '${context.l10n.t('ops_qr_reservation_registered_warehouse_prefix')} '
+        '${reservation.code}.',
+      );
       if (mounted) {
         setState(() {
           _storeUploadProgress = null;
@@ -913,7 +926,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           .markReadyForPickup(reservation.id);
       ref.invalidate(opsReservationsProvider);
       _showMessage(
-        'PIN ${caseItem.pickupPin} generado. La reserva está lista para recojo.',
+        '${context.l10n.t('ops_qr_pin_generated_prefix')} '
+        '${caseItem.pickupPin}. ${context.l10n.t('ops_qr_customer_ready_for_pickup_msg')}',
       );
     });
   }
@@ -921,11 +935,11 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   Future<void> _confirmPresentialDelivery(String reservationId) async {
     final pin = _pickupPinInputController.text.trim();
     if (pin.isEmpty) {
-      _showMessage('Ingresa el PIN del cliente para confirmar entrega.');
+      _showMessage(context.l10n.t('ops_qr_enter_customer_pin_to_confirm'));
       return;
     }
     if (!_isSixDigitPin(pin)) {
-      _showMessage('El PIN debe tener 6 dígitos numéricos.');
+      _showMessage(context.l10n.t('ops_qr_pin_must_have_six_digits'));
       return;
     }
 
@@ -933,7 +947,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         .read(qrHandoffControllerProvider)
         .casesByReservationId[reservationId];
     if (caseItem == null) {
-      _showMessage('Primero escanea y valida el QR de la reserva.');
+      _showMessage(context.l10n.t('ops_qr_scan_and_validate_first'));
       return;
     }
 
@@ -942,12 +956,12 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           .read(qrHandoffControllerProvider.notifier)
           .validatePickupPin(reservationId: reservationId, typedPin: pin);
       if (!validated) {
-        _showMessage('PIN incorrecto. Verifica con el cliente.');
+        _showMessage(context.l10n.t('ops_qr_pin_incorrect'));
         return;
       }
       ref.invalidate(opsReservationsProvider);
       _pickupPinInputController.clear();
-      _showMessage('Entrega presencial confirmada y reserva completada.');
+      _showMessage(context.l10n.t('ops_qr_presential_delivery_completed'));
     });
   }
 
@@ -968,14 +982,13 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
             reservationId: reservation.id,
             reservationCode: reservation.code,
             messageForOperator:
-                'Courier solicita aprobación para entrega final de ${reservation.code}.',
+                '${context.l10n.t('ops_qr_courier_request_approval_prefix')} '
+                '${reservation.code}.',
             messageForCustomerInSpanish: translation.messageInSpanish,
             customerLanguage: caseItem.customerLanguage,
           );
       ref.invalidate(opsReservationsProvider);
-      _showMessage(
-        'Solicitud enviada al operador. Cliente recibirá mensaje traducido.',
-      );
+      _showMessage(context.l10n.t('ops_qr_request_sent_translated_notice'));
     });
   }
 
@@ -985,7 +998,8 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           .read(qrHandoffControllerProvider.notifier)
           .approveOperatorHandoff(notificationId: item.id);
       _showMessage(
-        'Aprobacion concedida para ${item.reservationCode}. PIN ${caseItem.pickupPin}.',
+        '${context.l10n.t('ops_qr_approval_granted_prefix')} '
+        '${item.reservationCode}. PIN ${caseItem.pickupPin}.',
       );
     });
   }
@@ -993,11 +1007,11 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   Future<void> _confirmDeliveryWithPin(String reservationId) async {
     final pin = _deliveryPinInputController.text.trim();
     if (pin.isEmpty) {
-      _showMessage('Ingresa el PIN final para cerrar la entrega.');
+      _showMessage(context.l10n.t('ops_qr_enter_final_pin'));
       return;
     }
     if (!_isSixDigitPin(pin)) {
-      _showMessage('El PIN debe tener 6 dígitos numéricos.');
+      _showMessage(context.l10n.t('ops_qr_pin_must_have_six_digits'));
       return;
     }
 
@@ -1005,19 +1019,19 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         .read(qrHandoffControllerProvider)
         .casesByReservationId[reservationId];
     if (caseItem == null) {
-      _showMessage('Primero escanea y valida el QR de la reserva.');
+      _showMessage(context.l10n.t('ops_qr_scan_and_validate_first'));
       return;
     }
     if (!caseItem.identityValidated) {
-      _showMessage('Falta validar identidad del receptor.');
+      _showMessage(context.l10n.t('ops_qr_missing_identity_validation'));
       return;
     }
     if (!caseItem.luggageMatched) {
-      _showMessage('Falta validar coincidencia de maleta e ID.');
+      _showMessage(context.l10n.t('ops_qr_missing_luggage_match_validation'));
       return;
     }
     if (!caseItem.operatorApprovalGranted) {
-      _showMessage('Falta aprobación del operador/admin.');
+      _showMessage(context.l10n.t('ops_qr_missing_operator_approval'));
       return;
     }
 
@@ -1027,13 +1041,13 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           .completeDeliveryWithPin(reservationId: reservationId, typedPin: pin);
       if (!ok) {
         _showMessage(
-          'No se pudo completar: verifica identidad, maleta y aprobación operador.',
+          context.l10n.t('ops_qr_complete_delivery_validation_failed'),
         );
         return;
       }
       ref.invalidate(opsReservationsProvider);
       _deliveryPinInputController.clear();
-      _showMessage('Entrega delivery completada correctamente.');
+      _showMessage(context.l10n.t('ops_qr_delivery_completed_ok'));
     });
   }
 
@@ -1049,14 +1063,15 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           .read(qrHandoffControllerProvider.notifier)
           .tagLuggage(reservation: reservation, bagUnits: _bagUnits);
       _showMessage(
-        'ID de maleta generado para ${reservation.code} ($_bagUnits bulto(s)).',
+        '${context.l10n.t('ops_qr_bag_id_generated_prefix')} '
+        '${reservation.code} ($_bagUnits ${context.l10n.t('bultos').toLowerCase()}).',
       );
     });
   }
 
   String? _validateBagTagAction(Reservation reservation) {
     if (_bagUnits < 1 || _bagUnits > 20) {
-      return 'Selecciona entre 1 y 20 bultos para generar la etiqueta.';
+      return context.l10n.t('ops_qr_select_units_between_1_20');
     }
     if (_isReservationClosed(reservation.status)) {
       return '${context.l10n.t('ops_qr_bag_tag_not_allowed_prefix')} '
@@ -1064,7 +1079,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     }
     if (reservation.status == ReservationStatus.pendingPayment ||
         reservation.status == ReservationStatus.draft) {
-      return 'La reserva aún no está habilitada para registrar maleta.';
+      return context.l10n.t('ops_qr_reservation_not_enabled_for_bag');
     }
     return null;
   }
@@ -1074,13 +1089,13 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     required QrHandoffCase? caseItem,
   }) {
     if (caseItem == null) {
-      return 'Primero escanea el QR de la reserva.';
+      return context.l10n.t('ops_qr_scan_reservation_qr_first');
     }
     if ((caseItem.bagTagId ?? '').trim().isEmpty) {
-      return 'Primero genera el ID/QR de maleta antes de registrar en almacén.';
+      return context.l10n.t('ops_qr_generate_bag_qr_before_store');
     }
     if (reservation.status == ReservationStatus.stored) {
-      return 'Esta reserva ya figura registrada en almacén.';
+      return context.l10n.t('ops_qr_already_stored');
     }
     if (reservation.status != ReservationStatus.confirmed &&
         reservation.status != ReservationStatus.checkinPending) {
@@ -1095,10 +1110,10 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     required QrHandoffCase? caseItem,
   }) {
     if (caseItem == null) {
-      return 'Primero escanea el QR de la reserva.';
+      return context.l10n.t('ops_qr_scan_reservation_qr_first');
     }
     if ((caseItem.bagTagId ?? '').trim().isEmpty) {
-      return 'Primero genera el ID/QR de maleta.';
+      return context.l10n.t('ops_qr_generate_bag_qr_first');
     }
     if (reservation.status != ReservationStatus.stored &&
         reservation.status != ReservationStatus.readyForPickup) {
@@ -1133,7 +1148,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       await action();
     } catch (error) {
       final readable = AppErrorFormatter.readable(error);
-      _showMessage('No se pudo completar la accion: $readable');
+      _showMessage(
+        '${context.l10n.t('ops_qr_action_failed_prefix')}: $readable',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -1147,6 +1164,35 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   void _showMessage(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+}
+
+String _stageLabel(BuildContext context, QrHandoffStage? stage) {
+  switch (stage) {
+    case QrHandoffStage.qrValidated:
+      return context.l10n.t('reservation_stage_qr_validated');
+    case QrHandoffStage.bagTagged:
+      return context.l10n.t('reservation_stage_bag_tagged');
+    case QrHandoffStage.storedAtWarehouse:
+      return context.l10n.t('reservation_stage_stored_at_warehouse');
+    case QrHandoffStage.readyForPickup:
+      return context.l10n.t('reservation_stage_ready_for_pickup');
+    case QrHandoffStage.pickupPinValidated:
+      return context.l10n.t('reservation_stage_pickup_pin_validated');
+    case QrHandoffStage.deliveryIdentityValidated:
+      return context.l10n.t('reservation_stage_delivery_identity_validated');
+    case QrHandoffStage.deliveryLuggageValidated:
+      return context.l10n.t('reservation_stage_delivery_luggage_validated');
+    case QrHandoffStage.deliveryApprovalPending:
+      return context.l10n.t('reservation_stage_delivery_approval_pending');
+    case QrHandoffStage.deliveryApprovalGranted:
+      return context.l10n.t('reservation_stage_delivery_approval_granted');
+    case QrHandoffStage.deliveryCompleted:
+      return context.l10n.t('reservation_stage_delivery_done');
+    case QrHandoffStage.draft:
+      return context.l10n.t('reservation_stage_draft');
+    case null:
+      return context.l10n.t('ops_qr_stage_not_available');
   }
 }
 
@@ -1188,12 +1234,12 @@ class _ReservationContextCard extends StatelessWidget {
             Text(
               '${reservation.warehouse.name} - ${reservation.warehouse.city}',
             ),
-            Text('Bultos: ${reservation.bagCount}'),
+            Text('${context.l10n.t('bultos')}: ${reservation.bagCount}'),
             Text(
               '${context.l10n.t('reservation_status')}: '
               '${reservation.status.localizedLabel(context)}',
             ),
-            Text('Estado QR/PIN: $stageLabel'),
+            Text('${context.l10n.t('ops_qr_stage_prefix')}: $stageLabel'),
           ],
         ),
       ),
@@ -1304,7 +1350,8 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Debes registrar ${widget.requiredPhotos} foto(s), una por cada bulto. Estas imágenes quedarán cerradas al confirmar el ingreso a almacén.',
+                  '${context.l10n.t('ops_qr_photo_dialog_intro_prefix')} '
+                  '${widget.requiredPhotos} ${context.l10n.t('ops_qr_photo_units_suffix')}',
                 ),
                 SizedBox(height: 14),
                 ...List.generate(widget.requiredPhotos, (index) {
@@ -1318,7 +1365,7 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Bulto ${index + 1}',
+                              '${context.l10n.t('reservation_bag_unit_prefix')} ${index + 1}',
                               style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
@@ -1345,8 +1392,8 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
                                   ),
                                 ),
                                 alignment: Alignment.center,
-                                child: const Text(
-                                  'Aún no hay imagen seleccionada',
+                                child: Text(
+                                  context.l10n.t('ops_qr_photo_none_selected'),
                                 ),
                               ),
                             const SizedBox(height: 10),
@@ -1361,8 +1408,8 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
                                   icon: const Icon(Icons.upload_file_outlined),
                                   label: Text(
                                     current == null
-                                        ? 'Seleccionar imagen'
-                                        : 'Cambiar imagen',
+                                        ? context.l10n.t('ops_qr_photo_select')
+                                        : context.l10n.t('ops_qr_photo_change'),
                                   ),
                                 ),
                                 if (current != null)
@@ -1401,8 +1448,9 @@ class _BagPhotoDialogState extends State<_BagPhotoDialog> {
                 ).pop(_selected.whereType<SelectedEvidenceImage>().toList()),
           child: Text(
             completed
-                ? 'Confirmar ${widget.requiredPhotos} fotos'
-                : 'Faltan fotos',
+                ? '${context.l10n.t('ops_qr_photo_confirm_prefix')} '
+                      '${widget.requiredPhotos} ${context.l10n.t('photos')}'
+                : context.l10n.t('ops_qr_photo_missing'),
           ),
         ),
       ],

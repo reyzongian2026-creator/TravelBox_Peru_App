@@ -285,8 +285,8 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                           icon: Icon(Icons.check_circle_outline),
                           label: Text(
                             item.deliveryType.toUpperCase() == 'PICKUP'
-                                ? 'Confirmar recojo'
-                                : 'Confirmar entrega',
+                                ? context.l10n.t('courier_confirm_pickup')
+                                : context.l10n.t('courier_confirm_delivery'),
                           ),
                         ),
                       if (!showClaimAction && item.canOperate)

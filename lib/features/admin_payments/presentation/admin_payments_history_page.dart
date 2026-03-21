@@ -6,24 +6,29 @@ import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
+import '../../../shared/utils/status_localizer.dart';
 
-final paymentHistoryStatusFilterProvider = StateProvider<String>((ref) => 'ALL');
+final paymentHistoryStatusFilterProvider = StateProvider<String>(
+  (ref) => 'ALL',
+);
 
-final adminPaymentHistoryProvider = FutureProvider<List<AdminPaymentHistoryItem>>((
-  ref,
-) async {
-  ref.watch(realtimeAppEventCursorProvider);
-  final dio = ref.read(dioProvider);
-  final response = await dio.get<Map<String, dynamic>>(
-    '/payments/history',
-    queryParameters: {'page': 0, 'size': 100},
-  );
-  final data = response.data ?? <String, dynamic>{};
-  final items = data['items'] as List<dynamic>? ?? const [];
-  return items
-      .map((item) => AdminPaymentHistoryItem.fromJson(item as Map<String, dynamic>))
-      .toList();
-});
+final adminPaymentHistoryProvider =
+    FutureProvider<List<AdminPaymentHistoryItem>>((ref) async {
+      ref.watch(realtimeAppEventCursorProvider);
+      final dio = ref.read(dioProvider);
+      final response = await dio.get<Map<String, dynamic>>(
+        '/payments/history',
+        queryParameters: {'page': 0, 'size': 100},
+      );
+      final data = response.data ?? <String, dynamic>{};
+      final items = data['items'] as List<dynamic>? ?? const [];
+      return items
+          .map(
+            (item) =>
+                AdminPaymentHistoryItem.fromJson(item as Map<String, dynamic>),
+          )
+          .toList();
+    });
 
 class AdminPaymentsHistoryPage extends ConsumerWidget {
   AdminPaymentsHistoryPage({super.key});
@@ -34,7 +39,7 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
     final filter = ref.watch(paymentHistoryStatusFilterProvider);
 
     return AppShellScaffold(
-      title: 'Historial de pagos',
+      title: context.l10n.t('payments_history_title'),
       currentRoute: '/admin/payments-history',
       child: historyAsync.when(
         data: (items) {
@@ -50,42 +55,68 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
                   spacing: 8,
                   children: [
                     _StatusChip(
-                      label: 'Todos',
+                      label: context.l10n.t('todos'),
                       value: 'ALL',
                       current: filter,
                       onSelected: (value) =>
-                          ref.read(paymentHistoryStatusFilterProvider.notifier).state = value,
+                          ref
+                                  .read(
+                                    paymentHistoryStatusFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     _StatusChip(
-                      label: 'Pendientes',
+                      label: paymentStatusLabel(context, 'PENDING'),
                       value: 'PENDING',
                       current: filter,
                       onSelected: (value) =>
-                          ref.read(paymentHistoryStatusFilterProvider.notifier).state = value,
+                          ref
+                                  .read(
+                                    paymentHistoryStatusFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     _StatusChip(
-                      label: 'Confirmados',
+                      label: paymentStatusLabel(context, 'CONFIRMED'),
                       value: 'CONFIRMED',
                       current: filter,
                       onSelected: (value) =>
-                          ref.read(paymentHistoryStatusFilterProvider.notifier).state = value,
+                          ref
+                                  .read(
+                                    paymentHistoryStatusFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     _StatusChip(
-                      label: 'Fallidos',
+                      label: paymentStatusLabel(context, 'FAILED'),
                       value: 'FAILED',
                       current: filter,
                       onSelected: (value) =>
-                          ref.read(paymentHistoryStatusFilterProvider.notifier).state = value,
+                          ref
+                                  .read(
+                                    paymentHistoryStatusFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     _StatusChip(
-                      label: 'Reembolsados',
+                      label: paymentStatusLabel(context, 'REFUNDED'),
                       value: 'REFUNDED',
                       current: filter,
                       onSelected: (value) =>
-                          ref.read(paymentHistoryStatusFilterProvider.notifier).state = value,
+                          ref
+                                  .read(
+                                    paymentHistoryStatusFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     OutlinedButton.icon(
-                      onPressed: () => ref.invalidate(adminPaymentHistoryProvider),
+                      onPressed: () =>
+                          ref.invalidate(adminPaymentHistoryProvider),
                       icon: const Icon(Icons.refresh),
                       label: Text(context.l10n.t('recargar')),
                     ),
@@ -95,7 +126,11 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
               const SizedBox(height: 8),
               Expanded(
                 child: filtered.isEmpty
-                    ? const EmptyStateView(message: 'No hay pagos para este filtro.')
+                    ? EmptyStateView(
+                        message: context.l10n.t(
+                          'payments_history_empty_filtered',
+                        ),
+                      )
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: filtered.length,
@@ -106,14 +141,20 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
                             child: ListTile(
                               leading: const Icon(Icons.receipt_long_outlined),
                               title: Text(
-                                'Pago #${item.paymentIntentId} - Reserva #${item.reservationId}',
+                                '${context.l10n.t('payment')} #${item.paymentIntentId} - '
+                                '${context.l10n.t('operator_reservation')} #${item.reservationId}',
                               ),
                               subtitle: Text(
                                 '${item.userEmail}\nS/${item.amount.toStringAsFixed(2)} | ${item.paymentMethod} | ${item.paymentProvider}',
                               ),
                               isThreeLine: true,
                               trailing: Chip(
-                                label: Text(item.paymentStatus),
+                                label: Text(
+                                  paymentStatusLabel(
+                                    context,
+                                    item.paymentStatus,
+                                  ),
+                                ),
                                 visualDensity: VisualDensity.compact,
                               ),
                             ),
@@ -126,7 +167,7 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudo cargar historial de pagos: $error',
+          message: '${context.l10n.t('payments_history_load_failed')}: $error',
           onRetry: () => ref.invalidate(adminPaymentHistoryProvider),
         ),
       ),
@@ -188,4 +229,3 @@ class AdminPaymentHistoryItem {
     );
   }
 }
-

@@ -338,6 +338,184 @@ class AppLocalizations {
       'ops_qr_approval_status_pending': 'Pendiente',
       'ops_qr_approval_status_approved': 'Aprobada',
       'ops_qr_approval_status_rejected': 'Rechazada',
+      'ops_qr_title': 'Operacion QR y PIN',
+      'ops_qr_tab_scan': 'Escanear',
+      'ops_qr_tab_presential': 'Presencial',
+      'ops_qr_tab_approvals': 'Aprobaciones',
+      'ops_qr_load_failed': 'No se pudo cargar modulo QR/PIN',
+      'ops_qr_empty_reservations':
+          'No hay reservas visibles para tu perfil. Crea una reserva o toma un servicio primero.',
+      'ops_qr_header_hint_empty':
+          'Escanea o ingresa un QR para vincular una reserva y continuar.',
+      'ops_qr_header_selected_prefix': 'Reserva seleccionada',
+      'ops_qr_scan_input_label': 'Escanear QR o codigo',
+      'ops_qr_scan_input_hint':
+          'Ejemplo: TRAVELBOX|RESERVATION|TBX-12345 o TBX-12345',
+      'ops_qr_customer_language_for_messages':
+          'Idioma del cliente para mensajes',
+      'ops_qr_no_selected_reservation_hint':
+          'Aun no hay reserva seleccionada. Escanea el QR del cliente para continuar.',
+      'ops_qr_customer_qr_title': 'QR cliente',
+      'ops_qr_customer_qr_subtitle':
+          'Se usa para ubicar reserva y validar identidad inicial.',
+      'ops_qr_bag_qr_title': 'QR maleta',
+      'ops_qr_bag_qr_subtitle':
+          'Etiqueta operativa para pegar a la maleta y hacer match con la reserva.',
+      'ops_qr_bag_qr_empty':
+          'Aun no hay ID de maleta. Genera etiqueta para registrar custodia.',
+      'ops_qr_uploading_photos_prefix': 'Subiendo fotos',
+      'ops_qr_select_reservation_scan_tab':
+          'Selecciona una reserva en la pestana Escanear.',
+      'ops_qr_customer_ready_for_pickup_msg':
+          'Tu reserva esta lista para recojo. Presenta tu QR y PIN de seguridad.',
+      'ops_qr_presential_flow_title': 'Flujo presencial',
+      'ops_qr_not_generated': 'No generado',
+      'ops_qr_customer_message_prefix': 'Mensaje cliente',
+      'ops_qr_pin_from_customer_label': 'PIN entregado por cliente',
+      'ops_qr_pin_from_customer_hint':
+          'Ingresa el PIN para confirmar entrega presencial',
+      'ops_qr_delivery_identity_hint':
+          'El courier verifica nombre/documento antes de entregar.',
+      'ops_qr_expected_id_prefix': 'ID esperado',
+      'ops_qr_customer_message_label': 'Mensaje de cliente',
+      'ops_qr_customer_message_hint':
+          'Ej. Hello, please show your QR to validate your reservation and luggage.',
+      'ops_qr_message_source_language_label': 'Idioma original del mensaje',
+      'ops_qr_operator_view_prefix': 'Vista operador',
+      'ops_qr_customer_view_prefix': 'Vista cliente',
+      'ops_qr_pin_approved_prefix': 'PIN aprobado',
+      'ops_qr_pin_not_approved_yet': 'Aun no aprobado por operador/admin.',
+      'ops_qr_pin_confirmed_by_customer_label': 'PIN confirmado por cliente',
+      'ops_qr_pin_confirmed_by_customer_hint':
+          'Courier valida el PIN recibido para cerrar entrega',
+      'ops_qr_no_pending_approvals':
+          'No hay solicitudes de aprobacion pendientes.',
+      'ops_qr_operator_message_prefix': 'Operador',
+      'ops_qr_customer_translated_prefix': 'Cliente (traducido)',
+      'ops_qr_scan_or_enter_code_first':
+          'Ingresa o escanea un codigo QR primero.',
+      'ops_qr_reservation_not_found_for_qr':
+          'No se encontro reserva para el QR ingresado.',
+      'ops_qr_reservation_linked_prefix': 'Reserva vinculada por QR',
+      'ops_qr_reservation_registered_warehouse_prefix':
+          'Reserva registrada en almacen',
+      'ops_qr_pin_generated_prefix': 'PIN generado',
+      'ops_qr_enter_customer_pin_to_confirm':
+          'Ingresa el PIN del cliente para confirmar entrega.',
+      'ops_qr_pin_must_have_six_digits':
+          'El PIN debe tener 6 digitos numericos.',
+      'ops_qr_scan_and_validate_first':
+          'Primero escanea y valida el QR de la reserva.',
+      'ops_qr_pin_incorrect': 'PIN incorrecto. Verifica con el cliente.',
+      'ops_qr_presential_delivery_completed':
+          'Entrega presencial confirmada y reserva completada.',
+      'ops_qr_courier_request_approval_prefix':
+          'Courier solicita aprobacion para entrega final de',
+      'ops_qr_request_sent_translated_notice':
+          'Solicitud enviada al operador. Cliente recibira mensaje traducido.',
+      'ops_qr_approval_granted_prefix': 'Aprobacion concedida para',
+      'ops_qr_enter_final_pin': 'Ingresa el PIN final para cerrar la entrega.',
+      'ops_qr_missing_identity_validation':
+          'Falta validar identidad del receptor.',
+      'ops_qr_missing_luggage_match_validation':
+          'Falta validar coincidencia de maleta e ID.',
+      'ops_qr_missing_operator_approval':
+          'Falta aprobacion del operador/admin.',
+      'ops_qr_complete_delivery_validation_failed':
+          'No se pudo completar: verifica identidad, maleta y aprobacion operador.',
+      'ops_qr_delivery_completed_ok':
+          'Entrega delivery completada correctamente.',
+      'ops_qr_bag_id_generated_prefix': 'ID de maleta generado para',
+      'ops_qr_select_units_between_1_20':
+          'Selecciona entre 1 y 20 bultos para generar la etiqueta.',
+      'ops_qr_reservation_not_enabled_for_bag':
+          'La reserva aun no esta habilitada para registrar maleta.',
+      'ops_qr_scan_reservation_qr_first':
+          'Primero escanea el QR de la reserva.',
+      'ops_qr_generate_bag_qr_before_store':
+          'Primero genera el ID/QR de maleta antes de registrar en almacen.',
+      'ops_qr_generate_bag_qr_first': 'Primero genera el ID/QR de maleta.',
+      'ops_qr_already_stored': 'Esta reserva ya figura registrada en almacen.',
+      'ops_qr_action_failed_prefix': 'No se pudo completar la accion',
+      'ops_qr_stage_prefix': 'Estado QR/PIN',
+      'ops_qr_stage_not_available': 'Sin etapa',
+      'ops_qr_photo_dialog_intro_prefix': 'Debes registrar',
+      'ops_qr_photo_units_suffix':
+          'foto(s), una por cada bulto. Estas imagenes quedaran cerradas al confirmar el ingreso a almacen.',
+      'ops_qr_photo_none_selected': 'Aun no hay imagen seleccionada',
+      'ops_qr_photo_select': 'Seleccionar imagen',
+      'ops_qr_photo_change': 'Cambiar imagen',
+      'ops_qr_photo_confirm_prefix': 'Confirmar',
+      'ops_qr_photo_missing': 'Faltan fotos',
+      'tracking_reservation_load_failed':
+          'No se pudo cargar reserva para tracking',
+      'tracking_route_estimated': 'Ruta estimada',
+      'tracking_route_road_prefix': 'Ruta vial',
+      'tracking_eta_note_logistics': 'ETA estimado por tracking logistico.',
+      'tracking_eta_note_no_live_traffic': 'ETA estimado sin trafico en vivo.',
+      'tracking_eta_note_provider_no_realtime':
+          'ETA estimado por ruta vial. No incluye trafico en tiempo real.',
+      'tracking_eta_prefix': 'ETA',
+      'tracking_reservation_prefix': 'Reserva',
+      'tracking_load_failed': 'No se pudo cargar tracking.',
+      'tracking_missing_title': 'Aun no hay tracking disponible',
+      'tracking_missing_can_request':
+          'La reserva todavia no tiene una orden logistica creada. Puedes solicitar delivery o recojo segun el estado de la reserva.',
+      'tracking_missing_not_required':
+          'Esta reserva no tiene una orden de delivery asociada o ya no requiere seguimiento en vivo.',
+      'cash_pending_empty':
+          'No hay pagos en caja pendientes.\nSi acabas de registrar un pago en efectivo, toca actualizar.',
+      'cash_pending_refresh_now': 'Actualizar ahora',
+      'cash_payment_reason_approved': 'Pago validado por operador',
+      'cash_payment_reason_rejected': 'Pago rechazado por operador',
+      'cash_payment_approved_ok': 'Pago aprobado correctamente.',
+      'cash_payment_rejected_ok': 'Pago rechazado correctamente.',
+      'cash_payment_process_failed_prefix':
+          'No se pudo procesar el pago en caja',
+      'payments_history_title': 'Historial de pagos',
+      'payments_history_empty_filtered': 'No hay pagos para este filtro.',
+      'payments_history_load_failed': 'No se pudo cargar historial de pagos',
+      'auth_continue_failed': 'No se pudo continuar',
+      'auth_portal_hero_subtitle':
+          'Guarda tu equipaje de forma segura en aeropuerto y ciudad, mientras disfrutas tu viaje.',
+      'onboarding_guest_name': 'cliente',
+      'onboarding_welcome_title_prefix': 'Bienvenido',
+      'onboarding_intro_subtitle':
+          'Esta guia rapida te muestra como reservar, pagar y recoger tu equipaje en TravelBox.',
+      'onboarding_slide_1_title': '1. Elige sede y horario',
+      'onboarding_slide_1_subtitle':
+          'Busca la sede en el mapa, revisa precio por hora y selecciona tu rango de tiempo.',
+      'onboarding_slide_2_title': '2. Paga y confirma',
+      'onboarding_slide_2_subtitle':
+          'Confirma el pago para activar la reserva y recibir tu QR de atencion.',
+      'onboarding_slide_3_title': '3. Entrega y recojo final',
+      'onboarding_slide_3_subtitle':
+          'En sede validan tu QR, registran evidencias y luego completas el recojo de forma segura.',
+      'onboarding_loading': 'Cargando...',
+      'onboarding_start_now': 'Empezar ahora',
+      'register_hero_subtitle':
+          'Configura tu perfil y empieza a reservar almacenamiento seguro en segundos.',
+      'courier_confirm_pickup': 'Confirmar recojo',
+      'courier_confirm_delivery': 'Confirmar entrega',
+      'checkout_payment_process_failed_prefix': 'No se pudo procesar pago',
+      'checkout_processing': 'Procesando...',
+      'checkout_confirm_payment': 'Confirmar pago',
+      'checkout_payment_headline_offline':
+          'Pago presencial con validacion manual',
+      'checkout_payment_headline_online': 'Pago inmediato para habilitar el QR',
+      'reservation_success_qr_pending_message':
+          'Tu reserva existe, pero el QR de check-in aun no esta habilitado porque el pago sigue pendiente.',
+      'reservation_success_qr_checkin_only_message':
+          'Este QR solo sirve para check-in de equipaje. No es un QR de pago.',
+      'reservation_success_pending_steps':
+          '1. Paga en caja o al encargado.\n2. El operador debe aprobar el cobro en su panel.\n3. Cuando el pago pase a CONFIRMED, el QR se habilitara para check-in.',
+      'reservation_success_qr_pending_label': 'QR pendiente',
+      'amount': 'Monto',
+      'schedule': 'Horario',
+      'payment': 'Pago',
+      'min': 'min',
+      'photos': 'fotos',
+      'tracking': 'Tracking',
       'tracking_courier': 'Tracking courier',
     },
     'en': {
@@ -593,6 +771,216 @@ class AppLocalizations {
       'ops_qr_approval_status_pending': 'Pending',
       'ops_qr_approval_status_approved': 'Approved',
       'ops_qr_approval_status_rejected': 'Rejected',
+      'ops_qr_title': 'QR and PIN operations',
+      'ops_qr_tab_scan': 'Scan',
+      'ops_qr_tab_presential': 'In person',
+      'ops_qr_tab_approvals': 'Approvals',
+      'ops_qr_load_failed': 'Could not load QR/PIN module',
+      'ops_qr_empty_reservations':
+          'No reservations are visible for your profile. Create or take a service first.',
+      'ops_qr_header_hint_empty':
+          'Scan or enter a QR code to link a reservation and continue.',
+      'ops_qr_header_selected_prefix': 'Selected reservation',
+      'ops_qr_scan_input_label': 'Scan QR or code',
+      'ops_qr_scan_input_hint':
+          'Example: TRAVELBOX|RESERVATION|TBX-12345 or TBX-12345',
+      'ops_qr_customer_language_for_messages': 'Customer language for messages',
+      'ops_qr_no_selected_reservation_hint':
+          'No reservation selected yet. Scan the customer QR to continue.',
+      'ops_qr_customer_qr_title': 'Customer QR',
+      'ops_qr_customer_qr_subtitle':
+          'Used to locate reservation and validate initial identity.',
+      'ops_qr_bag_qr_title': 'Luggage QR',
+      'ops_qr_bag_qr_subtitle':
+          'Operational tag to attach to luggage and match with reservation.',
+      'ops_qr_bag_qr_empty':
+          'No luggage ID yet. Generate the tag to register custody.',
+      'ops_qr_uploading_photos_prefix': 'Uploading photos',
+      'ops_qr_select_reservation_scan_tab':
+          'Select a reservation in the Scan tab.',
+      'ops_qr_customer_ready_for_pickup_msg':
+          'Your reservation is ready for pickup. Show your QR and security PIN.',
+      'ops_qr_presential_flow_title': 'In-person flow',
+      'ops_qr_not_generated': 'Not generated',
+      'ops_qr_customer_message_prefix': 'Customer message',
+      'ops_qr_pin_from_customer_label': 'PIN provided by customer',
+      'ops_qr_pin_from_customer_hint': 'Enter PIN to confirm in-person handoff',
+      'ops_qr_delivery_identity_hint':
+          'Courier verifies name/document before handoff.',
+      'ops_qr_expected_id_prefix': 'Expected ID',
+      'ops_qr_customer_message_label': 'Customer message',
+      'ops_qr_customer_message_hint':
+          'Example: Hello, please show your QR to validate your reservation and luggage.',
+      'ops_qr_message_source_language_label': 'Original message language',
+      'ops_qr_operator_view_prefix': 'Operator view',
+      'ops_qr_customer_view_prefix': 'Customer view',
+      'ops_qr_pin_approved_prefix': 'Approved PIN',
+      'ops_qr_pin_not_approved_yet': 'Not approved by operator/admin yet.',
+      'ops_qr_pin_confirmed_by_customer_label': 'PIN confirmed by customer',
+      'ops_qr_pin_confirmed_by_customer_hint':
+          'Courier validates PIN provided by customer to close handoff',
+      'ops_qr_no_pending_approvals': 'No pending approval requests.',
+      'ops_qr_operator_message_prefix': 'Operator',
+      'ops_qr_customer_translated_prefix': 'Customer (translated)',
+      'ops_qr_scan_or_enter_code_first': 'Enter or scan a QR code first.',
+      'ops_qr_reservation_not_found_for_qr':
+          'No reservation found for the entered QR.',
+      'ops_qr_reservation_linked_prefix': 'Reservation linked by QR',
+      'ops_qr_reservation_registered_warehouse_prefix':
+          'Reservation registered in warehouse',
+      'ops_qr_pin_generated_prefix': 'PIN generated',
+      'ops_qr_enter_customer_pin_to_confirm':
+          'Enter customer PIN to confirm handoff.',
+      'ops_qr_pin_must_have_six_digits': 'PIN must have 6 numeric digits.',
+      'ops_qr_scan_and_validate_first':
+          'Scan and validate the reservation QR first.',
+      'ops_qr_pin_incorrect': 'Incorrect PIN. Verify with customer.',
+      'ops_qr_presential_delivery_completed':
+          'In-person handoff confirmed and reservation completed.',
+      'ops_qr_courier_request_approval_prefix':
+          'Courier requests approval for final handoff of',
+      'ops_qr_request_sent_translated_notice':
+          'Request sent to operator. Customer will receive translated message.',
+      'ops_qr_approval_granted_prefix': 'Approval granted for',
+      'ops_qr_enter_final_pin': 'Enter final PIN to close handoff.',
+      'ops_qr_missing_identity_validation':
+          'Identity validation for receiver is missing.',
+      'ops_qr_missing_luggage_match_validation':
+          'Luggage and ID match validation is missing.',
+      'ops_qr_missing_operator_approval': 'Operator/admin approval is missing.',
+      'ops_qr_complete_delivery_validation_failed':
+          'Could not complete: verify identity, luggage, and operator approval.',
+      'ops_qr_delivery_completed_ok':
+          'Delivery handoff completed successfully.',
+      'ops_qr_bag_id_generated_prefix': 'Luggage ID generated for',
+      'ops_qr_select_units_between_1_20':
+          'Select between 1 and 20 units to generate tag.',
+      'ops_qr_reservation_not_enabled_for_bag':
+          'Reservation is not enabled for luggage registration yet.',
+      'ops_qr_scan_reservation_qr_first': 'Scan reservation QR first.',
+      'ops_qr_generate_bag_qr_before_store':
+          'Generate luggage ID/QR before warehouse registration.',
+      'ops_qr_generate_bag_qr_first': 'Generate luggage ID/QR first.',
+      'ops_qr_already_stored':
+          'This reservation is already registered in warehouse.',
+      'ops_qr_action_failed_prefix': 'Could not complete action',
+      'ops_qr_stage_prefix': 'QR/PIN status',
+      'ops_qr_stage_not_available': 'No stage',
+      'ops_qr_photo_dialog_intro_prefix': 'You must register',
+      'ops_qr_photo_units_suffix':
+          'photo(s), one for each bag unit. These images will be locked when warehouse check-in is confirmed.',
+      'ops_qr_photo_none_selected': 'No image selected yet',
+      'ops_qr_photo_select': 'Select image',
+      'ops_qr_photo_change': 'Change image',
+      'ops_qr_photo_confirm_prefix': 'Confirm',
+      'ops_qr_photo_missing': 'Photos missing',
+      'tracking_reservation_load_failed':
+          'Could not load reservation for tracking',
+      'tracking_route_estimated': 'Estimated route',
+      'tracking_route_road_prefix': 'Road route',
+      'tracking_eta_note_logistics': 'ETA estimated from logistics tracking.',
+      'tracking_eta_note_no_live_traffic':
+          'ETA estimated without live traffic.',
+      'tracking_eta_note_provider_no_realtime':
+          'ETA estimated from road route. It does not include real-time traffic.',
+      'tracking_eta_prefix': 'ETA',
+      'tracking_reservation_prefix': 'Reservation',
+      'tracking_load_failed': 'Could not load tracking.',
+      'tracking_missing_title': 'No tracking available yet',
+      'tracking_missing_can_request':
+          'This reservation does not have a logistics order yet. You can request delivery or pickup according to reservation status.',
+      'tracking_missing_not_required':
+          'This reservation has no associated delivery order or no longer requires live tracking.',
+      'cash_pending_empty':
+          'There are no pending cash payments.\nIf you just registered a cash payment, refresh now.',
+      'cash_pending_refresh_now': 'Refresh now',
+      'cash_payment_reason_approved': 'Payment validated by operator',
+      'cash_payment_reason_rejected': 'Payment rejected by operator',
+      'cash_payment_approved_ok': 'Payment approved successfully.',
+      'cash_payment_rejected_ok': 'Payment rejected successfully.',
+      'cash_payment_process_failed_prefix': 'Could not process cash payment',
+      'payments_history_title': 'Payment history',
+      'payments_history_empty_filtered':
+          'There are no payments for this filter.',
+      'payments_history_load_failed': 'Could not load payment history',
+      'auth_continue_failed': 'Could not continue',
+      'auth_portal_hero_subtitle':
+          'Store your luggage safely at airport and city spots while you enjoy your trip.',
+      'onboarding_guest_name': 'guest',
+      'onboarding_welcome_title_prefix': 'Welcome',
+      'onboarding_intro_subtitle':
+          'This quick guide shows how to reserve, pay, and pick up your luggage in TravelBox.',
+      'onboarding_slide_1_title': '1. Choose location and time',
+      'onboarding_slide_1_subtitle':
+          'Find location on map, review hourly price, and choose your time range.',
+      'onboarding_slide_2_title': '2. Pay and confirm',
+      'onboarding_slide_2_subtitle':
+          'Confirm payment to activate reservation and receive your service QR.',
+      'onboarding_slide_3_title': '3. Drop off and final pickup',
+      'onboarding_slide_3_subtitle':
+          'At location, they validate your QR, register evidence, and then you complete secure pickup.',
+      'onboarding_loading': 'Loading...',
+      'onboarding_start_now': 'Start now',
+      'register_hero_subtitle':
+          'Set up your profile and start booking secure storage in seconds.',
+      'courier_confirm_pickup': 'Confirm pickup',
+      'courier_confirm_delivery': 'Confirm delivery',
+      'checkout_payment_process_failed_prefix': 'Could not process payment',
+      'checkout_processing': 'Processing...',
+      'checkout_confirm_payment': 'Confirm payment',
+      'checkout_payment_headline_offline':
+          'In-person payment with manual validation',
+      'checkout_payment_headline_online': 'Immediate payment to enable QR',
+      'reservation_success_qr_pending_message':
+          'Your reservation exists, but check-in QR is not enabled yet because payment is still pending.',
+      'reservation_success_qr_checkin_only_message':
+          'This QR is only for luggage check-in. It is not a payment QR.',
+      'reservation_success_pending_steps':
+          '1. Pay at counter or to staff.\n2. Operator must approve collection in panel.\n3. When payment changes to CONFIRMED, QR will be enabled for check-in.',
+      'reservation_success_qr_pending_label': 'QR pending',
+      'amount': 'Amount',
+      'schedule': 'Schedule',
+      'payment': 'Payment',
+      'min': 'min',
+      'photos': 'photos',
+      'tracking': 'Tracking',
+      'recargar': 'Reload',
+      'buscar_reserva': 'Find reservation',
+      'bultos': 'Bags',
+      'generar_id_maleta': 'Generate bag ID',
+      'registrar_en_almacn': 'Register in warehouse',
+      'lista_para_recojo__pin': 'Ready for pickup + PIN',
+      'regenerar_pin': 'Regenerate PIN',
+      'reforzar_listo_para_recojo': 'Re-send ready for pickup',
+      'confirmar_entrega_presencial': 'Confirm in-person handoff',
+      'validar_identidad_de_quien_recibe': 'Validate receiver identity',
+      'validar_que_maleta_e_id_coincidan': 'Validate luggage and ID match',
+      'solicitar_aprobacin_al_operador': 'Request operator approval',
+      'pin_para_cierre_delivery': 'PIN for delivery closure',
+      'completar_entrega_delivery': 'Complete delivery handoff',
+      'reserva_activa': 'Active reservation',
+      'aprobar_y_generar_pin': 'Approve and generate PIN',
+      'ocultar': 'Hide',
+      'quitar': 'Remove',
+      'fotos_del_equipaje': 'Luggage photos',
+      'todos': 'All',
+      'next': 'Next',
+      'omitir': 'Skip',
+      'ver_reserva': 'View reservation',
+      'volver_al_monitor': 'Back to monitor',
+      'reintentar': 'Retry',
+      'solicitar_recojo': 'Request pickup',
+      'solicitar_delivery': 'Request delivery',
+      'request_delivery': 'Request delivery',
+      'reservation_method': 'Method',
+      'guardar': 'Save',
+      'crear': 'Create',
+      'editar': 'Edit',
+      'cambiar_foto': 'Change photo',
+      'subir_foto': 'Upload photo',
+      'qr_y_pin': 'QR and PIN',
+      'operacion_qr_y_pin': 'QR and PIN operations',
+      'abrir_modulo_qrpin': 'Open QR/PIN module',
       'tracking_courier': 'Courier tracking',
     },
     'pt': {

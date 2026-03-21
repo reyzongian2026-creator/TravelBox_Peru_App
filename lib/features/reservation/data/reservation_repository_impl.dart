@@ -5,6 +5,7 @@ import '../../../core/constants/payment_constants.dart';
 import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/reservation.dart';
+import '../../../shared/state/luggage_photo_memory_store.dart';
 import '../../../shared/state/reservation_store.dart';
 import '../../../shared/utils/app_exception.dart';
 import '../domain/reservation_repository.dart';
@@ -302,7 +303,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       await _ref
           .read(reservationStoreProvider.notifier)
           .replaceForUser(userId, reservations);
-      return reservations;
+      return reservations.map(_applyMemoryLuggagePhotos).toList();
     } catch (_) {
       try {
         final response = await _dio.get<dynamic>('/reservations');
@@ -315,7 +316,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         await _ref
             .read(reservationStoreProvider.notifier)
             .replaceForUser(userId, reservations);
-        return reservations;
+        return reservations.map(_applyMemoryLuggagePhotos).toList();
       } catch (error) {
         if (!AppEnv.useMockFallback) {
           if (error is DioException) {
@@ -326,6 +327,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         final local = _ref.read(reservationStoreProvider);
         return local
             .where((reservation) => reservation.userId == userId)
+            .map(_applyMemoryLuggagePhotos)
             .toList()
           ..sort((a, b) => b.startAt.compareTo(a.startAt));
       }
@@ -384,14 +386,16 @@ class ReservationRepositoryImpl implements ReservationRepository {
             'query': normalizedQuery,
         },
       );
-      return _extractList(
-        response.data,
-      ).map((item) => _mapReservation(item as Map<String, dynamic>)).toList();
+      return _extractList(response.data)
+          .map((item) => _mapReservation(item as Map<String, dynamic>))
+          .map(_applyMemoryLuggagePhotos)
+          .toList();
     } catch (primaryError) {
       try {
         final response = await _dio.get<dynamic>('/reservations');
         return _extractList(response.data)
             .map((item) => _mapReservation(item as Map<String, dynamic>))
+            .map(_applyMemoryLuggagePhotos)
             .where(
               (item) =>
                   (status == null || item.status == status) &&
@@ -407,6 +411,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       }
       return _ref
           .read(reservationStoreProvider)
+          .map(_applyMemoryLuggagePhotos)
           .where(
             (item) =>
                 (status == null || item.status == status) &&
@@ -431,7 +436,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         fallbackReservationId: reservationId,
       );
       await _ref.read(reservationStoreProvider.notifier).upsert(reservation);
-      return reservation;
+      return _applyMemoryLuggagePhotos(reservation);
     } catch (error) {
       if (!AppEnv.useMockFallback) {
         if (error is DioException) {
@@ -439,9 +444,13 @@ class ReservationRepositoryImpl implements ReservationRepository {
         }
         throw AppException.fromError(error);
       }
-      return _ref
+      final local = _ref
           .read(reservationStoreProvider.notifier)
           .findById(reservationId);
+      if (local == null) {
+        return null;
+      }
+      return _applyMemoryLuggagePhotos(local);
     }
   }
 
@@ -861,5 +870,11 @@ class ReservationRepositoryImpl implements ReservationRepository {
     );
     _ref.read(reservationStoreProvider.notifier).upsert(updated);
     return updated;
+  }
+
+  Reservation _applyMemoryLuggagePhotos(Reservation reservation) {
+    return _ref
+        .read(luggagePhotoMemoryStoreProvider.notifier)
+        .applyToReservation(reservation);
   }
 }

@@ -81,7 +81,8 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'No se pudo continuar: ${AppErrorFormatter.readable(next.error!)}',
+              '${context.l10n.t('auth_continue_failed')}: '
+              '${AppErrorFormatter.readable(next.error!)}',
             ),
           ),
         );
@@ -91,8 +92,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     return AuthSplitScaffold(
       heroLabel: 'TravelBox',
       heroTitle: 'TRAVELBOX',
-      heroSubtitle:
-          'Guarda tu equipaje de forma segura en aeropuerto y ciudad, mientras disfrutas tu viaje.',
+      heroSubtitle: context.l10n.t('auth_portal_hero_subtitle'),
       showGuardianBear: false,
       showCompactHero: false,
       heroAnimation: _teddyAnimation,

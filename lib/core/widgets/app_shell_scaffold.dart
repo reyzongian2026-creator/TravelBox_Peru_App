@@ -75,7 +75,9 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
     final safeBottomInset = mediaQuery.padding.bottom;
     final compactTopBar = screenWidth < 390;
     final inputLocked = _isKeyboardOrInputVisible(mediaQuery);
-    final operationGuide = resolveOperationGuide(currentRoute);
+    final operationGuide = session.locale.languageCode.toLowerCase() == 'es'
+        ? resolveOperationGuide(currentRoute)
+        : null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scaffoldBackground = isDark
         ? const Color(0xFF060E1C)

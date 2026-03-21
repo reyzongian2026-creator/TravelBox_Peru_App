@@ -89,9 +89,8 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
         data: (items) {
           if (items.isEmpty) {
             return EmptyStateView(
-              message:
-                  'No hay pagos en caja pendientes.\nSi acabas de registrar un pago en efectivo, toca actualizar.',
-              actionLabel: 'Actualizar ahora',
+              message: context.l10n.t('cash_pending_empty'),
+              actionLabel: context.l10n.t('cash_pending_refresh_now'),
               onAction: () => ref.invalidate(cashPendingPaymentsProvider),
             );
           }
@@ -111,16 +110,18 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Intento #${payment.paymentIntentId} - Reserva #${payment.reservationId}',
+                          '${context.l10n.t('operator_attempt')} #${payment.paymentIntentId} - '
+                          '${context.l10n.t('operator_reservation')} #${payment.reservationId}',
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                         const SizedBox(height: 4),
                         Text('${payment.userName} (${payment.userEmail})'),
                         Text(
-                          'Monto: S/${payment.amount.toStringAsFixed(2)} - Metodo: ${payment.paymentMethod}',
+                          '${context.l10n.t('amount')}: S/${payment.amount.toStringAsFixed(2)} - '
+                          '${context.l10n.t('reservation_method')}: ${payment.paymentMethod}',
                         ),
                         Text(
-                          'Horario: ${payment.startAt} -> ${payment.endAt}',
+                          '${context.l10n.t('schedule')}: ${payment.startAt} -> ${payment.endAt}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 10),
@@ -158,7 +159,8 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: 'No se pudieron cargar pagos en caja: $error',
+          message:
+              '${context.l10n.t('operator_pending_cash_load_failed')}: $error',
           onRetry: () => ref.invalidate(cashPendingPaymentsProvider),
         ),
       ),
@@ -177,8 +179,8 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
         '/payments/cash/$paymentIntentId/$action',
         data: {
           'reason': approve
-              ? 'Pago validado por operador'
-              : 'Pago rechazado por operador',
+              ? context.l10n.t('cash_payment_reason_approved')
+              : context.l10n.t('cash_payment_reason_rejected'),
         },
       );
       ref.invalidate(cashPendingPaymentsProvider);
@@ -187,8 +189,8 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
         SnackBar(
           content: Text(
             approve
-                ? 'Pago aprobado correctamente.'
-                : 'Pago rechazado correctamente.',
+                ? context.l10n.t('cash_payment_approved_ok')
+                : context.l10n.t('cash_payment_rejected_ok'),
           ),
         ),
       );
@@ -201,7 +203,7 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
         SnackBar(
           content: Text(
             backendMessage ??
-                'No se pudo procesar el pago en caja: ${error.message}',
+                '${context.l10n.t('cash_payment_process_failed_prefix')}: ${error.message}',
           ),
         ),
       );
@@ -238,7 +240,7 @@ class CashPendingPayment {
     return CashPendingPayment(
       paymentIntentId: json['paymentIntentId']?.toString() ?? '',
       reservationId: json['reservationId']?.toString() ?? '',
-      userName: json['userName']?.toString() ?? 'Usuario',
+      userName: json['userName']?.toString() ?? 'User',
       userEmail: json['userEmail']?.toString() ?? '-',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       paymentMethod: json['paymentMethod']?.toString() ?? 'cash',

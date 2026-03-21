@@ -113,7 +113,9 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(
-          child: Text('No se pudo cargar reserva para tracking: $error'),
+          child: Text(
+            '${context.l10n.t('tracking_reservation_load_failed')}: $error',
+          ),
         ),
       ),
     );
@@ -191,8 +193,9 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                 attributions: [
                   TextSourceAttribution(
                     route.fallbackUsed
-                        ? 'Ruta estimada'
-                        : 'Ruta vial ${route.provider.toUpperCase()}',
+                        ? context.l10n.t('tracking_route_estimated')
+                        : '${context.l10n.t('tracking_route_road_prefix')} '
+                              '${route.provider.toUpperCase()}',
                   ),
                 ],
               ),
@@ -212,10 +215,10 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
       orElse: () => null,
     );
     final etaNote = route == null
-        ? 'ETA estimado por tracking logistico.'
+        ? context.l10n.t('tracking_eta_note_logistics')
         : route.fallbackUsed
-        ? 'ETA estimado sin trafico en vivo.'
-        : 'ETA estimado por ruta vial. No incluye trafico en tiempo real.';
+        ? context.l10n.t('tracking_eta_note_no_live_traffic')
+        : context.l10n.t('tracking_eta_note_provider_no_realtime');
     return Card(
       child: Column(
         children: [
@@ -225,7 +228,10 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
               '${context.l10n.t('reservation_current_status')}: '
               '${deliveryStatusLabel(context, tracking.status)}',
             ),
-            subtitle: Text('ETA: ${tracking.etaMinutes} min\n$etaNote'),
+            subtitle: Text(
+              '${context.l10n.t('tracking_eta_prefix')}: '
+              '${tracking.etaMinutes} ${context.l10n.t('min')}\n$etaNote',
+            ),
             trailing: IconButton(
               onPressed: _loadTracking,
               icon: const Icon(Icons.refresh),
@@ -254,7 +260,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Reserva ${reservation.code}',
+              '${context.l10n.t('tracking_reservation_prefix')} ${reservation.code}',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -302,7 +308,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                 subtitle: Text(
                   '${event.message}\n${_formatDate(event.createdAt)}',
                 ),
-                trailing: Text('${event.etaMinutes} min'),
+                trailing: Text('${event.etaMinutes} ${context.l10n.t('min')}'),
               ),
             )
             .toList(),
@@ -339,7 +345,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
       }
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar tracking.';
+        _error = context.l10n.t('tracking_load_failed');
         _tracking = null;
         _deliveryMissing = false;
         _loading = false;
@@ -347,7 +353,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar tracking.';
+        _error = context.l10n.t('tracking_load_failed');
         _tracking = null;
         _deliveryMissing = false;
         _loading = false;
@@ -452,15 +458,15 @@ class _MissingDeliveryState extends StatelessWidget {
                   const Icon(Icons.route_outlined, size: 42),
                   const SizedBox(height: 12),
                   Text(
-                    'Aún no hay tracking disponible',
+                    context.l10n.t('tracking_missing_title'),
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     canRequestDelivery || canRequestPickup
-                        ? 'La reserva todavía no tiene una orden logística creada. Puedes solicitar delivery o recojo según el estado de la reserva.'
-                        : 'Esta reserva no tiene una orden de delivery asociada o ya no requiere seguimiento en vivo.',
+                        ? context.l10n.t('tracking_missing_can_request')
+                        : context.l10n.t('tracking_missing_not_required'),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),

@@ -637,7 +637,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      title: Text(isEditing ? 'Editar almacen' : 'Nuevo almacen'),
+      title: Text(
+        isEditing ? context.l10n.t('editar') : context.l10n.t('nuevo'),
+      ),
       content: SizedBox(
         width: maxDialogWidth,
         child: ConstrainedBox(
@@ -690,8 +692,8 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                       label: Text(
                         widget.initial?.imageUrl != null ||
                                 _selectedPhoto != null
-                            ? 'Cambiar foto'
-                            : 'Subir foto',
+                            ? context.l10n.t('cambiar_foto')
+                            : context.l10n.t('subir_foto'),
                       ),
                     ),
                     if (_selectedPhoto != null)
@@ -1096,7 +1098,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
               ),
             );
           },
-          child: Text(isEditing ? 'Guardar' : 'Crear'),
+          child: Text(
+            isEditing ? context.l10n.t('guardar') : context.l10n.t('crear'),
+          ),
         ),
       ],
     );

@@ -129,9 +129,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         if (value == null) return;
                         setState(() => paymentMethod = value);
                       },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: InputDecoration(border: OutlineInputBorder()),
                     ),
                   if (!forceCashOnly &&
                       (selectedPaymentMethod == PaymentConstants.methodCard ||
@@ -256,7 +254,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       final message = _errorMessage(error);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('No se pudo procesar pago: $message'),
+                          content: Text(
+                            '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
+                            '$message',
+                          ),
                         ),
                       );
                     } finally {
@@ -268,7 +269,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 52),
             ),
-            child: Text(processing ? 'Procesando...' : 'Confirmar pago'),
+            child: Text(
+              processing
+                  ? context.l10n.t('checkout_processing')
+                  : context.l10n.t('checkout_confirm_payment'),
+            ),
           ),
         ],
       ),
@@ -285,9 +290,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   String _paymentHeadline(String method) {
     if (_isOfflinePaymentMethod(method)) {
-      return 'Pago presencial con validacion manual';
+      return context.l10n.t('checkout_payment_headline_offline');
     }
-    return 'Pago inmediato para habilitar el QR';
+    return context.l10n.t('checkout_payment_headline_online');
   }
 
   String _paymentHelp(String method) {
@@ -307,5 +312,3 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     }
   }
 }
-
-
