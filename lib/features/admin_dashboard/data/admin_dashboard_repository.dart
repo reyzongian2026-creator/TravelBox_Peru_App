@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
@@ -190,9 +191,9 @@ class DashboardSummary {
 }
 
 class RevenueReport {
-  final double totalRevenue;
+  final Decimal totalRevenue;
   final int totalReservations;
-  final double averageReservationValue;
+  final Decimal averageReservationValue;
   final DateTime periodStart;
   final DateTime periodEnd;
   final String periodLabel;
@@ -213,10 +214,25 @@ class RevenueReport {
   });
 
   factory RevenueReport.fromJson(Map<String, dynamic> json) {
+    Decimal parseDecimal(dynamic value) {
+      if (value == null) return Decimal.zero;
+      if (value is Decimal) return value;
+      if (value is int) return Decimal.fromInt(value);
+      if (value is double) return Decimal.parse(value.toString());
+      if (value is String) {
+        try {
+          return Decimal.parse(value);
+        } catch (_) {
+          return Decimal.zero;
+        }
+      }
+      return Decimal.zero;
+    }
+
     return RevenueReport(
-      totalRevenue: (json['totalRevenue'] as num?)?.toDouble() ?? 0.0,
+      totalRevenue: parseDecimal(json['totalRevenue']),
       totalReservations: (json['totalReservations'] as int?) ?? 0,
-      averageReservationValue: (json['averageReservationValue'] as num?)?.toDouble() ?? 0.0,
+      averageReservationValue: parseDecimal(json['averageReservationValue']),
       periodStart: DateTime.tryParse(json['periodStart']?.toString() ?? '') ?? DateTime.now(),
       periodEnd: DateTime.tryParse(json['periodEnd']?.toString() ?? '') ?? DateTime.now(),
       periodLabel: json['periodLabel']?.toString() ?? '',
@@ -236,7 +252,7 @@ class RevenueReport {
 class RevenueByWarehouse {
   final int warehouseId;
   final String warehouseName;
-  final double revenue;
+  final Decimal revenue;
   final int reservationCount;
 
   RevenueByWarehouse({
@@ -247,10 +263,25 @@ class RevenueByWarehouse {
   });
 
   factory RevenueByWarehouse.fromJson(Map<String, dynamic> json) {
+    Decimal parseDecimal(dynamic value) {
+      if (value == null) return Decimal.zero;
+      if (value is Decimal) return value;
+      if (value is int) return Decimal.fromInt(value);
+      if (value is double) return Decimal.parse(value.toString());
+      if (value is String) {
+        try {
+          return Decimal.parse(value);
+        } catch (_) {
+          return Decimal.zero;
+        }
+      }
+      return Decimal.zero;
+    }
+
     return RevenueByWarehouse(
       warehouseId: (json['warehouseId'] as int?) ?? 0,
       warehouseName: json['warehouseName']?.toString() ?? '',
-      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      revenue: parseDecimal(json['revenue']),
       reservationCount: (json['reservationCount'] as int?) ?? 0,
     );
   }
@@ -258,7 +289,7 @@ class RevenueByWarehouse {
 
 class RevenueByCity {
   final String cityName;
-  final double revenue;
+  final Decimal revenue;
   final int reservationCount;
 
   RevenueByCity({
@@ -268,9 +299,24 @@ class RevenueByCity {
   });
 
   factory RevenueByCity.fromJson(Map<String, dynamic> json) {
+    Decimal parseDecimal(dynamic value) {
+      if (value == null) return Decimal.zero;
+      if (value is Decimal) return value;
+      if (value is int) return Decimal.fromInt(value);
+      if (value is double) return Decimal.parse(value.toString());
+      if (value is String) {
+        try {
+          return Decimal.parse(value);
+        } catch (_) {
+          return Decimal.zero;
+        }
+      }
+      return Decimal.zero;
+    }
+
     return RevenueByCity(
       cityName: json['cityName']?.toString() ?? '',
-      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      revenue: parseDecimal(json['revenue']),
       reservationCount: (json['reservationCount'] as int?) ?? 0,
     );
   }
@@ -278,7 +324,7 @@ class RevenueByCity {
 
 class RevenueByDay {
   final String date;
-  final double revenue;
+  final Decimal revenue;
   final int reservationCount;
 
   RevenueByDay({
@@ -288,9 +334,24 @@ class RevenueByDay {
   });
 
   factory RevenueByDay.fromJson(Map<String, dynamic> json) {
+    Decimal parseDecimal(dynamic value) {
+      if (value == null) return Decimal.zero;
+      if (value is Decimal) return value;
+      if (value is int) return Decimal.fromInt(value);
+      if (value is double) return Decimal.parse(value.toString());
+      if (value is String) {
+        try {
+          return Decimal.parse(value);
+        } catch (_) {
+          return Decimal.zero;
+        }
+      }
+      return Decimal.zero;
+    }
+
     return RevenueByDay(
       date: json['date']?.toString() ?? '',
-      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      revenue: parseDecimal(json['revenue']),
       reservationCount: (json['reservationCount'] as int?) ?? 0,
     );
   }

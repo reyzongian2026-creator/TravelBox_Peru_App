@@ -192,21 +192,21 @@ class _RevenueTrendChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (data.isEmpty) return const SizedBox.shrink();
     
-    final maxRevenue = data.map((e) => e.revenue).reduce((a, b) => a > b ? a : b);
+    final maxRevenue = data.map((e) => e.revenue.toDouble()).reduce((a, b) => a > b ? a : b);
     
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       itemCount: data.length,
       itemBuilder: (context, index) {
         final item = data[index];
-        final height = maxRevenue > 0 ? (item.revenue / maxRevenue) * 120 : 0.0;
+        final height = maxRevenue > 0 ? (item.revenue.toDouble() / maxRevenue) * 120 : 0.0;
         return SizedBox(
           width: 60,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                formatter.format(item.revenue),
+                formatter.format(item.revenue.toDouble()),
                 style: const TextStyle(fontSize: 10),
                 overflow: TextOverflow.ellipsis,
               ),
