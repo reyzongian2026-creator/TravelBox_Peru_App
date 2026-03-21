@@ -433,8 +433,14 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                _InfoBlock(title: context.l10n.t('almacen'), value: item.warehouseName),
-                _InfoBlock(title: context.l10n.t('ciudad'), value: item.cityName),
+                _InfoBlock(
+                  title: context.l10n.t('almacen'),
+                  value: item.warehouseName,
+                ),
+                _InfoBlock(
+                  title: context.l10n.t('ciudad'),
+                  value: item.cityName,
+                ),
                 _InfoBlock(
                   title: context.l10n.t('delivery_monitor_label_customer'),
                   value: item.customerName,
@@ -602,7 +608,9 @@ class _EmbeddedTrackingSection extends ConsumerWidget {
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: LoadingStateView(
-            message: context.l10n.t('delivery_monitor_loading_embedded_tracking'),
+            message: context.l10n.t(
+              'delivery_monitor_loading_embedded_tracking',
+            ),
           ),
         ),
       ),
@@ -849,31 +857,6 @@ class DeliveryMonitorItem {
   final DateTime updatedAt;
 
   String get etaLabel => etaMinutes <= 0 ? '0 min' : '$etaMinutes min';
-
-  String get reservationStatusLabel {
-    switch (reservationStatus.toUpperCase()) {
-      case 'PENDING_PAYMENT':
-        return 'Pendiente pago';
-      case 'CONFIRMED':
-        return 'Confirmada';
-      case 'CHECKIN_PENDING':
-        return 'Check-in pendiente';
-      case 'STORED':
-        return 'Almacenada';
-      case 'OUT_FOR_DELIVERY':
-        return 'En delivery';
-      case 'READY_FOR_PICKUP':
-        return 'Lista para recojo';
-      case 'COMPLETED':
-        return 'Completada';
-      case 'CANCELLED':
-        return 'Cancelada';
-      case 'INCIDENT':
-        return 'Incidencia';
-      default:
-        return reservationStatus;
-    }
-  }
 
   String get deliveryStatusLabel {
     switch (deliveryStatus.toUpperCase()) {

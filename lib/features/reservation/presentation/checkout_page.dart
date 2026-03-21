@@ -77,8 +77,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
               title: Text(draft.warehouse.name),
               subtitle: Text(
                 '${draft.startAt} - ${draft.endAt}\n'
-                '${draft.bagCount} bultos, tamano ${draft.size}\n'
-                'Recojo: ${draft.pickupRequested ? 'Si' : 'No'} - Entrega: ${draft.dropoffRequested ? 'Si' : 'No'} - Seguro: ${draft.extraInsurance ? 'Si' : 'No'}',
+                '${draft.bagCount} ${context.l10n.t('bultos')}, ${context.l10n.t('main_size')} ${draft.size}\n'
+                '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}'
+                ' - ${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}'
+                ' - ${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
               ),
             ),
           ),
@@ -97,7 +99,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       leading: const Icon(Icons.payments_outlined),
                       title: Text(context.l10n.t('cash_only')),
                       subtitle: Text(
-                        'Pagos digitales temporalmente deshabilitados. El operador validara el cobro manualmente.',
+                        context.l10n.t('checkout_digital_payments_disabled'),
                       ),
                     )
                   else
@@ -138,9 +140,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     const SizedBox(height: 10),
                     TextField(
                       controller: _sourceTokenController,
-                      decoration: const InputDecoration(
-                        labelText: 'sourceTokenId (Culqi, obligatorio)',
-                        hintText: 'tkn_test_xxx',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'checkout_source_token_label',
+                        ),
+                        hintText: context.l10n.t('checkout_source_token_hint'),
                       ),
                     ),
                   ],
@@ -153,9 +157,13 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     const SizedBox(height: 10),
                     TextField(
                       controller: _customerEmailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email cliente (opcional)',
-                        hintText: 'cliente@correo.com',
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'checkout_customer_email_optional_label',
+                        ),
+                        hintText: context.l10n.t(
+                          'checkout_customer_email_optional_hint',
+                        ),
                       ),
                     ),
                   ],
@@ -168,10 +176,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             child: ListTile(
               title: Text(context.l10n.t('final_total')),
               subtitle: Text(
-                'Almacenaje S/${draft.storageSubtotal().toStringAsFixed(2)} '
-                '+ Recojo S/${draft.pickupCost().toStringAsFixed(2)} '
-                '+ Entrega S/${draft.dropoffCost().toStringAsFixed(2)} '
-                '+ Seguro S/${draft.insuranceCost().toStringAsFixed(2)}',
+                '${context.l10n.t('checkout_breakdown_storage')} S/${draft.storageSubtotal().toStringAsFixed(2)} '
+                '+ ${context.l10n.t('checkout_breakdown_pickup')} S/${draft.pickupCost().toStringAsFixed(2)} '
+                '+ ${context.l10n.t('checkout_breakdown_dropoff')} S/${draft.dropoffCost().toStringAsFixed(2)} '
+                '+ ${context.l10n.t('checkout_breakdown_insurance')} S/${draft.insuranceCost().toStringAsFixed(2)}',
               ),
               trailing: Text(
                 'S/${draft.estimatePrice().toStringAsFixed(2)}',
@@ -199,8 +207,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 child: ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: Text(context.l10n.t('counter_validation')),
-                  subtitle: const Text(
-                    'Tu pago quedara PENDING hasta que cajero u operador lo apruebe en el panel de cobros.',
+                  subtitle: Text(
+                    context.l10n.t('checkout_pending_offline_approval_notice'),
                   ),
                 ),
               ),
@@ -217,9 +225,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                                 PaymentConstants.methodYape) &&
                         _sourceTokenController.text.trim().isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Para tarjeta o Yape debes enviar un sourceTokenId valido antes de confirmar.',
+                            context.l10n.t(
+                              'checkout_source_token_required_notice',
+                            ),
                           ),
                         ),
                       );
@@ -298,17 +308,17 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   String _paymentHelp(String method) {
     switch (method) {
       case PaymentConstants.methodCard:
-        return 'Tarjeta confirma el pago en linea y habilita el QR de check-in. Requiere sourceTokenId de Culqi.';
+        return context.l10n.t('checkout_payment_help_card');
       case PaymentConstants.methodYape:
-        return 'Yape confirma el pago en linea y habilita el QR de check-in. Requiere sourceTokenId de Culqi.';
+        return context.l10n.t('checkout_payment_help_yape');
       case PaymentConstants.methodWallet:
-        return 'Wallet/Plin deja la reserva confirmada sin pasar por caja.';
+        return context.l10n.t('checkout_payment_help_wallet');
       case PaymentConstants.methodCounter:
-        return 'Debes pagar en el almacen y esperar aprobacion del encargado.';
+        return context.l10n.t('checkout_payment_help_counter');
       case PaymentConstants.methodCash:
-        return 'Debes entregar efectivo y el operador validara el cobro desde su panel.';
+        return context.l10n.t('checkout_payment_help_cash');
       default:
-        return 'Selecciona un metodo para continuar.';
+        return context.l10n.t('checkout_payment_help_default');
     }
   }
 }

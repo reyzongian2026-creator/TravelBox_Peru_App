@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n/app_localizations.dart';
 import '../../core/theme/brand_tokens.dart';
 
 class TravelBoxLogo extends StatelessWidget {
@@ -79,8 +80,8 @@ class TravelBoxLogo extends StatelessWidget {
                     if (resolvedShowSubtitle)
                       Text(
                         compact
-                            ? 'Storage turistico'
-                            : 'Storage turistico inteligente',
+                            ? context.l10n.t('travelbox_logo_subtitle_compact')
+                            : context.l10n.t('travelbox_logo_subtitle_full'),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: TextStyle(

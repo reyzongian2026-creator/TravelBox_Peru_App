@@ -283,13 +283,13 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         : ref
               .watch(qrHandoffControllerProvider)
               .casesByReservationId[selectedReservation.id];
-    final languageEntries = const <String, String>{
-      'es': 'Español',
-      'en': 'English',
-      'de': 'Deutsch',
-      'fr': 'Français',
-      'it': 'Italiano',
-      'pt': 'Português',
+    final languageEntries = <String, String>{
+      'es': context.l10n.t('spanish'),
+      'en': context.l10n.t('english'),
+      'de': context.l10n.t('deutsch'),
+      'fr': context.l10n.t('francais'),
+      'it': context.l10n.t('italiano'),
+      'pt': context.l10n.t('portugues'),
     };
 
     return ListView(

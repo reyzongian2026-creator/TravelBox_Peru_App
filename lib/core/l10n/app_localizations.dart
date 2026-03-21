@@ -512,6 +512,8 @@ class AppLocalizations {
       'auth_continue_failed': 'No se pudo continuar',
       'auth_portal_hero_subtitle':
           'Guarda tu equipaje de forma segura en aeropuerto y ciudad, mientras disfrutas tu viaje.',
+      'auth_hero_welcome_back': 'Bienvenido de nuevo',
+      'auth_validating': 'Validando...',
       'onboarding_guest_name': 'cliente',
       'onboarding_welcome_title_prefix': 'Bienvenido',
       'onboarding_intro_subtitle':
@@ -529,6 +531,13 @@ class AppLocalizations {
       'onboarding_start_now': 'Empezar ahora',
       'register_hero_subtitle':
           'Configura tu perfil y empieza a reservar almacenamiento seguro en segundos.',
+      'register_hero_title': 'CREA TU CUENTA',
+      'travelbox_logo_subtitle_compact': 'Storage turistico',
+      'travelbox_logo_subtitle_full': 'Storage turistico inteligente',
+      'deutsch': 'Deutsch',
+      'francais': 'Frances',
+      'italiano': 'Italiano',
+      'portugues': 'Portugues',
       'courier_confirm_pickup': 'Confirmar recojo',
       'courier_confirm_delivery': 'Confirmar entrega',
       'checkout_payment_process_failed_prefix': 'No se pudo procesar pago',
@@ -537,6 +546,36 @@ class AppLocalizations {
       'checkout_payment_headline_offline':
           'Pago presencial con validacion manual',
       'checkout_payment_headline_online': 'Pago inmediato para habilitar el QR',
+      'checkout_summary_pickup': 'Recojo',
+      'checkout_summary_dropoff': 'Entrega',
+      'checkout_summary_insurance': 'Seguro',
+      'checkout_digital_payments_disabled':
+          'Pagos digitales temporalmente deshabilitados. El operador validara el cobro manualmente.',
+      'checkout_source_token_label': 'sourceTokenId (Culqi, obligatorio)',
+      'checkout_source_token_hint': 'tkn_test_xxx',
+      'checkout_customer_email_optional_label': 'Email cliente (opcional)',
+      'checkout_customer_email_optional_hint': 'cliente@correo.com',
+      'checkout_breakdown_storage': 'Almacenaje',
+      'checkout_breakdown_pickup': 'Recojo',
+      'checkout_breakdown_dropoff': 'Entrega',
+      'checkout_breakdown_insurance': 'Seguro',
+      'checkout_pending_offline_approval_notice':
+          'Tu pago quedara PENDING hasta que cajero u operador lo apruebe en el panel de cobros.',
+      'checkout_source_token_required_notice':
+          'Para tarjeta o Yape debes enviar un sourceTokenId valido antes de confirmar.',
+      'checkout_payment_help_card':
+          'Tarjeta confirma el pago en linea y habilita el QR de check-in. Requiere sourceTokenId de Culqi.',
+      'checkout_payment_help_yape':
+          'Yape confirma el pago en linea y habilita el QR de check-in. Requiere sourceTokenId de Culqi.',
+      'checkout_payment_help_wallet':
+          'Wallet/Plin deja la reserva confirmada sin pasar por caja.',
+      'checkout_payment_help_counter':
+          'Debes pagar en el almacen y esperar aprobacion del encargado.',
+      'checkout_payment_help_cash':
+          'Debes entregar efectivo y el operador validara el cobro desde su panel.',
+      'checkout_payment_help_default': 'Selecciona un metodo para continuar.',
+      'yes': 'Si',
+      'no': 'No',
       'reservation_success_qr_pending_message':
           'Tu reserva existe, pero el QR de check-in aun no esta habilitado porque el pago sigue pendiente.',
       'reservation_success_qr_checkin_only_message':
@@ -603,8 +642,7 @@ class AppLocalizations {
           'No hay ordenes de delivery para el filtro actual.',
       'delivery_monitor_no_active':
           'No hay deliveries activos para monitorear ahora.',
-      'delivery_monitor_no_recent':
-          'No hay deliveries recientes disponibles.',
+      'delivery_monitor_no_recent': 'No hay deliveries recientes disponibles.',
       'delivery_monitor_reservation_prefix': 'Reserva',
       'delivery_monitor_eta_prefix': 'ETA',
       'delivery_monitor_panel_summary_prefix': 'Panel monitoreando',
@@ -642,8 +680,7 @@ class AppLocalizations {
       'courier_services_load_failed_prefix':
           'No se pudieron cargar servicios courier',
       'courier_services_claim_success_prefix': 'Tomaste el servicio',
-      'courier_services_tracking_updated_prefix':
-          'Tracking actualizado para',
+      'courier_services_tracking_updated_prefix': 'Tracking actualizado para',
       'courier_services_vehicle_type_label': 'Tipo de vehiculo',
       'courier_services_plate_or_code_label': 'Placa o codigo',
       'courier_services_loading_route': 'Cargando ruta sugerida...',
@@ -660,6 +697,15 @@ class AppLocalizations {
           'Ej. Llegue al hotel / equipaje verificado',
       'courier_services_location_permission_denied':
           'No se concedio permiso de ubicacion.',
+      'courier_dashboard_title': 'Panel courier',
+      'courier_dashboard_header': 'Operacion courier TravelBox',
+      'courier_dashboard_intro':
+          'Toma un servicio disponible, confirma salida, comparte ubicacion y cierra la entrega o recojo desde tu modulo operativo.',
+      'courier_dashboard_flow_title': 'Flujo operativo',
+      'courier_dashboard_step_4':
+          '4. Actualiza ubicacion y estado durante el trayecto.',
+      'courier_dashboard_tracking_manual_hint':
+          'Puedes usar GPS del navegador o registrar coordenadas manuales si estas probando en local.',
       'warehouse_detail_title': 'Detalle de sede',
       'warehouse_detail_not_found': 'No encontramos este almacen.',
       'warehouse_detail_city_prefix': 'Sede en',
@@ -669,8 +715,9 @@ class AppLocalizations {
       'warehouse_detail_score_prefix': 'Score',
       'warehouse_detail_extra_services_title': 'Servicios extra',
       'warehouse_detail_tourism_highlight_prefix': 'Turismo destacado',
-      'warehouse_detail_load_failed_prefix':
-          'No se pudo cargar el detalle',
+      'warehouse_detail_load_failed_prefix': 'No se pudo cargar el detalle',
+      'reservation_form_warehouse_not_found': 'No encontramos el almacen.',
+      'reservation_form_price_from_prefix': 'Desde',
       'admin_warehouses_title': 'Gestion de almacenes',
       'admin_warehouses_empty_filter': 'No hay almacenes para este filtro.',
       'admin_warehouses_load_failed_prefix': 'No se pudo cargar almacenes',
@@ -684,6 +731,57 @@ class AppLocalizations {
       'admin_warehouses_registry_board': 'Tablero de registros',
       'admin_warehouses_swipe_right_hint':
           'Desliza hacia la derecha para ver mas columnas.',
+      'admin_warehouses_operation_failed_prefix': 'Operacion fallida',
+      'admin_warehouses_storage_not_available':
+          'Firebase Storage no esta disponible. El almacen seguira con portada automatica.',
+      'admin_warehouses_photo_upload_web_only':
+          'La carga de fotos desde archivo esta habilitada en la web admin.',
+      'admin_warehouses_photo_hint_storage_enabled':
+          'Si no subes una foto, TravelBox mostrara una portada automatica por sede.',
+      'admin_warehouses_photo_hint_storage_disabled':
+          'Firebase Storage esta deshabilitado por ahora. Se mostrara la portada automatica por sede.',
+      'admin_warehouses_name_label': 'Nombre',
+      'admin_warehouses_name_too_long':
+          'El nombre no puede superar 140 caracteres.',
+      'admin_warehouses_address_label': 'Direccion',
+      'admin_warehouses_address_too_long':
+          'La direccion no puede superar 220 caracteres.',
+      'admin_warehouses_city_label': 'Ciudad',
+      'admin_warehouses_select_city_required':
+          'Selecciona la ciudad del almacen.',
+      'admin_warehouses_tourist_zone_optional': 'Zona turistica (opcional)',
+      'admin_warehouses_latitude_label': 'Latitud',
+      'admin_warehouses_longitude_label': 'Longitud',
+      'admin_warehouses_map_helper':
+          'Puedes tocar el mapa para registrar la ubicacion exacta sin calcular coordenadas manualmente.',
+      'admin_warehouses_capacity_label': 'Capacidad',
+      'admin_warehouses_opening_label': 'Apertura',
+      'admin_warehouses_closing_label': 'Cierre',
+      'admin_warehouses_prices_panel_title': 'Precios por almacen (solo admin)',
+      'admin_warehouses_rate_s_h': 'Tarifa S/h',
+      'admin_warehouses_rate_m_h': 'Tarifa M/h',
+      'admin_warehouses_rate_l_h': 'Tarifa L/h',
+      'admin_warehouses_rate_xl_h': 'Tarifa XL/h',
+      'admin_warehouses_pickup_delivery_fee': 'Recojo delivery',
+      'admin_warehouses_dropoff_delivery_fee': 'Entrega delivery',
+      'admin_warehouses_additional_insurance': 'Seguro adicional',
+      'admin_warehouses_rules_optional': 'Reglas (opcional)',
+      'admin_warehouses_rules_too_long':
+          'Las reglas no pueden superar 600 caracteres.',
+      'admin_warehouses_price_validation_error':
+          'Revisa precios/tarifas: deben ser montos numericos y no negativos.',
+      'admin_warehouses_select_city_before_map':
+          'Selecciona primero la ciudad para ubicar el almacen en el mapa.',
+      'admin_warehouses_auto_cover_by_city': 'Portada automatica por sede',
+      'admin_warehouses_invalid_amount': 'Ingresa un monto valido.',
+      'admin_warehouses_amount_non_negative': 'No puede ser negativo.',
+      'warehouse_location_picker_title': 'Elegir coordenadas en mapa',
+      'warehouse_location_picker_hint_base':
+          'Toca el mapa para fijar la ubicacion del almacen.',
+      'warehouse_location_picker_hint_with_context':
+          'Toca el mapa para fijar la ubicacion del almacen en',
+      'warehouse_location_picker_latitude': 'Latitud',
+      'warehouse_location_picker_longitude': 'Longitud',
       'verify_email_back_tooltip': 'Volver',
       'verify_email_mock_code_prefix': 'Codigo mock',
       'verify_email_verify_failed_prefix': 'No se pudo verificar',
@@ -1093,6 +1191,8 @@ class AppLocalizations {
       'auth_continue_failed': 'Could not continue',
       'auth_portal_hero_subtitle':
           'Store your luggage safely at airport and city spots while you enjoy your trip.',
+      'auth_hero_welcome_back': 'Welcome back',
+      'auth_validating': 'Validating...',
       'onboarding_guest_name': 'guest',
       'onboarding_welcome_title_prefix': 'Welcome',
       'onboarding_intro_subtitle':
@@ -1110,6 +1210,13 @@ class AppLocalizations {
       'onboarding_start_now': 'Start now',
       'register_hero_subtitle':
           'Set up your profile and start booking secure storage in seconds.',
+      'register_hero_title': 'CREATE YOUR ACCOUNT',
+      'travelbox_logo_subtitle_compact': 'Tourist storage',
+      'travelbox_logo_subtitle_full': 'Smart tourist storage',
+      'deutsch': 'German',
+      'francais': 'French',
+      'italiano': 'Italian',
+      'portugues': 'Portuguese',
       'courier_confirm_pickup': 'Confirm pickup',
       'courier_confirm_delivery': 'Confirm delivery',
       'checkout_payment_process_failed_prefix': 'Could not process payment',
@@ -1118,6 +1225,36 @@ class AppLocalizations {
       'checkout_payment_headline_offline':
           'In-person payment with manual validation',
       'checkout_payment_headline_online': 'Immediate payment to enable QR',
+      'checkout_summary_pickup': 'Pickup',
+      'checkout_summary_dropoff': 'Delivery',
+      'checkout_summary_insurance': 'Insurance',
+      'checkout_digital_payments_disabled':
+          'Digital payments are temporarily disabled. The operator will validate manual collection.',
+      'checkout_source_token_label': 'sourceTokenId (Culqi, required)',
+      'checkout_source_token_hint': 'tkn_test_xxx',
+      'checkout_customer_email_optional_label': 'Customer email (optional)',
+      'checkout_customer_email_optional_hint': 'client@email.com',
+      'checkout_breakdown_storage': 'Storage',
+      'checkout_breakdown_pickup': 'Pickup',
+      'checkout_breakdown_dropoff': 'Delivery',
+      'checkout_breakdown_insurance': 'Insurance',
+      'checkout_pending_offline_approval_notice':
+          'Your payment will remain PENDING until cashier or operator approves it from the collections panel.',
+      'checkout_source_token_required_notice':
+          'Card or Yape requires a valid sourceTokenId before confirmation.',
+      'checkout_payment_help_card':
+          'Card confirms payment online and enables check-in QR. Requires Culqi sourceTokenId.',
+      'checkout_payment_help_yape':
+          'Yape confirms payment online and enables check-in QR. Requires Culqi sourceTokenId.',
+      'checkout_payment_help_wallet':
+          'Wallet/Plin confirms reservation without counter approval.',
+      'checkout_payment_help_counter':
+          'You must pay at warehouse and wait for staff approval.',
+      'checkout_payment_help_cash':
+          'You must pay cash and operator will validate collection from their panel.',
+      'checkout_payment_help_default': 'Select a method to continue.',
+      'yes': 'Yes',
+      'no': 'No',
       'reservation_success_qr_pending_message':
           'Your reservation exists, but check-in QR is not enabled yet because payment is still pending.',
       'reservation_success_qr_checkin_only_message':
@@ -1183,8 +1320,7 @@ class AppLocalizations {
       'delivery_monitor_empty_filter':
           'There are no delivery orders for this filter.',
       'delivery_monitor_no_active': 'There are no active deliveries right now.',
-      'delivery_monitor_no_recent':
-          'There are no recent deliveries available.',
+      'delivery_monitor_no_recent': 'There are no recent deliveries available.',
       'delivery_monitor_reservation_prefix': 'Reservation',
       'delivery_monitor_eta_prefix': 'ETA',
       'delivery_monitor_panel_summary_prefix': 'Panel monitoring',
@@ -1207,24 +1343,20 @@ class AppLocalizations {
       'delivery_monitor_route_simulated': 'simulated',
       'delivery_monitor_route_road_prefix': 'Route',
       'courier_services_title': 'Courier services',
-      'courier_services_search_label':
-          'Search by code, customer, or city',
+      'courier_services_search_label': 'Search by code, customer, or city',
       'courier_services_tab_available': 'Available',
       'courier_services_tab_mine': 'My services',
       'courier_services_empty_available':
           'There are no open services for this filter.',
-      'courier_services_empty_mine':
-          'You have no assigned services right now.',
+      'courier_services_empty_mine': 'You have no assigned services right now.',
       'courier_services_service_prefix': 'Service',
       'courier_services_pickup_point_prefix': 'Pickup point',
       'courier_services_destination_prefix': 'Destination',
       'courier_services_eta_prefix': 'Current ETA',
       'courier_services_vehicle_prefix': 'Vehicle',
-      'courier_services_load_failed_prefix':
-          'Could not load courier services',
+      'courier_services_load_failed_prefix': 'Could not load courier services',
       'courier_services_claim_success_prefix': 'You claimed service',
-      'courier_services_tracking_updated_prefix':
-          'Tracking updated for',
+      'courier_services_tracking_updated_prefix': 'Tracking updated for',
       'courier_services_vehicle_type_label': 'Vehicle type',
       'courier_services_plate_or_code_label': 'Plate or code',
       'courier_services_loading_route': 'Loading suggested route...',
@@ -1241,6 +1373,15 @@ class AppLocalizations {
           'e.g. Arrived at hotel / luggage verified',
       'courier_services_location_permission_denied':
           'Location permission was not granted.',
+      'courier_dashboard_title': 'Courier panel',
+      'courier_dashboard_header': 'TravelBox courier operations',
+      'courier_dashboard_intro':
+          'Claim an available service, confirm departure, share location, and close pickup or delivery from your operations module.',
+      'courier_dashboard_flow_title': 'Operational flow',
+      'courier_dashboard_step_4':
+          '4. Update location and status during the route.',
+      'courier_dashboard_tracking_manual_hint':
+          'You can use browser GPS or enter coordinates manually when testing locally.',
       'warehouse_detail_title': 'Warehouse detail',
       'warehouse_detail_not_found': 'We could not find this warehouse.',
       'warehouse_detail_city_prefix': 'Location in',
@@ -1251,6 +1392,9 @@ class AppLocalizations {
       'warehouse_detail_extra_services_title': 'Extra services',
       'warehouse_detail_tourism_highlight_prefix': 'Tourism highlight',
       'warehouse_detail_load_failed_prefix': 'Could not load detail',
+      'reservation_form_warehouse_not_found':
+          'We could not find this warehouse.',
+      'reservation_form_price_from_prefix': 'From',
       'admin_warehouses_title': 'Warehouse management',
       'admin_warehouses_empty_filter':
           'There are no warehouses for this filter.',
@@ -1263,8 +1407,55 @@ class AppLocalizations {
       'admin_warehouses_status_active': 'Active',
       'admin_warehouses_status_inactive': 'Inactive',
       'admin_warehouses_registry_board': 'Registry board',
-      'admin_warehouses_swipe_right_hint':
-          'Swipe right to see more columns.',
+      'admin_warehouses_swipe_right_hint': 'Swipe right to see more columns.',
+      'admin_warehouses_operation_failed_prefix': 'Operation failed',
+      'admin_warehouses_storage_not_available':
+          'Firebase Storage is not available. Warehouse will keep automatic cover image.',
+      'admin_warehouses_photo_upload_web_only':
+          'File photo upload is currently enabled in admin web.',
+      'admin_warehouses_photo_hint_storage_enabled':
+          'If you do not upload a photo, TravelBox shows an automatic cover by site.',
+      'admin_warehouses_photo_hint_storage_disabled':
+          'Firebase Storage is disabled for now. Automatic cover by site will be used.',
+      'admin_warehouses_name_label': 'Name',
+      'admin_warehouses_name_too_long': 'Name cannot exceed 140 characters.',
+      'admin_warehouses_address_label': 'Address',
+      'admin_warehouses_address_too_long':
+          'Address cannot exceed 220 characters.',
+      'admin_warehouses_city_label': 'City',
+      'admin_warehouses_select_city_required': 'Select warehouse city.',
+      'admin_warehouses_tourist_zone_optional': 'Tourist zone (optional)',
+      'admin_warehouses_latitude_label': 'Latitude',
+      'admin_warehouses_longitude_label': 'Longitude',
+      'admin_warehouses_map_helper':
+          'You can tap the map to register exact location without manual coordinates.',
+      'admin_warehouses_capacity_label': 'Capacity',
+      'admin_warehouses_opening_label': 'Opening',
+      'admin_warehouses_closing_label': 'Closing',
+      'admin_warehouses_prices_panel_title': 'Warehouse prices (admin only)',
+      'admin_warehouses_rate_s_h': 'Rate S/h',
+      'admin_warehouses_rate_m_h': 'Rate M/h',
+      'admin_warehouses_rate_l_h': 'Rate L/h',
+      'admin_warehouses_rate_xl_h': 'Rate XL/h',
+      'admin_warehouses_pickup_delivery_fee': 'Pickup delivery',
+      'admin_warehouses_dropoff_delivery_fee': 'Dropoff delivery',
+      'admin_warehouses_additional_insurance': 'Extra insurance',
+      'admin_warehouses_rules_optional': 'Rules (optional)',
+      'admin_warehouses_rules_too_long': 'Rules cannot exceed 600 characters.',
+      'admin_warehouses_price_validation_error':
+          'Review prices/rates: values must be numeric and non-negative.',
+      'admin_warehouses_select_city_before_map':
+          'Select city first to place warehouse on map.',
+      'admin_warehouses_auto_cover_by_city': 'Automatic cover by site',
+      'admin_warehouses_invalid_amount': 'Enter a valid amount.',
+      'admin_warehouses_amount_non_negative': 'Amount cannot be negative.',
+      'warehouse_location_picker_title': 'Pick coordinates on map',
+      'warehouse_location_picker_hint_base':
+          'Tap the map to set warehouse location.',
+      'warehouse_location_picker_hint_with_context':
+          'Tap the map to set warehouse location in',
+      'warehouse_location_picker_latitude': 'Latitude',
+      'warehouse_location_picker_longitude': 'Longitude',
       'verify_email_back_tooltip': 'Back',
       'verify_email_mock_code_prefix': 'Mock code',
       'verify_email_verify_failed_prefix': 'Could not verify',

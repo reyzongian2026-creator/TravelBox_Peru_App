@@ -541,7 +541,7 @@ class _AuthPanel extends StatelessWidget {
                 : (isClient ? onClientLogin : onInternalLogin),
             icon: isClient ? Icons.person_outline : Icons.badge_outlined,
             label: authState.isLoading
-                ? 'Validando...'
+                ? l10n.t('auth_validating')
                 : isClient
                 ? l10n.t('login_as_client')
                 : l10n.t('login_as_internal'),

@@ -10,7 +10,7 @@ class CourierDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppShellScaffold(
-      title: 'Panel courier',
+      title: context.l10n.t('courier_dashboard_title'),
       currentRoute: '/courier/panel',
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -27,15 +27,15 @@ class CourierDashboardPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Operacion courier TravelBox',
+                  context.l10n.t('courier_dashboard_header'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'Toma un servicio disponible, confirma salida, comparte ubicacion y cierra la entrega o recojo desde tu modulo operativo.',
+                Text(
+                  context.l10n.t('courier_dashboard_intro'),
                   style: TextStyle(color: Colors.white),
                 ),
                 const SizedBox(height: 16),
@@ -61,19 +61,21 @@ class CourierDashboardPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Flujo operativo',
+                    context.l10n.t('courier_dashboard_flow_title'),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(context.l10n.t('1_revisa_servicios_disponibles_y_toma_un')),
+                  Text(
+                    context.l10n.t('1_revisa_servicios_disponibles_y_toma_un'),
+                  ),
                   Text(context.l10n.t('2_registra_tu_vehiculo_si_aplica')),
                   Text(context.l10n.t('3_marca_salida_e_informa_eta')),
+                  Text(context.l10n.t('courier_dashboard_step_4')),
                   Text(
-                    '4. Actualiza ubicacion y estado durante el trayecto.',
+                    context.l10n.t('5_confirma_recojo_o_entrega_al_finalizar'),
                   ),
-                  Text(context.l10n.t('5_confirma_recojo_o_entrega_al_finalizar')),
                 ],
               ),
             ),
@@ -83,8 +85,8 @@ class CourierDashboardPage extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.my_location_outlined),
               title: Text(context.l10n.t('tracking_manual_asistido')),
-              subtitle: const Text(
-                'Puedes usar GPS del navegador o registrar coordenadas manuales si estas probando en local.',
+              subtitle: Text(
+                context.l10n.t('courier_dashboard_tracking_manual_hint'),
               ),
             ),
           ),
@@ -93,4 +95,3 @@ class CourierDashboardPage extends StatelessWidget {
     );
   }
 }
-

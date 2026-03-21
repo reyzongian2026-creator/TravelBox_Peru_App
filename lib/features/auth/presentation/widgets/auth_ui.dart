@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/layout/responsive_layout.dart';
+import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/theme/brand_tokens.dart';
 import 'auth_teddy_animation.dart';
 
@@ -372,7 +373,7 @@ class AuthHeroPanel extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                compact ? 'Bienvenido de nuevo' : 'Bienvenido de nuevo',
+                context.l10n.t('auth_hero_welcome_back'),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.95),
                   fontSize: compact ? 22 : 32,

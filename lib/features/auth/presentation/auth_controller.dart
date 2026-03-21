@@ -25,9 +25,8 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
           .login(email: email.trim(), password: password)
           .timeout(
             _loginTimeout,
-            onTimeout: () => throw TimeoutException(
-              'El inicio de sesion esta tardando mas de lo esperado.',
-            ),
+            onTimeout: () =>
+                throw TimeoutException('Login is taking longer than expected.'),
           );
       await _ref
           .read(sessionControllerProvider.notifier)
@@ -91,7 +90,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
           .timeout(
             _socialLoginTimeout,
             onTimeout: () => throw TimeoutException(
-              'El proveedor social no respondio a tiempo. Vuelve a intentar.',
+              'Social login timed out. Please try again.',
             ),
           );
       await _ref

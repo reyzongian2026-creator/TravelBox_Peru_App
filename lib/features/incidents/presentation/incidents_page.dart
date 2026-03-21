@@ -481,15 +481,15 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   String _categoryLabel(String rawCategory) {
     switch (rawCategory) {
       case 'damage':
-        return 'Danio';
+        return 'Damage';
       case 'delay':
-        return 'Retraso';
+        return 'Delay';
       case 'wrong-item':
-        return 'Objeto equivocado';
+        return 'Wrong item';
       case 'payment':
-        return 'Pago';
+        return 'Payment';
       default:
-        return 'Otro';
+        return 'Other';
     }
   }
 

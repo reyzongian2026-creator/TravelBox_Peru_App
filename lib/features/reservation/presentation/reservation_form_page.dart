@@ -51,7 +51,9 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
       body: warehouseAsync.when(
         data: (warehouse) {
           if (warehouse == null) {
-            return EmptyStateView(message: 'No encontramos el almacen.');
+            return EmptyStateView(
+              message: context.l10n.t('reservation_form_warehouse_not_found'),
+            );
           }
 
           final draft = ReservationDraft(
@@ -73,7 +75,8 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                   title: Text(warehouse.name),
                   subtitle: Text('${warehouse.address}, ${warehouse.district}'),
                   trailing: Text(
-                    'Desde S/${warehouse.pricePerHourSmall.toStringAsFixed(2)}/h',
+                    '${context.l10n.t('reservation_form_price_from_prefix')} '
+                    'S/${warehouse.pricePerHourSmall.toStringAsFixed(2)}/h',
                   ),
                 ),
               ),
@@ -88,9 +91,18 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                       SizedBox(height: 8),
                       SegmentedButton<int>(
                         segments: [
-                          ButtonSegment(value: 1, label: Text(context.l10n.t('1'))),
-                          ButtonSegment(value: 2, label: Text(context.l10n.t('2'))),
-                          ButtonSegment(value: 3, label: Text(context.l10n.t('3'))),
+                          ButtonSegment(
+                            value: 1,
+                            label: Text(context.l10n.t('1')),
+                          ),
+                          ButtonSegment(
+                            value: 2,
+                            label: Text(context.l10n.t('2')),
+                          ),
+                          ButtonSegment(
+                            value: 3,
+                            label: Text(context.l10n.t('3')),
+                          ),
                         ],
                         selected: {bagCount},
                         onSelectionChanged: (value) {
@@ -104,10 +116,22 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                       SizedBox(height: 8),
                       SegmentedButton<String>(
                         segments: [
-                          ButtonSegment(value: 'S', label: Text(context.l10n.t('s'))),
-                          ButtonSegment(value: 'M', label: Text(context.l10n.t('m'))),
-                          ButtonSegment(value: 'L', label: Text(context.l10n.t('l'))),
-                          ButtonSegment(value: 'XL', label: Text(context.l10n.t('xl'))),
+                          ButtonSegment(
+                            value: 'S',
+                            label: Text(context.l10n.t('s')),
+                          ),
+                          ButtonSegment(
+                            value: 'M',
+                            label: Text(context.l10n.t('m')),
+                          ),
+                          ButtonSegment(
+                            value: 'L',
+                            label: Text(context.l10n.t('l')),
+                          ),
+                          ButtonSegment(
+                            value: 'XL',
+                            label: Text(context.l10n.t('xl')),
+                          ),
                         ],
                         selected: {size},
                         onSelectionChanged: (value) {
@@ -275,5 +299,3 @@ class _DateSelector extends StatelessWidget {
     );
   }
 }
-
-

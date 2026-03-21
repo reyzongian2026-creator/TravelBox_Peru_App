@@ -1,5 +1,5 @@
 name: Run Once - Redeploy Full + Build Clients
-# trigger: 2026-03-21 i18n-full-pass deploy
+# trigger: 2026-03-21 i18n-locale-hardening-pass deploy
 
 on:
   push:

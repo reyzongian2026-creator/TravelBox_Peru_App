@@ -95,7 +95,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     return AuthSplitScaffold(
       heroLabel: 'TravelBox',
-      heroTitle: 'CREA TU CUENTA',
+      heroTitle: context.l10n.t('register_hero_title'),
       heroSubtitle: context.l10n.t('register_hero_subtitle'),
       showGuardianBear: false,
       formChild: Form(

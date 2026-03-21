@@ -488,9 +488,14 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
   void _showError(Object error) {
     if (!mounted) return;
     final message = AppErrorFormatter.readable(error);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Operacion fallida: $message')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${context.l10n.t('admin_warehouses_operation_failed_prefix')}: '
+          '$message',
+        ),
+      ),
+    );
   }
 }
 
@@ -604,9 +609,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     if (!AppEnv.firebaseStorageUploadsEnabled) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Firebase Storage no esta disponible. El almacen seguira con portada automatica.',
+            context.l10n.t('admin_warehouses_storage_not_available'),
           ),
         ),
       );
@@ -616,9 +621,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     if (image == null) {
       if (!mounted || kIsWeb) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'La carga de fotos desde archivo esta habilitada en la web admin.',
+            context.l10n.t('admin_warehouses_photo_upload_web_only'),
           ),
         ),
       );
@@ -715,14 +720,20 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 SizedBox(height: 6),
                 Text(
                   AppEnv.firebaseStorageUploadsEnabled
-                      ? 'Si no subes una foto, TravelBox mostrara una portada automatica por sede.'
-                      : 'Firebase Storage esta deshabilitado por ahora. Se mostrara la portada automatica por sede.',
+                      ? context.l10n.t(
+                          'admin_warehouses_photo_hint_storage_enabled',
+                        )
+                      : context.l10n.t(
+                          'admin_warehouses_photo_hint_storage_disabled',
+                        ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nombre'),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t('admin_warehouses_name_label'),
+                  ),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     final required = FormValidators.requiredText(
@@ -733,7 +744,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                     if (required != null) return required;
                     final text = value?.trim() ?? '';
                     if (text.length > 140) {
-                      return 'El nombre no puede superar 140 caracteres.';
+                      return context.l10n.t('admin_warehouses_name_too_long');
                     }
                     return null;
                   },
@@ -741,7 +752,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Direccion'),
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t('admin_warehouses_address_label'),
+                  ),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     final required = FormValidators.requiredText(
@@ -752,7 +765,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                     if (required != null) return required;
                     final text = value?.trim() ?? '';
                     if (text.length > 220) {
-                      return 'La direccion no puede superar 220 caracteres.';
+                      return context.l10n.t(
+                        'admin_warehouses_address_too_long',
+                      );
                     }
                     return null;
                   },
@@ -761,7 +776,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 citiesAsync.when(
                   data: (cities) => DropdownButtonFormField<int>(
                     initialValue: _selectedCityId,
-                    decoration: const InputDecoration(labelText: 'Ciudad'),
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t('admin_warehouses_city_label'),
+                    ),
                     items: cities
                         .map(
                           (city) => DropdownMenuItem<int>(
@@ -780,7 +797,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                       });
                     },
                     validator: (value) => value == null
-                        ? 'Selecciona la ciudad del almacen.'
+                        ? context.l10n.t(
+                            'admin_warehouses_select_city_required',
+                          )
                         : null,
                   ),
                   loading: () => const LinearProgressIndicator(),
@@ -791,8 +810,10 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 zonesAsync.when(
                   data: (zones) => DropdownButtonFormField<int>(
                     initialValue: _selectedZoneId,
-                    decoration: const InputDecoration(
-                      labelText: 'Zona turistica (opcional)',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.t(
+                        'admin_warehouses_tourist_zone_optional',
+                      ),
                     ),
                     items: zones
                         .map(
@@ -828,7 +849,11 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                         decimal: true,
                         signed: true,
                       ),
-                      decoration: const InputDecoration(labelText: 'Latitud'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'admin_warehouses_latitude_label',
+                        ),
+                      ),
                       validator: FormValidators.latitude,
                     ),
                     TextFormField(
@@ -837,7 +862,11 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                         decimal: true,
                         signed: true,
                       ),
-                      decoration: const InputDecoration(labelText: 'Longitud'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'admin_warehouses_longitude_label',
+                        ),
+                      ),
                       validator: FormValidators.longitude,
                     ),
                   ],
@@ -876,7 +905,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                           ),
                           SizedBox(height: 6),
                           Text(
-                            'Puedes tocar el mapa para registrar la ubicacion exacta sin calcular coordenadas manualmente.',
+                            context.l10n.t('admin_warehouses_map_helper'),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -901,7 +930,11 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                     TextFormField(
                       controller: _capacityController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Capacidad'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'admin_warehouses_capacity_label',
+                        ),
+                      ),
                       validator: (value) => FormValidators.positiveInt(
                         value,
                         label: 'La capacidad',
@@ -910,14 +943,22 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                     TextFormField(
                       controller: _openHourController,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(labelText: 'Apertura'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'admin_warehouses_opening_label',
+                        ),
+                      ),
                       validator: (value) =>
                           FormValidators.hour(value, label: 'La apertura'),
                     ),
                     TextFormField(
                       controller: _closeHourController,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(labelText: 'Cierre'),
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'admin_warehouses_closing_label',
+                        ),
+                      ),
                       validator: (value) {
                         final base = FormValidators.hour(
                           value,
@@ -944,7 +985,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Precios por almacen (solo admin)',
+                        context.l10n.t('admin_warehouses_prices_panel_title'),
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -961,31 +1002,37 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                         children: [
                           _MoneyField(
                             controller: _pricePerHourSmallController,
-                            label: 'Tarifa S/h',
+                            label: context.l10n.t('admin_warehouses_rate_s_h'),
                           ),
                           _MoneyField(
                             controller: _pricePerHourMediumController,
-                            label: 'Tarifa M/h',
+                            label: context.l10n.t('admin_warehouses_rate_m_h'),
                           ),
                           _MoneyField(
                             controller: _pricePerHourLargeController,
-                            label: 'Tarifa L/h',
+                            label: context.l10n.t('admin_warehouses_rate_l_h'),
                           ),
                           _MoneyField(
                             controller: _pricePerHourExtraLargeController,
-                            label: 'Tarifa XL/h',
+                            label: context.l10n.t('admin_warehouses_rate_xl_h'),
                           ),
                           _MoneyField(
                             controller: _pickupFeeController,
-                            label: 'Recojo delivery',
+                            label: context.l10n.t(
+                              'admin_warehouses_pickup_delivery_fee',
+                            ),
                           ),
                           _MoneyField(
                             controller: _dropoffFeeController,
-                            label: 'Entrega delivery',
+                            label: context.l10n.t(
+                              'admin_warehouses_dropoff_delivery_fee',
+                            ),
                           ),
                           _MoneyField(
                             controller: _insuranceFeeController,
-                            label: 'Seguro adicional',
+                            label: context.l10n.t(
+                              'admin_warehouses_additional_insurance',
+                            ),
                           ),
                         ],
                       ),
@@ -996,13 +1043,15 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 TextFormField(
                   controller: _rulesController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Reglas (opcional)',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t(
+                      'admin_warehouses_rules_optional',
+                    ),
                   ),
                   validator: (value) {
                     final text = value?.trim() ?? '';
                     if (text.length > 600) {
-                      return 'Las reglas no pueden superar 600 caracteres.';
+                      return context.l10n.t('admin_warehouses_rules_too_long');
                     }
                     return null;
                   },
@@ -1076,7 +1125,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 _showValidation = true;
                 _formError =
                     hourRangeError ??
-                    'Revisa precios/tarifas: deben ser montos numericos y no negativos.';
+                    context.l10n.t('admin_warehouses_price_validation_error');
               });
               return;
             }
@@ -1136,8 +1185,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
         FormValidators.parseDouble(_longitudeController.text) == null) {
       setState(() {
         _showValidation = true;
-        _formError =
-            'Selecciona primero la ciudad para ubicar el almacen en el mapa.';
+        _formError = context.l10n.t('admin_warehouses_select_city_before_map');
       });
       return;
     }
@@ -1287,7 +1335,7 @@ class _WarehousePhotoPreview extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Portada automatica por sede',
+            context.l10n.t('admin_warehouses_auto_cover_by_city'),
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: Colors.white70),
@@ -1386,10 +1434,10 @@ class _MoneyField extends StatelessWidget {
       validator: (value) {
         final parsed = FormValidators.parseDouble(value);
         if (parsed == null) {
-          return 'Ingresa un monto valido.';
+          return context.l10n.t('admin_warehouses_invalid_amount');
         }
         if (parsed < 0) {
-          return 'No puede ser negativo.';
+          return context.l10n.t('admin_warehouses_amount_non_negative');
         }
         return null;
       },

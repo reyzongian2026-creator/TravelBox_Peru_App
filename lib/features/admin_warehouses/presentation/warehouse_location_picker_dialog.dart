@@ -49,16 +49,16 @@ class _WarehouseLocationPickerDialogState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Elegir coordenadas en mapa',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                context.l10n.t('warehouse_location_picker_title'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 6),
               Text(
                 subtitle.isEmpty
-                    ? 'Toca el mapa para fijar la ubicacion del almacen.'
-                    : 'Toca el mapa para fijar la ubicacion del almacen en $subtitle.',
+                    ? context.l10n.t('warehouse_location_picker_hint_base')
+                    : '${context.l10n.t('warehouse_location_picker_hint_with_context')} $subtitle.',
               ),
               const SizedBox(height: 12),
               Expanded(
@@ -125,11 +125,13 @@ class _WarehouseLocationPickerDialogState
                 runSpacing: 10,
                 children: [
                   _CoordinateChip(
-                    label: 'Latitud',
+                    label: context.l10n.t('warehouse_location_picker_latitude'),
                     value: _selectedPoint.latitude.toStringAsFixed(6),
                   ),
                   _CoordinateChip(
-                    label: 'Longitud',
+                    label: context.l10n.t(
+                      'warehouse_location_picker_longitude',
+                    ),
                     value: _selectedPoint.longitude.toStringAsFixed(6),
                   ),
                 ],
@@ -176,4 +178,3 @@ class _CoordinateChip extends StatelessWidget {
     );
   }
 }
-
