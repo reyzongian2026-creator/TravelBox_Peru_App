@@ -100,14 +100,15 @@ class EmptyStateView extends StatelessWidget {
 
 String _resolveUiMessage(BuildContext context, String raw) {
   final normalized = raw.trim();
-  switch (normalized) {
-    case 'Cargando...':
-      return context.l10n.t('loading');
-    case 'Reintentar':
-      return context.l10n.t('reintentar');
-    case context.l10n.t('state_view_no_data'):
-      return context.l10n.t('empty');
-    default:
-      return raw;
+  final noDataKey = context.l10n.t('state_view_no_data');
+  if (normalized == 'Cargando...') {
+    return context.l10n.t('loading');
   }
+  if (normalized == 'Reintentar') {
+    return context.l10n.t('reintentar');
+  }
+  if (normalized == noDataKey) {
+    return context.l10n.t('empty');
+  }
+  return raw;
 }
