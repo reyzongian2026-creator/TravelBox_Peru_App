@@ -170,7 +170,7 @@ class _DashboardContent extends ConsumerWidget {
                   '${stats['periodLabel'] ?? context.l10n.t('admin_dashboard_current_period')} '
                   '- ${context.l10n.t('admin_dashboard_updated_prefix')} '
                   '${_formattedDate(stats['generatedAt'])}',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9)),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.9)),
                 ),
                 SizedBox(height: sectionGap),
                 SegmentedButton<AdminDashboardPeriodOption>(
@@ -855,7 +855,7 @@ class _KpiCard extends StatelessWidget {
           SizedBox(height: compact ? 2 : 4),
           Text(
             subtitle,
-            style: TextStyle(color: Colors.white.withOpacity(0.88)),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.88)),
           ),
         ],
       ),

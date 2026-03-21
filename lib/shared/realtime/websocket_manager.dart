@@ -272,7 +272,7 @@ final realtimeEventProvider = StreamProvider<WebSocketEvent>((ref) {
 
 final reservationRealtimeUpdatesProvider = StreamProvider.family<WebSocketEvent?, String>(
   (ref, reservationId) {
-    return ref.watch(realtimeEventProvider.stream).where((event) {
+    return _createEventStream(ref).where((event) {
       if (event.type == WebSocketEventType.reservationUpdated ||
           event.type == WebSocketEventType.reservationCreated) {
         return event.payload['id']?.toString() == reservationId;
@@ -283,7 +283,26 @@ final reservationRealtimeUpdatesProvider = StreamProvider.family<WebSocketEvent?
 );
 
 final dashboardRealtimeUpdatesProvider = StreamProvider<WebSocketEvent>((ref) {
-  return ref.watch(realtimeEventProvider.stream).where((event) {
+  return _createEventStream(ref).where((event) {
     return event.type == WebSocketEventType.dashboardStatsUpdate;
   });
 });
+
+Stream<WebSocketEvent> _createEventStream(Ref ref) {
+  final controller = StreamController<WebSocketEvent>();
+  
+  void listener(WebSocketEvent event) {
+    if (!controller.isClosed) {
+      controller.add(event);
+    }
+  }
+  
+  ref.onDispose(() {
+    ref.read(webSocketManagerProvider.notifier).removeEventListener(listener);
+    controller.close();
+  });
+  
+  ref.read(webSocketManagerProvider.notifier).addEventListener(listener);
+  
+  return controller.stream;
+}
