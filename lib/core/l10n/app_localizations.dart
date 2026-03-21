@@ -474,6 +474,8 @@ class AppLocalizations {
           'Falta validar coincidencia de maleta e ID.',
       'ops_qr_missing_operator_approval':
           'Falta aprobacion del operador/admin.',
+      'ops_qr_validate_identity_first':
+          'Primero debes validar la identidad antes de validar el equipaje.',
       'ops_qr_complete_delivery_validation_failed':
           'No se pudo completar: verifica identidad, maleta y aprobacion operador.',
       'ops_qr_delivery_completed_ok':
@@ -1619,6 +1621,8 @@ class AppLocalizations {
       'ops_qr_missing_luggage_match_validation':
           'Luggage and ID match validation is missing.',
       'ops_qr_missing_operator_approval': 'Operator/admin approval is missing.',
+      'ops_qr_validate_identity_first':
+          'You must validate identity before validating luggage.',
       'ops_qr_complete_delivery_validation_failed':
           'Could not complete: verify identity, luggage, and operator approval.',
       'ops_qr_delivery_completed_ok':
@@ -2968,6 +2972,8 @@ class AppLocalizations {
       'ops_qr_missing_identity_validation': 'Falta validar identidad del receptou.',
       'ops_qr_missing_luggage_match_validation': 'Falta validar coemcidencia de maleta e ID.',
       'ops_qr_missing_operator_approval': 'Falta aprobacion del operadou/Admemistradou.',
+      'ops_qr_validate_identity_first':
+          'Zuerst Identitat validieren bevor Gepack validiert wird.',
       'ops_qr_no_pending_approvals': 'Nenhum solicitudes de aprobacion pendentes.',
       'ops_qr_no_selected_reservation_hint': 'Aun Nao hay reserva seleccionada. EEscanearea el QR del cliente para contemuar.',
       'ops_qr_not_generated': 'No generado',
@@ -5558,6 +5564,8 @@ class AppLocalizations {
       'ops_qr_missing_identity_validation': 'Falta validar identidad del receptoder.',
       'ops_qr_missing_luggage_match_validation': 'Falta validar coincidencia de maleta e ID.',
       'ops_qr_missing_operator_approval': 'Falta aprobacion del operadoder/Administratoder.',
+      'ops_qr_validate_identity_first':
+          'Vous devez dabord valider identite avant de valider bagage.',
       'ops_qr_no_pending_approvals': 'Keine solicitudes de aprobacion ausstehend.',
       'ops_qr_no_selected_reservation_hint': 'Aun Nein hay Reservierung seleccionada. EScannenea el QR del cliente para continuar.',
       'ops_qr_not_generated': 'No generado',
@@ -6615,6 +6623,8 @@ class AppLocalizations {
       'ops_qr_missing_identity_validation': 'Falta validar identidad del receptou.',
       'ops_qr_missing_luggage_match_validation': 'Falta validar codanscidencia de maleta e ID.',
       'ops_qr_missing_operator_approval': 'Falta aprobacion del operadou/Admdansistrateur.',
+      'ops_qr_validate_identity_first':
+          'Prima devi validare identita prima di validare bagaglio.',
       'ops_qr_no_pending_approvals': 'Aucun solicitudes de aprobacion en_attente.',
       'ops_qr_no_selected_reservation_hint': 'Aun Non hay reservation seleccionada. EScannerea el QR del cliente para contdansuar.',
       'ops_qr_not_generated': 'No generado',
@@ -7671,6 +7681,8 @@ class AppLocalizations {
       'ops_qr_missing_identity_validation': 'Falta validar identidad del recepto.',
       'ops_qr_missing_luggage_match_validation': 'Falta validar coincidencia de maleta e ID.',
       'ops_qr_missing_operator_approval': 'Falta aprobacion del operado/Amministratoe.',
+      'ops_qr_validate_identity_first':
+          'Primeiro voce deve validar identidade antes de validar bagagem.',
       'ops_qr_no_pending_approvals': 'Nessun solicitudes de aprobacion in_sospeso.',
       'ops_qr_no_selected_reservation_hint': 'Aun No hay preNonazione seleccionada. EScansionaea el QR del cliente para continuar.',
       'ops_qr_not_generated': 'No generado',

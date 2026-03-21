@@ -576,9 +576,13 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         ),
         SwitchListTile(
           value: selectedCase.luggageMatched,
-          onChanged: _processing
+          onChanged: _processing || !selectedCase.identityValidated
               ? null
               : (value) => _runAction(() async {
+                  if (!selectedCase.identityValidated) {
+                    _showMessage(context.l10n.t('ops_qr_validate_identity_first'));
+                    return;
+                  }
                   await ref
                       .read(qrHandoffControllerProvider.notifier)
                       .setDeliveryLuggageMatched(
@@ -588,7 +592,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                 }),
           title: Text(context.l10n.t('validar_que_maleta_e_id_coincidan')),
           subtitle: Text(
-            '${context.l10n.t('ops_qr_expected_id_prefix')}: ${selectedCase.bagTagId ?? '-'}',
+            !selectedCase.identityValidated
+                ? context.l10n.t('ops_qr_validate_identity_first')
+                : '${context.l10n.t('ops_qr_expected_id_prefix')}: ${selectedCase.bagTagId ?? '-'}',
           ),
         ),
         SizedBox(height: 10),
