@@ -13,6 +13,7 @@ enum WebSocketEventType {
   dashboardStatsUpdate,
   approvalRequired,
   deliveryStatusChanged,
+  pong,
   unknown,
 }
 
@@ -91,10 +92,13 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
   }
 
   void _notifyListeners(WebSocketEvent event) {
-    for (final listener in _eventListeners) {
+    final listeners = List<void Function(WebSocketEvent)>.from(_eventListeners);
+    for (final listener in listeners) {
       try {
         listener(event);
-      } catch (_) {}
+      } catch (e, st) {
+        print('WebSocket listener error: $e');
+      }
     }
   }
 
@@ -145,14 +149,26 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
   void _onMessage(dynamic message) {
     try {
       final data = jsonDecode(message.toString()) as Map<String, dynamic>;
+      final typeString = data['type']?.toString().toLowerCase() ?? '';
+      
+      if (typeString == 'pong') {
+        return;
+      }
+      
       final event = WebSocketEvent.fromJson(data);
       _notifyListeners(event);
-    } catch (_) {}
+    } catch (e, st) {
+      // Log error but don't crash
+      print('WebSocket message parse error: $e');
+    }
   }
 
-  void _onError(Object error) {
-    state = AsyncValue.error(error, StackTrace.current);
-    _scheduleReconnect();
+  void _onError(Object error, [StackTrace? st]) {
+    print('WebSocket error: $error');
+    state = AsyncValue.error(error, st ?? StackTrace.current);
+    if (!_manuallyDisconnected) {
+      _scheduleReconnect();
+    }
   }
 
   void _onDone() {
@@ -191,14 +207,18 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
   void _sendPing() {
     try {
       _channel?.sink.add(jsonEncode({'type': 'ping', 'timestamp': DateTime.now().toIso8601String()}));
-    } catch (_) {}
+    } catch (e) {
+      print('WebSocket ping error: $e');
+    }
   }
 
   void sendMessage(Map<String, dynamic> message) {
     if (state.valueOrNull == WebSocketConnectionStatus.connected) {
       try {
         _channel?.sink.add(jsonEncode(message));
-      } catch (_) {}
+      } catch (e) {
+        print('WebSocket send error: $e');
+      }
     }
   }
 
