@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:travelbox_peru_app/core/l10n/app_localizations.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_controller.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_model.dart';
 import 'package:travelbox_peru_app/features/Rating/presentation/rating_widgets.dart';
@@ -37,16 +38,17 @@ class _WarehouseRatingsPageState extends ConsumerState<WarehouseRatingsPage> {
   @override
   Widget build(BuildContext context) {
     final controller = ref.watch(ratingControllerProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Rese\u00f1as - ${widget.warehouseName}'),
+        title: Text('${l10n.t('rating_title')} - ${widget.warehouseName}'),
       ),
-      body: _buildBody(controller),
+      body: _buildBody(controller, l10n),
     );
   }
 
-  Widget _buildBody(RatingController controller) {
+  Widget _buildBody(RatingController controller, AppLocalizations l10n) {
     if (controller.isLoading && controller.ratings.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -72,8 +74,8 @@ class _WarehouseRatingsPageState extends ConsumerState<WarehouseRatingsPage> {
                 );
                 if (success && mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Rese\u00f1a enviada exitosamente'),
+                    SnackBar(
+                      content: Text(l10n.t('rating_success')),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -92,9 +94,9 @@ class _WarehouseRatingsPageState extends ConsumerState<WarehouseRatingsPage> {
                       size: 48,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '\u00a1Ya has dejado tu rese\u00f1a!',
-                      style: TextStyle(
+                    Text(
+                      l10n.t('rating_already_reviewed'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -110,19 +112,19 @@ class _WarehouseRatingsPageState extends ConsumerState<WarehouseRatingsPage> {
               ),
             ),
           const SizedBox(height: 24),
-          const Text(
-            'Todas las rese\u00f1as',
-            style: TextStyle(
+          Text(
+            l10n.t('rating_all_reviews'),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
           if (controller.ratings.isEmpty)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text('A\u00fan no hay rese\u00f1as'),
+                padding: const EdgeInsets.all(32),
+                child: Text(l10n.t('rating_no_reviews')),
               ),
             )
           else

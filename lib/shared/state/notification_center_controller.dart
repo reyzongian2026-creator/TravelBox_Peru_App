@@ -46,7 +46,7 @@ class NotificationCenterState {
     required this.popupQueue,
     required this.seenIds,
     required this.loading,
-    required this.error,
+    required this.errorKey,
     required this.cursor,
   });
 
@@ -56,7 +56,7 @@ class NotificationCenterState {
       popupQueue: [],
       seenIds: {},
       loading: false,
-      error: null,
+      errorKey: null,
       cursor: 0,
     );
   }
@@ -65,7 +65,7 @@ class NotificationCenterState {
   final List<AppNotification> popupQueue;
   final Set<String> seenIds;
   final bool loading;
-  final String? error;
+  final String? errorKey;
   final int cursor;
 
   int get unreadCount =>
@@ -76,7 +76,7 @@ class NotificationCenterState {
     List<AppNotification>? popupQueue,
     Set<String>? seenIds,
     bool? loading,
-    String? error,
+    String? errorKey,
     int? cursor,
     bool clearError = false,
   }) {
@@ -85,7 +85,7 @@ class NotificationCenterState {
       popupQueue: popupQueue ?? this.popupQueue,
       seenIds: seenIds ?? this.seenIds,
       loading: loading ?? this.loading,
-      error: clearError ? null : (error ?? this.error),
+      errorKey: clearError ? null : (errorKey ?? this.errorKey),
       cursor: cursor ?? this.cursor,
     );
   }
@@ -323,32 +323,32 @@ class NotificationCenterController
     if (_activeUserId == null || _activeUserId!.isEmpty) return;
 
     _isFetching = true;
-    if (showLoading && (!state.loading || state.error != null)) {
+    if (showLoading && (!state.loading || state.errorKey != null)) {
       state = state.copyWith(loading: true, clearError: true);
     }
 
     try {
       await _refreshByStream();
-      if (state.loading || state.error != null) {
+      if (state.loading || state.errorKey != null) {
         state = state.copyWith(loading: false, clearError: true);
       }
     } on DioException catch (error) {
       final status = error.response?.statusCode ?? 0;
       if (status == 404 || status == 405) {
         await _refreshByLegacyEndpoint();
-        if (state.loading || state.error != null) {
+        if (state.loading || state.errorKey != null) {
           state = state.copyWith(loading: false, clearError: true);
         }
       } else {
         state = state.copyWith(
           loading: false,
-          error: error.message ?? 'Could not fetch notifications.',
+          errorKey: 'notification_fetch_error',
         );
       }
     } catch (error) {
       state = state.copyWith(
         loading: false,
-        error: 'Could not fetch notifications: $error',
+        errorKey: 'notification_fetch_error',
       );
     } finally {
       _isFetching = false;
@@ -560,11 +560,11 @@ class NotificationCenterController
         return;
       }
       state = previous.copyWith(
-        error: error.message ?? 'Could not delete notification.',
+        errorKey: 'notification_delete_error',
       );
       await refreshNow();
     } catch (error) {
-      state = previous.copyWith(error: 'Could not delete notification: $error');
+      state = previous.copyWith(errorKey: 'notification_delete_error');
       await refreshNow();
     }
   }
@@ -588,12 +588,12 @@ class NotificationCenterController
         return;
       }
       state = previous.copyWith(
-        error: error.message ?? 'Could not delete notifications.',
+        errorKey: 'notification_delete_all_error',
       );
       await refreshNow();
     } catch (error) {
       state = previous.copyWith(
-        error: 'Could not delete notifications: $error',
+        errorKey: 'notification_delete_all_error',
       );
       await refreshNow();
     }

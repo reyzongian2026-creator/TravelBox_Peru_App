@@ -75,10 +75,7 @@ class OpsQrHandoffPage extends ConsumerStatefulWidget {
 
 class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   final _scanController = TextEditingController();
-  final _deliveryCustomerMessageController = TextEditingController(
-    text:
-        'Hello, please show your QR to validate your reservation and luggage.',
-  );
+  late final TextEditingController _deliveryCustomerMessageController;
   final _pickupPinInputController = TextEditingController();
   final _deliveryPinInputController = TextEditingController();
   String _customerLanguage = 'es';
@@ -94,6 +91,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   @override
   void initState() {
     super.initState();
+    _deliveryCustomerMessageController = TextEditingController();
     final initialScan = widget.initialScannedValue?.trim();
     if (initialScan != null && initialScan.isNotEmpty) {
       _pendingAutoScanValue = initialScan;

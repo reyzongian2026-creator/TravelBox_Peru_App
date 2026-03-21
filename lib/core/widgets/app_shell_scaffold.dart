@@ -1139,7 +1139,7 @@ class _SidebarBrandIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'TravelBox',
+      message: context.l10n.t('travelbox_tooltip'),
       child: Container(
         width: 44,
         height: 44,

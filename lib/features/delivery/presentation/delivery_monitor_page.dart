@@ -858,23 +858,6 @@ class DeliveryMonitorItem {
 
   String get etaLabel => etaMinutes <= 0 ? '0 min' : '$etaMinutes min';
 
-  String get deliveryStatusLabel {
-    switch (deliveryStatus.toUpperCase()) {
-      case 'REQUESTED':
-        return 'Solicitado';
-      case 'ASSIGNED':
-        return 'Asignado';
-      case 'IN_TRANSIT':
-        return 'En tránsito';
-      case 'DELIVERED':
-        return 'Entregado';
-      case 'CANCELLED':
-        return 'Cancelado';
-      default:
-        return deliveryStatus;
-    }
-  }
-
   Color get statusColor {
     switch (deliveryStatus.toUpperCase()) {
       case 'ASSIGNED':

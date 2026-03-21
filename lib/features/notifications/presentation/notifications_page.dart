@@ -63,10 +63,9 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       return LoadingStateView();
     }
 
-    if (notifications.error != null && notifications.items.isEmpty) {
+    if (notifications.errorKey != null && notifications.items.isEmpty) {
       return ErrorStateView(
-        message:
-            '${context.l10n.t('notifications_load_failed')}: ${notifications.error}',
+        message: context.l10n.t(notifications.errorKey!),
         onRetry: () => ref
             .read(notificationCenterControllerProvider.notifier)
             .refreshNow(),

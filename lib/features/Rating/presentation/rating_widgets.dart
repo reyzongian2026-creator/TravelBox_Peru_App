@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:travelbox_peru_app/core/l10n/app_localizations.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_model.dart';
 
 class StarRatingWidget extends StatelessWidget {
@@ -53,6 +54,7 @@ class RatingSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -75,7 +77,7 @@ class RatingSummaryCard extends StatelessWidget {
                     StarRatingWidget(stars: summary.averageStars.round()),
                     const SizedBox(height: 4),
                     Text(
-                      '${summary.totalRatings} rese\u00f1as',
+                      l10n.t('rating_reviews_count').replaceAll('{count}', summary.totalRatings.toString()),
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
@@ -96,7 +98,7 @@ class RatingSummaryCard extends StatelessWidget {
               Center(
                 child: TextButton(
                   onPressed: onSeeAll,
-                  child: const Text('Ver todas las rese\u00f1as'),
+                  child: Text(l10n.t('rating_view_all')),
                 ),
               ),
             ],
@@ -147,6 +149,7 @@ class RatingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -172,7 +175,7 @@ class RatingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        rating.userName ?? 'Usuario',
+                        rating.userName ?? l10n.t('rating_user_default'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Row(
@@ -185,9 +188,9 @@ class RatingCard extends StatelessWidget {
                               size: 14,
                               color: Colors.blue,
                             ),
-                            const Text(
-                              ' Verificado',
-                              style: TextStyle(fontSize: 10, color: Colors.blue),
+                            Text(
+                              ' ${l10n.t('rating_verified')}',
+                              style: const TextStyle(fontSize: 10, color: Colors.blue),
                             ),
                           ],
                         ],
@@ -197,7 +200,7 @@ class RatingCard extends StatelessWidget {
                 ),
                 if (rating.createdAt != null)
                   Text(
-                    _formatDate(rating.createdAt!),
+                    _formatDate(rating.createdAt!, l10n),
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 12,
@@ -218,19 +221,19 @@ class RatingCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, AppLocalizations l10n) {
     final now = DateTime.now();
     final diff = now.difference(date);
     if (diff.inDays > 30) {
       return '${date.day}/${date.month}/${date.year}';
     } else if (diff.inDays > 0) {
-      return 'hace ${diff.inDays}d';
+      return l10n.t('rating_time_ago_days').replaceAll('{days}', diff.inDays.toString());
     } else if (diff.inHours > 0) {
-      return 'hace ${diff.inHours}h';
+      return l10n.t('rating_time_ago_hours').replaceAll('{hours}', diff.inHours.toString());
     } else if (diff.inMinutes > 0) {
-      return 'hace ${diff.inMinutes}m';
+      return l10n.t('rating_time_ago_minutes').replaceAll('{minutes}', diff.inMinutes.toString());
     }
-    return 'ahora';
+    return l10n.t('rating_time_ago_now');
   }
 }
 
@@ -254,15 +257,16 @@ class RatingInputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '\u00bfC\u00f3mo fue tu experiencia?',
-              style: TextStyle(
+            Text(
+              l10n.t('rating_experience_question'),
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -279,9 +283,9 @@ class RatingInputWidget extends StatelessWidget {
             TextField(
               maxLines: 3,
               maxLength: 500,
-              decoration: const InputDecoration(
-                hintText: 'Cu\u00e9ntanos m\u00e1s sobre tu experiencia (opcional)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: l10n.t('rating_experience_hint'),
+                border: const OutlineInputBorder(),
               ),
               onChanged: onCommentChanged,
             ),
@@ -301,7 +305,7 @@ class RatingInputWidget extends StatelessWidget {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text('Enviar rese\u00f1a'),
+                  : Text(l10n.t('rating_submit')),
             ),
           ],
         ),
