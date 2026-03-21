@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,12 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/layout/responsive_layout.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
-import '../../../shared/state/realtime_app_event_cursor_provider.dart';
-import '../../../shared/state/warehouse_catalog_sync.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../domain/dashboard_optimized_provider.dart';
 
 enum AdminDashboardPeriodOption { week, month, year }
 
@@ -22,7 +19,6 @@ extension AdminDashboardPeriodOptionX on AdminDashboardPeriodOption {
     AdminDashboardPeriodOption.year => 'year',
   };
 
-  // Note: label getter deprecated - use _periodLabel(context) function instead for i18n support
   String get label => switch (this) {
     AdminDashboardPeriodOption.week => 'period_week',
     AdminDashboardPeriodOption.month => 'period_month',
@@ -34,40 +30,10 @@ final adminDashboardPeriodProvider = StateProvider<AdminDashboardPeriodOption>(
   (ref) => AdminDashboardPeriodOption.month,
 );
 
-final adminDashboardProvider =
-    FutureProvider.family<Map<String, dynamic>, AdminDashboardPeriodOption>((
-      ref,
-      period,
-    ) async {
-      ref.watch(realtimeAppEventCursorProvider);
-      ref.watch(warehouseCatalogVersionProvider);
-      final dio = ref.read(dioProvider);
-      const paths = [
-        '/admin/dashboard',
-        '/admin/dashboard/summary',
-        '/admin/stats',
-        '/admin/overview',
-      ];
-
-      DioException? lastError;
-      for (final path in paths) {
-        try {
-          final response = await dio.get<Map<String, dynamic>>(
-            path,
-            queryParameters: {'period': period.code},
-          );
-          return response.data ?? <String, dynamic>{};
-        } on DioException catch (error) {
-          lastError = error;
-          final statusCode = error.response?.statusCode ?? 0;
-          if (statusCode != 404 && statusCode != 405) {
-            rethrow;
-          }
-        }
-      }
-
-      throw lastError ?? StateError('Could not load admin dashboard');
-    });
+final adminDashboardNotifierProvider =
+    StateNotifierProvider<DashboardStatsNotifier, AsyncValue<Map<String, dynamic>>>(
+  (ref) => DashboardStatsNotifier(ref),
+);
 
 class AdminDashboardPage extends ConsumerWidget {
   const AdminDashboardPage({super.key});
@@ -75,19 +41,25 @@ class AdminDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedPeriod = ref.watch(adminDashboardPeriodProvider);
-    final dashboard = ref.watch(adminDashboardProvider(selectedPeriod));
+    final dashboard = ref.watch(adminDashboardNotifierProvider);
 
     return AppShellScaffold(
       title: context.l10n.t('admin_dashboard_title'),
       currentRoute: '/admin/dashboard',
       child: dashboard.when(
-        data: (stats) =>
-            _DashboardContent(stats: stats, selectedPeriod: selectedPeriod),
-        loading: () => const LoadingStateView(),
+        data: (stats) {
+          ref.read(adminDashboardNotifierProvider.notifier).setPeriod(selectedPeriod.code);
+          return _DashboardContent(stats: stats, selectedPeriod: selectedPeriod);
+        },
+        loading: () {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(adminDashboardNotifierProvider.notifier).refresh();
+          });
+          return const LoadingStateView();
+        },
         error: (error, _) => ErrorStateView(
-          message:
-              '${context.l10n.t('dashboard_load_failed')}: ${_errorMessage(error)}',
-          onRetry: () => ref.invalidate(adminDashboardProvider(selectedPeriod)),
+          message: '${context.l10n.t('dashboard_load_failed')}: $error',
+          onRetry: () => ref.read(adminDashboardNotifierProvider.notifier).refresh(force: true),
         ),
       ),
     );
@@ -982,13 +954,4 @@ String _formattedDate(dynamic value) {
     return '-';
   }
   return PeruTime.formatDateTime(parsed);
-}
-
-String _errorMessage(Object error) {
-  final text = error.toString();
-  final match = RegExp(r'message[=:]\s*([^,}]+)').firstMatch(text);
-  if (match != null) {
-    return match.group(1)!.trim();
-  }
-  return text;
 }

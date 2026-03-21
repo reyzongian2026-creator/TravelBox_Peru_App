@@ -94,6 +94,13 @@ abstract class ReservationRepository {
     double? longitude,
     String? message,
   });
+
+  Future<Reservation> createAssistedReservation({
+    required String userId,
+    required ReservationDraft draft,
+  });
+
+  Future<String> getReservationQrCode(String reservationId);
 }
 
 class ReservationPagedResult {

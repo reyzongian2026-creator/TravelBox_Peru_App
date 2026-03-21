@@ -310,6 +310,26 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
     return _consumeBackendCase(response.data ?? const <String, dynamic>{});
   }
 
+  Future<QrHandoffCase> markStoredAtWarehouseWithPhotos({
+    required String reservationId,
+    required List<String> photoBase64List,
+    int bagUnits = 1,
+  }) async {
+    final formData = FormData.fromMap({
+      'bagUnits': bagUnits.clamp(1, 20),
+      'photos': photoBase64List.map((base64) => FormData.fromMap({
+        'data': base64,
+        'contentType': 'image/jpeg',
+      })).toList(),
+    });
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/ops/qr-handoff/reservations/$reservationId/store-with-photos',
+      data: formData,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    return _consumeBackendCase(response.data ?? const <String, dynamic>{});
+  }
+
   Future<QrHandoffCase> markReadyForPickup(String reservationId) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/ops/qr-handoff/reservations/$reservationId/ready-for-pickup',

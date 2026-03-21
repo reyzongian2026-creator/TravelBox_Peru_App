@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -972,5 +974,63 @@ class ReservationRepositoryImpl implements ReservationRepository {
     return _ref
         .read(luggagePhotoMemoryStoreProvider.notifier)
         .applyToReservation(reservation);
+  }
+
+  @override
+  Future<Reservation> createAssistedReservation({
+    required String userId,
+    required ReservationDraft draft,
+  }) async {
+    try {
+      final warehouseId = int.tryParse(draft.warehouse.id);
+      if (warehouseId == null) {
+        throw const FormatException('warehouseId no numerico para backend');
+      }
+
+      final requestData = _buildReservationPayload(
+        warehouseId: warehouseId,
+        draft: draft,
+      );
+
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/reservations/assisted',
+        data: requestData,
+      );
+
+      final reservation = _mapReservation(
+        response.data ?? <String, dynamic>{},
+        userId: userId,
+        fallbackDraft: draft,
+      );
+
+      await _ref.read(reservationStoreProvider.notifier).upsert(reservation);
+      return reservation;
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<String> getReservationQrCode(String reservationId) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/reservations/$reservationId/qr',
+        options: Options(
+          responseType: ResponseType.bytes,
+        ),
+      );
+
+      final bytes = response.data as List<int>;
+      final base64 = base64Encode(bytes);
+      return 'data:image/png;base64,$base64';
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
   }
 }

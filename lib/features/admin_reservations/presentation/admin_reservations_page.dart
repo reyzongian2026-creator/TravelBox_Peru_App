@@ -255,7 +255,9 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                                   FilledButton.tonalIcon(
                                     onPressed: isBusy
                                         ? null
-                                        : () => context.push('/ops/qr-handoff'),
+                                        : () => context.push(
+                                            '/ops/qr-handoff?scan=${Uri.encodeComponent(item.code)}',
+                                          ),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size(0, 40),
                                       visualDensity: VisualDensity.compact,

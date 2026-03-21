@@ -2060,6 +2060,9 @@ class AppLocalizations {
           'Sube la foto de cómo entregas tu maleta antes del ingreso al almacén.',
       'upload': 'Subir',
       'reservation_payment': 'Pago',
+      'reservation_late_pickup_surcharge': 'Recargo por recogida tardía',
+      'reservation_late_pickup_surcharge_description':
+          'Cargo adicional por exceder el tiempo de almacenamiento agreed.',
       'reservation_flow_method': 'Flujo',
       'reservation_method': 'Método',
       'reservation_pending_payment_qr_warning':
@@ -2222,6 +2225,9 @@ class AppLocalizations {
           'Upload a photo of how you hand over your luggage before warehouse check-in.',
       'upload': 'Upload',
       'reservation_payment': 'Payment',
+      'reservation_late_pickup_surcharge': 'Late pickup surcharge',
+      'reservation_late_pickup_surcharge_description':
+          'Additional charge for exceeding the agreed storage time.',
       'reservation_flow_method': 'Flow',
       'reservation_method': 'Method',
       'reservation_pending_payment_qr_warning':
@@ -3566,6 +3572,9 @@ class AppLocalizations {
       'reservation_status_cancelled': 'Storniert',
       'reservation_status_incident': 'Vorfall',
       'reservation_status_expired': 'Abgelaufen',
+      'reservation_late_pickup_surcharge': 'Zuschlag fur verspatete Abholung',
+      'reservation_late_pickup_surcharge_description':
+          'Zusatzliche Gebuhr fur Uberschreitung der vereinbarten Lagerzeit.',
     },
     'fr': {
       'app_name': 'TravelBox',
@@ -3944,6 +3953,9 @@ class AppLocalizations {
       'reservation_status_cancelled': 'Annule',
       'reservation_status_incident': 'Incident',
       'reservation_status_expired': 'Expire',
+      'reservation_late_pickup_surcharge': 'Supplement pour enlvement tardif',
+      'reservation_late_pickup_surcharge_description':
+          'Frais supplementaires pour depassement du temps de stockage convenu.',
     },
     'it': {
       'app_name': 'TravelBox',
@@ -4321,6 +4333,9 @@ class AppLocalizations {
       'reservation_status_cancelled': 'Annullato',
       'reservation_status_incident': 'Incidente',
       'reservation_status_expired': 'Scaduto',
+      'reservation_late_pickup_surcharge': 'Supplemento per ritiro tardivo',
+      'reservation_late_pickup_surcharge_description':
+          'Addebito aggiuntivo per il superamento del tempo di deposito concordato.',
     },
     'pt': {
       'app_name': 'TravelBox',
@@ -4687,6 +4702,9 @@ class AppLocalizations {
       'period_week': 'Semana',
       'period_month': 'Mes',
       'period_year': 'Ano',
+      'reservation_late_pickup_surcharge': 'Taxa de retirada tardia',
+      'reservation_late_pickup_surcharge_description':
+          'Cobranca adicional por exceder o tempo de armazenamento acordado.',
     },
   };
 }

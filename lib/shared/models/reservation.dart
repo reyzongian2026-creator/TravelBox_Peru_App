@@ -264,6 +264,7 @@ class Reservation {
     this.pickupRequested = false,
     this.dropoffRequested = false,
     this.extraInsurance = false,
+    this.latePickupSurcharge = 0,
     this.qrImageUrl,
     this.qrDataUrl,
     this.operationalDetail,
@@ -282,6 +283,7 @@ class Reservation {
   final bool pickupRequested;
   final bool dropoffRequested;
   final bool extraInsurance;
+  final double latePickupSurcharge;
   final String? qrImageUrl;
   final String? qrDataUrl;
   final ReservationOperationalDetail? operationalDetail;
@@ -293,6 +295,7 @@ class Reservation {
     bool? pickupRequested,
     bool? dropoffRequested,
     bool? extraInsurance,
+    double? latePickupSurcharge,
   }) {
     return Reservation(
       id: id,
@@ -308,6 +311,7 @@ class Reservation {
       pickupRequested: pickupRequested ?? this.pickupRequested,
       dropoffRequested: dropoffRequested ?? this.dropoffRequested,
       extraInsurance: extraInsurance ?? this.extraInsurance,
+      latePickupSurcharge: latePickupSurcharge ?? this.latePickupSurcharge,
       qrImageUrl: qrImageUrl,
       qrDataUrl: qrDataUrl,
       operationalDetail: operationalDetail ?? this.operationalDetail,
@@ -329,6 +333,7 @@ class Reservation {
       'pickupRequested': pickupRequested,
       'dropoffRequested': dropoffRequested,
       'extraInsurance': extraInsurance,
+      'latePickupSurcharge': latePickupSurcharge,
       'qrImageUrl': qrImageUrl,
       'qrDataUrl': qrDataUrl,
       'operationalDetail': operationalDetail?.toJson(),
@@ -390,6 +395,8 @@ class Reservation {
           (json['dropoffRequested'] ?? json['deliveryRequested']) as bool? ??
           false,
       extraInsurance: json['extraInsurance'] as bool? ?? false,
+      latePickupSurcharge:
+          (json['latePickupSurcharge'] as num?)?.toDouble() ?? 0,
       qrImageUrl: json['qrImageUrl']?.toString(),
       qrDataUrl: json['qrImageDataUrl']?.toString(),
       operationalDetail: json['operationalDetail'] is Map<String, dynamic>

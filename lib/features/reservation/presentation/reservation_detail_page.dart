@@ -227,6 +227,33 @@ class ReservationDetailPage extends ConsumerWidget {
                               ),
                             ),
                           ),
+                        if (reservation.latePickupSurcharge > 0)
+                          Card(
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.access_time,
+                                color: Colors.orange,
+                              ),
+                              title: Text(
+                                context.l10n.t('reservation_late_pickup_surcharge'),
+                              ),
+                              subtitle: Text(
+                                context.l10n.t(
+                                  'reservation_late_pickup_surcharge_description',
+                                ),
+                              ),
+                              trailing: Text(
+                                'S/${reservation.latePickupSurcharge.toStringAsFixed(2)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
+                          ),
                       ],
                     );
                   },
@@ -275,6 +302,16 @@ class ReservationDetailPage extends ConsumerWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    if (canOperate)
+                      if (reservation.status == ReservationStatus.confirmed ||
+                          reservation.status == ReservationStatus.checkinPending)
+                        FilledButton.tonalIcon(
+                          onPressed: () => context.push(
+                            '/ops/qr-handoff?scan=${Uri.encodeComponent(reservation.code)}',
+                          ),
+                          icon: Icon(Icons.inventory_2_outlined),
+                          label: Text(context.l10n.t('registrar_ingreso_qr')),
+                        ),
                     if (reservation.status == ReservationStatus.stored ||
                         reservation.status == ReservationStatus.readyForPickup)
                       if (reservation.dropoffRequested)
