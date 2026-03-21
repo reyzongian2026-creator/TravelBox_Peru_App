@@ -10,7 +10,7 @@ on:
       secrets_mode:
         required: false
         type: string
-        default: keyvault
+        default: env
       project_id:
         required: false
         type: string
@@ -138,7 +138,7 @@ on:
       secrets_mode:
         description: "Origen de secretos para build/deploy"
         required: true
-        default: keyvault
+        default: env
         type: choice
         options:
           - keyvault
@@ -385,6 +385,13 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $vault = "${{ inputs.azure_keyvault_name }}"
+          function Test-PlaceholderSecret([string]$value) {
+            if ([string]::IsNullOrWhiteSpace($value)) { return $false }
+            $normalized = $value.ToLowerInvariant().Replace(" ", "")
+            return @(
+              "changeme","change-me","replace-me","replace_me","placeholder","dummy","todo","tbd","__pending_meta__"
+            ) -contains $normalized
+          }
           $map = @(
             @{ secret = "tbx-azure-client-id"; env = "AZURE_CLIENT_ID"; required = $true },
             @{ secret = "tbx-azure-client-secret"; env = "AZURE_CLIENT_SECRET"; required = $true },
@@ -411,6 +418,9 @@ jobs:
               }
               continue
             }
+            if (Test-PlaceholderSecret $value) {
+              throw "Secret de Key Vault con valor placeholder: $($item.secret)"
+            }
             "$($item.env)=$value" >> $env:GITHUB_ENV
           }
 
@@ -435,10 +445,27 @@ jobs:
           FIREBASE_FACEBOOK_APP_ID: ${{ secrets.FIREBASE_FACEBOOK_APP_ID }}
         run: |
           set -euo pipefail
+          is_placeholder_secret() {
+            local normalized="${1,,}"
+            normalized="${normalized// /}"
+            case "$normalized" in
+              changeme|change-me|replace-me|replace_me|placeholder|dummy|todo|tbd|__pending_meta__)
+                return 0
+                ;;
+              *)
+                return 1
+                ;;
+            esac
+          }
           required=(AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_TENANT_ID FIREBASE_API_KEY FIREBASE_PROJECT_ID FIREBASE_MESSAGING_SENDER_ID)
           for key in "${required[@]}"; do
-            if [[ -z "${!key:-}" ]]; then
+            value="${!key:-}"
+            if [[ -z "${value}" ]]; then
               echo "Missing required GitHub secret: ${key}" >&2
+              exit 1
+            fi
+            if is_placeholder_secret "${value}"; then
+              echo "GitHub secret ${key} still looks like a placeholder" >&2
               exit 1
             fi
           done

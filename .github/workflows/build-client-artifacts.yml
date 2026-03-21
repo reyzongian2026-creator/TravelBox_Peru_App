@@ -10,7 +10,7 @@ on:
       secrets_mode:
         required: false
         type: string
-        default: keyvault
+        default: env
       azure_keyvault_name:
         required: false
         type: string
@@ -69,7 +69,7 @@ on:
       secrets_mode:
         description: "Origen de secretos para FIREBASE_*"
         required: true
-        default: keyvault
+        default: env
         type: choice
         options:
           - keyvault
@@ -177,10 +177,21 @@ jobs:
           FIREBASE_FACEBOOK_APP_ID: ${{ secrets.FIREBASE_FACEBOOK_APP_ID }}
         run: |
           $ErrorActionPreference = "Stop"
+          function Test-PlaceholderSecret([string]$value) {
+            if ([string]::IsNullOrWhiteSpace($value)) { return $false }
+            $normalized = $value.ToLowerInvariant().Replace(" ", "")
+            return @(
+              "changeme","change-me","replace-me","replace_me","placeholder","dummy","todo","tbd","__pending_meta__"
+            ) -contains $normalized
+          }
           $required = @("FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID")
           foreach ($key in $required) {
-            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$key").Value)) {
+            $value = (Get-Item "Env:$key").Value
+            if ([string]::IsNullOrWhiteSpace($value)) {
               throw "Missing required GitHub secret: $key"
+            }
+            if (Test-PlaceholderSecret $value) {
+              throw "GitHub secret still looks like placeholder: $key"
             }
           }
           $all = @(
@@ -192,6 +203,9 @@ jobs:
           foreach ($key in $all) {
             $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
             if ($null -eq $value) { $value = "" }
+            if (-not [string]::IsNullOrWhiteSpace($value) -and (Test-PlaceholderSecret $value)) {
+              throw "GitHub secret still looks like placeholder: $key"
+            }
             "$key=$value" >> $env:GITHUB_ENV
           }
 
@@ -302,10 +316,21 @@ jobs:
           FIREBASE_FACEBOOK_APP_ID: ${{ secrets.FIREBASE_FACEBOOK_APP_ID }}
         run: |
           $ErrorActionPreference = "Stop"
+          function Test-PlaceholderSecret([string]$value) {
+            if ([string]::IsNullOrWhiteSpace($value)) { return $false }
+            $normalized = $value.ToLowerInvariant().Replace(" ", "")
+            return @(
+              "changeme","change-me","replace-me","replace_me","placeholder","dummy","todo","tbd","__pending_meta__"
+            ) -contains $normalized
+          }
           $required = @("FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID")
           foreach ($key in $required) {
-            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$key").Value)) {
+            $value = (Get-Item "Env:$key").Value
+            if ([string]::IsNullOrWhiteSpace($value)) {
               throw "Missing required GitHub secret: $key"
+            }
+            if (Test-PlaceholderSecret $value) {
+              throw "GitHub secret still looks like placeholder: $key"
             }
           }
           $all = @(
@@ -317,6 +342,9 @@ jobs:
           foreach ($key in $all) {
             $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
             if ($null -eq $value) { $value = "" }
+            if (-not [string]::IsNullOrWhiteSpace($value) -and (Test-PlaceholderSecret $value)) {
+              throw "GitHub secret still looks like placeholder: $key"
+            }
             "$key=$value" >> $env:GITHUB_ENV
           }
 
@@ -434,10 +462,21 @@ jobs:
           FIREBASE_FACEBOOK_APP_ID: ${{ secrets.FIREBASE_FACEBOOK_APP_ID }}
         run: |
           $ErrorActionPreference = "Stop"
+          function Test-PlaceholderSecret([string]$value) {
+            if ([string]::IsNullOrWhiteSpace($value)) { return $false }
+            $normalized = $value.ToLowerInvariant().Replace(" ", "")
+            return @(
+              "changeme","change-me","replace-me","replace_me","placeholder","dummy","todo","tbd","__pending_meta__"
+            ) -contains $normalized
+          }
           $required = @("FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID")
           foreach ($key in $required) {
-            if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$key").Value)) {
+            $value = (Get-Item "Env:$key").Value
+            if ([string]::IsNullOrWhiteSpace($value)) {
               throw "Missing required GitHub secret: $key"
+            }
+            if (Test-PlaceholderSecret $value) {
+              throw "GitHub secret still looks like placeholder: $key"
             }
           }
           $all = @(
@@ -449,6 +488,9 @@ jobs:
           foreach ($key in $all) {
             $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
             if ($null -eq $value) { $value = "" }
+            if (-not [string]::IsNullOrWhiteSpace($value) -and (Test-PlaceholderSecret $value)) {
+              throw "GitHub secret still looks like placeholder: $key"
+            }
             "$key=$value" >> $env:GITHUB_ENV
           }
 

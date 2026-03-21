@@ -6,7 +6,7 @@ on:
       secrets_mode:
         description: "Origen de secretos"
         required: true
-        default: keyvault
+        default: env
         type: choice
         options:
           - keyvault
@@ -77,4 +77,3 @@ jobs:
       force_cash_payments_only: ${{ inputs.force_cash_payments_only }}
       dry_run: ${{ inputs.dry_run }}
     secrets: inherit
-

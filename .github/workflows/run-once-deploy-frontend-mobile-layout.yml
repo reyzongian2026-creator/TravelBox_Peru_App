@@ -22,7 +22,7 @@ jobs:
     uses: ./.github/workflows/deploy-cloudrun-all.yml
     with:
       deploy_target: frontend_only
-      secrets_mode: keyvault
+      secrets_mode: env
       project_id: travelboxperudb
       region: us-central1
       frontend_service_name: travelbox-frontend-prod

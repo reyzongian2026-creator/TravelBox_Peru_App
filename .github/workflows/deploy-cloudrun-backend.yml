@@ -6,7 +6,7 @@ on:
       secrets_mode:
         description: "Origen de secretos"
         required: true
-        default: keyvault
+        default: env
         type: choice
         options:
           - keyvault
