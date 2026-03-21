@@ -113,6 +113,16 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                       icon: const Icon(Icons.refresh),
                       label: Text(context.l10n.t('recargar')),
                     ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: () => _exportReservations(context),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: const Icon(Icons.download),
+                      label: Text(context.l10n.t('exportar')),
+                    ),
                   ],
                 ),
               ],
@@ -501,6 +511,20 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
     ref.read(adminReservationSearchProvider.notifier).state = '';
     _refreshReservations();
     setState(() {});
+  }
+
+  void _exportReservations(BuildContext context) {
+    final search = ref.read(adminReservationSearchProvider);
+    final status = ref.read(adminReservationStatusFilterProvider);
+    var url = '/admin/reservations/export';
+    var params = <String>[];
+    if (search.isNotEmpty) params.add('query=$search');
+    if (status != null) params.add('status=$status');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${context.l10n.t('descargando')}... $url')),
+    );
   }
 
   void _goToPreviousPage() {

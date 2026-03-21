@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/admin_dashboard/presentation/admin_dashboard_page.dart';
+import '../../features/admin_dashboard/presentation/admin_shell_page.dart';
+import '../../features/admin_dashboard/presentation/admin_ratings_page.dart';
+import '../../features/admin_dashboard/presentation/system_admin_page.dart';
+import '../../features/admin_dashboard/presentation/revenue_report_widget.dart';
 import '../../features/admin_incidents/presentation/admin_incidents_page.dart';
 import '../../features/admin_payments/presentation/admin_payments_history_page.dart';
 import '../../features/admin_reservations/presentation/admin_reservations_page.dart';
@@ -271,6 +275,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin/dashboard',
         builder: (context, state) => AdminDashboardPage(),
+      ),
+      GoRoute(
+        path: '/admin/shell',
+        builder: (context, state) => AdminShellPage(),
+      ),
+      GoRoute(
+        path: '/admin/ratings',
+        builder: (context, state) => AdminRatingsPage(),
+      ),
+      GoRoute(
+        path: '/admin/system',
+        builder: (context, state) => SystemAdminPage(),
       ),
       GoRoute(
         path: '/admin/cash-payments',

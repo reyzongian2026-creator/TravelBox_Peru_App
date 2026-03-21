@@ -8,6 +8,14 @@ abstract class AdminDashboardRepository {
   Future<DashboardOverview> getDashboardOverview(String period);
   Future<DashboardSummary> getDashboardSummary(String period);
   Future<void> invalidateCache({String? period});
+  
+  Future<RevenueReport> getRevenueReport(DateTime startDate, DateTime endDate);
+  
+  Future<List<AdminRatingItem>> getAllRatings();
+  
+  Future<SystemHealthInfo> getSystemHealth();
+  
+  Future<List<AuditLogEntry>> getAuditLog({int limit = 100, String? entityType, int? entityId, String? action, String? performedBy});
 }
 
 class DashboardStats {
@@ -181,6 +189,261 @@ class DashboardSummary {
   }
 }
 
+class RevenueReport {
+  final double totalRevenue;
+  final int totalReservations;
+  final double averageReservationValue;
+  final DateTime periodStart;
+  final DateTime periodEnd;
+  final String periodLabel;
+  final List<RevenueByWarehouse> byWarehouse;
+  final List<RevenueByCity> byCity;
+  final List<RevenueByDay> byDay;
+
+  RevenueReport({
+    required this.totalRevenue,
+    required this.totalReservations,
+    required this.averageReservationValue,
+    required this.periodStart,
+    required this.periodEnd,
+    required this.periodLabel,
+    required this.byWarehouse,
+    required this.byCity,
+    required this.byDay,
+  });
+
+  factory RevenueReport.fromJson(Map<String, dynamic> json) {
+    return RevenueReport(
+      totalRevenue: (json['totalRevenue'] as num?)?.toDouble() ?? 0.0,
+      totalReservations: (json['totalReservations'] as int?) ?? 0,
+      averageReservationValue: (json['averageReservationValue'] as num?)?.toDouble() ?? 0.0,
+      periodStart: DateTime.tryParse(json['periodStart']?.toString() ?? '') ?? DateTime.now(),
+      periodEnd: DateTime.tryParse(json['periodEnd']?.toString() ?? '') ?? DateTime.now(),
+      periodLabel: json['periodLabel']?.toString() ?? '',
+      byWarehouse: (json['byWarehouse'] as List<dynamic>?)
+          ?.map((e) => RevenueByWarehouse.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      byCity: (json['byCity'] as List<dynamic>?)
+          ?.map((e) => RevenueByCity.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+      byDay: (json['byDay'] as List<dynamic>?)
+          ?.map((e) => RevenueByDay.fromJson(e as Map<String, dynamic>))
+          .toList() ?? [],
+    );
+  }
+}
+
+class RevenueByWarehouse {
+  final int warehouseId;
+  final String warehouseName;
+  final double revenue;
+  final int reservationCount;
+
+  RevenueByWarehouse({
+    required this.warehouseId,
+    required this.warehouseName,
+    required this.revenue,
+    required this.reservationCount,
+  });
+
+  factory RevenueByWarehouse.fromJson(Map<String, dynamic> json) {
+    return RevenueByWarehouse(
+      warehouseId: (json['warehouseId'] as int?) ?? 0,
+      warehouseName: json['warehouseName']?.toString() ?? '',
+      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      reservationCount: (json['reservationCount'] as int?) ?? 0,
+    );
+  }
+}
+
+class RevenueByCity {
+  final String cityName;
+  final double revenue;
+  final int reservationCount;
+
+  RevenueByCity({
+    required this.cityName,
+    required this.revenue,
+    required this.reservationCount,
+  });
+
+  factory RevenueByCity.fromJson(Map<String, dynamic> json) {
+    return RevenueByCity(
+      cityName: json['cityName']?.toString() ?? '',
+      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      reservationCount: (json['reservationCount'] as int?) ?? 0,
+    );
+  }
+}
+
+class RevenueByDay {
+  final String date;
+  final double revenue;
+  final int reservationCount;
+
+  RevenueByDay({
+    required this.date,
+    required this.revenue,
+    required this.reservationCount,
+  });
+
+  factory RevenueByDay.fromJson(Map<String, dynamic> json) {
+    return RevenueByDay(
+      date: json['date']?.toString() ?? '',
+      revenue: (json['revenue'] as num?)?.toDouble() ?? 0.0,
+      reservationCount: (json['reservationCount'] as int?) ?? 0,
+    );
+  }
+}
+
+class AdminRatingItem {
+  final int id;
+  final int userId;
+  final String userName;
+  final String userEmail;
+  final int warehouseId;
+  final String warehouseName;
+  final int? reservationId;
+  final int stars;
+  final String? comment;
+  final String type;
+  final bool verified;
+  final DateTime createdAt;
+
+  AdminRatingItem({
+    required this.id,
+    required this.userId,
+    required this.userName,
+    required this.userEmail,
+    required this.warehouseId,
+    required this.warehouseName,
+    this.reservationId,
+    required this.stars,
+    this.comment,
+    required this.type,
+    required this.verified,
+    required this.createdAt,
+  });
+
+  factory AdminRatingItem.fromJson(Map<String, dynamic> json) {
+    return AdminRatingItem(
+      id: (json['id'] as int?) ?? 0,
+      userId: (json['userId'] as int?) ?? 0,
+      userName: json['userName']?.toString() ?? '',
+      userEmail: json['userEmail']?.toString() ?? '',
+      warehouseId: (json['warehouseId'] as int?) ?? 0,
+      warehouseName: json['warehouseName']?.toString() ?? '',
+      reservationId: json['reservationId'] as int?,
+      stars: (json['stars'] as int?) ?? 0,
+      comment: json['comment']?.toString(),
+      type: json['type']?.toString() ?? 'WAREHOUSE',
+      verified: (json['verified'] as bool?) ?? false,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
+class SystemHealthInfo {
+  final String application;
+  final String status;
+  final String port;
+  final DateTime timestamp;
+  final MemoryInfo memory;
+  final CpuInfo cpu;
+
+  SystemHealthInfo({
+    required this.application,
+    required this.status,
+    required this.port,
+    required this.timestamp,
+    required this.memory,
+    required this.cpu,
+  });
+
+  factory SystemHealthInfo.fromJson(Map<String, dynamic> json) {
+    return SystemHealthInfo(
+      application: json['application']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'DOWN',
+      port: json['port']?.toString() ?? '',
+      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ?? DateTime.now(),
+      memory: MemoryInfo.fromJson(json['memory'] as Map<String, dynamic>? ?? {}),
+      cpu: CpuInfo.fromJson(json['cpu'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+}
+
+class MemoryInfo {
+  final int usedMB;
+  final int maxMB;
+  final int freeMB;
+  final double usagePercent;
+
+  MemoryInfo({
+    required this.usedMB,
+    required this.maxMB,
+    required this.freeMB,
+    required this.usagePercent,
+  });
+
+  factory MemoryInfo.fromJson(Map<String, dynamic> json) {
+    return MemoryInfo(
+      usedMB: (json['usedMB'] as int?) ?? 0,
+      maxMB: (json['maxMB'] as int?) ?? 0,
+      freeMB: (json['freeMB'] as int?) ?? 0,
+      usagePercent: (json['usagePercent'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class CpuInfo {
+  final int availableProcessors;
+  final double loadAverage;
+
+  CpuInfo({
+    required this.availableProcessors,
+    required this.loadAverage,
+  });
+
+  factory CpuInfo.fromJson(Map<String, dynamic> json) {
+    return CpuInfo(
+      availableProcessors: (json['availableProcessors'] as int?) ?? 0,
+      loadAverage: (json['loadAverage'] as num?)?.toDouble() ?? -1,
+    );
+  }
+}
+
+class AuditLogEntry {
+  final int id;
+  final DateTime timestamp;
+  final String action;
+  final String entityType;
+  final int entityId;
+  final String? details;
+  final String? performedBy;
+
+  AuditLogEntry({
+    required this.id,
+    required this.timestamp,
+    required this.action,
+    required this.entityType,
+    required this.entityId,
+    this.details,
+    this.performedBy,
+  });
+
+  factory AuditLogEntry.fromJson(Map<String, dynamic> json) {
+    return AuditLogEntry(
+      id: (json['id'] as int?) ?? 0,
+      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ?? DateTime.now(),
+      action: json['action']?.toString() ?? '',
+      entityType: json['entityType']?.toString() ?? '',
+      entityId: (json['entityId'] as int?) ?? 0,
+      details: json['details']?.toString(),
+      performedBy: json['performedBy']?.toString(),
+    );
+  }
+}
+
 final adminDashboardRepositoryProvider = Provider<AdminDashboardRepository>((ref) {
   return AdminDashboardRepositoryImpl(dio: ref.watch(dioProvider));
 });
@@ -268,6 +531,99 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<RevenueReport> getRevenueReport(DateTime startDate, DateTime endDate) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/admin/reports/revenue',
+        queryParameters: {
+          'startDate': '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}',
+          'endDate': '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}',
+        },
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException('Revenue report not available');
+      }
+      return RevenueReport.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<AdminRatingItem>> getAllRatings() async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/admin/reports/ratings',
+      );
+      final data = response.data;
+      if (data == null) {
+        return [];
+      }
+      return data.map((e) => AdminRatingItem.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<SystemHealthInfo> getSystemHealth() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/admin/system/health',
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException('System health not available');
+      }
+      return SystemHealthInfo.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<AuditLogEntry>> getAuditLog({
+    int limit = 100,
+    String? entityType,
+    int? entityId,
+    String? action,
+    String? performedBy,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/admin/system/audit-log',
+        queryParameters: {
+          'limit': limit,
+          if (entityType != null) 'entityType': entityType,
+          if (entityId != null) 'entityId': entityId,
+          if (action != null) 'action': action,
+          if (performedBy != null) 'performedBy': performedBy,
+        },
+      );
+      final data = response.data;
+      if (data == null) {
+        return [];
+      }
+      return data.map((e) => AuditLogEntry.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
       throw AppException.fromError(e);
     }
   }

@@ -16,11 +16,108 @@ import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
 import '../../incidents/data/selected_evidence_image.dart';
+import '../data/admin_users_repository.dart';
 
 final adminUsersAppliedSearchProvider = StateProvider<String>((ref) => '');
 final adminUsersAppliedRoleProvider = StateProvider<String>((ref) => 'ALL');
 final adminUsersLatestOnlyProvider = StateProvider<bool>((ref) => true);
 final adminUsersLoadRequestedProvider = StateProvider<bool>((ref) => false);
+final adminUsersCurrentPageProvider = StateProvider<int>((ref) => 0);
+final adminUsersPageSizeProvider = StateProvider<int>((ref) => 20);
+final adminUsersBulkSelectedProvider = StateProvider<Set<int>>((ref) => {});
+
+final adminUsersPagedProvider = FutureProvider<AdminUsersPagedResult>((ref) async {
+  ref.watch(realtimeAppEventCursorProvider);
+  final shouldLoad = ref.watch(adminUsersLoadRequestedProvider);
+  if (!shouldLoad) {
+    return AdminUsersPagedResult(items: [], page: 0, size: 20, totalElements: 0, totalPages: 0);
+  }
+  final dio = ref.read(dioProvider);
+  final query = ref.watch(adminUsersAppliedSearchProvider).trim();
+  final role = ref.watch(adminUsersAppliedRoleProvider);
+  final page = ref.watch(adminUsersCurrentPageProvider);
+  final size = ref.watch(adminUsersPageSizeProvider);
+  
+  final response = await dio.get<Map<String, dynamic>>(
+    '/admin/users/page',
+    queryParameters: {
+      if (query.isNotEmpty) 'query': query,
+      if (role != 'ALL') 'role': role,
+      'page': page,
+      'size': size,
+    },
+  );
+  
+  final data = response.data;
+  if (data == null) {
+    return AdminUsersPagedResult(items: [], page: 0, size: size, totalElements: 0, totalPages: 0);
+  }
+  
+  final content = (data['content'] as List<dynamic>?)
+      ?.map((item) => AdminUserPagedItem.fromJson(item as Map<String, dynamic>))
+      .toList() ?? [];
+  
+  return AdminUsersPagedResult(
+    items: content,
+    page: data['number'] as int? ?? 0,
+    size: data['size'] as int? ?? size,
+    totalElements: data['totalElements'] as int? ?? 0,
+    totalPages: data['totalPages'] as int? ?? 0,
+  );
+});
+
+class AdminUsersPagedResult {
+  final List<AdminUserPagedItem> items;
+  final int page;
+  final int size;
+  final int totalElements;
+  final int totalPages;
+  
+  AdminUsersPagedResult({
+    required this.items,
+    required this.page,
+    required this.size,
+    required this.totalElements,
+    required this.totalPages,
+  });
+  
+  bool get hasNext => page < totalPages - 1;
+  bool get hasPrevious => page > 0;
+}
+
+class AdminUserPagedItem {
+  final int id;
+  final String fullName;
+  final String email;
+  final String roles;
+  final bool active;
+  final List<int> warehouseIds;
+  final DateTime createdAt;
+  
+  AdminUserPagedItem({
+    required this.id,
+    required this.fullName,
+    required this.email,
+    required this.roles,
+    required this.active,
+    required this.warehouseIds,
+    required this.createdAt,
+  });
+  
+  factory AdminUserPagedItem.fromJson(Map<String, dynamic> json) {
+    return AdminUserPagedItem(
+      id: json['id'] as int,
+      fullName: json['fullName'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      roles: json['roles'] as String? ?? '',
+      active: json['active'] as bool? ?? true,
+      warehouseIds: (json['warehouseIds'] as List<dynamic>?)
+          ?.map((e) => e as int)
+          .toList() ?? [],
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
+}
 
 final adminUsersProvider = FutureProvider<List<AdminUserItem>>((ref) async {
   ref.watch(realtimeAppEventCursorProvider);
@@ -252,10 +349,21 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                   icon: Icon(Icons.refresh),
                   label: Text(context.l10n.t('recargar')),
                 ),
+                OutlinedButton.icon(
+                  onPressed: () => _exportUsers(context, ref),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: Icon(Icons.download),
+                  label: Text(l10n.t('exportar')),
+                ),
               ],
             ),
           ),
           SizedBox(height: itemGap),
+          _buildBulkActionBar(context, ref, l10n),
+          _buildPaginationControls(context, ref, l10n),
           Expanded(
             child: usersAsync.when(
               data: (items) {
@@ -344,6 +452,202 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       if (!mounted) return;
       _applyUserFilters();
     });
+  }
+
+  Widget _buildBulkActionBar(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+    final selected = ref.watch(adminUsersBulkSelectedProvider);
+    if (selected.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Text('${selected.length} ${l10n.t('seleccionados')}',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: () => ref.read(adminUsersBulkSelectedProvider.notifier).state = {},
+            icon: const Icon(Icons.close, size: 18),
+            label: Text(l10n.t('deseleccionar')),
+          ),
+          const SizedBox(width: 8),
+          TextButton.icon(
+            onPressed: () => _bulkActivate(context, ref, true),
+            icon: const Icon(Icons.check_circle_outline, size: 18),
+            label: Text(l10n.t('activar')),
+          ),
+          TextButton.icon(
+            onPressed: () => _bulkActivate(context, ref, false),
+            icon: const Icon(Icons.cancel_outlined, size: 18),
+            label: Text(l10n.t('desactivar')),
+          ),
+          TextButton.icon(
+            onPressed: () => _bulkDelete(context, ref),
+            icon: Icon(Icons.delete_outline, size: 18, color: Theme.of(context).colorScheme.error),
+            label: Text(l10n.t('eliminar'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaginationControls(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+    final pagedData = ref.watch(adminUsersPagedProvider);
+    final currentPage = ref.watch(adminUsersCurrentPageProvider);
+    final pageSize = ref.watch(adminUsersPageSizeProvider);
+    
+    return pagedData.when(
+      data: (result) {
+        if (result.totalElements == 0) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                onPressed: result.hasPrevious ? () => _goToPage(ref, 0) : null,
+                icon: const Icon(Icons.first_page),
+                tooltip: l10n.t('primera_pagina'),
+              ),
+              IconButton(
+                onPressed: result.hasPrevious ? () => _goToPage(ref, currentPage - 1) : null,
+                icon: const Icon(Icons.chevron_left),
+                tooltip: l10n.t('pagina_anterior'),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${result.page + 1} / ${result.totalPages}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: result.hasNext ? () => _goToPage(ref, currentPage + 1) : null,
+                icon: const Icon(Icons.chevron_right),
+                tooltip: l10n.t('siguiente_pagina'),
+              ),
+              IconButton(
+                onPressed: result.hasNext ? () => _goToPage(ref, result.totalPages - 1) : null,
+                icon: const Icon(Icons.last_page),
+                tooltip: l10n.t('ultima_pagina'),
+              ),
+              const SizedBox(width: 16),
+              Text('${result.totalElements} ${l10n.t('total_elementos')}'),
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                value: pageSize,
+                items: [10, 20, 50, 100].map((size) => 
+                  DropdownMenuItem(value: size, child: Text('$size'))
+                ).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(adminUsersPageSizeProvider.notifier).state = value;
+                    ref.invalidate(adminUsersPagedProvider);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  void _goToPage(WidgetRef ref, int page) {
+    ref.read(adminUsersCurrentPageProvider.notifier).state = page;
+    ref.invalidate(adminUsersPagedProvider);
+  }
+
+  Future<void> _bulkActivate(BuildContext context, WidgetRef ref, bool active) async {
+    final selected = ref.read(adminUsersBulkSelectedProvider);
+    if (selected.isEmpty) return;
+    
+    try {
+      final repo = ref.read(adminUsersRepositoryProvider);
+      final result = await repo.bulkUpdateActive(selected, active);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+      }
+      ref.read(adminUsersBulkSelectedProvider.notifier).state = {};
+      ref.invalidate(adminUsersPagedProvider);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _bulkDelete(BuildContext context, WidgetRef ref) async {
+    final selected = ref.read(adminUsersBulkSelectedProvider);
+    if (selected.isEmpty) return;
+    
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.t('confirmar_eliminacion')),
+        content: Text('${selected.length} ${dialogContext.l10n.t('usuarios_seran_eliminados')}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(dialogContext.l10n.t('cancelar')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(dialogContext.l10n.t('eliminar'), style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm != true) return;
+    
+    try {
+      final repo = ref.read(adminUsersRepositoryProvider);
+      final result = await repo.bulkDelete(selected);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+      }
+      ref.read(adminUsersBulkSelectedProvider.notifier).state = {};
+      ref.invalidate(adminUsersPagedProvider);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _exportUsers(BuildContext context, WidgetRef ref) {
+    final repo = ref.read(adminUsersRepositoryProvider);
+    final url = repo.getExportUrl();
+    final query = ref.read(adminUsersAppliedSearchProvider);
+    final role = ref.read(adminUsersAppliedRoleProvider);
+    
+    var fullUrl = url;
+    if (query.isNotEmpty || role != 'ALL') {
+      fullUrl += '?';
+      if (query.isNotEmpty) fullUrl += 'query=$query';
+      if (role != 'ALL') fullUrl += '&role=$role';
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${context.l10n.t('descargando')}... $fullUrl')),
+    );
   }
 
   Future<void> _toggleActive(AdminUserItem user, bool active) async {
