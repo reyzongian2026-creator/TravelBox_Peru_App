@@ -4,6 +4,8 @@ class AppLocalizations {
   AppLocalizations(this.locale);
 
   final Locale locale;
+  
+  static final Map<String, String> _translationCache = {};
 
   static const supportedLocales = [
     Locale('es'),
@@ -24,7 +26,19 @@ class AppLocalizations {
   }
 
   String t(String key) {
+    final cacheKey = '${locale.languageCode}:$key';
+    if (_translationCache.containsKey(cacheKey)) {
+      return _translationCache[cacheKey]!;
+    }
+    
+    final result = _translate(key);
+    _translationCache[cacheKey] = result;
+    return result;
+  }
+  
+  String _translate(String key) {
     final languageCode = locale.languageCode.toLowerCase();
+    
     final override = _runtimeOverrides[languageCode]?[key];
     if (_isUsableLocalizedValue(override, key) &&
         !_isSpanishDuplicateValue(languageCode, key, override)) {
