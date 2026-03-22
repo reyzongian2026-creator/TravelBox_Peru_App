@@ -14,6 +14,7 @@ void main() {
   test('isAuthenticated is false with empty token', () {
     const state = SessionState(
       locale: Locale('es'),
+      sessionLanguage: 'es',
       user: user,
       accessToken: '',
       refreshToken: 'refresh',
@@ -27,6 +28,7 @@ void main() {
   test('isAuthenticated is false with malformed token', () {
     const state = SessionState(
       locale: Locale('es'),
+      sessionLanguage: 'es',
       user: user,
       accessToken: 'not-a-jwt',
       refreshToken: 'refresh',
@@ -40,6 +42,7 @@ void main() {
   test('isAuthenticated is true with jwt-like token', () {
     const state = SessionState(
       locale: Locale('es'),
+      sessionLanguage: 'es',
       user: user,
       accessToken: 'aaa.bbb.ccc',
       refreshToken: 'refresh',

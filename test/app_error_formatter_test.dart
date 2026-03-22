@@ -23,7 +23,7 @@ void main() {
     );
 
     expect(
-      AppErrorFormatter.readable(error),
+      AppErrorFormatter.readable(error, (key, {params}) => key),
       'Demasiados intentos. Espera 45s e intenta nuevamente.',
     );
   });
@@ -34,7 +34,7 @@ void main() {
     );
 
     expect(
-      AppErrorFormatter.readable(error),
+      AppErrorFormatter.readable(error, (key, {params}) => key),
       'Firebase no se inicializo en esta app. Revisa las variables FIREBASE_* y vuelve a ejecutar el build.',
     );
   });
