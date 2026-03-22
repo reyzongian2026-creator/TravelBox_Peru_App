@@ -271,3 +271,4 @@ Campos minimos recomendados en respuesta de almacen:
   - Web: validado y build OK.
   - Android: pendiente instalar Android SDK.
   - Windows desktop: pendiente Visual Studio + Developer Mode de Windows.
+# Deployment trigger
