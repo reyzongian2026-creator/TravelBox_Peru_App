@@ -557,7 +557,7 @@ jobs:
             "--min-instances", "${env:BACKEND_MIN_INSTANCES}",
             "--max-instances", "${env:BACKEND_MAX_INSTANCES}",
             "--timeout", "${env:BACKEND_TIMEOUT_SECONDS}",
-            "--health-check-timeout", "600",
+            "--deploy-health-check", "--health-check-timeout=600s",
             "--env-vars-file", $backendEnvFile,
             "--quiet"
           )
