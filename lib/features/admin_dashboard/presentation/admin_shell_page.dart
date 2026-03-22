@@ -17,6 +17,7 @@ class AdminShellPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // ignore: unused_local_variable
     final currentIndex = ref.watch(adminTabIndexProvider);
     final l10n = context.l10n;
     final responsive = context.responsive;

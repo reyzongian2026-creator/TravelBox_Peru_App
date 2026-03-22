@@ -96,7 +96,7 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
     for (final listener in listeners) {
       try {
         listener(event);
-      } catch (e, st) {
+      } catch (e) {
         print('WebSocket listener error: $e');
       }
     }
@@ -157,7 +157,7 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
       
       final event = WebSocketEvent.fromJson(data);
       _notifyListeners(event);
-    } catch (e, st) {
+    } catch (e) {
       // Log error but don't crash
       print('WebSocket message parse error: $e');
     }

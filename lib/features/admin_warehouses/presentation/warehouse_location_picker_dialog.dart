@@ -24,6 +24,7 @@ class WarehouseLocationPickerDialog extends StatefulWidget {
 class _WarehouseLocationPickerDialogState
     extends State<WarehouseLocationPickerDialog> {
   late LatLng _selectedPoint;
+  // ignore: unused_field
   GoogleMapController? _mapController;
 
   @override
