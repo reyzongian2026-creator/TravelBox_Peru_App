@@ -6,6 +6,7 @@ import 'app.dart';
 import 'core/env/app_env.dart';
 import 'core/firebase/travelbox_firebase.dart';
 import 'shared/services/mobile_push_service.dart';
+import 'shared/state/currency_preference.dart';
 import 'shared/state/session_controller.dart';
 import 'shared/state/session_token_storage.dart';
 
@@ -22,6 +23,7 @@ Future<void> bootstrap() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         sessionTokenStorageProvider.overrideWithValue(tokenStorage),
+        currencyPreferenceProvider.overrideWith((ref) => CurrencyPreferenceNotifier(prefs)),
       ],
       child: const TravelBoxApp(),
     ),

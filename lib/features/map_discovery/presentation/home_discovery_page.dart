@@ -22,7 +22,9 @@ import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/state/warehouse_catalog_sync.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/peru_flat_scene.dart';
+import '../../../shared/state/currency_preference.dart';
 import '../../../shared/widgets/travelbox_logo.dart';
+import '../../../shared/widgets/currency_widgets.dart';
 import '../data/discovery_repository_impl.dart';
 
 enum DiscoveryViewMode { list, map }
@@ -1061,11 +1063,17 @@ class _WarehouseCard extends StatelessWidget {
               spacing: responsive.itemGap,
               runSpacing: responsive.itemGap,
               children: [
-                Text(
-                  '${context.l10n.t('discovery_price_from')}: '
-                  '${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour)}'
-                  '${context.l10n.t('discovery_per_hour')}',
-                  style: Theme.of(context).textTheme.titleSmall,
+                Consumer(
+                  builder: (context, ref, child) {
+                    final userCurrency = ref.watch(currencyPreferenceProvider);
+                    final convertedPrice = CurrencyRates.convert(warehouse.priceFromPerHour, CurrencyCode.pen, userCurrency);
+                    return Text(
+                      '${context.l10n.t('discovery_price_from')}: '
+                      '${formatCurrency(convertedPrice, userCurrency)}'
+                      '${context.l10n.t('discovery_per_hour')}',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    );
+                  },
                 ),
                 FilledButton(
                   onPressed: () => context.push('/warehouse/${warehouse.id}'),
