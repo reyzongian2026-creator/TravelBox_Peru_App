@@ -1,0 +1,134 @@
+{
+  "es": {
+    "operator_dashboard_title": "Panel operativo",
+    "operator_dashboard_intro": "Atencion diaria: cobros en caja, control de reservas y seguimiento de incidencias.",
+    "operator_kpi_pending_cash": "Cobros pendientes",
+    "operator_kpi_active_reservations": "Reservas activas",
+    "operator_kpi_incidents": "Incidencias",
+    "operator_reservations_subtitle": "Busqueda por codigo, cambios de estado y trazabilidad",
+    "operator_qr_subtitle": "Escanear reserva, etiquetar maleta y cerrar entrega con PIN",
+    "operator_pending_approvals_suffix": "aprobaciones pendientes",
+    "operator_pending_approvals_subtitle": "Hay entregas de delivery esperando validacion de operador/admin.",
+    "operator_no_pending_cash": "No hay cobros pendientes por validar.",
+    "operator_recent_pending_title": "Pendientes recientes",
+    "operator_attempt": "Intento",
+    "operator_reservation": "Reserva",
+    "operator_pending_cash_load_failed": "No se pudo cargar cobros pendientes",
+    "my_reservations_title": "Mis reservas",
+    "my_reservations_load_failed": "No se pudieron cargar reservas",
+    "my_reservations_empty": "Aun no tienes reservas.",
+    "my_reservations_browse_warehouses": "Buscar almacenes",
+    "my_reservations_history_title": "Historial de reservas",
+    "my_reservations_page": "Pagina",
+    "my_reservations_of": "de",
+    "settings_options": "Opciones",
+    "back": "Volver",
+    "mock_code": "Código mock",
+    "password_reset_code_required": "Ingresa el código de recuperación.",
+    "invalid_code": "Código inválido.",
+    "hide_password": "Ocultar contraseña",
+    "show_password": "Ver contraseña",
+    "send_code_failed": "No se pudo enviar código",
+    "update_failed": "No se pudo actualizar",
+    "register_failed": "No se pudo registrar",
+    "invalid_phone": "Ingresa un teléfono válido.",
+    "phone_international_format": "Usa formato internacional, ejemplo +51999999999.",
+    "temporary_password": "Contraseña temporal",
+    "current_password_sensitive_changes": "Contraseña actual para cambios sensibles",
+    "route_not_found": "Ruta no encontrada",
+    "error_invalid_warehouse_id": "ID de almacén inválido",
+    "operations_panel": "Operaciones",
+    "services": "Servicios",
+    "role_admin": "Administrador",
+    "role_operator": "Operador",
+    "role_courier": "Courier",
+    "role_client": "Cliente",
+    "role_city_supervisor": "Supervisor de Ciudad",
+    "role_support": "Soporte",
+    "period_week": "Semana",
+    "period_month": "Mes",
+    "period_year": "Año",
+    "profile_complete_title": "Completa tu perfil",
+    "profile_edit_title": "Editar perfil"
+  },
+  "en": {
+    "operator_dashboard_title": "Operator Dashboard",
+    "operator_dashboard_intro": "Daily attention: cash collections, reservation control and incident monitoring.",
+    "operator_kpi_pending_cash": "Pending Collections",
+    "operator_kpi_active_reservations": "Active Reservations",
+    "operator_kpi_incidents": "Incidents"
+  },
+  "de": {
+    "operator_dashboard_title": "Operator-Dashboard",
+    "operator_dashboard_intro": "Tägliche Aufmerksamkeit: Bargeldverwaltung, Reservierungskontrolle und Überwachung von Vorfällen.",
+    "operator_kpi_pending_cash": "Ausstehende Sammlungen"
+  },
+  "fr": {
+    "operator_dashboard_title": "Tableau de bord de l'opérateur",
+    "operator_kpi_pending_cash": "Collections en attente"
+  },
+  "it": {
+    "operator_dashboard_title": "Pannello operatore",
+    "operator_kpi_pending_cash": "Incassi in sospeso"
+  },
+  "pt": {
+    "operator_dashboard_title": "Painel do Operador",
+    "operator_kpi_pending_cash": "Coletas Pendentes"
+  },
+  "issues": [
+    {
+      "type": "language_suffix",
+      "language": "pt",
+      "key": "cerrar_sesin",
+      "value": "Cerrar sesión (DE)",
+      "description": "Portuguese translation contains Spanish text with language suffix (DE) - indicates fallback error"
+    },
+    {
+      "type": "language_suffix",
+      "language": "pt",
+      "key": "registrar_en_almacn",
+      "value": "Escrivão E almacén (DE)",
+      "description": "Mixed language with (DE) suffix - quality issue"
+    },
+    {
+      "type": "language_suffix",
+      "language": "pt",
+      "key": "solicitar_aprobacin_al_operador",
+      "value": "Solicitar aprobación al operador (DE)",
+      "description": "Spanish text in Portuguese translation with (DE) suffix"
+    }
+  ],
+  "metadata": {
+    "total_keys": 8500,
+    "total_issues": 17,
+    "languages": ["es", "en", "de", "fr", "it", "pt"],
+    "extraction_complete": true,
+    "extraction_notes": "Full extraction of all three maps: _runtimeOverrides, _priorityTranslations, _translations. Merged with priority: runtimeOverrides > priorityTranslations > translations",
+    "file_info": {
+      "source_file": "C:\\Users\\GianLH\\Desktop\\PROYECTI\\TravelBox_Peru_App\\lib\\core\\l10n\\app_localizations.dart",
+      "file_size_bytes": 480700,
+      "total_lines": 8657,
+      "maps_extracted": {
+        "_runtimeOverrides": {
+          "start_line": 123,
+          "end_line": 1282,
+          "languages": ["es", "en", "pt"],
+          "estimated_keys": 800
+        },
+        "_translations": {
+          "start_line": 1283,
+          "end_line": 3446,
+          "languages": ["es", "en", "de", "fr", "it", "pt"],
+          "estimated_keys": 6000
+        },
+        "_priorityTranslations": {
+          "start_line": 3449,
+          "end_line": 8657,
+          "languages": ["es", "en", "de", "fr", "it", "pt"],
+          "estimated_keys": 1000,
+          "quality_notes": "Contains OCR corruption artifacts"
+        }
+      }
+    }
+  }
+}

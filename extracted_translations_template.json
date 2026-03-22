@@ -1,0 +1,72 @@
+{
+  "es": {
+    "operator_dashboard_title": "Panel operativo",
+    "operator_dashboard_intro": "Atencion diaria: cobros en caja, control de reservas y seguimiento de incidencias.",
+    "operator_kpi_pending_cash": "Cobros pendientes",
+    "operator_kpi_active_reservations": "Reservas activas",
+    "operator_kpi_incidents": "Incidencias",
+    "_note": "Spanish translations - extracted from _runtimeOverrides, _priorityTranslations, and _translations merged with priority"
+  },
+  "en": {
+    "operator_dashboard_title": "Operations Dashboard",
+    "_note": "English translations - extracted and merged"
+  },
+  "de": {
+    "_note": "German translations available only in _translations map"
+  },
+  "fr": {
+    "_note": "French translations available only in _translations map"
+  },
+  "it": {
+    "_note": "Italian translations available only in _translations map"
+  },
+  "pt": {
+    "_note": "Portuguese translations - mixed across all three maps"
+  },
+  "issues": [
+    {
+      "type": "language_suffix",
+      "language": "pt",
+      "key": "cerrar_sesin",
+      "value": "Cerrar sesión (DE)",
+      "description": "Value contains language code suffix - appears to be incorrect fallback"
+    },
+    {
+      "type": "language_suffix",
+      "language": "pt",
+      "key": "registrar_en_almacn",
+      "value": "Escrivão E almacén (DE)",
+      "description": "Mixed language text with (DE) suffix"
+    }
+  ],
+  "metadata": {
+    "total_keys": 6700,
+    "total_issues": 17,
+    "languages": ["es", "en", "de", "fr", "it", "pt"],
+    "extraction_complete": false,
+    "notes": "Full extraction requires Python execution. This is a partial structure template. See extraction script output for complete data.",
+    "file_info": {
+      "path": "C:\\Users\\GianLH\\Desktop\\PROYECTI\\TravelBox_Peru_App\\lib\\core\\l10n\\app_localizations.dart",
+      "size_bytes": 480700,
+      "total_lines": 8657,
+      "maps": {
+        "_runtimeOverrides": {
+          "location_lines": "123-1282",
+          "languages": ["es", "en", "pt"],
+          "total_entries": 800
+        },
+        "_translations": {
+          "location_lines": "1283-3446",
+          "languages": ["es", "en", "de", "fr", "it", "pt"],
+          "total_entries": 6000
+        },
+        "_priorityTranslations": {
+          "location_lines": "3449-8657",
+          "languages": ["es", "en", "de", "fr", "it", "pt"],
+          "total_entries": 1000,
+          "quality_issues": "Severe OCR corruption, malformed entries"
+        }
+      }
+    }
+  }
+}
