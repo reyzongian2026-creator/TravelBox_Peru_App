@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/constants/payment_constants.dart';
 import '../../../core/env/app_env.dart';
@@ -176,13 +177,13 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             child: ListTile(
               title: Text(context.l10n.t('final_total')),
               subtitle: Text(
-                '${context.l10n.t('checkout_breakdown_storage')} S/${draft.storageSubtotal().toStringAsFixed(2)} '
-                '+ ${context.l10n.t('checkout_breakdown_pickup')} S/${draft.pickupCost().toStringAsFixed(2)} '
-                '+ ${context.l10n.t('checkout_breakdown_dropoff')} S/${draft.dropoffCost().toStringAsFixed(2)} '
-                '+ ${context.l10n.t('checkout_breakdown_insurance')} S/${draft.insuranceCost().toStringAsFixed(2)}',
+                '${context.l10n.t('checkout_breakdown_storage')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.storageSubtotal())} '
+                '+ ${context.l10n.t('checkout_breakdown_pickup')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.pickupCost())} '
+                '+ ${context.l10n.t('checkout_breakdown_dropoff')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.dropoffCost())} '
+                '+ ${context.l10n.t('checkout_breakdown_insurance')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.insuranceCost())}',
               ),
               trailing: Text(
-                'S/${draft.estimatePrice().toStringAsFixed(2)}',
+                NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.estimatePrice()),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),

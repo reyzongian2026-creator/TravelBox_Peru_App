@@ -131,10 +131,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                     ],
                   ),
-                  child: const Text(
-                    'TRAVELBOX',
+                  child: Text(
+                    l10n.t('app_name').toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -244,7 +244,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   if (value != null) {
                     setState(() {
                       _nationality = value;
-                      _preferredLanguage = _getDefaultLanguageForCountry(value);
+                      if (value != 'Other') {
+                        _preferredLanguage = _getDefaultLanguageForCountry(value);
+                      }
                     });
                   }
                 },

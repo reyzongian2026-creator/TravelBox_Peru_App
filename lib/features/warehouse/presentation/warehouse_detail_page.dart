@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
@@ -123,7 +124,7 @@ class WarehouseDetailPage extends ConsumerWidget {
                       ),
                       Text(
                         '${context.l10n.t('warehouse_detail_price_from_prefix')}: '
-                        'S/${warehouse.priceFromPerHour.toStringAsFixed(2)}/hora',
+                        '${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour)}',
                       ),
                       Text(
                         '${context.l10n.t('warehouse_detail_score_prefix')}: '

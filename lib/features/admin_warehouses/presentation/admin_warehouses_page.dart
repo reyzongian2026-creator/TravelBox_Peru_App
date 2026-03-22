@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';

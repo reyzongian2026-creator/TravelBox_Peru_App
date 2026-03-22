@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
@@ -810,68 +809,48 @@ class _CourierProgressDialogState
                   child: Card(
                     margin: EdgeInsets.zero,
                     clipBehavior: Clip.antiAlias,
-                    child: FlutterMap(
-                      options: MapOptions(
-                        initialCenter: LatLng(
+                    child: GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: LatLng(
                           widget.item.currentLatitude,
                           widget.item.currentLongitude,
                         ),
-                        initialZoom: 13,
-                        initialCameraFit: CameraFit.bounds(
-                          bounds: LatLngBounds.fromPoints(routePoints),
-                          padding: const EdgeInsets.all(28),
-                          maxZoom: 16,
-                        ),
+                        zoom: 13,
                       ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'travelbox.peru.app',
+                      polylines: {
+                        Polyline(
+                          polylineId: const PolylineId('route'),
+                          points: routePoints,
+                          color: route?.fallbackUsed == true
+                              ? const Color(0xFF3B82F6)
+                              : const Color(0xFF0B8B8C),
+                          width: 4,
                         ),
-                        PolylineLayer(
-                          polylines: [
-                            Polyline(
-                              points: routePoints,
-                              strokeWidth: 4,
-                              color: route?.fallbackUsed == true
-                                  ? Color(0xFF3B82F6)
-                                  : const Color(0xFF0B8B8C),
-                            ),
-                          ],
+                      },
+                      markers: {
+                        Marker(
+                          markerId: const MarkerId('current'),
+                          position: LatLng(
+                            widget.item.currentLatitude,
+                            widget.item.currentLongitude,
+                          ),
+                          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                         ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: LatLng(
-                                widget.item.currentLatitude,
-                                widget.item.currentLongitude,
-                              ),
-                              width: 44,
-                              height: 44,
-                              child: const Icon(
-                                Icons.local_shipping,
-                                color: Colors.red,
-                              ),
-                            ),
-                            Marker(
-                              point: LatLng(
-                                widget.item.destinationLatitude,
-                                widget.item.destinationLongitude,
-                              ),
-                              width: 44,
-                              height: 44,
-                              child: Icon(
-                                widget.item.deliveryType.toUpperCase() ==
-                                        'PICKUP'
-                                    ? Icons.inventory_2_outlined
-                                    : Icons.flag,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ],
+                        Marker(
+                          markerId: const MarkerId('destination'),
+                          position: LatLng(
+                            widget.item.destinationLatitude,
+                            widget.item.destinationLongitude,
+                          ),
+                          icon: widget.item.deliveryType.toUpperCase() == 'PICKUP'
+                              ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
+                              : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
                         ),
-                      ],
+                      },
+                      myLocationEnabled: false,
+                      myLocationButtonEnabled: false,
+                      zoomControlsEnabled: false,
+                      mapToolbarEnabled: false,
                     ),
                   ),
                 ),

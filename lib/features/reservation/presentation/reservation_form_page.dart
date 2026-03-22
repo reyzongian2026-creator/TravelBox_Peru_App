@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
@@ -142,7 +143,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        'Tarifa ${size.toUpperCase()}: S/${warehouse.rateForSize(size).toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_hour_per_package')}',
+                        '${context.l10n.t('rate_label')} ${size.toUpperCase()}: ${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.rateForSize(size))} ${context.l10n.t('price_suffix_per_hour_per_package')}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 16),

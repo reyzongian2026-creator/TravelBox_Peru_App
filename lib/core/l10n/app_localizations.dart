@@ -579,6 +579,7 @@ class AppLocalizations {
       'checkout_customer_email_optional_label': 'Email cliente (opcional)',
       'checkout_customer_email_optional_hint': 'cliente@correo.com',
       'checkout_breakdown_storage': 'Almacenaje',
+      'rate_label': 'Tarifa',
       'checkout_breakdown_pickup': 'Recojo',
       'checkout_breakdown_dropoff': 'Entrega',
       'checkout_breakdown_insurance': 'Seguro',
@@ -1729,6 +1730,7 @@ class AppLocalizations {
       'checkout_customer_email_optional_label': 'Customer email (optional)',
       'checkout_customer_email_optional_hint': 'client@email.com',
       'checkout_breakdown_storage': 'Storage',
+      'rate_label': 'Rate',
       'checkout_breakdown_pickup': 'Pickup',
       'checkout_breakdown_dropoff': 'Delivery',
       'checkout_breakdown_insurance': 'Insurance',
@@ -3463,6 +3465,7 @@ class AppLocalizations {
       'current_password_sensitive_changes':
           'Contraseña actual para cambios sensibles',
       'route_not_found': 'Ruta no encontrada',
+      'error_invalid_warehouse_id': 'ID de almacén inválido',
       'operations_panel': 'Operaciones',
       'services': 'Servicios',
       'role_admin': 'Administrador',
@@ -3635,6 +3638,7 @@ class AppLocalizations {
       'current_password_sensitive_changes':
           'Current password for sensitive changes',
       'route_not_found': 'Route not found',
+      'error_invalid_warehouse_id': 'Invalid warehouse ID',
       'operations_panel': 'Operations',
       'services': 'Services',
       'role_admin': 'Administrator',

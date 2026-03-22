@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/l10n/app_localizations.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
 class WarehouseLocationPickerDialog extends StatefulWidget {
   WarehouseLocationPickerDialog({
@@ -25,6 +24,7 @@ class WarehouseLocationPickerDialog extends StatefulWidget {
 class _WarehouseLocationPickerDialogState
     extends State<WarehouseLocationPickerDialog> {
   late LatLng _selectedPoint;
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
@@ -38,6 +38,20 @@ class _WarehouseLocationPickerDialogState
       if (widget.cityLabel.trim().isNotEmpty) widget.cityLabel.trim(),
       if (widget.zoneLabel?.trim().isNotEmpty == true) widget.zoneLabel!.trim(),
     ].join(' / ');
+
+    final markers = <Marker>{
+      if (widget.anchorPoint != null)
+        Marker(
+          markerId: const MarkerId('anchor'),
+          position: widget.anchorPoint!,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        ),
+      Marker(
+        markerId: const MarkerId('selected'),
+        position: _selectedPoint,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      ),
+    };
 
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
@@ -64,58 +78,22 @@ class _WarehouseLocationPickerDialogState
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: _selectedPoint,
-                      initialZoom: 14,
-                      interactionOptions: const InteractionOptions(
-                        flags:
-                            InteractiveFlag.drag |
-                            InteractiveFlag.pinchZoom |
-                            InteractiveFlag.doubleTapZoom |
-                            InteractiveFlag.scrollWheelZoom,
-                      ),
-                      onTap: (_, point) {
-                        setState(() => _selectedPoint = point);
-                      },
+                  child: GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: _selectedPoint,
+                      zoom: 14,
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName:
-                            'com.travelbox.peru.travelbox_peru_app',
-                      ),
-                      if (widget.anchorPoint != null)
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: widget.anchorPoint!,
-                              width: 36,
-                              height: 36,
-                              child: const Icon(
-                                Icons.place_outlined,
-                                color: Color(0xFF1F6E8C),
-                                size: 30,
-                              ),
-                            ),
-                          ],
-                        ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: _selectedPoint,
-                            width: 44,
-                            height: 44,
-                            child: const Icon(
-                              Icons.location_pin,
-                              color: Color(0xFFC43D3D),
-                              size: 38,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    markers: markers,
+                    onMapCreated: (controller) {
+                      _mapController = controller;
+                    },
+                    onTap: (point) {
+                      setState(() => _selectedPoint = point);
+                    },
+                    myLocationEnabled: false,
+                    myLocationButtonEnabled: false,
+                    zoomControlsEnabled: false,
+                    mapToolbarEnabled: false,
                   ),
                 ),
               ),
@@ -144,7 +122,7 @@ class _WarehouseLocationPickerDialogState
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(context.l10n.t('cancelar')),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: () => Navigator.of(context).pop(_selectedPoint),
                     icon: const Icon(Icons.check),

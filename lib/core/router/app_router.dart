@@ -182,12 +182,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/warehouse/:warehouseId/ratings',
-        builder: (_, state) {
+        builder: (context, state) {
           final warehouseId = int.tryParse(state.pathParameters['warehouseId'] ?? '');
           final warehouseName = state.uri.queryParameters['name'] ?? '';
           if (warehouseId == null) {
-            return const Scaffold(
-              body: Center(child: Text('Invalid warehouse ID')),
+            return Scaffold(
+              body: Center(child: Text(context.l10n.t('error_invalid_warehouse_id'))),
             );
           }
           return WarehouseRatingsPage(

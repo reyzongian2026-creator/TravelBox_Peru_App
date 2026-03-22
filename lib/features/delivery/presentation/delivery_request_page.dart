@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
@@ -796,43 +795,25 @@ class _DeliveryLocationPickerDialogState
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: _selectedPoint,
-                      initialZoom: 14,
-                      interactionOptions: const InteractionOptions(
-                        flags:
-                            InteractiveFlag.drag |
-                            InteractiveFlag.pinchZoom |
-                            InteractiveFlag.doubleTapZoom |
-                            InteractiveFlag.scrollWheelZoom,
-                      ),
-                      onTap: (_, point) {
-                        setState(() => _selectedPoint = point);
-                      },
+                  child: GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: _selectedPoint,
+                      zoom: 14,
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName:
-                            'com.travelbox.peru.travelbox_peru_app',
+                    markers: {
+                      Marker(
+                        markerId: const MarkerId('selected'),
+                        position: _selectedPoint,
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                       ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: _selectedPoint,
-                            width: 44,
-                            height: 44,
-                            child: const Icon(
-                              Icons.location_pin,
-                              color: Color(0xFFC43D3D),
-                              size: 38,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    },
+                    onTap: (point) {
+                      setState(() => _selectedPoint = point);
+                    },
+                    myLocationEnabled: false,
+                    myLocationButtonEnabled: false,
+                    zoomControlsEnabled: false,
+                    mapToolbarEnabled: false,
                   ),
                 ),
               ),

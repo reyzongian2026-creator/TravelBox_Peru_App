@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations.dart';
@@ -728,114 +728,43 @@ class _MapView extends StatelessWidget {
         ? allPoints.first
         : const LatLng(-12.0464, -77.0428);
 
-    final markers = <Marker>[
+    final googleMarkers = <Marker>[
       ...warehouses.map(
         (warehouse) => Marker(
-          width: 124,
-          height: 52,
-          point: LatLng(warehouse.latitude, warehouse.longitude),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => context.push('/warehouse/${warehouse.id}'),
-              child: Card(
-                color: Colors.white.withValues(alpha: 0.96),
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: warehouse.id == nearestWarehouseId
-                        ? const Color(0xFF0B8B8C)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 16,
-                          color: Color(0xFF0B8B8C),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            'S/${warehouse.priceFromPerHour.toStringAsFixed(0)} ${warehouse.name}',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          markerId: MarkerId(warehouse.id),
+          position: LatLng(warehouse.latitude, warehouse.longitude),
+          infoWindow: InfoWindow(
+            title: warehouse.name,
+            snippet: NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour),
+            onTap: () => context.push('/warehouse/${warehouse.id}'),
           ),
+          anchor: const Offset(0.5, 0.5),
         ),
       ),
     ];
 
     if (userPosition != null) {
-      markers.add(
+      googleMarkers.add(
         Marker(
-          width: 22,
-          height: 22,
-          point: LatLng(userPosition!.latitude, userPosition!.longitude),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D4ED8),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-          ),
+          markerId: const MarkerId('user_location'),
+          position: LatLng(userPosition!.latitude, userPosition!.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
       );
     }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: FlutterMap(
-        options: MapOptions(
-          initialCenter: center,
-          initialZoom: 12,
-          initialCameraFit: allPoints.length > 1
-              ? CameraFit.bounds(
-                  bounds: LatLngBounds.fromPoints(allPoints),
-                  padding: const EdgeInsets.all(42),
-                  maxZoom: 13.5,
-                  minZoom: 4,
-                )
-              : null,
-          interactionOptions: const InteractionOptions(
-            flags:
-                InteractiveFlag.pinchZoom |
-                InteractiveFlag.drag |
-                InteractiveFlag.doubleTapZoom |
-                InteractiveFlag.scrollWheelZoom,
-          ),
+      child: GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: center,
+          zoom: 12,
         ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
-          ),
-          MarkerLayer(markers: markers),
-        ],
+        markers: googleMarkers.toSet(),
+        myLocationEnabled: false,
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+        mapToolbarEnabled: false,
       ),
     );
   }
@@ -1073,7 +1002,7 @@ class _WarehouseCard extends StatelessWidget {
               children: [
                 Text(
                   '${context.l10n.t('discovery_price_from')}: '
-                  'S/${warehouse.priceFromPerHour.toStringAsFixed(2)}'
+                  '${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour)}'
                   '${context.l10n.t('discovery_per_hour')}',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),

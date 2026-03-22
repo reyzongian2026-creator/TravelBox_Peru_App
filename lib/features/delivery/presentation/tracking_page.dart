@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
@@ -146,60 +145,37 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
     return Card(
       child: SizedBox(
         height: responsive.mapHeight(max: 460),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: current,
-            initialZoom: 13,
-            initialCameraFit: CameraFit.bounds(
-              bounds: LatLngBounds.fromPoints(routePoints),
-              padding: const EdgeInsets.all(40),
-              maxZoom: 15,
-            ),
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: current,
+            zoom: 13,
           ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'travelbox.peru.app',
+          polylines: {
+            Polyline(
+              polylineId: const PolylineId('route'),
+              points: routePoints,
+              color: route?.fallbackUsed == true
+                  ? const Color(0xFF3B82F6)
+                  : const Color(0xFF0B8B8C),
+              width: 4,
             ),
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: routePoints,
-                  strokeWidth: 4,
-                  color: route?.fallbackUsed == true
-                      ? const Color(0xFF3B82F6)
-                      : const Color(0xFF0B8B8C),
-                ),
-              ],
+          },
+          markers: {
+            Marker(
+              markerId: const MarkerId('current'),
+              position: current,
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
             ),
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: current,
-                  width: 44,
-                  height: 44,
-                  child: const Icon(Icons.local_shipping, color: Colors.red),
-                ),
-                Marker(
-                  point: destination,
-                  width: 44,
-                  height: 44,
-                  child: const Icon(Icons.flag, color: Colors.blue),
-                ),
-              ],
+            Marker(
+              markerId: const MarkerId('destination'),
+              position: destination,
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
             ),
-            if (route != null)
-              RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution(
-                    route.fallbackUsed
-                        ? context.l10n.t('tracking_route_estimated')
-                        : '${context.l10n.t('tracking_route_road_prefix')} '
-                              '${route.provider.toUpperCase()}',
-                  ),
-                ],
-              ),
-          ],
+          },
+          myLocationEnabled: false,
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: false,
+          mapToolbarEnabled: false,
         ),
       ),
     );

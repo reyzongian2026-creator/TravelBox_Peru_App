@@ -90,8 +90,8 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     });
 
     return AuthSplitScaffold(
-      heroLabel: 'TravelBox',
-      heroTitle: 'TRAVELBOX',
+      heroLabel: context.l10n.t('app_name'),
+      heroTitle: context.l10n.t('app_name').toUpperCase(),
       heroSubtitle: context.l10n.t('auth_portal_hero_subtitle'),
       showGuardianBear: false,
       showCompactHero: false,
@@ -376,10 +376,10 @@ class _AuthPanel extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Text(
-                'TRAVELBOX',
+              child: Text(
+                context.l10n.t('app_name').toUpperCase(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
