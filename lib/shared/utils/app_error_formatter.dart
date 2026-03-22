@@ -2,96 +2,112 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-import 'app_exception.dart';
+import 'app_error.dart';
 
 class AppErrorFormatter {
   const AppErrorFormatter._();
 
-  static String readable(
-    Object error, {
-    String fallback = 'Ocurrio un error inesperado.',
-  }) {
+  static AppError getError(Object error) {
     if (error is AppException) {
-      final message = error.message.trim();
-      return message.isEmpty ? fallback : message;
+      return error.error;
     }
-
     if (error is DioException) {
-      final response = error.response;
-      final statusCode = response?.statusCode;
-      final data = _normalizeErrorData(response?.data);
-      final backendMessage = data?['message']?.toString().trim();
-      final parsedDetails = _extractDetails(data);
+      return _errorFromDioError(error);
+    }
+    return AppError(
+      AppErrorCode.error_generic,
+      backendMessage: error.toString().replaceFirst('Exception: ', '').trim(),
+    );
+  }
 
-      if (statusCode == 429) {
-        final retryAfter = _extractRetryAfterSeconds(response?.headers);
-        if (retryAfter != null && retryAfter > 0) {
-          return 'Demasiados intentos. Espera ${retryAfter}s e intenta nuevamente.';
-        }
-        if (backendMessage != null && backendMessage.isNotEmpty) {
-          return backendMessage;
-        }
-        return 'Demasiados intentos. Intenta nuevamente en unos minutos.';
-      }
+  static String readable(Object error, String Function(String key, {Map<String, dynamic>? params}) translator) {
+    final appError = getError(error);
+    var translated = translator(appError.translationKey, params: appError.params);
+    
+    // Handle parameter substitution (e.g., {seconds} -> 60)
+    if (appError.params.isNotEmpty) {
+      appError.params.forEach((key, value) {
+        translated = translated.replaceAll('{$key}', value.toString());
+      });
+    }
+    
+    if (appError.hasBackendMessage) {
+      return '$translated: ${appError.backendMessage}';
+    }
+    
+    return translated;
+  }
 
-      if (parsedDetails.isNotEmpty) {
-        if (backendMessage != null && backendMessage.isNotEmpty) {
-          return '$backendMessage ${parsedDetails.join(' | ')}';
-        }
-        return parsedDetails.join(' | ');
-      }
-      if (backendMessage != null && backendMessage.isNotEmpty) {
-        return backendMessage;
-      }
-
-      final message = error.message?.trim();
-      if (message != null && message.isNotEmpty) {
-        return message;
-      }
+  static AppError _errorFromDioError(DioException error) {
+    if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return const AppError(AppErrorCode.error_connection);
     }
 
-    final text = error.toString().replaceFirst('Exception: ', '').trim();
-    final lowered = text.toLowerCase();
-    if (lowered.contains('firebase_auth/operation-not-allowed') ||
-        lowered.contains('identity provider configuration is not found')) {
-      return 'El proveedor social aun no esta habilitado en Firebase Auth (Google/Facebook).';
+    final statusCode = error.response?.statusCode;
+    final data = error.response?.data;
+    final payload = _normalizeErrorData(data);
+    final extractedMessage = payload?['message']?.toString().trim();
+    final extractedDetails = _extractDetails(payload);
+    final joinedMessage = _joinMessageWithDetails(extractedMessage, extractedDetails);
+
+    if (statusCode == 429) {
+      final retryAfter = _extractRetryAfterSeconds(error.response?.headers);
+      return AppError(
+        AppErrorCode.error_rate_limit,
+        params: retryAfter != null && retryAfter > 0 ? {'seconds': retryAfter} : {},
+      );
     }
-    if (lowered.contains('firebase_auth/unauthorized-domain') ||
-        lowered.contains('unauthorized-domain')) {
-      return 'Este dominio no esta autorizado en Firebase Auth. Agrega tu dominio de Cloud Run en Authorized domains.';
+
+    if (statusCode == 400) {
+      return AppError(
+        AppErrorCode.error_invalid_request,
+        backendMessage: joinedMessage,
+      );
     }
-    if (lowered.contains('invalid scopes') && lowered.contains('email')) {
-      return 'Facebook rechazo el scope email para esta app. Ajusta permisos en Meta Developers o usa solo public_profile.';
+    if (statusCode == 401) {
+      return AppError(
+        AppErrorCode.error_unauthorized,
+        backendMessage: joinedMessage,
+      );
     }
-    if (lowered.contains('firebase_auth/channel-error') &&
-        lowered.contains('signinwithprovider')) {
-      return 'El flujo social movil no esta listo para este proveedor. Actualiza la configuracion nativa.';
+    if (statusCode == 403) {
+      return AppError(
+        AppErrorCode.error_no_permissions,
+        backendMessage: joinedMessage,
+      );
     }
-    if (lowered.contains('missingpluginexception') &&
-        lowered.contains('flutter_facebook_auth')) {
-      return 'Facebook Sign-In no esta disponible en este build. Reinicia la app completa o valida la configuracion nativa.';
+    if (statusCode == 404) {
+      return AppError(
+        AppErrorCode.error_not_found,
+        backendMessage: joinedMessage,
+      );
     }
-    if (lowered.contains('firebase_facebook_app_id')) {
-      return 'Falta FIREBASE_FACEBOOK_APP_ID en el build web. El login de Facebook no puede inicializarse.';
+    if (statusCode != null && statusCode >= 500) {
+      return const AppError(AppErrorCode.error_server_error);
     }
-    if (lowered.contains('googlesigninexceptioncode.canceled') ||
-        lowered.contains('account reauth failed')) {
-      return 'El inicio con Google fue cancelado o no se pudo completar en este dispositivo. Intenta nuevamente.';
+
+    return AppError(
+      AppErrorCode.error_generic,
+      backendMessage: joinedMessage,
+    );
+  }
+
+  static String translateError(Object error, String Function(String key, {Map<String, dynamic>? params}) translator) {
+    final appError = getError(error);
+    
+    if (appError.hasBackendMessage) {
+      final translated = translator(appError.translationKey, params: appError.params);
+      return '$translated: ${appError.backendMessage}';
     }
-    if (lowered.contains('timeoutexception') &&
-        (lowered.contains('social') || lowered.contains('sesion'))) {
-      return 'El proveedor social tardo demasiado en responder. Intenta nuevamente.';
-    }
-    if (lowered.contains('core/no-app') ||
-        lowered.contains('no firebase app') ||
-        lowered.contains('firebase.initializeapp')) {
-      return 'Firebase no se inicializo en esta app. Revisa las variables FIREBASE_* y vuelve a ejecutar el build.';
-    }
-    final match = RegExp(r'message[=:]\s*([^,}]+)').firstMatch(text);
-    if (match != null) {
-      return match.group(1)!.trim();
-    }
-    return text.isEmpty ? fallback : text;
+    
+    return translator(appError.translationKey, params: appError.params);
+  }
+
+  static String getErrorKey(Object error) {
+    final appError = getError(error);
+    return appError.translationKey;
   }
 
   static Map<String, dynamic>? _normalizeErrorData(dynamic rawData) {
@@ -134,6 +150,24 @@ class AppErrorFormatter {
         .map((item) => item.toString().trim())
         .where((item) => item.isNotEmpty)
         .toList();
+  }
+
+  static String? _joinMessageWithDetails(
+    String? backendMessage,
+    List<String> details,
+  ) {
+    final normalizedMessage = backendMessage?.trim();
+    if (details.isEmpty) {
+      if (normalizedMessage == null || normalizedMessage.isEmpty) {
+        return null;
+      }
+      return normalizedMessage;
+    }
+    final joinedDetails = details.join(' | ');
+    if (normalizedMessage == null || normalizedMessage.isEmpty) {
+      return joinedDetails;
+    }
+    return '$normalizedMessage $joinedDetails';
   }
 
   static int? _extractRetryAfterSeconds(Headers? headers) {

@@ -1,16 +1,9 @@
 import 'package:flutter/material.dart';
 
-class ReauthDialog extends StatefulWidget {
-  final String title;
-  final String message;
-  final String confirmButtonText;
+import '../../../core/l10n/app_localizations.dart';
 
-  const ReauthDialog({
-    super.key,
-    this.title = 'Verificación de Seguridad',
-    this.message = 'Para guardar cambios en datos sensibles, ingresa tu contraseña actual.',
-    this.confirmButtonText = 'Verificar y Guardar',
-  });
+class ReauthDialog extends StatefulWidget {
+  const ReauthDialog({super.key});
 
   @override
   State<ReauthDialog> createState() => _ReauthDialogState();
@@ -42,6 +35,8 @@ class _ReauthDialogState extends State<ReauthDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -55,7 +50,7 @@ class _ReauthDialogState extends State<ReauthDialog> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              widget.title,
+              l10n.t('reauth_title'),
               style: TextStyle(
                 color: Colors.orange.shade800,
                 fontSize: 18,
@@ -87,7 +82,7 @@ class _ReauthDialogState extends State<ReauthDialog> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      widget.message,
+                      l10n.t('reauth_message'),
                       style: TextStyle(
                         color: Colors.orange.shade900,
                         fontSize: 13,
@@ -103,8 +98,8 @@ class _ReauthDialogState extends State<ReauthDialog> {
               obscureText: _obscurePassword,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'Contraseña actual',
-                hintText: 'Ingresa tu contraseña',
+                labelText: l10n.t('reauth_password_label'),
+                hintText: l10n.t('reauth_password_hint'),
                 prefixIcon: const Icon(Icons.password),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -122,10 +117,10 @@ class _ReauthDialogState extends State<ReauthDialog> {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'La contraseña es requerida';
+                  return l10n.t('reauth_password_required');
                 }
                 if (value.length < 6) {
-                  return 'La contraseña debe tener al menos 6 caracteres';
+                  return l10n.t('reauth_password_too_short');
                 }
                 return null;
               },
@@ -166,7 +161,7 @@ class _ReauthDialogState extends State<ReauthDialog> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(null),
-          child: const Text('Cancelar'),
+          child: Text(l10n.t('reauth_cancel_button')),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _submit,
@@ -186,26 +181,17 @@ class _ReauthDialogState extends State<ReauthDialog> {
                     color: Colors.white,
                   ),
                 )
-              : Text(widget.confirmButtonText),
+              : Text(l10n.t('reauth_confirm_button')),
         ),
       ],
     );
   }
 }
 
-Future<String?> showReauthDialog(
-  BuildContext context, {
-  String title = 'Verificación de Seguridad',
-  String message = 'Para guardar cambios en datos sensibles, ingresa tu contraseña actual.',
-  String confirmButtonText = 'Verificar y Guardar',
-}) {
+Future<String?> showReauthDialog(BuildContext context) {
   return showDialog<String>(
     context: context,
     barrierDismissible: false,
-    builder: (context) => ReauthDialog(
-      title: title,
-      message: message,
-      confirmButtonText: confirmButtonText,
-    ),
+    builder: (context) => const ReauthDialog(),
   );
 }

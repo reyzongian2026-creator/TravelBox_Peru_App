@@ -32,6 +32,19 @@ extension PhotoTypeExtension on PhotoType {
     }
   }
 
+  String displayNameWithLocale(dynamic l10n) {
+    switch (this) {
+      case PhotoType.checkin:
+        return l10n.t('photo_type_checkin');
+      case PhotoType.checkout:
+        return l10n.t('photo_type_checkout');
+      case PhotoType.clientHandoff:
+        return l10n.t('photo_type_client_handoff');
+      case PhotoType.warehouseReceived:
+        return l10n.t('photo_type_warehouse_received');
+    }
+  }
+
   static PhotoType? fromString(String value) {
     switch (value.toUpperCase()) {
       case 'CHECKIN':

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/l10n/app_localizations.dart';
+
 enum SensitiveDataType {
   dni,
   ruc,
@@ -65,31 +67,31 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
     }
   }
 
-  String? _defaultValidator(String? value) {
+  String? _defaultValidator(String? value, AppLocalizations l10n) {
     if (value == null || value.isEmpty) {
-      return 'Este campo es requerido';
+      return l10n.t('error_required_field');
     }
 
     switch (widget.type) {
       case SensitiveDataType.dni:
       case SensitiveDataType.ruc:
         if (value.length < 8) {
-          return 'Debe tener al menos 8 caracteres';
+          return l10n.t('error_min_length_8');
         }
         break;
       case SensitiveDataType.passport:
         if (value.length < 6) {
-          return 'Debe tener al menos 6 caracteres';
+          return l10n.t('error_min_length_6');
         }
         break;
       case SensitiveDataType.phone:
         if (value.length < 7) {
-          return 'Debe tener al menos 7 caracteres';
+          return l10n.t('error_min_length_7');
         }
         break;
       case SensitiveDataType.creditCard:
         if (value.length < 13) {
-          return 'Número de tarjeta inválido';
+          return l10n.t('error_invalid_credit_card');
         }
         break;
       default:
@@ -101,6 +103,8 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,7 +141,7 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      'Requiere verificación',
+                      l10n.t('field_reauth_required'),
                       style: TextStyle(
                         fontSize: 9,
                         color: Colors.orange.shade700,
@@ -153,9 +157,9 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
         TextFormField(
           controller: widget.controller,
           obscureText: !_showFullValue,
-          validator: widget.validator ?? _defaultValidator,
+          validator: widget.validator ?? (value) => _defaultValidator(value, l10n),
           decoration: InputDecoration(
-            hintText: widget.hintText ?? 'Ingrese ${widget.label.toLowerCase()}',
+            hintText: widget.hintText ?? l10n.t('field_enter_value').replaceAll('{label}', widget.label.toLowerCase()),
             filled: true,
             fillColor: Colors.orange.shade50.withOpacity(0.3),
             border: OutlineInputBorder(
@@ -187,7 +191,7 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
                       _showFullValue = !_showFullValue;
                     });
                   },
-                  tooltip: _showFullValue ? 'Ocultar' : 'Mostrar',
+                  tooltip: _showFullValue ? l10n.t('action_hide') : l10n.t('action_show'),
                 ),
                 if (widget.requireReauth)
                   Padding(
@@ -215,7 +219,7 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'Para guardar cambios en datos sensibles, deberás verificar tu contraseña.',
+                    l10n.t('reauth_message'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.orange.shade700,
                         ),

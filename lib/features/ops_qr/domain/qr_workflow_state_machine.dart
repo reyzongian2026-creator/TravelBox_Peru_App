@@ -34,6 +34,27 @@ extension QrWorkflowStepX on QrWorkflowStep {
     }
   }
 
+  String labelWithLocale(dynamic l10n) {
+    switch (this) {
+      case QrWorkflowStep.scan:
+        return l10n.t('qr_workflow_scan');
+      case QrWorkflowStep.validate:
+        return l10n.t('qr_workflow_validate');
+      case QrWorkflowStep.tagBags:
+        return l10n.t('qr_workflow_tag_bags');
+      case QrWorkflowStep.capturePhotos:
+        return l10n.t('qr_workflow_capture_photos');
+      case QrWorkflowStep.storeInWarehouse:
+        return l10n.t('qr_workflow_store');
+      case QrWorkflowStep.generatePickupPin:
+        return l10n.t('qr_workflow_generate_pin');
+      case QrWorkflowStep.customerPickupOrDelivery:
+        return l10n.t('qr_workflow_delivery');
+      case QrWorkflowStep.complete:
+        return l10n.t('qr_workflow_complete');
+    }
+  }
+
   QrWorkflowStep? get next {
     switch (this) {
       case QrWorkflowStep.scan:
