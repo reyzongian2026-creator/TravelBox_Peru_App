@@ -408,7 +408,10 @@ jobs:
             @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
             @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false },
             @{ secret = "tbx-auth-facebook-app-id"; env = "FIREBASE_FACEBOOK_APP_ID"; required = $false },
-            @{ secret = "tbx-app-google-maps-api-key"; env = "GOOGLE_MAPS_API_KEY"; required = $false }
+            @{ secret = "tbx-app-google-maps-api-key"; env = "GOOGLE_MAPS_API_KEY"; required = $false },
+            @{ secret = "tbx-back-azure-storage-images-connection-string"; env = "AZURE_STORAGE_IMAGES_CONNECTION_STRING"; required = $false },
+            @{ secret = "tbx-back-azure-storage-reports-connection-string"; env = "AZURE_STORAGE_REPORTS_CONNECTION_STRING"; required = $false },
+            @{ secret = "tbx-back-encryption-key"; env = "APP_SECURITY_ENCRYPTION_KEY"; required = $false }
           )
 
           foreach ($item in $map) {
@@ -535,7 +538,10 @@ jobs:
             "AZURE_KEYVAULT_ENDPOINT: `"https://${{ inputs.azure_keyvault_name }}.vault.azure.net/`"",
             "AZURE_CLIENT_ID: `"${env:AZURE_CLIENT_ID}`"",
             "AZURE_CLIENT_SECRET: `"${env:AZURE_CLIENT_SECRET}`"",
-            "AZURE_TENANT_ID: `"${env:AZURE_TENANT_ID}`""
+            "AZURE_TENANT_ID: `"${env:AZURE_TENANT_ID}`"",
+            "AZURE_STORAGE_IMAGES_CONNECTION_STRING: `"${env:AZURE_STORAGE_IMAGES_CONNECTION_STRING}`"",
+            "AZURE_STORAGE_REPORTS_CONNECTION_STRING: `"${env:AZURE_STORAGE_REPORTS_CONNECTION_STRING}`"",
+            "APP_SECURITY_ENCRYPTION_KEY: `"${env:APP_SECURITY_ENCRYPTION_KEY}`""
           )
           if (-not [string]::IsNullOrWhiteSpace($frontendUrl)) {
             $lines += "APP_FRONTEND_BASE_URL: `"$frontendUrl`""
