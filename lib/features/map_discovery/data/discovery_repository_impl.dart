@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -136,6 +138,113 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
         throw AppException.fromError(error);
       }
       return DemoData.findWarehouse(warehouseId);
+    }
+  }
+
+  @override
+  Future<String?> getWarehouseImage(String warehouseId) async {
+    try {
+      final response = await _dio.get<dynamic>(
+        '/warehouses/$warehouseId/image',
+        options: Options(
+          responseType: ResponseType.bytes,
+        ),
+      );
+      final bytes = response.data as List<int>;
+      final base64 = base64Encode(bytes);
+      return 'data:image/png;base64,$base64';
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null;
+      }
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<Warehouse>> findNearbyWarehouses({
+    required double latitude,
+    required double longitude,
+    double radiusKm = 10,
+    String? baggageSize,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/warehouses/nearby',
+        queryParameters: {
+          'lat': latitude,
+          'lng': longitude,
+          'radius': radiusKm,
+          if (baggageSize?.isNotEmpty == true) 'baggageSize': baggageSize,
+        },
+      );
+      final data = response.data;
+      if (data == null) return [];
+      final itemsRaw = data['warehouses'] ?? data['items'] ?? data['data'] ?? [];
+      return (itemsRaw as List)
+          .map((item) => Warehouse.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return [];
+      }
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<WarehouseAvailabilityResult> searchAvailability({
+    double? latitude,
+    double? longitude,
+    DateTime? startAt,
+    DateTime? endAt,
+    int? baggageCount,
+    String? baggageSize,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/warehouses/availability/search',
+        queryParameters: {
+          if (latitude != null) 'lat': latitude,
+          if (longitude != null) 'lng': longitude,
+          if (startAt != null) 'startAt': startAt.toUtc().toIso8601String(),
+          if (endAt != null) 'endAt': endAt.toUtc().toIso8601String(),
+          if (baggageCount != null) 'baggageCount': baggageCount,
+          if (baggageSize?.isNotEmpty == true) 'baggageSize': baggageSize,
+        },
+      );
+      final data = response.data;
+      if (data == null) {
+        return const WarehouseAvailabilityResult(
+          hasAvailability: false,
+          warehouses: [],
+          totalCount: 0,
+        );
+      }
+      final itemsRaw = data['warehouses'] ?? data['items'] ?? data['data'] ?? [];
+      final warehouses = (itemsRaw as List)
+          .map((item) => Warehouse.fromJson(item as Map<String, dynamic>))
+          .toList();
+      return WarehouseAvailabilityResult(
+        hasAvailability: data['hasAvailability'] as bool? ?? warehouses.isNotEmpty,
+        warehouses: warehouses,
+        totalCount: data['totalCount'] as int? ?? warehouses.length,
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return const WarehouseAvailabilityResult(
+          hasAvailability: false,
+          warehouses: [],
+          totalCount: 0,
+        );
+      }
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
     }
   }
 }

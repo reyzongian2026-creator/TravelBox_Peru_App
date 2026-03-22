@@ -1033,4 +1033,44 @@ class ReservationRepositoryImpl implements ReservationRepository {
       throw AppException.fromError(e);
     }
   }
+
+  @override
+  Future<ReservationTracking> getReservationTracking(String reservationId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/reservations/$reservationId/tracking',
+      );
+      final data = response.data ?? <String, dynamic>{};
+      return _mapReservationTracking(data, reservationId);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  ReservationTracking _mapReservationTracking(Map<String, dynamic> data, String reservationId) {
+    return ReservationTracking(
+      reservationId: reservationId,
+      status: data['status']?.toString() ?? '',
+      currentStep: data['currentStep']?.toString(),
+      estimatedCompletion: data['estimatedCompletion'] != null
+          ? DateTime.tryParse(data['estimatedCompletion'].toString())
+          : null,
+      steps: (data['steps'] as List<dynamic>?)
+              ?.map((s) => TrackingStep(
+                    id: s['id']?.toString() ?? '',
+                    title: s['title']?.toString() ?? '',
+                    description: s['description']?.toString() ?? '',
+                    timestamp: s['timestamp'] != null
+                        ? DateTime.tryParse(s['timestamp'].toString())
+                        : null,
+                    isCompleted: s['isCompleted'] as bool? ?? false,
+                    isActive: s['isActive'] as bool? ?? false,
+                  ))
+              .toList() ??
+          [],
+    );
+  }
 }

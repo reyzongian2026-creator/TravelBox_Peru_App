@@ -101,6 +101,42 @@ abstract class ReservationRepository {
   });
 
   Future<String> getReservationQrCode(String reservationId);
+
+  Future<ReservationTracking> getReservationTracking(String reservationId);
+}
+
+class ReservationTracking {
+  const ReservationTracking({
+    required this.reservationId,
+    required this.status,
+    this.currentStep,
+    this.steps = const [],
+    this.estimatedCompletion,
+  });
+
+  final String reservationId;
+  final String status;
+  final String? currentStep;
+  final List<TrackingStep> steps;
+  final DateTime? estimatedCompletion;
+}
+
+class TrackingStep {
+  final String id;
+  final String title;
+  final String description;
+  final DateTime? timestamp;
+  final bool isCompleted;
+  final bool isActive;
+
+  const TrackingStep({
+    required this.id,
+    required this.title,
+    required this.description,
+    this.timestamp,
+    required this.isCompleted,
+    required this.isActive,
+  });
 }
 
 class ReservationPagedResult {

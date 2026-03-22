@@ -6,6 +6,14 @@ import '../../../shared/utils/app_exception.dart';
 abstract class DeliveryOrdersRepository {
   Future<DeliveryOrderDetail?> getDeliveryOrderById(String orderId);
   Future<DeliveryTracking> getDeliveryOrderTracking(String orderId);
+  Future<List<DeliveryOrderDetail>> getDeliveryOrders({
+    String? status,
+    int page = 0,
+    int size = 20,
+  });
+  Future<DeliveryTracking> getDeliveryOrderTrackingByReservation(String reservationId);
+  Future<void> claimDeliveryOrder(String orderId);
+  Future<void> updateDeliveryProgress(String orderId, String status, {String? notes});
 }
 
 class DeliveryOrderDetail {
@@ -200,6 +208,82 @@ class DeliveryOrdersRepositoryImpl implements DeliveryOrdersRepository {
       throw AppException.fromDioError(e);
     } catch (e) {
       if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<DeliveryOrderDetail>> getDeliveryOrders({
+    String? status,
+    int page = 0,
+    int size = 20,
+  }) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/delivery-orders',
+        queryParameters: {
+          'page': page,
+          'size': size,
+          if (status != null && status.isNotEmpty) 'status': status,
+        },
+      );
+      final data = response.data;
+      if (data == null) return [];
+      return data.map((item) => DeliveryOrderDetail.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<DeliveryTracking> getDeliveryOrderTrackingByReservation(String reservationId) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/delivery-orders/reservation/$reservationId/tracking',
+      );
+
+      final data = response.data;
+      if (data == null) {
+        throw AppException.withCode(AppErrorCode.error_not_found, backendMessage: 'Tracking information not found');
+      }
+
+      return DeliveryTracking.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<void> claimDeliveryOrder(String orderId) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        '/delivery-orders/$orderId/claim',
+      );
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<void> updateDeliveryProgress(String orderId, String status, {String? notes}) async {
+    try {
+      await _dio.patch<Map<String, dynamic>>(
+        '/delivery-orders/$orderId/progress',
+        data: {
+          'status': status,
+          if (notes != null) 'notes': notes,
+        },
+      );
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
       throw AppException.fromError(e);
     }
   }

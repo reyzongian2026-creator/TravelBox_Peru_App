@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/utils/app_exception.dart';
 
 class NotificationStore extends StateNotifier<AsyncValue<List<AppNotification>>> {
   final Ref _ref;
@@ -65,6 +67,30 @@ class NotificationStore extends StateNotifier<AsyncValue<List<AppNotification>>>
       if (state.valueOrNull == null) {
         state = AsyncValue.error(e, st);
       }
+    }
+  }
+
+  Future<void> deleteNotification(String id) async {
+    try {
+      final dio = _ref.read(dioProvider);
+      await dio.delete('/notifications/$id');
+      removeNotification(id);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  Future<void> deleteAllNotifications() async {
+    try {
+      final dio = _ref.read(dioProvider);
+      await dio.delete('/notifications/my');
+      state = const AsyncValue.data([]);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
     }
   }
 

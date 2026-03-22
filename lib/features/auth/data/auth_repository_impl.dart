@@ -347,6 +347,79 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<EmailChangeResult> initiateEmailChange({required String newEmail}) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/email-change/initiate',
+        data: {'newEmail': newEmail.trim()},
+      );
+      final data = response.data ?? <String, dynamic>{};
+      return EmailChangeResult(
+        success: data['success'] as bool? ?? true,
+        message: data['message']?.toString() ?? 'Verification code sent to new email.',
+        expiresAtIso: data['expiresAt']?.toString(),
+      );
+    } on DioException catch (error) {
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
+      _warnMockFallback('initiateEmailChange', error);
+      return const EmailChangeResult(
+        success: true,
+        message: 'Email change initiated in mock mode.',
+      );
+    } catch (error) {
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
+      _warnMockFallback('initiateEmailChange', error);
+      return const EmailChangeResult(
+        success: true,
+        message: 'Email change initiated in mock mode.',
+      );
+    }
+  }
+
+  @override
+  Future<EmailChangeResult> verifyEmailChange({
+    required String code,
+    required String newEmail,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/email-change/verify',
+        data: {
+          'code': code.trim(),
+          'newEmail': newEmail.trim(),
+        },
+      );
+      final data = response.data ?? <String, dynamic>{};
+      return EmailChangeResult(
+        success: data['success'] as bool? ?? true,
+        message: data['message']?.toString() ?? 'Email changed successfully.',
+      );
+    } on DioException catch (error) {
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
+      _warnMockFallback('verifyEmailChange', error);
+      return const EmailChangeResult(
+        success: true,
+        message: 'Email changed in mock mode.',
+      );
+    } catch (error) {
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
+      _warnMockFallback('verifyEmailChange', error);
+      return const EmailChangeResult(
+        success: true,
+        message: 'Email changed in mock mode.',
+      );
+    }
+  }
+
   AuthSession _mapSession(Map<String, dynamic> data) {
     final accessToken =
         data['accessToken']?.toString() ??

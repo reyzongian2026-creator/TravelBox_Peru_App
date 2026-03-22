@@ -8,6 +8,7 @@ abstract class InventoryRepository {
   Future<CheckoutResult> checkout(CheckoutRequest request);
   Future<String> uploadEvidence(String incidentId, String filePath, String description);
   Future<List<Evidence>> getEvidences(String reservationId);
+  Future<Evidence> createEvidence(EvidenceRequest request);
 }
 
 class CheckinRequest {
@@ -201,6 +202,26 @@ class Evidence {
   }
 }
 
+class EvidenceRequest {
+  final String reservationId;
+  final String type;
+  final String? description;
+  final String? filePath;
+
+  EvidenceRequest({
+    required this.reservationId,
+    required this.type,
+    this.description,
+    this.filePath,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'reservationId': reservationId,
+        'type': type,
+        if (description != null) 'description': description,
+      };
+}
+
 final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
   return InventoryRepositoryImpl(dio: ref.watch(dioProvider));
 });
@@ -282,6 +303,25 @@ class InventoryRepositoryImpl implements InventoryRepository {
       final data = response.data;
       if (data == null) return [];
       return data.map((e) => Evidence.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<Evidence> createEvidence(EvidenceRequest request) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/inventory/evidences',
+        data: request.toJson(),
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException.withCode(AppErrorCode.err_upload_failed, backendMessage: 'Failed to create evidence');
+      }
+      return Evidence.fromJson(data);
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {

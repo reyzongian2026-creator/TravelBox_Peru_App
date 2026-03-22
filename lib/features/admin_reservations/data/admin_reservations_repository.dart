@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/app_exception.dart';
 
 abstract class AdminReservationsRepository {
@@ -10,6 +11,12 @@ abstract class AdminReservationsRepository {
     DateTime? endDate,
     String? status,
     String? format,
+  });
+  Future<List<Reservation>> getAllReservations({
+    ReservationStatus? status,
+    String? query,
+    int page = 0,
+    int size = 50,
   });
 }
 
@@ -98,6 +105,36 @@ class AdminReservationsRepositoryImpl implements AdminReservationsRepository {
         throw AppException.withCode(AppErrorCode.err_export_failed, backendMessage: 'Export failed');
       }
       return data['url'].toString();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<Reservation>> getAllReservations({
+    ReservationStatus? status,
+    String? query,
+    int page = 0,
+    int size = 50,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/admin/reservations',
+        queryParameters: {
+          'page': page,
+          'size': size,
+          if (status != null) 'status': status.code,
+          if (query != null && query.isNotEmpty) 'query': query,
+        },
+      );
+      final data = response.data;
+      if (data == null) return [];
+      final itemsRaw = data['items'] ?? data['content'] ?? data['data'] ?? data['reservations'] ?? [];
+      return (itemsRaw as List)
+          .map((item) => Reservation.fromJson(item as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {

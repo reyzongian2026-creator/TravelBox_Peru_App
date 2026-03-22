@@ -28,6 +28,9 @@ abstract class GeoRepository {
     required double destLat,
     required double destLng,
   });
+
+  Future<List<GeoCity>> getCities();
+  Future<List<GeoZone>> getZones({String? cityId});
 }
 
 class GeoSearchSuggestion {
@@ -54,6 +57,59 @@ class GeoSearchSuggestion {
       location: json['location'] != null
           ? GeoCoordinate.fromJson(json['location'] as Map<String, dynamic>)
           : null,
+    );
+  }
+}
+
+class GeoCity {
+  final String id;
+  final String name;
+  final String? country;
+  final GeoCoordinate? center;
+
+  const GeoCity({
+    required this.id,
+    required this.name,
+    this.country,
+    this.center,
+  });
+
+  factory GeoCity.fromJson(Map<String, dynamic> json) {
+    return GeoCity(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      country: json['country']?.toString(),
+      center: json['center'] != null
+          ? GeoCoordinate.fromJson(json['center'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+}
+
+class GeoZone {
+  final String id;
+  final String name;
+  final String? cityId;
+  final GeoCoordinate? center;
+  final String? type;
+
+  const GeoZone({
+    required this.id,
+    required this.name,
+    this.cityId,
+    this.center,
+    this.type,
+  });
+
+  factory GeoZone.fromJson(Map<String, dynamic> json) {
+    return GeoZone(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      cityId: json['cityId']?.toString(),
+      center: json['center'] != null
+          ? GeoCoordinate.fromJson(json['center'] as Map<String, dynamic>)
+          : null,
+      type: json['type']?.toString(),
     );
   }
 }
@@ -237,6 +293,47 @@ class GeoRepositoryImpl implements GeoRepository {
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         return null;
+      }
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<GeoCity>> getCities() async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/geo/cities',
+      );
+      final data = response.data;
+      if (data == null) return [];
+      return data.map((item) => GeoCity.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return [];
+      }
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<GeoZone>> getZones({String? cityId}) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/geo/zones',
+        queryParameters: {
+          if (cityId != null) 'cityId': cityId,
+        },
+      );
+      final data = response.data;
+      if (data == null) return [];
+      return data.map((item) => GeoZone.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return [];
       }
       throw AppException.fromDioError(e);
     } catch (e) {

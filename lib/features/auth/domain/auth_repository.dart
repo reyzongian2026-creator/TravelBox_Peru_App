@@ -78,4 +78,23 @@ abstract class AuthRepository {
     required String newPassword,
     required String confirmPassword,
   });
+
+  Future<EmailChangeResult> initiateEmailChange({required String newEmail});
+
+  Future<EmailChangeResult> verifyEmailChange({
+    required String code,
+    required String newEmail,
+  });
+}
+
+class EmailChangeResult {
+  const EmailChangeResult({
+    required this.success,
+    required this.message,
+    this.expiresAtIso,
+  });
+
+  final bool success;
+  final String message;
+  final String? expiresAtIso;
 }
