@@ -1030,6 +1030,7 @@ class AppLocalizations {
       'create_account': 'Crear cuenta',
       'create_client_account': 'Crear cuenta de cliente',
       'credenciales': 'Credenciales',
+      'currency': 'Moneda',
       'danio': 'Daño',
       'dark_mode': 'Modo oscuro',
       'dashboard': 'Panel',

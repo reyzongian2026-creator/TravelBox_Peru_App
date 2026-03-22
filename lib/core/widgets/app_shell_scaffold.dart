@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/state/currency_preference.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/notifications/domain/app_notification.dart';
@@ -1052,6 +1053,7 @@ class _SettingsComboMenu extends ConsumerWidget {
     final l10n = context.l10n;
     final themeMode = ref.watch(themeModeControllerProvider);
     final session = ref.watch(sessionControllerProvider);
+    final userCurrency = ref.watch(currencyPreferenceProvider);
     final isDark = themeMode == ThemeMode.dark;
     final currentLocaleCode = session.locale.languageCode.toLowerCase();
 
@@ -1061,6 +1063,13 @@ class _SettingsComboMenu extends ConsumerWidget {
       onSelected: (value) {
         if (value == 'theme') {
           ref.read(themeModeControllerProvider.notifier).toggle();
+        } else if (value.startsWith('currency_')) {
+          final currencyCode = value.replaceFirst('currency_', '');
+          final currency = CurrencyCode.values.firstWhere(
+            (c) => c.code == currencyCode,
+            orElse: () => CurrencyCode.pen,
+          );
+          ref.read(currencyPreferenceProvider.notifier).setCurrency(currency);
         } else {
           ref.read(sessionControllerProvider.notifier).setLocale(Locale(value));
         }
@@ -1077,6 +1086,42 @@ class _SettingsComboMenu extends ConsumerWidget {
               const SizedBox(width: 8),
               Text(isDark ? l10n.t('light_mode') : l10n.t('dark_mode')),
             ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          enabled: false,
+          child: Row(
+            children: [
+              const Icon(Icons.attach_money, size: 18),
+              const SizedBox(width: 8),
+              Text(l10n.t('currency')),
+            ],
+          ),
+        ),
+        ...CurrencyCode.values.map(
+          (currency) => PopupMenuItem<String>(
+            value: 'currency_${currency.code}',
+            child: Padding(
+              padding: const EdgeInsets.only(left: 24),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    child: Text(
+                      currency.symbol,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(currency.name),
+                  if (currency == userCurrency) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.check, size: 18),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
         const PopupMenuDivider(),
