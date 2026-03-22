@@ -39,7 +39,7 @@ final reservationSuccessPaymentStatusProvider =
     });
 
 class ReservationSuccessPage extends ConsumerWidget {
-  ReservationSuccessPage({super.key, required this.reservationId});
+  const ReservationSuccessPage({super.key, required this.reservationId});
 
   final String reservationId;
 

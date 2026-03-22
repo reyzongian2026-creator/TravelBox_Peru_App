@@ -616,7 +616,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
 
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'Dashboard stats not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Dashboard stats not available');
       }
 
       return DashboardStats.fromJson(data);
@@ -638,7 +638,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
 
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'Dashboard overview not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Dashboard overview not available');
       }
 
       return DashboardOverview.fromJson(data);
@@ -660,7 +660,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
 
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'Dashboard summary not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Dashboard summary not available');
       }
 
       return DashboardSummary.fromJson(data);
@@ -678,7 +678,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
       await _dio.post<void>(
         '/admin/dashboard/invalidate-cache',
         queryParameters: {
-          if (period != null) 'period': period,
+          'period': ?period,
         },
       );
     } on DioException catch (e) {
@@ -700,7 +700,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'Revenue report not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Revenue report not available');
       }
       return RevenueReport.fromJson(data);
     } on DioException catch (e) {
@@ -738,7 +738,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'System health not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'System health not available');
       }
       return SystemHealthInfo.fromJson(data);
     } on DioException catch (e) {
@@ -762,10 +762,10 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
         '/admin/system/audit-log',
         queryParameters: {
           'limit': limit,
-          if (entityType != null) 'entityType': entityType,
-          if (entityId != null) 'entityId': entityId,
-          if (action != null) 'action': action,
-          if (performedBy != null) 'performedBy': performedBy,
+          'entityType': ?entityType,
+          'entityId': ?entityId,
+          'action': ?action,
+          'performedBy': ?performedBy,
         },
       );
       final data = response.data;
@@ -790,7 +790,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'Dashboard summary not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Dashboard summary not available');
       }
       return DashboardSummary.fromJson(data);
     } on DioException catch (e) {
@@ -828,7 +828,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_fetch_failed, backendMessage: 'Trends data not available');
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Trends data not available');
       }
       return TrendsData.fromJson(data);
     } on DioException catch (e) {

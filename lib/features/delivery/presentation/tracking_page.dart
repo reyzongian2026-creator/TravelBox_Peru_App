@@ -20,7 +20,7 @@ import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 class TrackingPage extends ConsumerStatefulWidget {
-  TrackingPage({
+  const TrackingPage({
     super.key,
     required this.reservationId,
     this.title = 'tracking',
@@ -476,7 +476,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
 }
 
 class _MissingDeliveryState extends StatelessWidget {
-  _MissingDeliveryState({
+  const _MissingDeliveryState({
     required this.reservation,
     required this.onRefresh,
     required this.backofficeMode,

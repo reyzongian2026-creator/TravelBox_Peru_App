@@ -209,11 +209,11 @@ class DiscoveryRepositoryImpl implements DiscoveryRepository {
       final response = await _dio.get<Map<String, dynamic>>(
         '/warehouses/availability/search',
         queryParameters: {
-          if (latitude != null) 'lat': latitude,
-          if (longitude != null) 'lng': longitude,
+          'lat': ?latitude,
+          'lng': ?longitude,
           if (startAt != null) 'startAt': startAt.toUtc().toIso8601String(),
           if (endAt != null) 'endAt': endAt.toUtc().toIso8601String(),
-          if (baggageCount != null) 'baggageCount': baggageCount,
+          'baggageCount': ?baggageCount,
           if (baggageSize?.isNotEmpty == true) 'baggageSize': baggageSize,
         },
       );

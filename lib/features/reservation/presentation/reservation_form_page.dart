@@ -6,13 +6,14 @@ import 'package:intl/intl.dart';
 
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../warehouse/presentation/warehouse_detail_page.dart';
 import '../data/reservation_repository_impl.dart';
 import '../domain/reservation_repository.dart';
 
 class ReservationFormPage extends ConsumerStatefulWidget {
-  ReservationFormPage({super.key, required this.warehouseId});
+  const ReservationFormPage({super.key, required this.warehouseId});
 
   final String warehouseId;
 
@@ -245,8 +246,11 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message:
-              '${context.l10n.t('reservation_prepare_failed_prefix')}: $error',
+          message: AppErrorFormatter.readable(
+            error,
+            (String key, {Map<String, dynamic>? params}) =>
+                context.l10n.t(key),
+          ),
           onRetry: () =>
               ref.invalidate(warehouseDetailProvider(widget.warehouseId)),
         ),

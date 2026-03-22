@@ -90,7 +90,7 @@ final reservationIncidentsProvider =
     });
 
 class IncidentsPage extends ConsumerStatefulWidget {
-  IncidentsPage({super.key, this.reservationId});
+  const IncidentsPage({super.key, this.reservationId});
 
   final String? reservationId;
 

@@ -71,7 +71,7 @@ class _PhotoViewerDialogState extends State<PhotoViewerDialog>
   void _resetZoom() {
     _animateTo(
       Matrix4.identity(),
-      Matrix4.identity().scaled(2.0, 2.0),
+      Matrix4.diagonal3Values(2.0, 2.0, 1.0),
     );
   }
 
@@ -95,7 +95,7 @@ class _PhotoViewerDialogState extends State<PhotoViewerDialog>
     } else {
       _animateTo(
         _transformationController.value,
-        Matrix4.identity().scaled(2.5, 2.5),
+        Matrix4.diagonal3Values(2.5, 2.5, 1.0),
       );
     }
   }

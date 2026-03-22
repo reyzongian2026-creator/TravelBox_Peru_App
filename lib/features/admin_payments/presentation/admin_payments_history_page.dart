@@ -64,7 +64,7 @@ class AdminPaymentHistoryPage {
 }
 
 class AdminPaymentsHistoryPage extends ConsumerWidget {
-  AdminPaymentsHistoryPage({super.key});
+  const AdminPaymentsHistoryPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

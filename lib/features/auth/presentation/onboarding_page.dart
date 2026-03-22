@@ -8,7 +8,7 @@ import '../../../shared/widgets/travelbox_logo.dart';
 import 'widgets/auth_ui.dart';
 
 class OnboardingPage extends ConsumerStatefulWidget {
-  OnboardingPage({super.key});
+  const OnboardingPage({super.key});
 
   @override
   ConsumerState<OnboardingPage> createState() => _OnboardingPageState();

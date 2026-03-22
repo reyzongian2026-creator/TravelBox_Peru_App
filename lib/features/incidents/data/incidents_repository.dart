@@ -249,7 +249,7 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_create_incident, backendMessage: 'Failed to create incident');
+        throw AppException.withCode(AppErrorCode.errCreateIncident, backendMessage: 'Failed to create incident');
       }
       return Incident.fromJson(data);
     } on DioException catch (e) {
@@ -268,7 +268,7 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_update_failed, backendMessage: 'Failed to resolve incident');
+        throw AppException.withCode(AppErrorCode.errUpdateFailed, backendMessage: 'Failed to resolve incident');
       }
       return Incident.fromJson(data);
     } on DioException catch (e) {

@@ -3,27 +3,27 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 enum AppErrorCode {
-  error_connection,
-  error_rate_limit,
-  error_no_permissions,
-  error_not_found,
-  error_server_error,
-  error_generic,
-  error_invalid_request,
-  error_unauthorized,
-  error_bad_request,
+  errorConnection,
+  errorRateLimit,
+  errorNoPermissions,
+  errorNotFound,
+  errorServerError,
+  errorGeneric,
+  errorInvalidRequest,
+  errorUnauthorized,
+  errorBadRequest,
   
-  err_no_response,
-  err_export_failed,
-  err_checkin_failed,
-  err_checkout_failed,
-  err_upload_failed,
-  err_create_incident,
-  err_create_warehouse,
-  err_create_user,
-  err_update_failed,
-  err_delete_failed,
-  err_fetch_failed,
+  errNoResponse,
+  errExportFailed,
+  errCheckinFailed,
+  errCheckoutFailed,
+  errUploadFailed,
+  errCreateIncident,
+  errCreateWarehouse,
+  errCreateUser,
+  errUpdateFailed,
+  errDeleteFailed,
+  errFetchFailed,
 }
 
 class AppError {
@@ -33,7 +33,7 @@ class AppError {
   final Map<String, dynamic> params;
   final String? backendMessage;
 
-  String get translationKey => code.name;
+  String get translationKey => code.name.replaceAllMapped(RegExp(r'[A-Z]'), (match) => '_${match.group(0)!.toLowerCase()}');
 
   bool get hasBackendMessage => backendMessage != null && backendMessage!.isNotEmpty;
 
@@ -52,7 +52,7 @@ class AppException implements Exception {
         error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
       return AppException(
-        const AppError(AppErrorCode.error_connection),
+        const AppError(AppErrorCode.errorConnection),
       );
     }
 
@@ -67,7 +67,7 @@ class AppException implements Exception {
       final retryAfter = _extractRetryAfterSeconds(error.response?.headers);
       return AppException(
         AppError(
-          AppErrorCode.error_rate_limit,
+          AppErrorCode.errorRateLimit,
           params: retryAfter != null && retryAfter > 0 ? {'seconds': retryAfter} : {},
         ),
         statusCode: statusCode,
@@ -77,7 +77,7 @@ class AppException implements Exception {
     if (statusCode == 400) {
       return AppException(
         AppError(
-          AppErrorCode.error_invalid_request,
+          AppErrorCode.errorInvalidRequest,
           backendMessage: joinedMessage,
         ),
         statusCode: statusCode,
@@ -86,7 +86,7 @@ class AppException implements Exception {
     if (statusCode == 401) {
       return AppException(
         AppError(
-          AppErrorCode.error_unauthorized,
+          AppErrorCode.errorUnauthorized,
           backendMessage: joinedMessage,
         ),
         statusCode: statusCode,
@@ -95,7 +95,7 @@ class AppException implements Exception {
     if (statusCode == 403) {
       return AppException(
         AppError(
-          AppErrorCode.error_no_permissions,
+          AppErrorCode.errorNoPermissions,
           backendMessage: joinedMessage,
         ),
         statusCode: statusCode,
@@ -104,7 +104,7 @@ class AppException implements Exception {
     if (statusCode == 404) {
       return AppException(
         AppError(
-          AppErrorCode.error_not_found,
+          AppErrorCode.errorNotFound,
           backendMessage: joinedMessage,
         ),
         statusCode: statusCode,
@@ -112,14 +112,14 @@ class AppException implements Exception {
     }
     if (statusCode != null && statusCode >= 500) {
       return AppException(
-        const AppError(AppErrorCode.error_server_error),
+        const AppError(AppErrorCode.errorServerError),
         statusCode: statusCode,
       );
     }
 
     return AppException(
       AppError(
-        AppErrorCode.error_generic,
+        AppErrorCode.errorGeneric,
         backendMessage: joinedMessage,
       ),
       statusCode: statusCode,
@@ -135,7 +135,7 @@ class AppException implements Exception {
     }
     return AppException(
       AppError(
-        AppErrorCode.error_generic,
+        AppErrorCode.errorGeneric,
         backendMessage: error.toString().replaceFirst('Exception: ', '').trim(),
       ),
     );

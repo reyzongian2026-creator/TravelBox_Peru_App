@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 
 class CourierDashboardPage extends StatelessWidget {
-  CourierDashboardPage({super.key});
+  const CourierDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {

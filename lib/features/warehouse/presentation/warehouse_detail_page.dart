@@ -9,6 +9,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/peru_flat_scene.dart';
 import '../../map_discovery/data/discovery_repository_impl.dart';
@@ -22,7 +23,7 @@ final warehouseDetailProvider = FutureProvider.family((
 });
 
 class WarehouseDetailPage extends ConsumerWidget {
-  WarehouseDetailPage({super.key, required this.warehouseId});
+  const WarehouseDetailPage({super.key, required this.warehouseId});
 
   final String warehouseId;
 
@@ -189,8 +190,11 @@ class WarehouseDetailPage extends ConsumerWidget {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message:
-              '${context.l10n.t('warehouse_detail_load_failed_prefix')}: $error',
+          message: AppErrorFormatter.readable(
+            error,
+            (String key, {Map<String, dynamic>? params}) =>
+                context.l10n.t(key),
+          ),
           onRetry: () => ref.invalidate(warehouseDetailProvider(warehouseId)),
         ),
       ),

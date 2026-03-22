@@ -11,7 +11,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart' as latlong_pkg;
 
-import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
@@ -20,11 +19,11 @@ import '../../../shared/data/peru_tourism_catalog.dart';
 import '../../../shared/models/warehouse.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/state/warehouse_catalog_sync.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/peru_flat_scene.dart';
 import '../../../shared/state/currency_preference.dart';
 import '../../../shared/widgets/travelbox_logo.dart';
-import '../../../shared/widgets/currency_widgets.dart';
 import '../data/discovery_repository_impl.dart';
 
 enum DiscoveryViewMode { list, map }
@@ -418,7 +417,11 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: '${l10n.t('discovery_load_failed')}: $error',
+          message: AppErrorFormatter.readable(
+            error,
+            (String key, {Map<String, dynamic>? params}) =>
+                l10n.t(key),
+          ),
           onRetry: () => ref.invalidate(discoveryWarehousesProvider),
         ),
       ),

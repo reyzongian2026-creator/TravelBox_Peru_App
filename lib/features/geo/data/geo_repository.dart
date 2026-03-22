@@ -186,7 +186,7 @@ class GeoRepositoryImpl implements GeoRepository {
           'lat': latitude,
           'lng': longitude,
           'radius': radiusKm,
-          if (baggageSize != null) 'baggageSize': baggageSize,
+          'baggageSize': ?baggageSize,
         },
       );
 
@@ -223,7 +223,7 @@ class GeoRepositoryImpl implements GeoRepository {
           'lng': longitude,
           'query': query,
           'radius': radiusKm,
-          if (baggageSize != null) 'baggageSize': baggageSize,
+          'baggageSize': ?baggageSize,
         },
       );
 
@@ -325,7 +325,7 @@ class GeoRepositoryImpl implements GeoRepository {
       final response = await _dio.get<List<dynamic>>(
         '/geo/zones',
         queryParameters: {
-          if (cityId != null) 'cityId': cityId,
+          'cityId': ?cityId,
         },
       );
       final data = response.data;

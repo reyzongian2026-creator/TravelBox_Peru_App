@@ -18,7 +18,7 @@ import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 class CourierServicesPage extends ConsumerStatefulWidget {
-  CourierServicesPage({super.key});
+  const CourierServicesPage({super.key});
 
   @override
   ConsumerState<CourierServicesPage> createState() =>

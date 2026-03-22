@@ -240,7 +240,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_checkin_failed, backendMessage: 'Failed to checkin');
+        throw AppException.withCode(AppErrorCode.errCheckinFailed, backendMessage: 'Failed to checkin');
       }
       return CheckinResult.fromJson(data);
     } on DioException catch (e) {
@@ -259,7 +259,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_checkout_failed, backendMessage: 'Failed to checkout');
+        throw AppException.withCode(AppErrorCode.errCheckoutFailed, backendMessage: 'Failed to checkout');
       }
       return CheckoutResult.fromJson(data);
     } on DioException catch (e) {
@@ -283,7 +283,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null || data['url'] == null) {
-        throw AppException.withCode(AppErrorCode.err_upload_failed, backendMessage: 'Failed to upload evidence');
+        throw AppException.withCode(AppErrorCode.errUploadFailed, backendMessage: 'Failed to upload evidence');
       }
       return data['url'].toString();
     } on DioException catch (e) {
@@ -319,7 +319,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_upload_failed, backendMessage: 'Failed to create evidence');
+        throw AppException.withCode(AppErrorCode.errUploadFailed, backendMessage: 'Failed to create evidence');
       }
       return Evidence.fromJson(data);
     } on DioException catch (e) {

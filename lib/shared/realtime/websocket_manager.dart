@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:travelbox_peru_app/core/env/app_env.dart';
@@ -96,8 +97,8 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
     for (final listener in listeners) {
       try {
         listener(event);
-      } catch (e, st) {
-        print('WebSocket listener error: $e');
+      } catch (e) {
+        debugPrint('WebSocket listener error: $e');
       }
     }
   }
@@ -157,14 +158,14 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
       
       final event = WebSocketEvent.fromJson(data);
       _notifyListeners(event);
-    } catch (e, st) {
+    } catch (e) {
       // Log error but don't crash
-      print('WebSocket message parse error: $e');
+      debugPrint('WebSocket message parse error: $e');
     }
   }
 
   void _onError(Object error, [StackTrace? st]) {
-    print('WebSocket error: $error');
+    debugPrint('WebSocket error: $error');
     state = AsyncValue.error(error, st ?? StackTrace.current);
     if (!_manuallyDisconnected) {
       _scheduleReconnect();
@@ -208,7 +209,7 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
     try {
       _channel?.sink.add(jsonEncode({'type': 'ping', 'timestamp': DateTime.now().toIso8601String()}));
     } catch (e) {
-      print('WebSocket ping error: $e');
+      debugPrint('WebSocket ping error: $e');
     }
   }
 
@@ -217,7 +218,7 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
       try {
         _channel?.sink.add(jsonEncode(message));
       } catch (e) {
-        print('WebSocket send error: $e');
+        debugPrint('WebSocket send error: $e');
       }
     }
   }

@@ -61,7 +61,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   SelectedEvidenceImage? _selectedPhoto;
 
   AppUser? get _user => ref.read(sessionControllerProvider).user;
-  bool get _storageUploadsEnabled => AppEnv.firebaseStorageUploadsEnabled;
+  bool get _storageUploadsEnabled => AppEnv.azureStorageUploadsEnabled;
 
   bool get _requiresLocalPasswordReauth =>
       _user?.authProvider.toUpperCase() == 'LOCAL';

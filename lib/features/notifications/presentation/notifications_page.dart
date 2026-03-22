@@ -10,7 +10,7 @@ import '../../../shared/utils/status_localizer.dart';
 import '../domain/app_notification.dart';
 
 class NotificationsPage extends ConsumerStatefulWidget {
-  NotificationsPage({super.key});
+  const NotificationsPage({super.key});
 
   @override
   ConsumerState<NotificationsPage> createState() => _NotificationsPageState();
@@ -153,7 +153,7 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
 }
 
 class _UnreadSummary extends StatelessWidget {
-  _UnreadSummary({required this.unreadCount});
+  const _UnreadSummary({required this.unreadCount});
 
   final int unreadCount;
 

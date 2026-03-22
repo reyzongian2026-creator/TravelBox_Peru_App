@@ -139,7 +139,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
         queryParameters: {
           'page': page,
           'size': size,
-          if (reservationId != null) 'reservationId': reservationId,
+          'reservationId': ?reservationId,
         },
       );
 
@@ -216,7 +216,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       await _dio.post<void>(
         '/payments/cash/$paymentIntentId/approve',
         data: {
-          if (notes != null) 'notes': notes,
+          'notes': ?notes,
         },
       );
     } on DioException catch (e) {

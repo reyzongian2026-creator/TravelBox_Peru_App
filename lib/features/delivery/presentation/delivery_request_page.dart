@@ -64,7 +64,7 @@ extension DeliveryLocationModeX on DeliveryLocationMode {
 }
 
 class DeliveryRequestPage extends ConsumerStatefulWidget {
-  DeliveryRequestPage({
+  const DeliveryRequestPage({
     super.key,
     required this.reservationId,
     this.initialType = DeliveryRequestType.delivery,
@@ -459,11 +459,12 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
   }
 
   Future<void> _captureCurrentLocation(Reservation reservation) async {
+    final l10n = context.l10n;
     setState(() => _resolvingCurrentLocation = true);
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showMessage(context.l10n.t('delivery_enable_gps'));
+        _showMessage(l10n.t('delivery_enable_gps'));
         return;
       }
 
@@ -472,12 +473,12 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied) {
-        _showMessage(context.l10n.t('delivery_location_permission_denied'));
+        _showMessage(l10n.t('delivery_location_permission_denied'));
         return;
       }
       if (permission == LocationPermission.deniedForever) {
         _showMessage(
-          context.l10n.t('delivery_location_permission_denied_forever'),
+          l10n.t('delivery_location_permission_denied_forever'),
         );
         return;
       }
@@ -486,8 +487,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       if (position == null) {
         throw StateError(
           kIsWeb
-              ? context.l10n.t('delivery_browser_location_invalid')
-              : context.l10n.t('delivery_device_location_invalid'),
+              ? l10n.t('delivery_browser_location_invalid')
+              : l10n.t('delivery_device_location_invalid'),
         );
       }
       final point = LatLng(position.latitude, position.longitude);
@@ -498,14 +499,14 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
       });
       _prefillAddressFromPoint(point, reservation, currentLocation: true);
       _showMessage(
-        '${context.l10n.t('delivery_location_captured')} '
+        '${l10n.t('delivery_location_captured')} '
         '(~${position.accuracy.toStringAsFixed(0)} m).',
       );
     } catch (error) {
       _showMessage(
-        '${context.l10n.t('delivery_location_failed')}: '
-        '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}. '
-        '${context.l10n.t('elegir_punto_en_mapa')}.',
+        '${l10n.t('delivery_location_failed')}: '
+        '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => l10n.t(key))}. '
+        '${l10n.t('elegir_punto_en_mapa')}.',
       );
     } finally {
       if (mounted) {

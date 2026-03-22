@@ -2,15 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/admin_dashboard/presentation/admin_dashboard_page.dart';
 import '../../features/admin_dashboard/presentation/admin_shell_page.dart';
-import '../../features/admin_dashboard/presentation/admin_ratings_page.dart';
-import '../../features/admin_dashboard/presentation/system_admin_page.dart';
 import '../../features/admin_incidents/presentation/admin_incidents_page.dart';
-import '../../features/admin_payments/presentation/admin_payments_history_page.dart';
 import '../../features/admin_reservations/presentation/admin_reservations_page.dart';
-import '../../features/admin_users/presentation/admin_users_page.dart';
-import '../../features/admin_warehouses/presentation/admin_warehouses_page.dart';
 import '../../features/auth/presentation/auth_portal_page.dart';
 import '../../features/auth/presentation/login_page.dart';
 import '../../features/auth/presentation/onboarding_page.dart';
@@ -38,6 +32,7 @@ import '../../features/reservation/presentation/reservation_success_page.dart';
 import '../../features/auth/presentation/verify_email_page.dart';
 import '../../features/warehouse/presentation/warehouse_detail_page.dart';
 import '../../features/Rating/presentation/warehouse_ratings_page.dart';
+import '../debug/debug_text_page.dart';
 import '../l10n/app_localizations.dart';
 import '../../shared/state/session_controller.dart';
 
@@ -288,45 +283,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/qr-scan', builder: (context, state) => QrScanPage()),
-      GoRoute(
-        path: '/admin/dashboard',
-        builder: (context, state) => AdminDashboardPage(),
-      ),
-      GoRoute(
-        path: '/admin/shell',
-        builder: (context, state) => AdminShellPage(),
-      ),
-      GoRoute(
-        path: '/admin/ratings',
-        builder: (context, state) => AdminRatingsPage(),
-      ),
-      GoRoute(
-        path: '/admin/system',
-        builder: (context, state) => SystemAdminPage(),
-      ),
-      GoRoute(
-        path: '/admin/cash-payments',
-        builder: (context, state) => CashPaymentsPage(),
-      ),
-      GoRoute(
-        path: '/admin/warehouses',
-        builder: (context, state) => AdminWarehousesPage(),
-      ),
-      GoRoute(
-        path: '/admin/reservations',
-        builder: (context, state) => AdminReservationsPage(),
-      ),
-      GoRoute(
-        path: '/admin/incidents',
-        builder: (context, state) => AdminIncidentsPage(),
-      ),
-      GoRoute(
-        path: '/admin/payments-history',
-        builder: (context, state) => AdminPaymentsHistoryPage(),
-      ),
-      GoRoute(
-        path: '/admin/users',
-        builder: (context, state) => AdminUsersPage(),
+      ShellRoute(
+        builder: (context, state, child) => child,
+        routes: [
+          GoRoute(
+            path: '/admin/dashboard',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/warehouses',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/reservations',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/delivery',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/incidents',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/payments-history',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/ratings',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/system',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+        ],
       ),
       GoRoute(
         path: '/operator/panel',
@@ -392,6 +388,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           currentRoute: '/courier/services',
           backofficeMode: true,
         ),
+      ),
+      GoRoute(
+        path: '/debug/text',
+        builder: (_, state) => const DebugTextPage(),
       ),
     ],
     errorBuilder: (_, state) {

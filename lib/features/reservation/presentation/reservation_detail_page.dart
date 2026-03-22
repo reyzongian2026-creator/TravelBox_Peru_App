@@ -43,7 +43,7 @@ final reservationPaymentStatusProvider =
     });
 
 class ReservationDetailPage extends ConsumerWidget {
-  ReservationDetailPage({
+  const ReservationDetailPage({
     super.key,
     required this.reservationId,
     this.fallbackRoute = '/reservations',

@@ -123,9 +123,14 @@ class SessionState {
   }
 
   factory SessionState.fromJson(Map<String, dynamic> json) {
+    // Force Spanish as default when restoring from storage to prevent cross-language issues
+    // Always default to Spanish for both to ensure consistency
+    final finalLocale = const Locale('es');
+    final finalSessionLang = 'es';
+    
     return SessionState(
-      locale: _normalizeLocale(json['locale']?.toString()),
-      sessionLanguage: _normalizeSessionLanguage(json['sessionLanguage']?.toString()),
+      locale: finalLocale,
+      sessionLanguage: finalSessionLang,
       user: json['user'] == null
           ? null
           : AppUser.fromJson(json['user'] as Map<String, dynamic>),
@@ -255,14 +260,23 @@ class SessionController extends StateNotifier<SessionState> {
         state.user != null &&
         state.user!.id == user.id &&
         state.locale.languageCode.trim().isNotEmpty;
+    
+    // Always default to Spanish, only use user preferredLanguage if explicitly set
+    final userPreferredLang = user.preferredLanguage.trim().toLowerCase();
+    final isValidUserLang = userPreferredLang.isNotEmpty && 
+                            userPreferredLang != 'es' &&
+                            _supportedLanguageCodes.contains(userPreferredLang);
+    
     final nextLocale = keepCurrentLocale
         ? state.locale
-        : _normalizeLocale(user.preferredLanguage);
+        : (isValidUserLang ? _normalizeLocale(userPreferredLang) : const Locale('es'));
+    
     var nextState = state.copyWith(
       user: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
       locale: nextLocale,
+      sessionLanguage: isValidUserLang ? userPreferredLang : 'es',  // Sync sessionLanguage
       pendingVerificationCode: pendingVerificationCode,
       onboardingCompleted: _isOnboardingCompleted(user),
     );

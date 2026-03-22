@@ -13,7 +13,7 @@ import '../data/reservation_repository_impl.dart';
 import 'reservation_providers.dart';
 
 class CheckoutPage extends ConsumerStatefulWidget {
-  CheckoutPage({super.key, required this.warehouseId});
+  const CheckoutPage({super.key, required this.warehouseId});
 
   final String warehouseId;
 

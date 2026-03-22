@@ -91,7 +91,7 @@ bool _isOfflinePendingFromHistory(Map<String, dynamic> item) {
 }
 
 class CashPaymentsPage extends ConsumerStatefulWidget {
-  CashPaymentsPage({
+  const CashPaymentsPage({
     super.key,
     this.title = 'pagos_en_caja',
     this.currentRoute = '/admin/cash-payments',

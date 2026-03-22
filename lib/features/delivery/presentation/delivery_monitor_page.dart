@@ -68,7 +68,7 @@ final deliveryMonitorTrackingProvider = FutureProvider.autoDispose
     });
 
 class DeliveryMonitorPage extends ConsumerStatefulWidget {
-  DeliveryMonitorPage({
+  const DeliveryMonitorPage({
     super.key,
     required this.title,
     required this.currentRoute,
@@ -543,7 +543,7 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
 }
 
 class _EmbeddedTrackingSection extends ConsumerWidget {
-  _EmbeddedTrackingSection({required this.reservationId});
+  const _EmbeddedTrackingSection({required this.reservationId});
 
   final String reservationId;
 
@@ -692,7 +692,7 @@ class _EmbeddedTrackingMap extends ConsumerWidget {
     return _buildGoogleMapCard(responsive, current, destination, routePoints, route);
   }
 
-  Widget _buildFlutterMapCard(var responsive, latlong_pkg.LatLng current, latlong_pkg.LatLng destination, List<latlong_pkg.LatLng> routePoints, var route) {
+  Widget _buildFlutterMapCard(dynamic responsive, latlong_pkg.LatLng current, latlong_pkg.LatLng destination, List<latlong_pkg.LatLng> routePoints, dynamic route) {
     final markers = <flutter_map.Marker>[
       flutter_map.Marker(
         point: current,
@@ -740,7 +740,7 @@ class _EmbeddedTrackingMap extends ConsumerWidget {
     );
   }
 
-  Widget _buildGoogleMapCard(var responsive, latlong_pkg.LatLng current, latlong_pkg.LatLng destination, List<latlong_pkg.LatLng> routePoints, var route) {
+  Widget _buildGoogleMapCard(dynamic responsive, latlong_pkg.LatLng current, latlong_pkg.LatLng destination, List<latlong_pkg.LatLng> routePoints, dynamic route) {
     LatLng toGoogleLatLng(latlong_pkg.LatLng latLng) {
       return LatLng(latLng.latitude, latLng.longitude);
     }

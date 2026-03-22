@@ -60,7 +60,7 @@ final opsReservationsProvider = FutureProvider<List<Reservation>>((ref) async {
 });
 
 class OpsQrHandoffPage extends ConsumerStatefulWidget {
-  OpsQrHandoffPage({
+  const OpsQrHandoffPage({
     super.key,
     this.currentRoute = '/ops/qr-handoff',
     this.initialScannedValue,
@@ -838,6 +838,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         customerLanguage: _customerLanguage,
         scannedValue: scanned,
       );
+      if (!mounted) return;
       setState(() {
         _selectedReservationId = caseItem.reservationId;
         _bagUnits = reservation.bagCount.clamp(1, 10);
@@ -898,6 +899,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       await ref
           .read(qrHandoffControllerProvider.notifier)
           .markStoredAtWarehouse(reservation.id);
+      if (!mounted) return;
       ref.invalidate(opsReservationsProvider);
       ref.invalidate(reservationByIdProvider(reservation.id));
       ref.invalidate(myReservationsProvider);
@@ -932,6 +934,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       final caseItem = await ref
           .read(qrHandoffControllerProvider.notifier)
           .markReadyForPickup(reservation.id);
+      if (!mounted) return;
       ref.invalidate(opsReservationsProvider);
       _showMessage(
         '${context.l10n.t('ops_qr_pin_generated_prefix')} '
@@ -963,6 +966,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       final validated = await ref
           .read(qrHandoffControllerProvider.notifier)
           .validatePickupPin(reservationId: reservationId, typedPin: pin);
+      if (!mounted) return;
       if (!validated) {
         _showMessage(context.l10n.t('ops_qr_pin_incorrect'));
         return;
@@ -978,6 +982,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     QrHandoffCase caseItem,
   ) async {
     await _runAction(() async {
+      if (!mounted) return;
       final messageEs = _deliveryCustomerMessageController.text.trim();
       final translation = translateBidirectionalMessage(
         originalMessage: messageEs,
@@ -995,6 +1000,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
             messageForCustomerInSpanish: translation.messageInSpanish,
             customerLanguage: caseItem.customerLanguage,
           );
+      if (!mounted) return;
       ref.invalidate(opsReservationsProvider);
       _showMessage(context.l10n.t('ops_qr_request_sent_translated_notice'));
     });
@@ -1005,6 +1011,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       final caseItem = await ref
           .read(qrHandoffControllerProvider.notifier)
           .approveOperatorHandoff(notificationId: item.id);
+      if (!mounted) return;
       _showMessage(
         '${context.l10n.t('ops_qr_approval_granted_prefix')} '
         '${item.reservationCode}. PIN ${caseItem.pickupPin}.',
@@ -1047,6 +1054,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       final ok = await ref
           .read(qrHandoffControllerProvider.notifier)
           .completeDeliveryWithPin(reservationId: reservationId, typedPin: pin);
+      if (!mounted) return;
       if (!ok) {
         _showMessage(
           context.l10n.t('ops_qr_complete_delivery_validation_failed'),
@@ -1070,6 +1078,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       await ref
           .read(qrHandoffControllerProvider.notifier)
           .tagLuggage(reservation: reservation, bagUnits: _bagUnits);
+      if (!mounted) return;
       _showMessage(
         '${context.l10n.t('ops_qr_bag_id_generated_prefix')} '
         '${reservation.code} ($_bagUnits ${context.l10n.t('bultos').toLowerCase()}).',
@@ -1155,6 +1164,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     try {
       await action();
     } catch (error) {
+      if (!mounted) return;
       final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
       _showMessage(
         '${context.l10n.t('ops_qr_action_failed_prefix')}: $readable',
@@ -1216,7 +1226,7 @@ String _approvalStatusLabel(BuildContext context, OpsApprovalStatus status) {
 }
 
 class _ReservationContextCard extends StatelessWidget {
-  _ReservationContextCard({
+  const _ReservationContextCard({
     required this.reservation,
     required this.stageLabel,
   });

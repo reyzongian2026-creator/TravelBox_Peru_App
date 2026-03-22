@@ -39,7 +39,7 @@ final opsPendingApprovalsProvider = FutureProvider<int>((ref) async {
 });
 
 class OperatorDashboardPage extends ConsumerWidget {
-  OperatorDashboardPage({super.key});
+  const OperatorDashboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

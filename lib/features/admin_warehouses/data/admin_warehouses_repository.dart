@@ -307,7 +307,7 @@ class AdminWarehousesRepositoryImpl implements AdminWarehousesRepository {
           'size': size,
           if (search != null && search.isNotEmpty) 'search': search,
           if (city != null && city.isNotEmpty) 'city': city,
-          if (active != null) 'active': active,
+          'active': ?active,
         },
       );
       final data = response.data;
@@ -361,7 +361,7 @@ class AdminWarehousesRepositoryImpl implements AdminWarehousesRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_create_warehouse, backendMessage: 'Failed to create warehouse');
+        throw AppException.withCode(AppErrorCode.errCreateWarehouse, backendMessage: 'Failed to create warehouse');
       }
       return Warehouse.fromJson(data);
     } on DioException catch (e) {
@@ -380,7 +380,7 @@ class AdminWarehousesRepositoryImpl implements AdminWarehousesRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_update_failed, backendMessage: 'Failed to update warehouse');
+        throw AppException.withCode(AppErrorCode.errUpdateFailed, backendMessage: 'Failed to update warehouse');
       }
       return Warehouse.fromJson(data);
     } on DioException catch (e) {
@@ -402,7 +402,7 @@ class AdminWarehousesRepositoryImpl implements AdminWarehousesRepository {
       );
       final data = response.data;
       if (data == null || data['url'] == null) {
-        throw AppException.withCode(AppErrorCode.err_upload_failed, backendMessage: 'Failed to upload warehouse photo');
+        throw AppException.withCode(AppErrorCode.errUploadFailed, backendMessage: 'Failed to upload warehouse photo');
       }
       return data['url'].toString();
     } on DioException catch (e) {

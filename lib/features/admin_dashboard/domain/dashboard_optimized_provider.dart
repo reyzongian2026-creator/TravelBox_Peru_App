@@ -168,6 +168,7 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynami
     return result;
   }
 
+  @override
   void dispose() {
     _refreshTimer?.cancel();
     super.dispose();

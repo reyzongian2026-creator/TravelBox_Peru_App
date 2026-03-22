@@ -557,7 +557,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -572,7 +572,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     
     try {
       final repo = ref.read(adminUsersRepositoryProvider);
-      final result = await repo.bulkUpdateActive(selected, active);
+      final result = repo.bulkUpdateActive(selected, active);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result.message)),
@@ -615,7 +615,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     
     try {
       final repo = ref.read(adminUsersRepositoryProvider);
-      final result = await repo.bulkDelete(selected);
+      final result = repo.bulkDelete(selected);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(result.message)),
@@ -674,6 +674,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   }
 
   Future<void> _openCreateDialog({Set<String> presetRoles = const {}}) async {
+    final l10n = context.l10n;
     final warehouseOptions = await _loadWarehouseOptions();
     if (!mounted) return;
     final payload = await showDialog<_AdminUserFormData>(
@@ -704,10 +705,11 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               uploadedDocumentPhotoPath: uploadedDocumentPhotoPath,
             ),
           );
-    }, successMessage: context.l10n.t('admin_users_created_ok'));
+    }, successMessage: l10n.t('admin_users_created_ok'));
   }
 
   Future<void> _openEditDialog(AdminUserItem user) async {
+    final l10n = context.l10n;
     final warehouseOptions = await _loadWarehouseOptions();
     if (!mounted) return;
     final payload = await showDialog<_AdminUserFormData>(
@@ -737,10 +739,11 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               uploadedDocumentPhotoPath: uploadedDocumentPhotoPath,
             ),
           );
-    }, successMessage: context.l10n.t('admin_users_updated_ok'));
+    }, successMessage: l10n.t('admin_users_updated_ok'));
   }
 
   Future<void> _openPasswordDialog(AdminUserItem user) async {
+    final l10n = context.l10n;
     final newPassword = await showDialog<String>(
       context: context,
       builder: (context) => _PasswordDialog(user: user),
@@ -755,10 +758,11 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
             '/admin/users/${user.id}/password',
             data: {'password': newPassword},
           );
-    }, successMessage: context.l10n.t('admin_users_credentials_updated'));
+    }, successMessage: l10n.t('admin_users_credentials_updated'));
   }
 
   Future<void> _deleteUser(AdminUserItem user) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -784,10 +788,11 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     }
     await _runAdminAction(() async {
       await ref.read(dioProvider).delete<void>('/admin/users/${user.id}');
-    }, successMessage: context.l10n.t('admin_users_deleted_ok'));
+    }, successMessage: l10n.t('admin_users_deleted_ok'));
   }
 
   Future<String> _uploadDocumentPhoto(SelectedEvidenceImage file) async {
+    final l10n = context.l10n;
     final contentType = MediaType.parse(file.mimeType);
     final response = await ref
         .read(dioProvider)
@@ -804,7 +809,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final data = response.data ?? const <String, dynamic>{};
     final url = data['url']?.toString().trim() ?? '';
     if (url.isEmpty) {
-      throw StateError(context.l10n.t('admin_users_missing_document_url'));
+      throw StateError(l10n.t('admin_users_missing_document_url'));
     }
     return url;
   }
@@ -839,6 +844,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   }
 
   Future<List<_AdminWarehouseOption>> _loadWarehouseOptions() async {
+    final l10n = context.l10n;
     try {
       final response = await ref
           .read(dioProvider)
@@ -856,7 +862,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
         );
     } catch (error) {
       _showSnack(
-        '${context.l10n.t('admin_users_warehouses_load_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
+        '${l10n.t('admin_users_warehouses_load_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => l10n.t(key))}',
         isError: true,
       );
       return const [];
@@ -1006,7 +1012,7 @@ class _SummaryCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors != null ? colors!.first : null,
+                    color: colors?.first,
                   ),
                 ),
               ),
@@ -1014,7 +1020,7 @@ class _SummaryCard extends StatelessWidget {
                 value,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: colors != null ? colors!.first : null,
+                  color: colors?.first,
                 ),
               ),
             ],

@@ -161,7 +161,7 @@ class _SensitiveDataFieldState extends State<SensitiveDataField> {
           decoration: InputDecoration(
             hintText: widget.hintText ?? l10n.t('field_enter_value').replaceAll('{label}', widget.label.toLowerCase()),
             filled: true,
-            fillColor: Colors.orange.shade50.withOpacity(0.3),
+            fillColor: Colors.orange.shade50.withValues(alpha: 0.3),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.orange.shade200),

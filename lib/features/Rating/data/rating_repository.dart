@@ -17,9 +17,9 @@ class RatingRepository {
       '/ratings',
       data: {
         'warehouseId': warehouseId,
-        if (reservationId != null) 'reservationId': reservationId,
+        'reservationId': ?reservationId,
         'stars': stars,
-        if (comment != null) 'comment': comment,
+        'comment': ?comment,
         'type': type,
       },
     );

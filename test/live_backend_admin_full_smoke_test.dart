@@ -87,7 +87,7 @@ void main() {
       );
       expect(export.statusCode, 200);
       expect(export.contentType?.contains('text/csv'), true);
-      expect(export.bodyText?.startsWith('\u{FEFF}'), true, reason: 'CSV should have BOM');
+      expect(export.bodyText.startsWith('\u{FEFF}'), true, reason: 'CSV should have BOM');
     });
 
     test('reservations export endpoint returns CSV', () async {

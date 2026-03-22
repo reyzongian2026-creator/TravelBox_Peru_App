@@ -23,7 +23,7 @@ class SensitiveDataRepositoryImpl implements SensitiveDataRepository {
       final data = response.data;
       if (data == null) {
         throw AppException.withCode(
-          AppErrorCode.error_not_found,
+          AppErrorCode.errorNotFound,
           backendMessage: 'No decrypted data returned',
         );
       }

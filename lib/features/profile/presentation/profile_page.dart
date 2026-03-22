@@ -14,7 +14,7 @@ import '../../../shared/widgets/app_smart_image.dart';
 import '../../auth/data/auth_repository_impl.dart';
 
 class ProfilePage extends ConsumerWidget {
-  ProfilePage({super.key});
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

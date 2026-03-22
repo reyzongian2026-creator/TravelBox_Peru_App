@@ -3,7 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/l10n/app_localizations.dart';
 
 class WarehouseLocationPickerDialog extends StatefulWidget {
-  WarehouseLocationPickerDialog({
+  const WarehouseLocationPickerDialog({
     super.key,
     required this.initialPoint,
     this.anchorPoint,
@@ -24,6 +24,7 @@ class WarehouseLocationPickerDialog extends StatefulWidget {
 class _WarehouseLocationPickerDialogState
     extends State<WarehouseLocationPickerDialog> {
   late LatLng _selectedPoint;
+  // ignore: unused_field
   GoogleMapController? _mapController;
 
   @override

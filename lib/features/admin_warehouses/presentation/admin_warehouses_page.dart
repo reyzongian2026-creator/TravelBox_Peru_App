@@ -76,7 +76,7 @@ final adminZonesProvider = FutureProvider.family<List<ZoneOption>, int>((
 });
 
 class AdminWarehousesPage extends ConsumerStatefulWidget {
-  AdminWarehousesPage({super.key});
+  const AdminWarehousesPage({super.key});
 
   @override
   ConsumerState<AdminWarehousesPage> createState() =>
@@ -193,9 +193,11 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
               },
               loading: () => const LoadingStateView(),
               error: (error, _) => ErrorStateView(
-                message:
-                    '${context.l10n.t('admin_warehouses_load_failed_prefix')}: '
-                    '$error',
+                message: AppErrorFormatter.readable(
+                  error,
+                  (String key, {Map<String, dynamic>? params}) =>
+                      context.l10n.t(key),
+                ),
                 onRetry: () => ref.invalidate(adminWarehousesProvider),
               ),
             ),
@@ -332,7 +334,7 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
           response.data?['warehouseId']?.toString();
       if (createdId != null &&
           createdId.isNotEmpty &&
-          AppEnv.firebaseStorageUploadsEnabled &&
+          AppEnv.azureStorageUploadsEnabled &&
           form.selectedPhoto != null) {
         await _uploadWarehousePhoto(createdId, form.selectedPhoto!);
       }
@@ -364,8 +366,11 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
             '/admin/warehouses/${warehouse.id}',
             data: form.toJson(),
           );
-      if (AppEnv.firebaseStorageUploadsEnabled && form.selectedPhoto != null) {
-        await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
+      if (AppEnv.azureStorageUploadsEnabled && form.selectedPhoto != null) {
+        final newImageUrl = await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
+        if (newImageUrl != null) {
+          warehouse = warehouse.copyWith(imageUrl: newImageUrl);
+        }
       }
       _refreshWarehouseViews();
       if (!mounted) return;
@@ -383,11 +388,11 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
     }
   }
 
-  Future<void> _uploadWarehousePhoto(
+  Future<String?> _uploadWarehousePhoto(
     String warehouseId,
     SelectedEvidenceImage image,
   ) async {
-    await ref
+    final response = await ref
         .read(dioProvider)
         .post<Map<String, dynamic>>(
           '/admin/warehouses/$warehouseId/photo',
@@ -399,6 +404,13 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
             ),
           }),
         );
+    if (response.data != null && response.data!.containsKey('imageUrl')) {
+      return response.data!['imageUrl']?.toString();
+    }
+    if (response.data != null && response.data!.containsKey('coverImageUrl')) {
+      return response.data!['coverImageUrl']?.toString();
+    }
+    return null;
   }
 
   Future<void> _deleteWarehouse(AdminWarehouse warehouse) async {
@@ -500,7 +512,7 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 }
 
 class _WarehouseFormDialog extends ConsumerStatefulWidget {
-  _WarehouseFormDialog({this.initial});
+  const _WarehouseFormDialog({this.initial});
 
   final AdminWarehouse? initial;
 
@@ -606,7 +618,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
   }
 
   Future<void> _pickPhoto() async {
-    if (!AppEnv.firebaseStorageUploadsEnabled) {
+    if (!AppEnv.azureStorageUploadsEnabled) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -698,7 +710,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   runSpacing: 8,
                   children: [
                     FilledButton.tonalIcon(
-                      onPressed: AppEnv.firebaseStorageUploadsEnabled
+                      onPressed: AppEnv.azureStorageUploadsEnabled
                           ? _pickPhoto
                           : null,
                       icon: const Icon(Icons.photo_camera_back_outlined),
@@ -719,7 +731,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 ),
                 SizedBox(height: 6),
                 Text(
-                  AppEnv.firebaseStorageUploadsEnabled
+                  AppEnv.azureStorageUploadsEnabled
                       ? context.l10n.t(
                           'admin_warehouses_photo_hint_storage_enabled',
                         )
@@ -1346,16 +1358,38 @@ class _WarehousePhotoPreview extends StatelessWidget {
 
     Widget child;
     if (selectedBytes != null) {
-      child = ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.memory(
-          selectedBytes!,
-          height: previewHeight,
-          width: double.infinity,
-          fit: BoxFit.cover,
-        ),
+      child = Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.memory(
+            selectedBytes!,
+            fit: BoxFit.cover,
+          ),
+          Positioned(
+            bottom: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        context.l10n.t('cambiar_foto'),
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ],
+                  ),
+            ),
+          ),
+        ],
       );
-    } else {
+    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       child = AppSmartImage(
         source: imageUrl,
         height: previewHeight,
@@ -1363,12 +1397,17 @@ class _WarehousePhotoPreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         fallback: fallback,
       );
+    } else {
+      child = fallback;
     }
 
-    return SizedBox(
-      height: previewHeight,
-      width: double.infinity,
-      child: child,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: previewHeight,
+        width: double.infinity,
+        child: child,
+      ),
     );
   }
 }
@@ -1751,12 +1790,12 @@ class AdminWarehouse {
     );
   }
 
-  AdminWarehouse copyWith({bool? active}) {
+  AdminWarehouse copyWith({bool? active, String? imageUrl}) {
     return AdminWarehouse(
       id: id,
       name: name,
       address: address,
-      imageUrl: imageUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
       cityId: cityId,
       cityName: cityName,
       zoneId: zoneId,

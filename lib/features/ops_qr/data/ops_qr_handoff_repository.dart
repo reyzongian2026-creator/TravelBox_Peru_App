@@ -280,7 +280,7 @@ class OpsQrHandoffRepositoryImpl implements OpsQrHandoffRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_no_response, backendMessage: 'Scan failed');
+        throw AppException.withCode(AppErrorCode.errNoResponse, backendMessage: 'Scan failed');
       }
       return ScanResult.fromJson(data);
     } on DioException catch (e) {
@@ -298,7 +298,7 @@ class OpsQrHandoffRepositoryImpl implements OpsQrHandoffRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.error_not_found, backendMessage: 'Reservation case not found');
+        throw AppException.withCode(AppErrorCode.errorNotFound, backendMessage: 'Reservation case not found');
       }
       return ReservationCase.fromJson(data);
     } on DioException catch (e) {
@@ -317,7 +317,7 @@ class OpsQrHandoffRepositoryImpl implements OpsQrHandoffRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.err_update_failed, backendMessage: 'Tagging failed');
+        throw AppException.withCode(AppErrorCode.errUpdateFailed, backendMessage: 'Tagging failed');
       }
       return TagResult.fromJson(data);
     } on DioException catch (e) {

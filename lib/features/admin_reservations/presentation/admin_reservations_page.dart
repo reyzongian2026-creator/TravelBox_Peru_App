@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
@@ -10,11 +11,12 @@ import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/status_localizer.dart';
+import '../../../shared/utils/file_exporter_web.dart';
 import '../../reservation/data/reservation_repository_impl.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
 class AdminReservationsPage extends ConsumerStatefulWidget {
-  AdminReservationsPage({
+  const AdminReservationsPage({
     super.key,
     this.title = 'admin_reservations_title',
     this.currentRoute = '/admin/reservations',
@@ -513,18 +515,70 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
     setState(() {});
   }
 
-  void _exportReservations(BuildContext context) {
+  Future<void> _exportReservations(BuildContext context) async {
+    final l10n = context.l10n;
     final search = ref.read(adminReservationSearchProvider);
     final status = ref.read(adminReservationStatusFilterProvider);
-    var url = '/admin/reservations/export';
-    var params = <String>[];
-    if (search.isNotEmpty) params.add('query=$search');
-    if (status != null) params.add('status=$status');
-    if (params.isNotEmpty) url += '?${params.join('&')}';
     
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${context.l10n.t('descargando')}... $url')),
+      SnackBar(content: Text('${l10n.t('descargando')}...')),
     );
+    
+    try {
+      final dio = Dio();
+      var url = '/api/v1/admin/reservations/export';
+      var params = <String>[];
+      if (search.isNotEmpty) params.add('query=$search');
+      if (status != null) params.add('status=$status');
+      if (params.isNotEmpty) url += '?${params.join('&')}';
+      
+      final response = await dio.get<List<int>>(
+        url,
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            'Accept': 'text/csv',
+          },
+        ),
+      );
+      
+      if (response.data != null) {
+        final bytes = response.data!;
+        final csvContent = String.fromCharCodes(bytes);
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final filename = 'reservas_export_$timestamp.csv';
+        
+        final success = await downloadTextFile(
+          filename: filename,
+          content: csvContent,
+          mimeType: 'text/csv;charset=utf-8',
+        );
+        
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success 
+                ? 'Descarga completada' 
+                : 'Error al descargar'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      final message = AppErrorFormatter.readable(
+        error,
+        (String key, {Map<String, dynamic>? params}) =>
+            l10n.t(key),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al descargar: $message'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _goToPreviousPage() {

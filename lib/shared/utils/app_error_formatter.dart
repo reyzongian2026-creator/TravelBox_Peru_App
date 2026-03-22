@@ -15,7 +15,7 @@ class AppErrorFormatter {
       return _errorFromDioError(error);
     }
     return AppError(
-      AppErrorCode.error_generic,
+      AppErrorCode.errorGeneric,
       backendMessage: error.toString().replaceFirst('Exception: ', '').trim(),
     );
   }
@@ -42,7 +42,7 @@ class AppErrorFormatter {
     if (error.type == DioExceptionType.connectionError ||
         error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
-      return const AppError(AppErrorCode.error_connection);
+      return const AppError(AppErrorCode.errorConnection);
     }
 
     final statusCode = error.response?.statusCode;
@@ -55,41 +55,41 @@ class AppErrorFormatter {
     if (statusCode == 429) {
       final retryAfter = _extractRetryAfterSeconds(error.response?.headers);
       return AppError(
-        AppErrorCode.error_rate_limit,
+        AppErrorCode.errorRateLimit,
         params: retryAfter != null && retryAfter > 0 ? {'seconds': retryAfter} : {},
       );
     }
 
     if (statusCode == 400) {
       return AppError(
-        AppErrorCode.error_invalid_request,
+        AppErrorCode.errorInvalidRequest,
         backendMessage: joinedMessage,
       );
     }
     if (statusCode == 401) {
       return AppError(
-        AppErrorCode.error_unauthorized,
+        AppErrorCode.errorUnauthorized,
         backendMessage: joinedMessage,
       );
     }
     if (statusCode == 403) {
       return AppError(
-        AppErrorCode.error_no_permissions,
+        AppErrorCode.errorNoPermissions,
         backendMessage: joinedMessage,
       );
     }
     if (statusCode == 404) {
       return AppError(
-        AppErrorCode.error_not_found,
+        AppErrorCode.errorNotFound,
         backendMessage: joinedMessage,
       );
     }
     if (statusCode != null && statusCode >= 500) {
-      return const AppError(AppErrorCode.error_server_error);
+      return const AppError(AppErrorCode.errorServerError);
     }
 
     return AppError(
-      AppErrorCode.error_generic,
+      AppErrorCode.errorGeneric,
       backendMessage: joinedMessage,
     );
   }
