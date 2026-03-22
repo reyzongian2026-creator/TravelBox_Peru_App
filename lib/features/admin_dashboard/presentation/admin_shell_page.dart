@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_ratings_page.dart';
 import 'system_admin_page.dart';
+import '../../admin_users/presentation/admin_users_page.dart';
+import '../../admin_reservations/presentation/admin_reservations_page.dart';
+import '../../admin_payments/presentation/admin_payments_history_page.dart';
 
 final adminTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -19,12 +23,12 @@ class AdminShellPage extends ConsumerWidget {
     final responsive = context.responsive;
 
     final tabs = [
-      _TabItem(icon: Icons.dashboard, label: l10n.t('dashboard')),
-      _TabItem(icon: Icons.people, label: l10n.t('users')),
-      _TabItem(icon: Icons.inventory, label: l10n.t('reservas')),
-      _TabItem(icon: Icons.payments, label: l10n.t('payments')),
-      _TabItem(icon: Icons.analytics, label: l10n.t('reports')),
-      _TabItem(icon: Icons.settings, label: l10n.t('settings')),
+      _TabItem(icon: Icons.dashboard, label: l10n.t('dashboard'), route: '/admin/dashboard'),
+      _TabItem(icon: Icons.people, label: l10n.t('users'), route: '/admin/users'),
+      _TabItem(icon: Icons.inventory, label: l10n.t('reservas'), route: '/admin/reservations'),
+      _TabItem(icon: Icons.payments, label: l10n.t('payments'), route: '/admin/payments-history'),
+      _TabItem(icon: Icons.analytics, label: l10n.t('reports'), route: '/admin/ratings'),
+      _TabItem(icon: Icons.settings, label: l10n.t('settings'), route: '/admin/system'),
     ];
 
     return DefaultTabController(
@@ -37,16 +41,17 @@ class AdminShellPage extends ConsumerWidget {
             tabs: tabs.map((t) => Tab(icon: Icon(t.icon), text: t.label)).toList(),
             onTap: (index) {
               ref.read(adminTabIndexProvider.notifier).state = index;
+              context.go(tabs[index].route);
             },
           ),
         ),
         body: TabBarView(
           children: [
             AdminDashboardPage(),
-            _PlaceholderTab(title: l10n.t('users'), icon: Icons.people),
-            _PlaceholderTab(title: l10n.t('reservas'), icon: Icons.inventory),
-            _PlaceholderTab(title: l10n.t('payments'), icon: Icons.payments),
-            _ReportsTabContent(),
+            AdminUsersPage(),
+            AdminReservationsPage(),
+            AdminPaymentsHistoryPage(),
+            AdminRatingsPage(),
             SystemAdminPage(),
           ],
         ),
@@ -58,84 +63,7 @@ class AdminShellPage extends ConsumerWidget {
 class _TabItem {
   final IconData icon;
   final String label;
+  final String route;
 
-  _TabItem({required this.icon, required this.label});
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _PlaceholderTab({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tab: $title',
-            style: TextStyle(color: Colors.grey[500]),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReportsTabContent extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.bar_chart),
-            title: Text(l10n.t('dashboard_revenue')),
-            subtitle: Text(l10n.t('revenue_by_period')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-        ),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.star),
-            title: Text(l10n.t('ratings_management')),
-            subtitle: Text(l10n.t('manage_all_ratings')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-        ),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.health_and_safety),
-            title: Text(l10n.t('system_health')),
-            subtitle: Text(l10n.t('view_system_status')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-        ),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.history),
-            title: Text(l10n.t('audit_log')),
-            subtitle: Text(l10n.t('view_audit_trail')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-        ),
-      ],
-    );
-  }
+  _TabItem({required this.icon, required this.label, required this.route});
 }
