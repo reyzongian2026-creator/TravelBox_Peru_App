@@ -407,7 +407,8 @@ jobs:
             @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
             @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
             @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false },
-            @{ secret = "tbx-auth-facebook-app-id"; env = "FIREBASE_FACEBOOK_APP_ID"; required = $false }
+            @{ secret = "tbx-auth-facebook-app-id"; env = "FIREBASE_FACEBOOK_APP_ID"; required = $false },
+            @{ secret = "tbx-app-google-maps-api-key"; env = "GOOGLE_MAPS_API_KEY"; required = $false }
           )
 
           foreach ($item in $map) {
@@ -443,6 +444,7 @@ jobs:
           FIREBASE_WEB_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
           FIREBASE_FACEBOOK_ENABLED: ${{ secrets.FIREBASE_FACEBOOK_ENABLED }}
           FIREBASE_FACEBOOK_APP_ID: ${{ secrets.FIREBASE_FACEBOOK_APP_ID }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           set -euo pipefail
           is_placeholder_secret() {
@@ -615,7 +617,8 @@ jobs:
             --dart-define=FIREBASE_IOS_APP_ID="${FIREBASE_IOS_APP_ID}" \
             --dart-define=FIREBASE_WEB_APP_ID="${FIREBASE_WEB_APP_ID}" \
             --dart-define=FIREBASE_FACEBOOK_ENABLED="${FIREBASE_FACEBOOK_ENABLED:-true}" \
-            --dart-define=FIREBASE_FACEBOOK_APP_ID="${FIREBASE_FACEBOOK_APP_ID}"
+            --dart-define=FIREBASE_FACEBOOK_APP_ID="${FIREBASE_FACEBOOK_APP_ID}" \
+            --dart-define=GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY}"
 
       - name: Deploy frontend to Cloud Run
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'frontend_only' }}

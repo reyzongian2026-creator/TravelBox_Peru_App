@@ -15,7 +15,7 @@ class RatingRepository {
     String type = 'WAREHOUSE',
   }) async {
     final response = await dio.post(
-      '/api/v1/ratings',
+      '/ratings',
       data: {
         'warehouseId': warehouseId,
         if (reservationId != null) 'reservationId': reservationId,
@@ -29,7 +29,7 @@ class RatingRepository {
 
   Future<List<RatingModel>> getRatingsByWarehouse(int warehouseId) async {
     final response = await dio.get(
-      '/api/v1/ratings/warehouse/$warehouseId',
+      '/ratings/warehouse/$warehouseId',
     );
     final List<dynamic> data = response.data;
     return data.map((e) => RatingModel.fromJson(e)).toList();
@@ -37,7 +37,7 @@ class RatingRepository {
 
   Future<WarehouseRatingSummary> getWarehouseSummary(int warehouseId) async {
     final response = await dio.get(
-      '/api/v1/ratings/warehouse/$warehouseId/summary',
+      '/ratings/warehouse/$warehouseId/summary',
     );
     return WarehouseRatingSummary.fromJson(response.data);
   }
@@ -45,7 +45,7 @@ class RatingRepository {
   Future<RatingModel?> getMyRating(int warehouseId) async {
     try {
       final response = await dio.get(
-        '/api/v1/ratings/warehouse/$warehouseId/me',
+        '/ratings/warehouse/$warehouseId/me',
       );
       if (response.data == null) {
         return null;
@@ -62,7 +62,7 @@ class RatingRepository {
   Future<RatingModel?> getRatingByReservation(int reservationId) async {
     try {
       final response = await dio.get(
-        '/api/v1/ratings/reservation/$reservationId',
+        '/ratings/reservation/$reservationId',
       );
       if (response.data == null) {
         return null;
