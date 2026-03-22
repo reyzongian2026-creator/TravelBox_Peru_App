@@ -117,7 +117,7 @@ class SessionState {
 
   factory SessionState.fromJson(Map<String, dynamic> json) {
     return SessionState(
-      locale: Locale(json['locale']?.toString() ?? 'es'),
+      locale: _normalizeLocale(json['locale']?.toString()),
       user: json['user'] == null
           ? null
           : AppUser.fromJson(json['user'] as Map<String, dynamic>),

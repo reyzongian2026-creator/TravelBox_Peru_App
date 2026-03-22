@@ -8,6 +8,7 @@ import '../../../core/theme/brand_tokens.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
+import '../../../shared/utils/country_catalog.dart';
 import 'auth_controller.dart';
 import 'widgets/auth_ui.dart';
 
@@ -33,6 +34,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   bool _showValidation = false;
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
+
+  String _getDefaultLanguageForCountry(String country) {
+    final countryInfo = resolveCountryDialingByName(country);
+    return countryInfo.defaultLanguage;
+  }
 
   @override
   void dispose() {
@@ -236,7 +242,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                    setState(() => _nationality = value);
+                    setState(() {
+                      _nationality = value;
+                      _preferredLanguage = _getDefaultLanguageForCountry(value);
+                    });
                   }
                 },
               ),
