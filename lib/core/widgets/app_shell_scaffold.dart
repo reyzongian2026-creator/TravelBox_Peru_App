@@ -281,14 +281,10 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
         _mobileNavBehavior.isVisible;
     final mobileBottomInset = responsive.useDesktopShell
         ? safeBottomInset
-        : (navVisible
-              ? _MobileFloatingNavBar.visibleContentInset(
-                  safeBottom: safeBottomInset,
-                  baseHeight: navBarBaseHeight,
-                )
-              : _MobileFloatingNavBar.hiddenContentInset(
-                  safeBottom: safeBottomInset,
-                ));
+        : _MobileFloatingNavBar.visibleContentInset(
+            safeBottom: safeBottomInset,
+            baseHeight: navBarBaseHeight,
+          );
     final body = SafeArea(
       top: false,
       bottom: false,
