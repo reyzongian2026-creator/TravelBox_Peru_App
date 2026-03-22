@@ -1008,11 +1008,12 @@ class _WarehouseCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Chip(
-                  avatar: const Icon(Icons.star_rounded, size: 16),
-                  label: Text(warehouse.score.toStringAsFixed(1)),
-                  visualDensity: VisualDensity.compact,
-                ),
+                if (warehouse.score > 0)
+                  Chip(
+                    avatar: const Icon(Icons.star_rounded, size: 16),
+                    label: Text(warehouse.score.toStringAsFixed(1)),
+                    visualDensity: VisualDensity.compact,
+                  ),
               ],
             ),
             Text('${warehouse.address}, ${warehouse.district}'),

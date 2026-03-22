@@ -126,10 +126,12 @@ class WarehouseDetailPage extends ConsumerWidget {
                         '${context.l10n.t('warehouse_detail_price_from_prefix')}: '
                         '${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour)}',
                       ),
-                      Text(
-                        '${context.l10n.t('warehouse_detail_score_prefix')}: '
-                        '${warehouse.score.toStringAsFixed(1)}',
-                      ),
+                      if (warehouse.score > 0) ...[
+                        Text(
+                          '${context.l10n.t('warehouse_detail_score_prefix')}: '
+                          '${warehouse.score.toStringAsFixed(1)}',
+                        ),
+                      ],
                       TextButton.icon(
                         onPressed: () {
                           context.push(
