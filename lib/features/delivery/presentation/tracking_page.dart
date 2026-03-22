@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart' as latlong_pkg;
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
@@ -123,8 +126,8 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
   Widget _mapCard(BuildContext context) {
     final responsive = context.responsive;
     final tracking = _tracking!;
-    final current = LatLng(tracking.currentLatitude, tracking.currentLongitude);
-    final destination = LatLng(
+    final current = latlong_pkg.LatLng(tracking.currentLatitude, tracking.currentLongitude);
+    final destination = latlong_pkg.LatLng(
       tracking.destinationLatitude,
       tracking.destinationLongitude,
     );
@@ -142,18 +145,92 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
       orElse: () => null,
     );
 
+    if (kIsWeb) {
+      return _buildFlutterMapCard(context, responsive, current, destination, routePoints, route);
+    }
+    return _buildGoogleMapCard(context, responsive, current, destination, routePoints, route);
+  }
+
+  Widget _buildFlutterMapCard(
+    BuildContext context,
+    var responsive,
+    latlong_pkg.LatLng current,
+    latlong_pkg.LatLng destination,
+    List<latlong_pkg.LatLng> routePoints,
+    var route,
+  ) {
+    final markers = <flutter_map.Marker>[
+      flutter_map.Marker(
+        point: current,
+        width: 40,
+        height: 40,
+        child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+      ),
+      flutter_map.Marker(
+        point: destination,
+        width: 40,
+        height: 40,
+        child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
+      ),
+    ];
+
+    final polyline = routePoints.isNotEmpty
+        ? flutter_map.Polyline(
+            points: routePoints,
+            color: route?.fallbackUsed == true
+                ? const Color(0xFF3B82F6)
+                : const Color(0xFF0B8B8C),
+            strokeWidth: 4,
+          )
+        : null;
+
+    return Card(
+      child: SizedBox(
+        height: responsive.mapHeight(max: 460),
+        child: flutter_map.FlutterMap(
+          options: flutter_map.MapOptions(
+            initialCenter: current,
+            initialZoom: 13,
+          ),
+          children: [
+            flutter_map.TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.travelbox.peru.app',
+            ),
+            if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
+            flutter_map.MarkerLayer(markers: markers),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleMapCard(
+    BuildContext context,
+    var responsive,
+    latlong_pkg.LatLng current,
+    latlong_pkg.LatLng destination,
+    List<latlong_pkg.LatLng> routePoints,
+    var route,
+  ) {
+    LatLng toGoogleLatLng(latlong_pkg.LatLng latLng) {
+      return LatLng(latLng.latitude, latLng.longitude);
+    }
+
+    final googleRoutePoints = routePoints.map(toGoogleLatLng).toList();
+
     return Card(
       child: SizedBox(
         height: responsive.mapHeight(max: 460),
         child: GoogleMap(
           initialCameraPosition: CameraPosition(
-            target: current,
+            target: toGoogleLatLng(current),
             zoom: 13,
           ),
           polylines: {
             Polyline(
               polylineId: const PolylineId('route'),
-              points: routePoints,
+              points: googleRoutePoints,
               color: route?.fallbackUsed == true
                   ? const Color(0xFF3B82F6)
                   : const Color(0xFF0B8B8C),
@@ -163,12 +240,12 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
           markers: {
             Marker(
               markerId: const MarkerId('current'),
-              position: current,
+              position: toGoogleLatLng(current),
               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
             ),
             Marker(
               markerId: const MarkerId('destination'),
-              position: destination,
+              position: toGoogleLatLng(destination),
               icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
             ),
           },
@@ -367,23 +444,23 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
     );
   }
 
-  List<LatLng> _resolveRoutePoints(
+  List<latlong_pkg.LatLng> _resolveRoutePoints(
     AsyncValue<GeoRouteModel> routeAsync,
     DeliveryTrackingModel tracking,
-    LatLng current,
-    LatLng destination,
+    latlong_pkg.LatLng current,
+    latlong_pkg.LatLng destination,
   ) {
     final providerPoints = routeAsync.maybeWhen(
       data: (route) => route.points
-          .map((point) => LatLng(point.latitude, point.longitude))
+          .map((point) => latlong_pkg.LatLng(point.latitude, point.longitude))
           .toList(),
-      orElse: () => <LatLng>[],
+      orElse: () => <latlong_pkg.LatLng>[],
     );
     if (providerPoints.length >= 2) {
       return providerPoints;
     }
     final eventPoints = tracking.events
-        .map((event) => LatLng(event.latitude, event.longitude))
+        .map((event) => latlong_pkg.LatLng(event.latitude, event.longitude))
         .toList();
     if (eventPoints.isNotEmpty) {
       if (eventPoints.last.latitude != destination.latitude ||

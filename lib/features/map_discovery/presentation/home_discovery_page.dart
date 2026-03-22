@@ -1,13 +1,17 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart' as latlong_pkg;
 
+import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
@@ -719,20 +723,77 @@ class _MapView extends StatelessWidget {
   Widget build(BuildContext context) {
     final allPoints = [
       ...warehouses.map(
-        (warehouse) => LatLng(warehouse.latitude, warehouse.longitude),
+        (warehouse) => latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
       ),
       if (userPosition != null)
-        LatLng(userPosition!.latitude, userPosition!.longitude),
+        latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude),
     ];
     final center = allPoints.isNotEmpty
         ? allPoints.first
-        : const LatLng(-12.0464, -77.0428);
+        : const latlong_pkg.LatLng(-12.0464, -77.0428);
+
+    if (kIsWeb) {
+      return _buildFlutterMap(context, center);
+    }
+    return _buildGoogleMap(context, center);
+  }
+
+  Widget _buildFlutterMap(BuildContext context, latlong_pkg.LatLng center) {
+    final warehouseMarkers = warehouses.map((warehouse) => flutter_map.Marker(
+      point: latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
+      width: 40,
+      height: 40,
+      child: GestureDetector(
+        onTap: () => context.push('/warehouse/${warehouse.id}'),
+        child: const Icon(
+          Icons.location_on,
+          color: Color(0xFF0B8B8C),
+          size: 40,
+        ),
+      ),
+    )).toList();
+
+    if (userPosition != null) {
+      warehouseMarkers.add(flutter_map.Marker(
+        point: latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude),
+        width: 40,
+        height: 40,
+        child: const Icon(
+          Icons.my_location,
+          color: Color(0xFF3B82F6),
+          size: 40,
+        ),
+      ));
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: flutter_map.FlutterMap(
+        options: flutter_map.MapOptions(
+          initialCenter: center,
+          initialZoom: 12,
+        ),
+        children: [
+          flutter_map.TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.travelbox.peru.app',
+          ),
+          flutter_map.MarkerLayer(markers: warehouseMarkers),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleMap(BuildContext context, latlong_pkg.LatLng center) {
+    LatLng toGoogleLatLng(latlong_pkg.LatLng latLng) {
+      return LatLng(latLng.latitude, latLng.longitude);
+    }
 
     final googleMarkers = <Marker>[
       ...warehouses.map(
         (warehouse) => Marker(
           markerId: MarkerId(warehouse.id),
-          position: LatLng(warehouse.latitude, warehouse.longitude),
+          position: toGoogleLatLng(latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude)),
           infoWindow: InfoWindow(
             title: warehouse.name,
             snippet: NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour),
@@ -747,7 +808,7 @@ class _MapView extends StatelessWidget {
       googleMarkers.add(
         Marker(
           markerId: const MarkerId('user_location'),
-          position: LatLng(userPosition!.latitude, userPosition!.longitude),
+          position: toGoogleLatLng(latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude)),
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
       );
@@ -757,7 +818,7 @@ class _MapView extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: GoogleMap(
         initialCameraPosition: CameraPosition(
-          target: center,
+          target: toGoogleLatLng(center),
           zoom: 12,
         ),
         markers: googleMarkers.toSet(),

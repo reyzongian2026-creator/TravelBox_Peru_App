@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart' as latlong_pkg;
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
@@ -782,11 +785,11 @@ class _CourierProgressDialogState
     );
     final routePoints = routeAsync.maybeWhen(
       data: (value) => value.points
-          .map((point) => LatLng(point.latitude, point.longitude))
+          .map((point) => latlong_pkg.LatLng(point.latitude, point.longitude))
           .toList(),
-      orElse: () => <LatLng>[
-        LatLng(widget.item.currentLatitude, widget.item.currentLongitude),
-        LatLng(
+      orElse: () => <latlong_pkg.LatLng>[
+        latlong_pkg.LatLng(widget.item.currentLatitude, widget.item.currentLongitude),
+        latlong_pkg.LatLng(
           widget.item.destinationLatitude,
           widget.item.destinationLongitude,
         ),
@@ -809,49 +812,9 @@ class _CourierProgressDialogState
                   child: Card(
                     margin: EdgeInsets.zero,
                     clipBehavior: Clip.antiAlias,
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                          widget.item.currentLatitude,
-                          widget.item.currentLongitude,
-                        ),
-                        zoom: 13,
-                      ),
-                      polylines: {
-                        Polyline(
-                          polylineId: const PolylineId('route'),
-                          points: routePoints,
-                          color: route?.fallbackUsed == true
-                              ? const Color(0xFF3B82F6)
-                              : const Color(0xFF0B8B8C),
-                          width: 4,
-                        ),
-                      },
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('current'),
-                          position: LatLng(
-                            widget.item.currentLatitude,
-                            widget.item.currentLongitude,
-                          ),
-                          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-                        ),
-                        Marker(
-                          markerId: const MarkerId('destination'),
-                          position: LatLng(
-                            widget.item.destinationLatitude,
-                            widget.item.destinationLongitude,
-                          ),
-                          icon: widget.item.deliveryType.toUpperCase() == 'PICKUP'
-                              ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
-                              : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-                        ),
-                      },
-                      myLocationEnabled: false,
-                      myLocationButtonEnabled: false,
-                      zoomControlsEnabled: false,
-                      mapToolbarEnabled: false,
-                    ),
+                    child: kIsWeb
+                        ? _buildFlutterMap(widget.item, routePoints, route)
+                        : _buildGoogleMap(widget.item, routePoints, route),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1084,5 +1047,100 @@ class _CourierProgressDialogState
         _gettingLocation = false;
       });
     }
+  }
+
+  Widget _buildFlutterMap(CourierDeliveryItem item, List<latlong_pkg.LatLng> routePoints, var route) {
+    final current = latlong_pkg.LatLng(item.currentLatitude, item.currentLongitude);
+    final destination = latlong_pkg.LatLng(item.destinationLatitude, item.destinationLongitude);
+
+    final markers = <flutter_map.Marker>[
+      flutter_map.Marker(
+        point: current,
+        width: 40,
+        height: 40,
+        child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+      ),
+      flutter_map.Marker(
+        point: destination,
+        width: 40,
+        height: 40,
+        child: Icon(
+          Icons.location_on,
+          color: item.deliveryType.toUpperCase() == 'PICKUP' ? Colors.cyan : Colors.blue,
+          size: 40,
+        ),
+      ),
+    ];
+
+    final polyline = routePoints.isNotEmpty
+        ? flutter_map.Polyline(
+            points: routePoints,
+            color: route?.fallbackUsed == true
+                ? const Color(0xFF3B82F6)
+                : const Color(0xFF0B8B8C),
+            strokeWidth: 4,
+          )
+        : null;
+
+    return flutter_map.FlutterMap(
+      options: flutter_map.MapOptions(
+        initialCenter: current,
+        initialZoom: 13,
+      ),
+      children: [
+        flutter_map.TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.travelbox.peru.app',
+        ),
+        if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
+        flutter_map.MarkerLayer(markers: markers),
+      ],
+    );
+  }
+
+  Widget _buildGoogleMap(CourierDeliveryItem item, List<latlong_pkg.LatLng> routePoints, var route) {
+    final current = latlong_pkg.LatLng(item.currentLatitude, item.currentLongitude);
+    final destination = latlong_pkg.LatLng(item.destinationLatitude, item.destinationLongitude);
+
+    LatLng toGoogleLatLng(latlong_pkg.LatLng latLng) {
+      return LatLng(latLng.latitude, latLng.longitude);
+    }
+
+    final googleRoutePoints = routePoints.map(toGoogleLatLng).toList();
+
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: toGoogleLatLng(current),
+        zoom: 13,
+      ),
+      polylines: {
+        Polyline(
+          polylineId: const PolylineId('route'),
+          points: googleRoutePoints,
+          color: route?.fallbackUsed == true
+              ? const Color(0xFF3B82F6)
+              : const Color(0xFF0B8B8C),
+          width: 4,
+        ),
+      },
+      markers: {
+        Marker(
+          markerId: const MarkerId('current'),
+          position: toGoogleLatLng(current),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        ),
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: toGoogleLatLng(destination),
+          icon: item.deliveryType.toUpperCase() == 'PICKUP'
+              ? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)
+              : BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        ),
+      },
+      myLocationEnabled: false,
+      myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
+      mapToolbarEnabled: false,
+    );
   }
 }
