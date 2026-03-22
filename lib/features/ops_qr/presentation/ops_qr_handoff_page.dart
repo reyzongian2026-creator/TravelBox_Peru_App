@@ -1155,7 +1155,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
     try {
       await action();
     } catch (error) {
-      final readable = AppErrorFormatter.readable(error);
+      final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
       _showMessage(
         '${context.l10n.t('ops_qr_action_failed_prefix')}: $readable',
       );

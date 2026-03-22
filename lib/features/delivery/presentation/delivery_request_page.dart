@@ -504,7 +504,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     } catch (error) {
       _showMessage(
         '${context.l10n.t('delivery_location_failed')}: '
-        '${AppErrorFormatter.readable(error)}. '
+        '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}. '
         '${context.l10n.t('elegir_punto_en_mapa')}.',
       );
     } finally {
@@ -642,7 +642,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
         SnackBar(
           content: Text(
             '${context.l10n.t('delivery_request_failed')}: '
-            '${AppErrorFormatter.readable(error)}',
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );

@@ -82,7 +82,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
           SnackBar(
             content: Text(
               '${context.l10n.t('auth_continue_failed')}: '
-              '${AppErrorFormatter.readable(next.error!)}',
+              '${AppErrorFormatter.readable(next.error!, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
             ),
           ),
         );

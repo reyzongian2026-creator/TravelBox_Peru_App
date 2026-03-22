@@ -95,7 +95,7 @@ class AdminReservationsRepositoryImpl implements AdminReservationsRepository {
       );
       final data = response.data;
       if (data == null || data['url'] == null) {
-        throw AppException('Export failed');
+        throw AppException.withCode(AppErrorCode.err_export_failed, backendMessage: 'Export failed');
       }
       return data['url'].toString();
     } on DioException catch (e) {

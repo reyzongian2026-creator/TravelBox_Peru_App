@@ -235,7 +235,7 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
         SnackBar(
           content: Text(
             '${context.l10n.t('send_code_failed')}: '
-            '${AppErrorFormatter.readable(error)}',
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );
@@ -270,7 +270,7 @@ class _PasswordResetPageState extends ConsumerState<PasswordResetPage> {
         SnackBar(
           content: Text(
             '${context.l10n.t('update_failed')}: '
-            '${AppErrorFormatter.readable(error)}',
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );

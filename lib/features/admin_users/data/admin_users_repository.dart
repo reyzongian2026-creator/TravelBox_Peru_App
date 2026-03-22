@@ -294,7 +294,7 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException('Failed to create user');
+        throw AppException.withCode(AppErrorCode.err_create_user, backendMessage: 'Failed to create user');
       }
       return AdminUser.fromJson(data);
     } on DioException catch (e) {
@@ -313,7 +313,7 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException('Failed to update user');
+        throw AppException.withCode(AppErrorCode.err_update_failed, backendMessage: 'Failed to update user');
       }
       return AdminUser.fromJson(data);
     } on DioException catch (e) {
@@ -380,7 +380,7 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
       );
       final data = response.data;
       if (data == null || data['url'] == null) {
-        throw AppException('Failed to upload document photo');
+        throw AppException.withCode(AppErrorCode.err_upload_failed, backendMessage: 'Failed to upload document photo');
       }
       return data['url'].toString();
     } on DioException catch (e) {

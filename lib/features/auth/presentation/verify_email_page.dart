@@ -138,7 +138,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
         SnackBar(
           content: Text(
             '${context.l10n.t('verify_email_verify_failed_prefix')}: '
-            '${AppErrorFormatter.readable(error)}',
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );
@@ -172,7 +172,7 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
         SnackBar(
           content: Text(
             '${context.l10n.t('verify_email_resend_failed_prefix')}: '
-            '${AppErrorFormatter.readable(error)}',
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );

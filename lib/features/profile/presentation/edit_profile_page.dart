@@ -542,7 +542,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         SnackBar(
           content: Text(
             '${context.l10n.t('profile_save_failed')}: '
-            '${AppErrorFormatter.readable(error)}',
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );

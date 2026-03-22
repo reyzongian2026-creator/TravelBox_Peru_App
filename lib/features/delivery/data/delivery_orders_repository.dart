@@ -192,7 +192,7 @@ class DeliveryOrdersRepositoryImpl implements DeliveryOrdersRepository {
 
       final data = response.data;
       if (data == null) {
-        throw AppException('Tracking information not found');
+        throw AppException.withCode(AppErrorCode.error_not_found, backendMessage: 'Tracking information not found');
       }
 
       return DeliveryTracking.fromJson(data);

@@ -125,7 +125,8 @@ class _ChangeEmailFlowPageState extends ConsumerState<ChangeEmailFlowPage> {
         return message;
       }
     }
-    return AppException.fromDioError(e).message;
+    final appError = AppException.fromDioError(e).error;
+    return appError.backendMessage ?? 'Unknown error';
   }
 
   @override

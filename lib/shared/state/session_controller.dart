@@ -33,6 +33,7 @@ final sessionControllerProvider =
 class SessionState {
   const SessionState({
     required this.locale,
+    required this.sessionLanguage,
     required this.user,
     required this.accessToken,
     required this.refreshToken,
@@ -43,6 +44,7 @@ class SessionState {
   factory SessionState.initial() {
     return const SessionState(
       locale: Locale('es'),
+      sessionLanguage: 'es',
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -52,6 +54,7 @@ class SessionState {
   }
 
   final Locale locale;
+  final String sessionLanguage;
   final AppUser? user;
   final String? accessToken;
   final String? refreshToken;
@@ -78,6 +81,7 @@ class SessionState {
 
   SessionState copyWith({
     Locale? locale,
+    String? sessionLanguage,
     AppUser? user,
     String? accessToken,
     String? refreshToken,
@@ -88,6 +92,7 @@ class SessionState {
     if (clearSession) {
       return SessionState(
         locale: locale ?? this.locale,
+        sessionLanguage: sessionLanguage ?? this.sessionLanguage,
         user: null,
         accessToken: null,
         refreshToken: null,
@@ -97,6 +102,7 @@ class SessionState {
     }
     return SessionState(
       locale: locale ?? this.locale,
+      sessionLanguage: sessionLanguage ?? this.sessionLanguage,
       user: user ?? this.user,
       accessToken: accessToken ?? this.accessToken,
       refreshToken: refreshToken ?? this.refreshToken,
@@ -109,6 +115,7 @@ class SessionState {
   Map<String, dynamic> toJson() {
     return {
       'locale': locale.languageCode,
+      'sessionLanguage': sessionLanguage,
       'user': user?.toJson(),
       'pendingVerificationCode': pendingVerificationCode,
       'onboardingCompleted': onboardingCompleted,
@@ -118,6 +125,7 @@ class SessionState {
   factory SessionState.fromJson(Map<String, dynamic> json) {
     return SessionState(
       locale: _normalizeLocale(json['locale']?.toString()),
+      sessionLanguage: _normalizeSessionLanguage(json['sessionLanguage']?.toString()),
       user: json['user'] == null
           ? null
           : AppUser.fromJson(json['user'] as Map<String, dynamic>),
@@ -224,6 +232,12 @@ class SessionController extends StateNotifier<SessionState> {
     await _persist();
   }
 
+  Future<void> setSessionLanguage(String languageCode) async {
+    final normalized = _normalizeSessionLanguage(languageCode);
+    state = state.copyWith(sessionLanguage: normalized);
+    await _persist();
+  }
+
   Future<void> signIn({
     required AppUser user,
     required String accessToken,
@@ -295,7 +309,10 @@ class SessionController extends StateNotifier<SessionState> {
   }
 
   Future<void> signOut() async {
-    state = state.copyWith(clearSession: true);
+    state = state.copyWith(
+      clearSession: true,
+      sessionLanguage: 'es',
+    );
     await _persist();
   }
 
@@ -526,6 +543,14 @@ Locale _normalizeLocale(String? raw) {
     return Locale(code);
   }
   return const Locale('es');
+}
+
+String _normalizeSessionLanguage(String? raw) {
+  final code = raw?.trim().toLowerCase() ?? 'es';
+  if (_supportedLanguageCodes.contains(code)) {
+    return code;
+  }
+  return 'es';
 }
 
 bool _hasUsableAccessToken(String? rawToken) {

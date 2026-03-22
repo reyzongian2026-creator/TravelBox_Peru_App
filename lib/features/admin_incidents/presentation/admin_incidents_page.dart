@@ -615,7 +615,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
   }
 
   String _errorMessage(Object error) {
-    return AppErrorFormatter.readable(error);
+    return AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
   }
 
   String _trackingRoute(String reservationId) {

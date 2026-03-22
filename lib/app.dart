@@ -18,8 +18,7 @@ class TravelBoxApp extends ConsumerWidget {
     final session = ref.watch(sessionControllerProvider);
     final themeMode = ref.watch(themeModeControllerProvider);
     final effectiveLocale = session.locale;
-    LocalizationRuntime.languageCode = effectiveLocale.languageCode
-        .toLowerCase();
+    LocalizationRuntime.languageCode = session.sessionLanguage;
 
     return MaterialApp.router(
       title: 'TravelBox',

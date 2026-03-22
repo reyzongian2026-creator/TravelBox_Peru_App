@@ -506,6 +506,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                 commentInSpanish: commentInSpanish,
                 evidenceUrl: evidenceUrl,
               ),
+              'originalLanguage': customerLanguage,
             },
           );
 
@@ -634,7 +635,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   }
 
   String _errorMessage(Object error) {
-    return AppErrorFormatter.readable(error);
+    return AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
   }
 
   void _showSnackBar(String message) {

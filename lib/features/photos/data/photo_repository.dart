@@ -73,8 +73,9 @@ class PhotoRepositoryImpl implements PhotoRepository {
 
       final data = response.data;
       if (data == null) {
-        throw AppException(
-          'Failed to upload photo',
+        throw AppException.withCode(
+          AppErrorCode.err_upload_failed,
+          backendMessage: 'Failed to upload photo',
         );
       }
 

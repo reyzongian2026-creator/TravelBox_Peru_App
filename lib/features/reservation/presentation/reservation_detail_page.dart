@@ -465,7 +465,7 @@ class ReservationDetailPage extends ConsumerWidget {
           );
     } catch (error) {
       if (!context.mounted) return;
-      final readable = AppErrorFormatter.readable(error);
+      final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

@@ -393,7 +393,7 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
         _loading = false;
         _error =
             '${context.l10n.t('courier_services_load_failed_prefix')}: '
-            '${AppErrorFormatter.readable(error)}';
+            '${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}';
       });
     }
   }
@@ -461,7 +461,7 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppErrorFormatter.readable(error))),
+        SnackBar(content: Text(AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key)))),
       );
     } finally {
       if (mounted) {
@@ -1080,7 +1080,7 @@ class _CourierProgressDialogState
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _locationError = AppErrorFormatter.readable(error);
+        _locationError = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
         _gettingLocation = false;
       });
     }

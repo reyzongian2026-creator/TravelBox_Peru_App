@@ -219,7 +219,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException('Failed to checkin');
+        throw AppException.withCode(AppErrorCode.err_checkin_failed, backendMessage: 'Failed to checkin');
       }
       return CheckinResult.fromJson(data);
     } on DioException catch (e) {
@@ -238,7 +238,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException('Failed to checkout');
+        throw AppException.withCode(AppErrorCode.err_checkout_failed, backendMessage: 'Failed to checkout');
       }
       return CheckoutResult.fromJson(data);
     } on DioException catch (e) {
@@ -262,7 +262,7 @@ class InventoryRepositoryImpl implements InventoryRepository {
       );
       final data = response.data;
       if (data == null || data['url'] == null) {
-        throw AppException('Failed to upload evidence');
+        throw AppException.withCode(AppErrorCode.err_upload_failed, backendMessage: 'Failed to upload evidence');
       }
       return data['url'].toString();
     } on DioException catch (e) {

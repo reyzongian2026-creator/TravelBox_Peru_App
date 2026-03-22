@@ -487,7 +487,7 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    final message = AppErrorFormatter.readable(error);
+    final message = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

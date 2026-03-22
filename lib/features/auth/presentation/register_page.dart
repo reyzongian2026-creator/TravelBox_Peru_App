@@ -92,7 +92,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           SnackBar(
             content: Text(
               '${context.l10n.t('register_failed')}: '
-              '${AppErrorFormatter.readable(next.error!)}',
+              '${AppErrorFormatter.readable(next.error!, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
             ),
           ),
         );

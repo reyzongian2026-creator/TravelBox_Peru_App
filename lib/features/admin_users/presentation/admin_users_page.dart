@@ -406,7 +406,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               loading: () => const LoadingStateView(),
               error: (error, _) => ErrorStateView(
                 message:
-                    '${l10n.t('admin_users_load_failed')}: ${AppErrorFormatter.readable(error)}',
+                    '${l10n.t('admin_users_load_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => l10n.t(key))}',
                 onRetry: () => ref.invalidate(adminUsersProvider),
               ),
             ),
@@ -583,7 +583,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_update_error')}: ${AppErrorFormatter.readable(e)}'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_update_error')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}'), backgroundColor: Colors.red),
         );
       }
     }
@@ -626,7 +626,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_delete_error')}: ${AppErrorFormatter.readable(e)}'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_delete_error')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}'), backgroundColor: Colors.red),
         );
       }
     }
@@ -820,7 +820,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       ref.invalidate(adminUsersSummaryProvider);
       _showSnack(successMessage);
     } catch (error) {
-      _showSnack(AppErrorFormatter.readable(error), isError: true);
+      _showSnack(AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key)), isError: true);
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -856,7 +856,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
         );
     } catch (error) {
       _showSnack(
-        '${context.l10n.t('admin_users_warehouses_load_failed')}: ${AppErrorFormatter.readable(error)}',
+        '${context.l10n.t('admin_users_warehouses_load_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
         isError: true,
       );
       return const [];

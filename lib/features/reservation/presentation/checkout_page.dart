@@ -292,7 +292,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   }
 
   String _errorMessage(Object error) {
-    return AppErrorFormatter.readable(error);
+    return AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
   }
 
   bool _isOfflinePaymentMethod(String method) {

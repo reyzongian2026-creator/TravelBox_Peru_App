@@ -438,7 +438,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${context.l10n.t('admin_reservation_status_update_failed')}: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('admin_reservation_status_update_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );
@@ -472,7 +472,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${context.l10n.t('admin_reservation_refund_failed')}: ${AppErrorFormatter.readable(error)}',
+            '${context.l10n.t('admin_reservation_refund_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
           ),
         ),
       );

@@ -23,11 +23,13 @@ class CreateIncidentRequest {
   final String? reservationId;
   final String? warehouseId;
   final String? priority;
+  final String originalLanguage;
 
   CreateIncidentRequest({
     required this.title,
     required this.description,
     required this.type,
+    required this.originalLanguage,
     this.reservationId,
     this.warehouseId,
     this.priority,
@@ -37,6 +39,7 @@ class CreateIncidentRequest {
         'title': title,
         'description': description,
         'type': type,
+        'originalLanguage': originalLanguage,
         if (reservationId != null) 'reservationId': reservationId,
         if (warehouseId != null) 'warehouseId': warehouseId,
         if (priority != null) 'priority': priority,
@@ -58,6 +61,7 @@ class Incident {
   final String? assignedTo;
   final String? assignedToName;
   final String? resolution;
+  final String? originalLanguage;
   final DateTime createdAt;
   final DateTime? resolvedAt;
   final DateTime? updatedAt;
@@ -77,6 +81,7 @@ class Incident {
     this.assignedTo,
     this.assignedToName,
     this.resolution,
+    this.originalLanguage,
     required this.createdAt,
     this.resolvedAt,
     this.updatedAt,
@@ -98,9 +103,45 @@ class Incident {
       assignedTo: json['assignedTo']?.toString(),
       assignedToName: json['assignedToName']?.toString(),
       resolution: json['resolution']?.toString(),
+      originalLanguage: json['originalLanguage']?.toString(),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
       resolvedAt: json['resolvedAt'] != null ? DateTime.tryParse(json['resolvedAt'].toString()) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'].toString()) : null,
+    );
+  }
+}
+
+class IncidentMessage {
+  final int id;
+  final int incidentId;
+  final int? authorId;
+  final String authorRole;
+  final String originalLanguage;
+  final String textOriginal;
+  final String? textTranslated;
+  final DateTime createdAt;
+
+  IncidentMessage({
+    required this.id,
+    required this.incidentId,
+    this.authorId,
+    required this.authorRole,
+    required this.originalLanguage,
+    required this.textOriginal,
+    this.textTranslated,
+    required this.createdAt,
+  });
+
+  factory IncidentMessage.fromJson(Map<String, dynamic> json) {
+    return IncidentMessage(
+      id: (json['id'] as int?) ?? 0,
+      incidentId: (json['incidentId'] as int?) ?? 0,
+      authorId: json['authorId'] as int?,
+      authorRole: json['authorRole']?.toString() ?? 'unknown',
+      originalLanguage: json['originalLanguage']?.toString() ?? 'es',
+      textOriginal: json['textOriginal']?.toString() ?? '',
+      textTranslated: json['textTranslated']?.toString(),
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }
@@ -208,7 +249,7 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException('Failed to create incident');
+        throw AppException.withCode(AppErrorCode.err_create_incident, backendMessage: 'Failed to create incident');
       }
       return Incident.fromJson(data);
     } on DioException catch (e) {
@@ -227,7 +268,7 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException('Failed to resolve incident');
+        throw AppException.withCode(AppErrorCode.err_update_failed, backendMessage: 'Failed to resolve incident');
       }
       return Incident.fromJson(data);
     } on DioException catch (e) {
