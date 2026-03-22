@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/layout/responsive_layout.dart';
-import '../../../core/widgets/app_shell_scaffold.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_ratings_page.dart';
 import 'system_admin_page.dart';

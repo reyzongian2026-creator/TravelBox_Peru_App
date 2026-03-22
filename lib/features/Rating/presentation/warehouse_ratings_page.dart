@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travelbox_peru_app/core/l10n/app_localizations.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_controller.dart';
-import 'package:travelbox_peru_app/features/Rating/data/rating_model.dart';
 import 'package:travelbox_peru_app/features/Rating/presentation/rating_widgets.dart';
 
 class WarehouseRatingsPage extends ConsumerStatefulWidget {

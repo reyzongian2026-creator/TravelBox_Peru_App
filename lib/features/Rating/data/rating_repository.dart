@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:travelbox_peru_app/core/network/api_client.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_model.dart';
 
 class RatingRepository {
