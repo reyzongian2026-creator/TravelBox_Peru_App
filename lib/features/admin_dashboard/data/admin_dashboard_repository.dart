@@ -8,15 +8,107 @@ abstract class AdminDashboardRepository {
   Future<DashboardStats> getDashboardStats(String period);
   Future<DashboardOverview> getDashboardOverview(String period);
   Future<DashboardSummary> getDashboardSummary(String period);
+  Future<DashboardSummary> getDashboardSummaryOnly(String period);
+  Future<List<RankingItem>> getDashboardRankings(String period);
+  Future<TrendsData> getDashboardTrends(String period);
   Future<void> invalidateCache({String? period});
   
   Future<RevenueReport> getRevenueReport(DateTime startDate, DateTime endDate);
   
   Future<List<AdminRatingItem>> getAllRatings();
+  Future<void> updateRating(int ratingId, Map<String, dynamic> updates);
+  Future<void> deleteRating(int ratingId);
   
   Future<SystemHealthInfo> getSystemHealth();
   
   Future<List<AuditLogEntry>> getAuditLog({int limit = 100, String? entityType, int? entityId, String? action, String? performedBy});
+}
+
+class RankingItem {
+  final String type;
+  final String label;
+  final int value;
+  final double score;
+  final String? warehouseId;
+  final String? warehouseName;
+  final String? city;
+
+  RankingItem({
+    required this.type,
+    required this.label,
+    required this.value,
+    required this.score,
+    this.warehouseId,
+    this.warehouseName,
+    this.city,
+  });
+
+  factory RankingItem.fromJson(Map<String, dynamic> json) {
+    return RankingItem(
+      type: json['type']?.toString() ?? '',
+      label: json['label']?.toString() ?? '',
+      value: (json['value'] as int?) ?? 0,
+      score: (json['score'] as num?)?.toDouble() ?? 0.0,
+      warehouseId: json['warehouseId']?.toString(),
+      warehouseName: json['warehouseName']?.toString(),
+      city: json['city']?.toString(),
+    );
+  }
+}
+
+class TrendsData {
+  final String period;
+  final List<TrendPoint> reservations;
+  final List<TrendPoint> revenue;
+  final List<TrendPoint> activeUsers;
+  final double reservationGrowth;
+  final double revenueGrowth;
+  final double userGrowth;
+
+  TrendsData({
+    required this.period,
+    required this.reservations,
+    required this.revenue,
+    required this.activeUsers,
+    required this.reservationGrowth,
+    required this.revenueGrowth,
+    required this.userGrowth,
+  });
+
+  factory TrendsData.fromJson(Map<String, dynamic> json) {
+    return TrendsData(
+      period: json['period']?.toString() ?? 'month',
+      reservations: (json['reservations'] as List<dynamic>?)
+              ?.map((e) => TrendPoint.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      revenue: (json['revenue'] as List<dynamic>?)
+              ?.map((e) => TrendPoint.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      activeUsers: (json['activeUsers'] as List<dynamic>?)
+              ?.map((e) => TrendPoint.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      reservationGrowth: (json['reservationGrowth'] as num?)?.toDouble() ?? 0.0,
+      revenueGrowth: (json['revenueGrowth'] as num?)?.toDouble() ?? 0.0,
+      userGrowth: (json['userGrowth'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class TrendPoint {
+  final String date;
+  final double value;
+
+  TrendPoint({required this.date, required this.value});
+
+  factory TrendPoint.fromJson(Map<String, dynamic> json) {
+    return TrendPoint(
+      date: json['date']?.toString() ?? '',
+      value: (json['value'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 }
 
 class DashboardStats {
@@ -685,6 +777,89 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
       throw AppException.fromDioError(e);
     } catch (e) {
       if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<DashboardSummary> getDashboardSummaryOnly(String period) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/admin/dashboard/summary-only',
+        queryParameters: {'period': period},
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException('Dashboard summary not available');
+      }
+      return DashboardSummary.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<RankingItem>> getDashboardRankings(String period) async {
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/admin/dashboard/rankings-only',
+        queryParameters: {'period': period},
+      );
+      final data = response.data;
+      if (data == null) return [];
+      return data.map((e) => RankingItem.fromJson(e as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<TrendsData> getDashboardTrends(String period) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/admin/dashboard/trends-only',
+        queryParameters: {'period': period},
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException('Trends data not available');
+      }
+      return TrendsData.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<void> updateRating(int ratingId, Map<String, dynamic> updates) async {
+    try {
+      await _dio.patch<void>(
+        '/admin/reports/ratings/$ratingId',
+        data: updates,
+      );
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<void> deleteRating(int ratingId) async {
+    try {
+      await _dio.delete<void>('/admin/reports/ratings/$ratingId');
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
       throw AppException.fromError(e);
     }
   }
