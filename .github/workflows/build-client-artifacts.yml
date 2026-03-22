@@ -54,6 +54,8 @@ on:
         required: false
       FIREBASE_FACEBOOK_APP_ID:
         required: false
+      GOOGLE_MAPS_API_KEY:
+        required: false
   workflow_dispatch:
     inputs:
       target:
@@ -198,7 +200,8 @@ jobs:
             "FIREBASE_API_KEY","FIREBASE_PROJECT_ID","FIREBASE_MESSAGING_SENDER_ID",
             "FIREBASE_STORAGE_BUCKET","FIREBASE_AUTH_DOMAIN","FIREBASE_GOOGLE_SERVER_CLIENT_ID",
             "FIREBASE_IOS_BUNDLE_ID","FIREBASE_ANDROID_APP_ID","FIREBASE_IOS_APP_ID",
-            "FIREBASE_WEB_APP_ID","FIREBASE_FACEBOOK_ENABLED","FIREBASE_FACEBOOK_APP_ID"
+            "FIREBASE_WEB_APP_ID","FIREBASE_FACEBOOK_ENABLED","FIREBASE_FACEBOOK_APP_ID",
+            "GOOGLE_MAPS_API_KEY"
           )
           foreach ($key in $all) {
             $value = (Get-Item "Env:$key" -ErrorAction SilentlyContinue).Value
