@@ -38,6 +38,7 @@ import '../../features/reservation/presentation/reservation_form_page.dart';
 import '../../features/reservation/presentation/reservation_success_page.dart';
 import '../../features/auth/presentation/verify_email_page.dart';
 import '../../features/warehouse/presentation/warehouse_detail_page.dart';
+import '../../features/Rating/presentation/warehouse_ratings_page.dart';
 import '../l10n/app_localizations.dart';
 import '../../shared/state/session_controller.dart';
 
@@ -178,6 +179,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => WarehouseDetailPage(
           warehouseId: state.pathParameters['warehouseId'] ?? '',
         ),
+      ),
+      GoRoute(
+        path: '/warehouse/:warehouseId/ratings',
+        builder: (_, state) {
+          final warehouseId = int.tryParse(state.pathParameters['warehouseId'] ?? '');
+          final warehouseName = state.uri.queryParameters['name'] ?? '';
+          if (warehouseId == null) {
+            return const Scaffold(
+              body: Center(child: Text('Invalid warehouse ID')),
+            );
+          }
+          return WarehouseRatingsPage(
+            warehouseId: warehouseId,
+            warehouseName: warehouseName,
+          );
+        },
       ),
       GoRoute(
         path: '/reservation/new/:warehouseId',

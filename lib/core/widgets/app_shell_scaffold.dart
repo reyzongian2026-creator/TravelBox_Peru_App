@@ -189,7 +189,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
     final navItems = session.isCourier
         ? <_NavItem>[
             _NavItem(
-              label: l10n.t('courier'),
+              label: l10n.t('role_courier'),
               icon: Icons.delivery_dining_outlined,
               route: '/courier/panel',
             ),
@@ -235,7 +235,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
             ),
             if (session.isAdmin)
               _NavItem(
-                label: l10n.t('admin'),
+                label: l10n.t('role_admin'),
                 icon: Icons.admin_panel_settings_outlined,
                 route: '/admin/dashboard',
               ),

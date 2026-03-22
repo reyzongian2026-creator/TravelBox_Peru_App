@@ -247,27 +247,27 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                     ),
                     DropdownMenuItem(
                       value: 'CLIENT',
-                      child: Text(context.l10n.t('client')),
+                      child: Text(context.l10n.t('role_client')),
                     ),
                     DropdownMenuItem(
                       value: 'COURIER',
-                      child: Text(context.l10n.t('courier')),
+                      child: Text(context.l10n.t('role_courier')),
                     ),
                     DropdownMenuItem(
                       value: 'OPERATOR',
-                      child: Text(context.l10n.t('operator')),
+                      child: Text(context.l10n.t('role_operator')),
                     ),
                     DropdownMenuItem(
                       value: 'CITY_SUPERVISOR',
-                      child: Text(context.l10n.t('citysupervisor')),
+                      child: Text(context.l10n.t('role_city_supervisor')),
                     ),
                     DropdownMenuItem(
                       value: 'SUPPORT',
-                      child: Text(context.l10n.t('support')),
+                      child: Text(context.l10n.t('role_support')),
                     ),
                     DropdownMenuItem(
                       value: 'ADMIN',
-                      child: Text(context.l10n.t('admin')),
+                      child: Text(context.l10n.t('role_admin')),
                     ),
                   ],
                   onChanged: (value) {
@@ -895,29 +895,35 @@ class _AdminUsersSummary extends StatelessWidget {
       minItemWidth: 160,
       children: [
         _SummaryCard(
-          title: l10n.t('admin_users_summary_users'),
+          title: l10n.t('operations_users_summary_users'),
           value: '$totalUsers',
+          colors: const [Color(0xFF1F6E8C), Color(0xFF65A6B9)],
         ),
         _SummaryCard(
-          title: l10n.t('admin_users_summary_active'),
+          title: l10n.t('operations_users_summary_active'),
           value: '$activeCount',
+          colors: const [Color(0xFF2E7D32), Color(0xFF66BB6A)],
         ),
         _SummaryCard(
-          title: l10n.t('admin_users_summary_operators'),
+          title: l10n.t('operations_users_summary_operators'),
           value: '$operatorCount',
+          colors: const [Color(0xFF6A1B9A), Color(0xFFAB47BC)],
         ),
         _SummaryCard(
-          title: l10n.t('admin_users_summary_couriers'),
+          title: l10n.t('operations_users_summary_couriers'),
           value: '$courierCount',
+          colors: const [Color(0xFFE65100), Color(0xFFFF9800)],
         ),
         _SummaryCard(
-          title: l10n.t('admin_users_summary_completed_deliveries'),
+          title: l10n.t('operations_users_summary_completed_deliveries'),
           value: '$completedDeliveries',
+          colors: const [Color(0xFF0D47A1), Color(0xFF42A5F5)],
         ),
         if (summary != null && items.isNotEmpty && totalUsers > items.length)
           _SummaryCard(
-            title: l10n.t('admin_users_summary_showing'),
+            title: l10n.t('operations_users_summary_showing'),
             value: '${items.length} de $totalUsers',
+            colors: const [Color(0xFF37474F), Color(0xFF78909C)],
           ),
       ],
     );
@@ -952,10 +958,15 @@ class AdminUsersSummaryData {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.title, required this.value});
+  const _SummaryCard({
+    required this.title,
+    required this.value,
+    this.colors,
+  });
 
   final String title;
   final String value;
+  final List<Color>? colors;
 
   @override
   Widget build(BuildContext context) {
@@ -964,17 +975,46 @@ class _SummaryCard extends StatelessWidget {
     return SizedBox(
       height: height,
       child: Card(
-        child: Padding(
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          decoration: colors != null
+              ? BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: colors!.map((c) => c.withValues(alpha: 0.15)).toList(),
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                )
+              : null,
           padding: EdgeInsets.all(responsive.cardPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-              const Spacer(),
+              if (colors != null)
+                Container(
+                  width: 4,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: colors!.first,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              if (colors != null) const SizedBox(height: 4),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors != null ? colors!.first : null,
+                  ),
+                ),
+              ),
               Text(
                 value,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
+                  color: colors != null ? colors!.first : null,
                 ),
               ),
             ],

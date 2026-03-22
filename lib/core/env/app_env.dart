@@ -76,6 +76,11 @@ class AppEnv {
     defaultValue: false,
   );
 
+  static const googleMapsApiKey = String.fromEnvironment(
+    'GOOGLE_MAPS_API_KEY',
+    defaultValue: '',
+  );
+
   static bool get hasFirebaseClientAuthConfig =>
       firebaseApiKey.trim().isNotEmpty &&
       firebaseProjectId.trim().isNotEmpty &&

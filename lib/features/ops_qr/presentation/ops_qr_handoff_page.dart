@@ -200,20 +200,24 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                       ],
                     ),
                     Expanded(
-                      child: TabBarView(
-                        children: [
-                          _buildScanTab(reservations, selectedReservation),
-                          _buildPresentialTab(
-                            selectedReservation,
-                            selectedCase,
-                          ),
-                          _buildDeliveryTab(selectedReservation, selectedCase),
-                          _buildApprovalsTab(
-                            selectedReservation: selectedReservation,
-                            selectedCase: selectedCase,
-                            canApproveOperator: canApproveOperator,
-                          ),
-                        ],
+                      child: LayoutBuilder(
+                        builder: (context, tabBarConstraints) {
+                          return TabBarView(
+                            children: [
+                              _buildScanTab(reservations, selectedReservation),
+                              _buildPresentialTab(
+                                selectedReservation,
+                                selectedCase,
+                              ),
+                              _buildDeliveryTab(selectedReservation, selectedCase),
+                              _buildApprovalsTab(
+                                selectedReservation: selectedReservation,
+                                selectedCase: selectedCase,
+                                canApproveOperator: canApproveOperator,
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ),
                   ],

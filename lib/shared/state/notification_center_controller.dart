@@ -437,6 +437,9 @@ class NotificationCenterController
   }
 
   Future<_NotificationStreamSnapshot> _fetchStream({int? afterId}) async {
+    if (_activeAccessToken == null || _activeAccessToken!.isEmpty) {
+      return _NotificationStreamSnapshot(cursor: afterId ?? 0, items: []);
+    }
     final response = await _dio.get<Map<String, dynamic>>(
       '/notifications/stream',
       queryParameters: {

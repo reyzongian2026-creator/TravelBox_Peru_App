@@ -129,6 +129,15 @@ class WarehouseDetailPage extends ConsumerWidget {
                         '${context.l10n.t('warehouse_detail_score_prefix')}: '
                         '${warehouse.score.toStringAsFixed(1)}',
                       ),
+                      TextButton.icon(
+                        onPressed: () {
+                          context.push(
+                            '/warehouse/${warehouse.id}/ratings?name=${Uri.encodeComponent(warehouse.name)}',
+                          );
+                        },
+                        icon: const Icon(Icons.star_outline, size: 18),
+                        label: Text(context.l10n.t('rating_view_all')),
+                      ),
                     ],
                   ),
                 ),
