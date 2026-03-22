@@ -87,11 +87,7 @@ class _DashboardContent extends ConsumerWidget {
     ).languageCode.trim().toLowerCase();
     final currencyLocale = localeCode == 'es' ? 'es_PE' : localeCode;
 
-    final formatter = NumberFormat.currency(
-      locale: currencyLocale,
-      symbol: 'S/',
-      decimalDigits: 2,
-    );
+    final formatter = NumberFormat.simpleCurrency(locale: currencyLocale);
     final l10n = context.l10n;
     final kpiCards = <_KpiStat>[
       _KpiStat(

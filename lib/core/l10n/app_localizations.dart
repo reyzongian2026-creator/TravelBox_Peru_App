@@ -217,6 +217,8 @@ class AppLocalizations {
       'admin_users_select_warehouse_for_roles':
           'Debes seleccionar al menos una sede para estos roles.',
       'admin_users_update_credentials_of': 'Actualizar credenciales de',
+      'admin_users_bulk_update_error': 'No se pudieron actualizar usuarios',
+      'admin_users_bulk_delete_error': 'No se pudieron eliminar usuarios',
       'admin_reservations_title': 'Reservas admin',
       'admin_reservation_ready_pickup_msg':
           'Reserva lista para recojo en almacen.',
@@ -1370,6 +1372,8 @@ class AppLocalizations {
       'admin_users_select_warehouse_for_roles':
           'You must select at least one warehouse for these roles.',
       'admin_users_update_credentials_of': 'Update credentials for',
+      'admin_users_bulk_update_error': 'Could not bulk update users',
+      'admin_users_bulk_delete_error': 'Could not bulk delete users',
       'admin_reservations_title': 'Admin reservations',
       'admin_reservation_ready_pickup_msg':
           'Reservation ready for pickup at warehouse.',

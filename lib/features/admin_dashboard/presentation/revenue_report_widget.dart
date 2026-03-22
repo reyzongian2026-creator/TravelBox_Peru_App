@@ -28,7 +28,7 @@ class RevenueReportWidget extends ConsumerWidget {
     final l10n = context.l10n;
     final responsive = context.responsive;
     final currencyLocale = 'es_PE';
-    final formatter = NumberFormat.currency(locale: currencyLocale, symbol: 'S/', decimalDigits: 2);
+    final formatter = NumberFormat.simpleCurrency(locale: currencyLocale);
 
     return Card(
       child: Padding(

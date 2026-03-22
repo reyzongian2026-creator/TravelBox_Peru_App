@@ -687,10 +687,10 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   imageUrl: widget.initial?.imageUrl,
                   selectedBytes: _selectedPhoto?.bytes,
                   warehouseName: _nameController.text.trim().isEmpty
-                      ? (widget.initial?.name ?? 'TravelBox')
+                      ? (widget.initial?.name ?? context.l10n.t('app_name'))
                       : _nameController.text.trim(),
                   cityName:
-                      _selectedCityName ?? widget.initial?.cityName ?? 'Peru',
+                      _selectedCityName ?? widget.initial?.cityName ?? context.l10n.t('peru'),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -876,7 +876,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   data: (zones) => citiesAsync.when(
                     data: (cities) {
                       final cityName =
-                          _findCity(cities, _selectedCityId)?.name ?? 'Peru';
+                          _findCity(cities, _selectedCityId)?.name ?? context.l10n.t('peru');
                       final zoneName = _findZone(zones, _selectedZoneId)?.name;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

@@ -583,7 +583,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_update_error')}: ${AppErrorFormatter.readable(e)}'), backgroundColor: Colors.red),
         );
       }
     }
@@ -626,7 +626,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_delete_error')}: ${AppErrorFormatter.readable(e)}'), backgroundColor: Colors.red),
         );
       }
     }
