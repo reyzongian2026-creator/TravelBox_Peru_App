@@ -158,7 +158,7 @@ List<String> _parseExtraServices(Map<String, dynamic> json) {
 }
 
 String? _readImageUrl(Map<String, dynamic> json) {
-  const keys = ['coverImageUrl', 'imageUrl', 'photoUrl', 'image', 'imagen'];
+  const keys = ['coverImageUrl', 'imageUrl', 'photoUrl', 'image', 'imagen', 'url'];
   for (final key in keys) {
     final value = json[key]?.toString();
     if (value != null && value.trim().isNotEmpty) {
