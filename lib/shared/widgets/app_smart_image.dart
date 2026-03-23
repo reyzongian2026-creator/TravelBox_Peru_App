@@ -57,12 +57,20 @@ class AppSmartImage extends StatelessWidget {
       return _fallback();
     }
 
+    final cacheBustedUrl = _addCacheBuster(resolvedUrl);
     return Image.network(
-      resolvedUrl,
+      cacheBustedUrl,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (_, _, _) => _fallback(),
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      errorBuilder: (_, error, stackTrace) {
+        return _fallbackWithDebug(resolvedUrl, error);
+      },
       loadingBuilder: (context, child, progress) {
         if (progress == null) {
           return child;
@@ -86,6 +94,33 @@ class AppSmartImage extends StatelessWidget {
       color: const Color(0xFFE5EEF1),
       alignment: Alignment.center,
       child: const Icon(Icons.image_not_supported_outlined),
+    );
+  }
+
+  Widget _fallbackWithDebug(String url, Object? error) {
+    if (fallback != null) {
+      return fallback!;
+    }
+    return Container(
+      width: width,
+      height: height,
+      color: const Color(0xFFE5EEF1),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.image_not_supported_outlined, size: 20),
+          if (kDebugMode && url.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(4),
+              child: Text(
+                url.length > 30 ? '${url.substring(0, 30)}...' : url,
+                style: const TextStyle(fontSize: 8),
+                textAlign: TextAlign.center,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -144,4 +179,12 @@ Uri _normalizeForAndroidEmulator(Uri input) {
     return input;
   }
   return input.replace(host: '10.0.2.2');
+}
+
+String _addCacheBuster(String url) {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return url;
+  final params = Map<String, String>.from(uri.queryParameters);
+  params['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
+  return uri.replace(queryParameters: params).toString();
 }

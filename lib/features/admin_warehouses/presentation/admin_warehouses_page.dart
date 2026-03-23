@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -336,7 +338,15 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
           createdId.isNotEmpty &&
           AppEnv.azureStorageUploadsEnabled &&
           form.selectedPhoto != null) {
-        await _uploadWarehousePhoto(createdId, form.selectedPhoto!);
+        final newImageUrl = await _uploadWarehousePhoto(createdId, form.selectedPhoto!);
+        if (newImageUrl != null) {
+          await ref
+              .read(dioProvider)
+              .put<Map<String, dynamic>>(
+                '/admin/warehouses/$createdId',
+                data: form.toJsonWithImageUrl(newImageUrl),
+              );
+        }
       }
       _refreshWarehouseViews();
       _searchController.clear();
@@ -369,7 +379,12 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       if (AppEnv.azureStorageUploadsEnabled && form.selectedPhoto != null) {
         final newImageUrl = await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
         if (newImageUrl != null) {
-          warehouse = warehouse.copyWith(imageUrl: newImageUrl);
+          await ref
+              .read(dioProvider)
+              .put<Map<String, dynamic>>(
+                '/admin/warehouses/${warehouse.id}',
+                data: form.toJsonWithImageUrl(newImageUrl),
+              );
         }
       }
       _refreshWarehouseViews();
@@ -404,12 +419,25 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
             ),
           }),
         );
-    if (response.data != null && response.data!.containsKey('imageUrl')) {
-      return response.data!['imageUrl']?.toString();
+    if (kDebugMode) {
+      print('Upload photo response: ${response.data}');
     }
-    if (response.data != null && response.data!.containsKey('coverImageUrl')) {
-      return response.data!['coverImageUrl']?.toString();
+    final data = response.data;
+    if (data == null) {
+      if (kDebugMode) print('No data in response');
+      return null;
     }
+    final possibleKeys = ['imageUrl', 'coverImageUrl', 'url', 'image', 'photoUrl'];
+    for (final key in possibleKeys) {
+      if (data.containsKey(key) && data[key] != null) {
+        final url = data[key].toString();
+        if (url.isNotEmpty) {
+          if (kDebugMode) print('$key from response: $url');
+          return url;
+        }
+      }
+    }
+    if (kDebugMode) print('No imageUrl found in response. Keys: ${data.keys.toList()}');
     return null;
   }
 
@@ -1358,12 +1386,17 @@ class _WarehousePhotoPreview extends StatelessWidget {
 
     Widget child;
     if (selectedBytes != null) {
+      final dataUrl = 'data:image/png;base64,${base64Encode(selectedBytes!)}';
       child = Stack(
         fit: StackFit.expand,
         children: [
-          Image.memory(
-            selectedBytes!,
+          Image.network(
+            dataUrl,
             fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => Image.memory(
+              selectedBytes!,
+              fit: BoxFit.cover,
+            ),
           ),
           Positioned(
             bottom: 8,
@@ -1527,6 +1560,7 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
               dataRowMaxHeight: compact ? 58 : 62,
               columns: [
                 const DataColumn(label: SizedBox.shrink()),
+                DataColumn(label: Text(context.l10n.t('foto'))),
                 DataColumn(label: Text(context.l10n.t('id'))),
                 DataColumn(label: Text(context.l10n.t('almacen'))),
                 DataColumn(label: Text(context.l10n.t('ciudad'))),
@@ -1572,6 +1606,20 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
                                 visualDensity: VisualDensity.compact,
                               ),
                             ],
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: AppSmartImage(
+                                source: item.imageUrl,
+                                width: 48,
+                                height: 48,
+                              ),
+                            ),
                           ),
                         ),
                         DataCell(Text(item.id)),
@@ -1945,10 +1993,17 @@ class WarehouseFormData {
       'insuranceFee': insuranceFee,
     };
   }
+
+  Map<String, dynamic> toJsonWithImageUrl(String url) {
+    final data = toJson();
+    data['imageUrl'] = url;
+    data['coverImageUrl'] = url;
+    return data;
+  }
 }
 
 String? _readWarehouseImageUrl(Map<String, dynamic> json) {
-  const keys = ['coverImageUrl', 'imageUrl', 'photoUrl', 'image', 'imagen'];
+  const keys = ['coverImageUrl', 'imageUrl', 'photoUrl', 'image', 'imagen', 'url'];
   for (final key in keys) {
     final value = json[key]?.toString();
     if (value != null && value.trim().isNotEmpty) {

@@ -45,7 +45,7 @@ extension CurrencyCodeExtension on CurrencyCode {
       case CurrencyCode.usd:
         return const Locale('en', 'US');
       case CurrencyCode.eur:
-        return const Locale('de', 'DE');
+         return const Locale('es', 'PE');
     }
   }
 }
