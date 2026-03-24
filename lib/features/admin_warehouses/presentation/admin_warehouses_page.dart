@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -370,23 +368,22 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 
     setState(() => _saving = true);
     try {
+      Map<String, dynamic> updateData = form.toJson();
+      if (form.selectedPhoto != null) {
+        final newImageUrl = await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
+        if (newImageUrl != null) {
+          updateData = form.toJsonWithImageUrl(newImageUrl);
+        }
+      } else if (form.imageUrl != null && form.imageUrl!.isNotEmpty) {
+        updateData = form.toJsonWithImageUrl(form.imageUrl!);
+      }
+
       await ref
           .read(dioProvider)
           .put<Map<String, dynamic>>(
             '/admin/warehouses/${warehouse.id}',
-            data: form.toJson(),
+            data: updateData,
           );
-      if (AppEnv.azureStorageUploadsEnabled && form.selectedPhoto != null) {
-        final newImageUrl = await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
-        if (newImageUrl != null) {
-          await ref
-              .read(dioProvider)
-              .put<Map<String, dynamic>>(
-                '/admin/warehouses/${warehouse.id}',
-                data: form.toJsonWithImageUrl(newImageUrl),
-              );
-        }
-      }
       _refreshWarehouseViews();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -669,7 +666,30 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
       );
       return;
     }
+
+    final validationError = _validateImageSize(image);
+    if (validationError != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(validationError),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _selectedPhoto = image);
+  }
+
+  String? _validateImageSize(SelectedEvidenceImage image) {
+    const minSizeBytes = 5 * 1024;
+
+    if (image.bytes.length < minSizeBytes) {
+      return 'La imagen es muy pequena. Tamano minimo: 5KB';
+    }
+
+    return null;
   }
 
   void _clearPhotoSelection() {
@@ -1386,17 +1406,12 @@ class _WarehousePhotoPreview extends StatelessWidget {
 
     Widget child;
     if (selectedBytes != null) {
-      final dataUrl = 'data:image/png;base64,${base64Encode(selectedBytes!)}';
       child = Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            dataUrl,
+          Image.memory(
+            selectedBytes!,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Image.memory(
-              selectedBytes!,
-              fit: BoxFit.cover,
-            ),
           ),
           Positioned(
             bottom: 8,

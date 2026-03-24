@@ -9,6 +9,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
+import '../../../shared/state/warehouse_catalog_sync.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/peru_flat_scene.dart';
@@ -19,6 +20,7 @@ final warehouseDetailProvider = FutureProvider.family((
   String warehouseId,
 ) {
   ref.watch(realtimeAppEventCursorProvider);
+  ref.watch(warehouseCatalogVersionProvider);
   return ref.read(discoveryRepositoryProvider).getWarehouseById(warehouseId);
 });
 
