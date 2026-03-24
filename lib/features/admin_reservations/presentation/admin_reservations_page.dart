@@ -11,7 +11,7 @@ import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/status_localizer.dart';
-import '../../../shared/utils/file_exporter_web.dart';
+import '../../../shared/utils/file_exporter.dart';
 import '../../reservation/data/reservation_repository_impl.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
