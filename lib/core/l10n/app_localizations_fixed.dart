@@ -1276,6 +1276,11 @@ class AppLocalizations {
     },
   };
 }
+
+extension _BuildContextExtension on BuildContext {
+  AppLocalizations get l10n => AppLocalizations.of(this);
+}
+
 class _Delegate extends LocalizationsDelegate<AppLocalizations> {
   const _Delegate();
   @override bool isSupported(Locale l) => ["es","en","de","fr","it","pt"].contains(l.languageCode);
