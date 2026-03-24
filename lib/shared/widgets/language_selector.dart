@@ -22,7 +22,7 @@ class LanguageSelector extends ConsumerWidget {
 
     return PopupMenuButton<String>(
       icon: const Icon(Icons.language),
-      tooltip: 'Cambiar idioma',
+      tooltip: 'Change language',
       onSelected: (String languageCode) {
         ref.read(sessionControllerProvider.notifier).setSessionLanguage(languageCode);
       },
@@ -79,7 +79,7 @@ Future<void> showLanguageSelectorDialog(BuildContext context) async {
         children: [
           Icon(Icons.language),
           SizedBox(width: 8),
-          Text('Cambiar idioma'),
+          Text('Change language'),
         ],
       ),
       content: Column(
@@ -97,7 +97,7 @@ Future<void> showLanguageSelectorDialog(BuildContext context) async {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cerrar'),
+          child: const Text('Close'),
         ),
       ],
     ),

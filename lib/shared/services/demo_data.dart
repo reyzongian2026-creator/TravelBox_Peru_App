@@ -22,7 +22,7 @@ class DemoData {
       insuranceFee: 7.5,
       score: 4.8,
       availableSlots: 32,
-      extraServices: ['Seguro basico', 'Delivery', 'Locker XL'],
+      extraServices: ['Basic insurance', 'Delivery', 'Locker XL'],
     ),
     Warehouse(
       id: 'wh-lim-bar-02',
@@ -43,7 +43,7 @@ class DemoData {
       insuranceFee: 7.5,
       score: 4.7,
       availableSlots: 18,
-      extraServices: ['Delivery', 'Foto evidencia'],
+      extraServices: ['Delivery', 'Photo evidence'],
     ),
     Warehouse(
       id: 'wh-cus-cen-01',
@@ -64,7 +64,7 @@ class DemoData {
       insuranceFee: 8.0,
       score: 4.9,
       availableSlots: 21,
-      extraServices: ['Seguro premium', 'Recojo hotel'],
+      extraServices: ['Premium insurance', 'Hotel pickup'],
     ),
   ];
 
@@ -81,7 +81,7 @@ class DemoData {
       ReservationTimelineEvent(
         status: ReservationStatus.confirmed,
         timestamp: DateTime.now(),
-        message: 'Reserva confirmada y QR generado',
+        message: 'Reservation confirmed and QR generated',
       ),
     ];
   }

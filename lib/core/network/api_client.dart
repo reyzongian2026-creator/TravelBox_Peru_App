@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/models/app_user.dart';
+import '../../shared/services/app_error_report_service.dart';
 import '../../shared/state/local_realtime_mutation_tick_provider.dart';
 import '../../shared/state/session_controller.dart';
 import '../env/app_env.dart';
@@ -71,6 +73,8 @@ final dioProvider = Provider<Dio>((ref) {
         final request = error.requestOptions;
         final alreadyRetried = request.extra['__retried'] == true;
         final isAuthEndpoint = request.path.startsWith('/auth/');
+
+        _reportNetworkError(error);
 
         if (statusCode == 401 && !alreadyRetried && !isAuthEndpoint) {
           if (!_isRefreshing) {
@@ -142,6 +146,32 @@ final dioProvider = Provider<Dio>((ref) {
 
   return dio;
 });
+
+void _reportNetworkError(DioException error) {
+  final service = AppErrorReportNotifier.getGlobalService();
+  if (service == null) return;
+
+  final endpoint = error.requestOptions.path;
+  final statusCode = error.response?.statusCode;
+  final message = error.message ?? 'Unknown error';
+  final stackTrace = error.stackTrace.toString();
+
+  String? requestBody;
+  try {
+    final data = error.requestOptions.data;
+    if (data != null) {
+      if (data is Map || data is FormData) {
+        requestBody = data.toString();
+      }
+    }
+  } catch (_) {}
+
+  service.reportNetworkError(endpoint, statusCode, message, stackTrace, requestBody);
+
+  if (kDebugMode) {
+    debugPrint('[NETWORK ERROR] $statusCode $endpoint - $message');
+  }
+}
 
 bool _shouldSkipRetry(RequestOptions request) {
   final path = request.path.toLowerCase();

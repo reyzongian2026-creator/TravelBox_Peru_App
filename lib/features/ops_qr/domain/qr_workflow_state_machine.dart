@@ -16,21 +16,21 @@ extension QrWorkflowStepX on QrWorkflowStep {
   String get label {
     switch (this) {
       case QrWorkflowStep.scan:
-        return 'Escanear QR';
+        return 'Scan QR';
       case QrWorkflowStep.validate:
-        return 'Validar reserva';
+        return 'Validate reservation';
       case QrWorkflowStep.tagBags:
-        return 'Etiquetar equipajes';
+        return 'Tag luggage';
       case QrWorkflowStep.capturePhotos:
-        return 'Capturar fotos';
+        return 'Capture photos';
       case QrWorkflowStep.storeInWarehouse:
-        return 'Almacenar';
+        return 'Store';
       case QrWorkflowStep.generatePickupPin:
-        return 'Generar PIN';
+        return 'Generate PIN';
       case QrWorkflowStep.customerPickupOrDelivery:
-        return 'Entrega';
+        return 'Delivery';
       case QrWorkflowStep.complete:
-        return 'Completado';
+        return 'Completed';
     }
   }
 

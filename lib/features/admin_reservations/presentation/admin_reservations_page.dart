@@ -559,8 +559,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(success 
-                ? 'Descarga completada' 
-                : 'Error al descargar'),
+                ? 'Download completed' 
+                : 'Error downloading'),
           ),
         );
       }
@@ -574,7 +574,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al descargar: $message'),
+          content: Text('Error downloading: $message'),
           backgroundColor: Colors.red,
         ),
       );

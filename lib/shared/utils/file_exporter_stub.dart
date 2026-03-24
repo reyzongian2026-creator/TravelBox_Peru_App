@@ -8,6 +8,10 @@ Future<bool> downloadTextFile({
   return false;
 }
 
+Future<bool> downloadFromUrl(String downloadUrl, String filename) async {
+  return false;
+}
+
 Future<bool> openPrintPreview({
   required String title,
   required String htmlContent,

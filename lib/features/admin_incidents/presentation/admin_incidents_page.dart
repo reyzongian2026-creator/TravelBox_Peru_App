@@ -280,6 +280,30 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                 context.l10n.t('exportar_pdf_resueltos'),
                               ),
                             ),
+                            FilledButton.icon(
+                              onPressed: _saving
+                                  ? null
+                                  : () => _exportProfessionalPdf(),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                                visualDensity: VisualDensity.compact,
+                                backgroundColor: const Color(0xFF168F64),
+                              ),
+                              icon: const Icon(Icons.picture_as_pdf),
+                              label: const Text('PDF Report'),
+                            ),
+                            FilledButton.icon(
+                              onPressed: _saving
+                                  ? null
+                                  : () => _exportProfessionalExcel(),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                                visualDensity: VisualDensity.compact,
+                                backgroundColor: const Color(0xFF168F64),
+                              ),
+                              icon: const Icon(Icons.table_chart),
+                              label: const Text('Excel Report'),
+                            ),
                             if (resolvedItems.isEmpty)
                               Chip(
                                 label: Text(
@@ -659,6 +683,80 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
       success: success,
       successMessage: context.l10n.t('admin_incidents_print_preview_opened'),
     );
+  }
+
+  Future<void> _exportProfessionalPdf() async {
+    setState(() => _saving = true);
+    try {
+      final status = ref.read(adminIncidentsStatusProvider);
+      final query = ref.read(adminIncidentsSearchProvider);
+      final response = await ref.read(dioProvider).post<Map<String, dynamic>>(
+        '/incidents/reports/export/pdf',
+        data: {
+          if (status != 'ALL') 'status': status,
+          if (query.isNotEmpty) 'query': query,
+        },
+      );
+      final data = response.data;
+      if (data == null || !mounted) return;
+      final downloadUrl = data['downloadUrl'] as String?;
+      final fileName = data['fileName'] as String?;
+      if (downloadUrl == null || fileName == null) return;
+      await downloadFromUrl(downloadUrl, fileName);
+      if (!mounted) return;
+      _showExportFeedback(
+        success: true,
+        successMessage: 'PDF report generated successfully',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate PDF: ${_errorMessage(error)}'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  Future<void> _exportProfessionalExcel() async {
+    setState(() => _saving = true);
+    try {
+      final status = ref.read(adminIncidentsStatusProvider);
+      final query = ref.read(adminIncidentsSearchProvider);
+      final response = await ref.read(dioProvider).post<Map<String, dynamic>>(
+        '/incidents/reports/export/excel',
+        data: {
+          if (status != 'ALL') 'status': status,
+          if (query.isNotEmpty) 'query': query,
+        },
+      );
+      final data = response.data;
+      if (data == null || !mounted) return;
+      final downloadUrl = data['downloadUrl'] as String?;
+      final fileName = data['fileName'] as String?;
+      if (downloadUrl == null || fileName == null) return;
+      await downloadFromUrl(downloadUrl, fileName);
+      if (!mounted) return;
+      _showExportFeedback(
+        success: true,
+        successMessage: 'Excel report generated successfully',
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate Excel: ${_errorMessage(error)}'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
   }
 
   void _showExportFeedback({

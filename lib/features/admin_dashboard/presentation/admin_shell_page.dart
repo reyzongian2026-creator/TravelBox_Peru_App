@@ -59,7 +59,7 @@ class AdminShellPage extends ConsumerWidget {
       AdminUsersPage(),
       AdminWarehousesPage(),
       AdminReservationsPage(),
-      DeliveryMonitorPage(title: 'tracking_logistico', currentRoute: '/admin/delivery'),
+      DeliveryMonitorPage(title: l10n.t('tracking_logistico'), currentRoute: '/admin/delivery'),
       AdminIncidentsPage(currentRoute: '/admin/incidents'),
       AdminPaymentsHistoryPage(),
       AdminRatingsPage(),
@@ -71,7 +71,7 @@ class AdminShellPage extends ConsumerWidget {
       initialIndex: currentIndex,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(l10n.t('admin_panel')),
+          title: Text(l10n.t('admin_dashboard_title')),
           bottom: TabBar(
             isScrollable: responsive.isMobile,
             tabs: tabs.map((t) => Tab(icon: Icon(t.icon), text: t.label)).toList(),

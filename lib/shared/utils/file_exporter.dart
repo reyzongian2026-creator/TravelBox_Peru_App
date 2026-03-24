@@ -16,6 +16,10 @@ Future<bool> downloadTextFile({
   );
 }
 
+Future<bool> downloadFromUrl(String downloadUrl, String filename) {
+  return impl.downloadFromUrl(downloadUrl, filename);
+}
+
 Future<bool> openPrintPreview({
   required String title,
   required String htmlContent,

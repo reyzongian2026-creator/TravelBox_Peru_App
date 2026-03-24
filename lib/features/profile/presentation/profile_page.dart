@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/app_user.dart';
+import '../../../shared/services/app_error_report_service.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/internal_message_translator.dart';
 import '../../../shared/widgets/app_smart_image.dart';
@@ -178,6 +180,27 @@ class ProfilePage extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: () async {
               final refreshToken = session.refreshToken?.trim();
+              
+              try {
+                final jsonReporte = await AppErrorReportNotifier.exportAndClearBeforeLogout();
+                
+                if (!context.mounted) return;
+                
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => _ErrorReportDialog(jsonReporte: jsonReporte),
+                );
+                
+                if (shouldLogout != true) return;
+                
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error al exportar reporte: $e')),
+                );
+              }
+              
               await ref.read(sessionControllerProvider.notifier).signOut();
               if (!context.mounted) return;
               context.go('/login');
@@ -207,5 +230,119 @@ class _ProfileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(title: Text(label), subtitle: Text(value));
+  }
+}
+
+class _ErrorReportDialog extends StatelessWidget {
+  const _ErrorReportDialog({required this.jsonReporte});
+
+  final String jsonReporte;
+
+  @override
+  Widget build(BuildContext context) {
+    Map<String, dynamic>? parsed;
+    try {
+      parsed = jsonDecode(jsonReporte) as Map<String, dynamic>;
+    } catch (_) {
+      parsed = null;
+    }
+    
+    final totalErrors = parsed?['totalErrors'] ?? 0;
+    final errorsByType = parsed?['errorsByType'] as Map<String, dynamic>? ?? {};
+    
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.bug_report, color: totalErrors > 0 ? Colors.orange : Colors.green),
+          const SizedBox(width: 8),
+          const Text('Reporte de errores'),
+        ],
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              totalErrors == 0
+                  ? 'No se encontraron errores durante la sesión.'
+                  : 'Se encontraron $totalErrors errores durante la sesión. '
+                    'Puedes copiar el reporte antes de cerrar.',
+            ),
+            if (errorsByType.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              const Text('Resumen por tipo:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              ...errorsByType.entries.map((e) => Padding(
+                padding: const EdgeInsets.only(left: 8, top: 2),
+                child: Row(
+                  children: [
+                    Icon(_getIconForType(e.key), size: 16),
+                    const SizedBox(width: 4),
+                    Text('${e.key}: ${e.value}'),
+                  ],
+                ),
+              )),
+            ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              constraints: const BoxConstraints(maxHeight: 250),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  jsonReporte.length > 4000 
+                      ? '${jsonReporte.substring(0, 4000)}...\n\n(Contenido truncado - descarga el archivo completo)'
+                      : jsonReporte,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Saltar'),
+        ),
+        FilledButton.icon(
+          onPressed: () {
+            _copyToClipboard(context, jsonReporte);
+            Navigator.of(context).pop(true);
+          },
+          icon: const Icon(Icons.copy, size: 18),
+          label: const Text('Copiar reporte'),
+        ),
+      ],
+    );
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'i18n': return Icons.translate;
+      case 'network': return Icons.wifi_off;
+      case 'flutter': return Icons.error_outline;
+      case 'validation': return Icons.warning;
+      case 'operation': return Icons.play_arrow;
+      case 'firebase': return Icons.cloud_off;
+      default: return Icons.help_outline;
+    }
+  }
+
+  void _copyToClipboard(BuildContext context, String text) {
+    debugPrint('[ERROR REPORT] Reporte copiado al portapapeles');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Reporte copiado. Disponible también en consola.'),
+        duration: Duration(seconds: 5),
+      ),
+    );
   }
 }

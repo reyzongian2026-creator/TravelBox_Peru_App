@@ -24,6 +24,17 @@ Future<bool> downloadTextFile({
   return true;
 }
 
+Future<bool> downloadFromUrl(String downloadUrl, String filename) async {
+  final anchor = html.AnchorElement(href: downloadUrl)
+    ..download = filename
+    ..target = '_blank'
+    ..style.display = 'none';
+  html.document.body?.children.add(anchor);
+  anchor.click();
+  anchor.remove();
+  return true;
+}
+
 Future<bool> openPrintPreview({
   required String title,
   required String htmlContent,

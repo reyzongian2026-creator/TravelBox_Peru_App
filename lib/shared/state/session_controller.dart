@@ -123,10 +123,24 @@ class SessionState {
   }
 
   factory SessionState.fromJson(Map<String, dynamic> json) {
-    // Force Spanish as default when restoring from storage to prevent cross-language issues
-    // Always default to Spanish for both to ensure consistency
-    final finalLocale = const Locale('es');
-    final finalSessionLang = 'es';
+    // Use saved locale and sessionLanguage if available, otherwise default to Spanish
+    final savedLocaleCode = json['locale']?.toString().trim().toLowerCase();
+    final savedSessionLang = json['sessionLanguage']?.toString().trim().toLowerCase();
+    
+    Locale finalLocale;
+    String finalSessionLang;
+    
+    if (savedLocaleCode != null && savedLocaleCode.isNotEmpty && _supportedLanguageCodes.contains(savedLocaleCode)) {
+      finalLocale = Locale(savedLocaleCode);
+    } else {
+      finalLocale = const Locale('es');
+    }
+    
+    if (savedSessionLang != null && savedSessionLang.isNotEmpty && _supportedLanguageCodes.contains(savedSessionLang)) {
+      finalSessionLang = savedSessionLang;
+    } else {
+      finalSessionLang = 'es';
+    }
     
     return SessionState(
       locale: finalLocale,
