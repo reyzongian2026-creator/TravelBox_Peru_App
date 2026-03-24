@@ -33,7 +33,7 @@ import '../../features/auth/presentation/verify_email_page.dart';
 import '../../features/warehouse/presentation/warehouse_detail_page.dart';
 import '../../features/Rating/presentation/warehouse_ratings_page.dart';
 import '../debug/debug_text_page.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_fixed.dart';
 import '../../shared/state/session_controller.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {

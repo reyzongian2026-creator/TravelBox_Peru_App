@@ -12,7 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart' as latlong_pkg;
 
 import '../../../core/layout/responsive_layout.dart';
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';

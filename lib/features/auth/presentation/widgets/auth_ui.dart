@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/layout/responsive_layout.dart';
-import '../../../../core/l10n/app_localizations.dart';
+import '../../../../core/l10n/app_localizations_fixed.dart';
 import '../../../../core/theme/brand_tokens.dart';
 import 'auth_teddy_animation.dart';
 

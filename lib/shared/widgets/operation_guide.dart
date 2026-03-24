@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/app_localizations_fixed.dart';
 
 class OperationGuideStep {
   const OperationGuideStep({

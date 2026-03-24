@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/layout/responsive_layout.dart';
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/state_views.dart';
 import '../data/admin_dashboard_repository.dart';
 

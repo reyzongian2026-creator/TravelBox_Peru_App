@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_fixed.dart';
 
 class LoadingStateView extends StatelessWidget {
   const LoadingStateView({super.key, this.message = 'Cargando...'});

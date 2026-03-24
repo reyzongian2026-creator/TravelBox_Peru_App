@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
 import '../../../shared/widgets/travelbox_logo.dart';

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/app_user.dart';

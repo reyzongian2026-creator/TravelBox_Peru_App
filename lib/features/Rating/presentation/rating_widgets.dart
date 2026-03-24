@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:travelbox_peru_app/core/l10n/app_localizations.dart';
+import 'package:travelbox_peru_app/core/l10n/app_localizations_fixed.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_model.dart';
 
 class StarRatingWidget extends StatelessWidget {

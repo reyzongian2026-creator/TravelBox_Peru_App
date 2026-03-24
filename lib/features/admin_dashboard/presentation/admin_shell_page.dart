@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/layout/responsive_layout.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_ratings_page.dart';

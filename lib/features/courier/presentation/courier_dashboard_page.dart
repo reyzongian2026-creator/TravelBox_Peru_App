@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/app_shell_scaffold.dart';

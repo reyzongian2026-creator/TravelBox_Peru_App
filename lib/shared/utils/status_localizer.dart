@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/app_localizations_fixed.dart';
 import '../models/reservation.dart';
 
 extension ReservationStatusLocalizationX on ReservationStatus {

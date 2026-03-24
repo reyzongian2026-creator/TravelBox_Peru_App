@@ -1,4 +1,4 @@
-import '../../core/l10n/app_localizations.dart';
+import '../../core/l10n/app_localizations_fixed.dart';
 
 class FormValidators {
   const FormValidators._();

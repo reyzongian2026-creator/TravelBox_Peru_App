@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/theme/brand_tokens.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';

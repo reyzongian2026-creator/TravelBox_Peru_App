@@ -13,7 +13,7 @@ import '../../shared/widgets/operation_guide.dart';
 import '../../shared/widgets/travelbox_logo.dart';
 import '../layout/mobile_nav_behavior.dart';
 import '../layout/responsive_layout.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_fixed.dart';
 import '../theme/brand_tokens.dart';
 
 class AppShellScaffold extends ConsumerStatefulWidget {
