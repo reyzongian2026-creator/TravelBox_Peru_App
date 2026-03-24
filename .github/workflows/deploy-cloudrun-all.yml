@@ -255,6 +255,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       PROJECT_ID: ${{ inputs.project_id }}
       REGION: ${{ inputs.region }}
       FRONTEND_SERVICE_NAME: ${{ inputs.frontend_service_name }}
