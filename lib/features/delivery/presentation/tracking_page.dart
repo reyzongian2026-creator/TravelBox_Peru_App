@@ -5,9 +5,9 @@ import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:latlong2/latlong.dart' as latlong_pkg;
 
+import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
@@ -194,7 +194,9 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
           ),
           children: [
             flutter_map.TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
+                  ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
+                  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.travelbox.peru.app',
             ),
             if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
@@ -213,46 +215,49 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
     List<latlong_pkg.LatLng> routePoints,
     var route,
   ) {
-    LatLng toGoogleLatLng(latlong_pkg.LatLng latLng) {
-      return LatLng(latLng.latitude, latLng.longitude);
-    }
+    final markers = <flutter_map.Marker>[
+      flutter_map.Marker(
+        point: current,
+        width: 40,
+        height: 40,
+        child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+      ),
+      flutter_map.Marker(
+        point: destination,
+        width: 40,
+        height: 40,
+        child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
+      ),
+    ];
 
-    final googleRoutePoints = routePoints.map(toGoogleLatLng).toList();
+    final polyline = routePoints.isNotEmpty
+        ? flutter_map.Polyline(
+            points: routePoints,
+            color: route?.fallbackUsed == true
+                ? const Color(0xFF3B82F6)
+                : const Color(0xFF0B8B8C),
+            strokeWidth: 4,
+          )
+        : null;
 
     return Card(
       child: SizedBox(
         height: responsive.mapHeight(max: 460),
-        child: GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: toGoogleLatLng(current),
-            zoom: 13,
+        child: flutter_map.FlutterMap(
+          options: flutter_map.MapOptions(
+            initialCenter: current,
+            initialZoom: 13,
           ),
-          polylines: {
-            Polyline(
-              polylineId: const PolylineId('route'),
-              points: googleRoutePoints,
-              color: route?.fallbackUsed == true
-                  ? const Color(0xFF3B82F6)
-                  : const Color(0xFF0B8B8C),
-              width: 4,
+          children: [
+            flutter_map.TileLayer(
+              urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
+                  ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
+                  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.travelbox.peru.app',
             ),
-          },
-          markers: {
-            Marker(
-              markerId: const MarkerId('current'),
-              position: toGoogleLatLng(current),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            ),
-            Marker(
-              markerId: const MarkerId('destination'),
-              position: toGoogleLatLng(destination),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            ),
-          },
-          myLocationEnabled: false,
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-          mapToolbarEnabled: false,
+            if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
+            flutter_map.MarkerLayer(markers: markers),
+          ],
         ),
       ),
     );

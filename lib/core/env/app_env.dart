@@ -81,10 +81,36 @@ class AppEnv {
     defaultValue: '',
   );
 
+  static const azureMapsApiKey = String.fromEnvironment(
+    'AZURE_MAPS_API_KEY',
+    defaultValue: '',
+  );
+
+  static const azureTranslatorKey = String.fromEnvironment(
+    'AZURE_TRANSLATOR_KEY',
+    defaultValue: '',
+  );
+
+  static const azureClientId = String.fromEnvironment(
+    'AZURE_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  static const azureTenantId = String.fromEnvironment(
+    'AZURE_TENANT_ID',
+    defaultValue: '',
+  );
+
   static bool get hasFirebaseClientAuthConfig =>
       firebaseApiKey.trim().isNotEmpty &&
       firebaseProjectId.trim().isNotEmpty &&
       firebaseMessagingSenderId.trim().isNotEmpty;
+
+  static bool get hasEntraAuthConfig =>
+      azureClientId.trim().isNotEmpty &&
+      azureTenantId.trim().isNotEmpty;
+
+  static bool get hasAzureMapsConfig => azureMapsApiKey.trim().isNotEmpty;
 
   static bool get isProduction {
     final normalized = appEnvironment.trim().toLowerCase();
@@ -100,9 +126,14 @@ class AppEnv {
         'Configuracion insegura: USE_MOCK_FALLBACK=true en APP_ENV=prod.',
       );
     }
-    if (!hasFirebaseClientAuthConfig) {
+    if (!hasEntraAuthConfig && !hasFirebaseClientAuthConfig) {
       throw StateError(
-        'Configuracion insegura: faltan FIREBASE_API_KEY/FIREBASE_PROJECT_ID/FIREBASE_MESSAGING_SENDER_ID en APP_ENV=prod.',
+        'Configuracion insegura: faltan AZURE_CLIENT_ID/AZURE_TENANT_ID o FIREBASE_API_KEY en APP_ENV=prod.',
+      );
+    }
+    if (!hasAzureMapsConfig && googleMapsApiKey.trim().isEmpty) {
+      throw StateError(
+        'Configuracion insegura: faltan AZURE_MAPS_API_KEY o GOOGLE_MAPS_API_KEY en APP_ENV=prod.',
       );
     }
     final apiHost = Uri.tryParse(apiBaseUrl)?.host.trim().toLowerCase() ?? '';

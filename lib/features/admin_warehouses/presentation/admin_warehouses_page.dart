@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import '../../../core/l10n/app_localizations_fixed.dart';
+import 'package:latlong2/latlong.dart' as latlong_pkg;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http_parser/http_parser.dart';
+
+import '../../../core/l10n/app_localizations_fixed.dart';
 
 import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
@@ -1252,7 +1253,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
 
     final initialPoint = _resolveMapPoint(zones);
     final anchorPoint = _resolveAnchorPoint(zones);
-    final selected = await showDialog<LatLng>(
+    final selected = await showDialog<latlong_pkg.LatLng>(
       context: context,
       builder: (context) => WarehouseLocationPickerDialog(
         initialPoint: initialPoint,
@@ -1269,27 +1270,27 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     });
   }
 
-  LatLng _resolveMapPoint(List<ZoneOption> zones) {
+  latlong_pkg.LatLng _resolveMapPoint(List<ZoneOption> zones) {
     final latitude = FormValidators.parseDouble(_latitudeController.text);
     final longitude = FormValidators.parseDouble(_longitudeController.text);
     if (latitude != null && longitude != null) {
-      return LatLng(latitude, longitude);
+      return latlong_pkg.LatLng(latitude, longitude);
     }
     final zone = _findZone(zones, _selectedZoneId);
     if (zone?.latitude != null && zone?.longitude != null) {
-      return LatLng(zone!.latitude!, zone.longitude!);
+      return latlong_pkg.LatLng(zone!.latitude!, zone.longitude!);
     }
     final cityCenter = _cityCenter(_selectedCityName);
     if (cityCenter != null) {
       return cityCenter;
     }
-    return LatLng(-12.046374, -77.042793);
+    return latlong_pkg.LatLng(-12.046374, -77.042793);
   }
 
-  LatLng? _resolveAnchorPoint(List<ZoneOption> zones) {
+  latlong_pkg.LatLng? _resolveAnchorPoint(List<ZoneOption> zones) {
     final zone = _findZone(zones, _selectedZoneId);
     if (zone?.latitude != null && zone?.longitude != null) {
-      return LatLng(zone!.latitude!, zone.longitude!);
+      return latlong_pkg.LatLng(zone!.latitude!, zone.longitude!);
     }
     return _cityCenter(_selectedCityName);
   }
@@ -1333,7 +1334,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     return null;
   }
 
-  LatLng? _cityCenter(String? cityName) {
+  latlong_pkg.LatLng? _cityCenter(String? cityName) {
     if (cityName == null || cityName.trim().isEmpty) return null;
     return _peruCityCenters[cityName.trim().toLowerCase()];
   }
@@ -1736,17 +1737,17 @@ class CityOption {
   }
 }
 
-const Map<String, LatLng> _peruCityCenters = {
-  'lima': LatLng(-12.046374, -77.042793),
-  'cusco': LatLng(-13.53195, -71.967463),
-  'arequipa': LatLng(-16.398866, -71.536961),
-  'ica': LatLng(-14.06777, -75.72861),
-  'puno': LatLng(-15.840221, -70.021881),
-  'paracas': LatLng(-13.836423, -76.251228),
-  'nazca': LatLng(-14.833284, -74.938774),
-  'trujillo': LatLng(-8.111763, -79.028687),
-  'piura': LatLng(-5.19449, -80.63282),
-  'mancora': LatLng(-4.10695, -81.05108),
+const Map<String, latlong_pkg.LatLng> _peruCityCenters = {
+  'lima': latlong_pkg.LatLng(-12.046374, -77.042793),
+  'cusco': latlong_pkg.LatLng(-13.53195, -71.967463),
+  'arequipa': latlong_pkg.LatLng(-16.398866, -71.536961),
+  'ica': latlong_pkg.LatLng(-14.06777, -75.72861),
+  'puno': latlong_pkg.LatLng(-15.840221, -70.021881),
+  'paracas': latlong_pkg.LatLng(-13.836423, -76.251228),
+  'nazca': latlong_pkg.LatLng(-14.833284, -74.938774),
+  'trujillo': latlong_pkg.LatLng(-8.111763, -79.028687),
+  'piura': latlong_pkg.LatLng(-5.19449, -80.63282),
+  'mancora': latlong_pkg.LatLng(-4.10695, -81.05108),
 };
 
 class ZoneOption {

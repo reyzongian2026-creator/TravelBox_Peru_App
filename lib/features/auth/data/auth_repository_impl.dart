@@ -6,27 +6,34 @@ import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/utils/app_exception.dart';
-import 'firebase_client_auth_service.dart';
+import 'firebase_client_auth_service.dart' as firebase;
+import 'entra_client_auth_service.dart';
 import '../domain/auth_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     ref.watch(dioProvider),
     ref.watch(firebaseClientAuthServiceProvider),
+    ref.watch(entraClientAuthServiceProvider),
   );
 });
 
-final firebaseClientAuthServiceProvider = Provider<FirebaseClientAuthService>((
+final firebaseClientAuthServiceProvider = Provider<firebase.FirebaseClientAuthService>((
   ref,
 ) {
-  return FirebaseClientAuthService();
+  return firebase.FirebaseClientAuthService();
+});
+
+final entraClientAuthServiceProvider = Provider<EntraClientAuthService>((ref) {
+  return EntraClientAuthService();
 });
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._dio, this._firebaseClientAuthService);
+  AuthRepositoryImpl(this._dio, this._firebaseClientAuthService, this._entraClientAuthService);
 
   final Dio _dio;
-  final FirebaseClientAuthService _firebaseClientAuthService;
+  final firebase.FirebaseClientAuthService _firebaseClientAuthService;
+  final EntraClientAuthService _entraClientAuthService;
 
   @override
   Future<AuthSession> login({
@@ -131,9 +138,15 @@ class AuthRepositoryImpl implements AuthRepository {
     required String provider,
     required bool termsAccepted,
   }) async {
-    final socialProvider = switch (provider.trim().toUpperCase()) {
-      'GOOGLE' => SocialAuthProvider.google,
-      'FACEBOOK' => SocialAuthProvider.facebook,
+    final normalizedProvider = provider.trim().toUpperCase();
+    
+    if (normalizedProvider == 'MICROSOFT' || normalizedProvider == 'ENTRA' || normalizedProvider == 'AZURE') {
+      return _signInWithEntra(termsAccepted: termsAccepted);
+    }
+    
+    final socialProvider = switch (normalizedProvider) {
+      'GOOGLE' => firebase.SocialAuthProvider.google,
+      'FACEBOOK' => firebase.SocialAuthProvider.facebook,
       _ => throw UnsupportedError('Proveedor social no soportado: $provider'),
     };
     final socialResult = await _firebaseClientAuthService.signIn(
@@ -155,6 +168,38 @@ class AuthRepositoryImpl implements AuthRepository {
       return _mapSession(response.data ?? <String, dynamic>{});
     } catch (error) {
       await _firebaseClientAuthService.signOut();
+      if (error is DioException) {
+        throw AppException.fromDioError(error);
+      }
+      throw AppException.fromError(error);
+    }
+  }
+
+  Future<AuthSession> _signInWithEntra({required bool termsAccepted}) async {
+    if (!_entraClientAuthService.isConfigured) {
+      throw UnsupportedError(
+        'Microsoft Entra is not configured. Set AZURE_CLIENT_ID and AZURE_TENANT_ID.',
+      );
+    }
+    
+    try {
+      final entraResult = await _entraClientAuthService.signIn(SocialAuthProvider.microsoft);
+      
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/entra/social',
+        data: {
+          'accessToken': entraResult.accessToken,
+          'provider': 'MICROSOFT',
+          'termsAccepted': termsAccepted,
+          if (entraResult.displayName?.trim().isNotEmpty == true)
+            'displayName': entraResult.displayName!.trim(),
+          if (entraResult.email?.trim().isNotEmpty == true)
+            'email': entraResult.email!.trim(),
+        },
+      );
+      return _mapSession(response.data ?? <String, dynamic>{});
+    } catch (error) {
+      await _entraClientAuthService.signOut();
       if (error is DioException) {
         throw AppException.fromDioError(error);
       }
@@ -187,6 +232,7 @@ class AuthRepositoryImpl implements AuthRepository {
       dioError = error;
     } finally {
       await _firebaseClientAuthService.signOut();
+      await _entraClientAuthService.signOut();
     }
     if (dioError != null) {
       throw AppException.fromDioError(dioError);

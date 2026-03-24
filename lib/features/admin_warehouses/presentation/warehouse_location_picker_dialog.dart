@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
+import 'package:latlong2/latlong.dart' as latlong_pkg;
+import '../../../core/env/app_env.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 
 class WarehouseLocationPickerDialog extends StatefulWidget {
@@ -11,8 +13,8 @@ class WarehouseLocationPickerDialog extends StatefulWidget {
     this.zoneLabel,
   });
 
-  final LatLng initialPoint;
-  final LatLng? anchorPoint;
+  final latlong_pkg.LatLng initialPoint;
+  final latlong_pkg.LatLng? anchorPoint;
   final String cityLabel;
   final String? zoneLabel;
 
@@ -23,9 +25,8 @@ class WarehouseLocationPickerDialog extends StatefulWidget {
 
 class _WarehouseLocationPickerDialogState
     extends State<WarehouseLocationPickerDialog> {
-  late LatLng _selectedPoint;
-  // ignore: unused_field
-  GoogleMapController? _mapController;
+  late latlong_pkg.LatLng _selectedPoint;
+  final flutter_map.MapController _mapController = flutter_map.MapController();
 
   @override
   void initState() {
@@ -40,19 +41,29 @@ class _WarehouseLocationPickerDialogState
       if (widget.zoneLabel?.trim().isNotEmpty == true) widget.zoneLabel!.trim(),
     ].join(' / ');
 
-    final markers = <Marker>{
+    final markers = <flutter_map.Marker>[
       if (widget.anchorPoint != null)
-        Marker(
-          markerId: const MarkerId('anchor'),
-          position: widget.anchorPoint!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        flutter_map.Marker(
+          point: widget.anchorPoint!,
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.location_on,
+            color: Color(0xFF0078D4),
+            size: 40,
+          ),
         ),
-      Marker(
-        markerId: const MarkerId('selected'),
-        position: _selectedPoint,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      flutter_map.Marker(
+        point: _selectedPoint,
+        width: 40,
+        height: 40,
+        child: const Icon(
+          Icons.location_on,
+          color: Color(0xFFE5242D),
+          size: 40,
+        ),
       ),
-    };
+    ];
 
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
@@ -79,22 +90,24 @@ class _WarehouseLocationPickerDialogState
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: _selectedPoint,
-                      zoom: 14,
+                  child: flutter_map.FlutterMap(
+                    mapController: _mapController,
+                    options: flutter_map.MapOptions(
+                      initialCenter: _selectedPoint,
+                      initialZoom: 14,
+                      onTap: (tapPosition, point) {
+                        setState(() => _selectedPoint = point);
+                      },
                     ),
-                    markers: markers,
-                    onMapCreated: (controller) {
-                      _mapController = controller;
-                    },
-                    onTap: (point) {
-                      setState(() => _selectedPoint = point);
-                    },
-                    myLocationEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: false,
-                    mapToolbarEnabled: false,
+                    children: [
+                      flutter_map.TileLayer(
+                        urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
+                            ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
+                            : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.travelbox.peru.app',
+                      ),
+                      flutter_map.MarkerLayer(markers: markers),
+                    ],
                   ),
                 ),
               ),

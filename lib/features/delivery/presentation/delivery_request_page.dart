@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
+import 'package:latlong2/latlong.dart' as latlong_pkg;
 import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/env/app_env.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
@@ -88,7 +90,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
   bool _resolvingCurrentLocation = false;
   late DeliveryRequestType _type;
   DeliveryLocationMode _locationMode = DeliveryLocationMode.currentLocation;
-  LatLng? _selectedPoint;
+  latlong_pkg.LatLng? _selectedPoint;
   String? _seededReservationKey;
   bool _addressAutofilled = true;
   bool _zoneAutofilled = true;
@@ -421,16 +423,16 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     }
   }
 
-  LatLng _defaultServicePoint(Reservation reservation) {
+  latlong_pkg.LatLng _defaultServicePoint(Reservation reservation) {
     final latitude = reservation.warehouse.latitude;
     final longitude = reservation.warehouse.longitude;
     if (_isValidCoordinate(latitude, longitude)) {
-      return LatLng(latitude, longitude);
+      return latlong_pkg.LatLng(latitude, longitude);
     }
-    return const LatLng(-12.046374, -77.042793);
+    return const latlong_pkg.LatLng(-12.046374, -77.042793);
   }
 
-  bool _hasValidPoint(LatLng? point) {
+  bool _hasValidPoint(latlong_pkg.LatLng? point) {
     if (point == null) {
       return false;
     }
@@ -491,7 +493,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
               : l10n.t('delivery_device_location_invalid'),
         );
       }
-      final point = LatLng(position.latitude, position.longitude);
+      final point = latlong_pkg.LatLng(position.latitude, position.longitude);
       if (!mounted) return;
       setState(() {
         _selectedPoint = point;
@@ -517,7 +519,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
 
   Future<void> _pickOnMap(Reservation reservation) async {
     final initialPoint = _selectedPoint ?? _defaultServicePoint(reservation);
-    final selected = await showDialog<LatLng>(
+    final selected = await showDialog<latlong_pkg.LatLng>(
       context: context,
       builder: (context) =>
           _DeliveryLocationPickerDialog(initialPoint: initialPoint),
@@ -532,7 +534,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
   }
 
   void _prefillAddressFromPoint(
-    LatLng point,
+    latlong_pkg.LatLng point,
     Reservation reservation, {
     required bool currentLocation,
   }) {
@@ -756,7 +758,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
 class _DeliveryLocationPickerDialog extends StatefulWidget {
   const _DeliveryLocationPickerDialog({required this.initialPoint});
 
-  final LatLng initialPoint;
+  final latlong_pkg.LatLng initialPoint;
 
   @override
   State<_DeliveryLocationPickerDialog> createState() =>
@@ -765,7 +767,8 @@ class _DeliveryLocationPickerDialog extends StatefulWidget {
 
 class _DeliveryLocationPickerDialogState
     extends State<_DeliveryLocationPickerDialog> {
-  late LatLng _selectedPoint;
+  late latlong_pkg.LatLng _selectedPoint;
+  final flutter_map.MapController _mapController = flutter_map.MapController();
 
   @override
   void initState() {
@@ -796,25 +799,37 @@ class _DeliveryLocationPickerDialogState
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: GoogleMap(
-                    initialCameraPosition: CameraPosition(
-                      target: _selectedPoint,
-                      zoom: 14,
+                  child: flutter_map.FlutterMap(
+                    mapController: _mapController,
+                    options: flutter_map.MapOptions(
+                      initialCenter: _selectedPoint,
+                      initialZoom: 14,
+                      onTap: (tapPosition, point) {
+                        setState(() => _selectedPoint = point);
+                      },
                     ),
-                    markers: {
-                      Marker(
-                        markerId: const MarkerId('selected'),
-                        position: _selectedPoint,
-                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                    children: [
+                      flutter_map.TileLayer(
+                        urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
+                            ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
+                            : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.travelbox.peru.app',
                       ),
-                    },
-                    onTap: (point) {
-                      setState(() => _selectedPoint = point);
-                    },
-                    myLocationEnabled: false,
-                    myLocationButtonEnabled: false,
-                    zoomControlsEnabled: false,
-                    mapToolbarEnabled: false,
+                      flutter_map.MarkerLayer(
+                        markers: [
+                          flutter_map.Marker(
+                            point: _selectedPoint,
+                            width: 40,
+                            height: 40,
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Color(0xFFE5242D),
+                              size: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
