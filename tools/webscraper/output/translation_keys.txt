@@ -1,0 +1,1249 @@
+TravelBox Peru - Translation Keys
+==================================================
+
+abiertos: Abertos
+abrir_modulo_qrpin: Abrir modulo QR/PIN
+accept_terms: Aceito os termos e condicoes para criar minha conta.
+access_client: Acesso cliente
+access_internal: Acesso equipe interna
+access_roles_account_status: Acessos, funcoes e status da conta
+aceptar_servicio: Aceitar servico
+action_hide: Ocultar
+action_show: Mostrar
+activo: Ativo
+activos: Ativos
+actual: Atual
+actualizar_tracking: Atualizar rastreamento
+additional_insurance: Seguro adicional
+address: Direccion
+address_label: la direccion
+address_pending: Endereço pendente
+address_pending_confirmation: Endereço pendente de confirmação no app
+adjuntar_evidencia_fotografica: Anexar evidencia fotografica
+adjuntar_foto_dni: Anexar foto DNI
+admin: Admin
+admin_dashboard_best_warehouse_prefix: Mejo almacen
+admin_dashboard_current_period: Periodo actual
+admin_dashboard_no_courier_data: Aun No hay entregas suficientes en este periodo.
+admin_dashboard_no_operator_data: Aun No hay operadoes con servicios generados.
+admin_dashboard_operations_hub: Operacion central
+admin_dashboard_period_trend_title: Evolucion del periodo
+admin_dashboard_qr_pin_subtitle: EScansionaeo, etiqueta de maleta, validacion presencial y Consegna seguro
+admin_dashboard_tab_admin_core: Admin Core
+admin_dashboard_tab_analytics: Analitica
+admin_dashboard_tab_incidents: Incidencias
+admin_dashboard_tab_operator_ops: Operado
+admin_dashboard_tab_overview: Resumen
+admin_dashboard_title: Panel Amministratoe
+admin_dashboard_unique_clients: Clienti unicos
+admin_dashboard_updated_prefix: actualizado
+admin_incidents: Incidencias Amministratoe
+admin_incidents_col_client: Cliente
+admin_incidents_col_detail: Detalle
+admin_incidents_col_reservation: Reserva
+admin_incidents_col_resolution: Resolucion
+admin_incidents_col_ticket: Ticket
+admin_incidents_col_warehouse: MagazziNo
+admin_incidents_csv_generated: CSV de incidencias resueltas generado.
+admin_incidents_export_web_only: La expotacion solo esta disponible en la version web.
+admin_incidents_exported_count_label: Cantidad expotada
+admin_incidents_generated_on_label: Generado el
+admin_incidents_operator_title: Incidencias operativas
+admin_incidents_pdf_title: Incidencias resueltas TravelBox
+admin_incidents_print_preview_opened: Vista imprimible abierta. Desde el navegado puedes guardar como PDF.
+admin_incidents_resolved_title: Incidencias resueltas
+admin_incidents_support_title: Incidencias de sopote
+admin_reservation_cancel_requested_msg: Cancelacion solicitada desde panel operativo/Amministratoe.
+admin_reservation_code: Code
+admin_reservation_completed_from_panel_msg: Reserva finalizada desde el panel operativo.
+admin_reservation_empty_default: No reservations for this filter.
+admin_reservation_empty_query: No reservation found for
+admin_reservation_load_failed: Could not load reservations
+admin_reservation_ready_pickup_msg: Reserva lista para recojo en almacen.
+admin_reservation_refund_done: Cancellation/refund was executed for reservation
+admin_reservation_refund_failed: Could not cancel/refund
+admin_reservation_search_hint: Example: TRAVELBOX-ABC123 or Miraflores
+admin_reservation_search_label: Search by code, warehouse, or city
+admin_reservation_status_update_failed: Could not update reservation
+admin_reservation_status_updated: Reservation updated
+admin_reservation_total: Total
+admin_reservations_title: Reservas Amministratoe
+admin_shell_admin_incidents: Admin Incidencias
+admin_shell_admin_panel: Panel Admin
+admin_shell_admin_reservations: Admin Reservas
+admin_shell_cash_payments: Riscossioni en Caja
+admin_shell_ops_incidents: Incidencias Operativas
+admin_shell_ops_reservations: Reservas Operativas
+admin_shell_ops_users: Usuarios Operativos
+admin_shell_support_incidents: Incidencias de Sopote
+admin_shell_tracking_courier: Tracking Courier
+admin_shell_tracking_logistics: Tracking Logistico
+admin_siempre_activo: ADMIN sempre ativo
+admin_user_document_required: El Documentoo es requerido
+admin_user_full_name_required: El Nombre completo es requerido
+admin_user_nationality_required: La nacionalidad es requerida
+admin_user_plate_required: Enter vehicle plate
+admin_users_activated: Usuario activado.
+admin_users_admin_cannot_be_inactive: Un usuario ADMIN No puede quedar inactivo.
+admin_users_admin_cannot_delete_tooltip: ADMIN No se puede eliminar desde este panel.
+admin_users_admin_cannot_disable_tooltip: ADMIN No se puede desactivar.
+admin_users_assigned_warehouses: Sedes asignadas
+admin_users_bulk_delete_error: Could not bulk delete users
+admin_users_bulk_update_error: Could not bulk update users
+admin_users_deactivated: Usuario desactivado.
+admin_users_delete_warning_suffix: Si ya tiene operaciones vinculadas, el sistema bloqueara la eliminacion.
+admin_users_missing_document_url: No se recibio URL de la foto de Documentoo.
+admin_users_no_active_warehouses: Nessun sedes activas. Crea o activa una sede antes de guardar este usuario.
+admin_users_optional_for_role: Opcional para este rol.
+admin_users_press_load_hint: Presiona "Ver usuarios" para caricare segun tu filtro.
+admin_users_select_warehouse_for_roles: Debes seleccionar al meNos una sede para estos roles.
+admin_users_update_credentials_of: Actualizar credenciales de
+admin_users_vehicle_only_courier: Solo aplica para Coriere.
+admin_users_vehicle_required_courier: Obligatoia para usuarios Coriere.
+admin_warehouse_required_address: La direccion es requerida
+admin_warehouse_required_capacity: La capacidad debe ser mayo a cero
+admin_warehouse_required_close_time: La hoa de cierre es requerida
+admin_warehouse_required_name: El Nombre del almacen es requerido
+admin_warehouse_required_open_time: La hoa de apertura es requerida
+admin_warehouses_additional_insurance: Seguro adicional
+admin_warehouses_address_label: Direccion
+admin_warehouses_address_too_long: La direccion No puede superar 220 caracteres.
+admin_warehouses_amount_non_negative: No puede ser negativo.
+admin_warehouses_auto_cover_by_city: Potada automatica po sede
+admin_warehouses_capacity_label: Capacidad
+admin_warehouses_city_label: Ciudad
+admin_warehouses_closing_label: Cierre
+admin_warehouses_dropoff_delivery_fee: Entrega Consegna
+admin_warehouses_empty_filter: Nessun almacenes para este filtro.
+admin_warehouses_invalid_amount: Ingresa un monto valido.
+admin_warehouses_latitude_label: Latitud
+admin_warehouses_load_failed_prefix: No se pudo caricare almacenes
+admin_warehouses_longitude_label: Longitud
+admin_warehouses_map_helper: Puedes tocar el Mappaa para registrar la ubicacion exacta sin calcular coodenadas manualmente.
+admin_warehouses_name_label: Nombre
+admin_warehouses_name_too_long: El Nombre No puede superar 140 caracteres.
+admin_warehouses_opening_label: Apertura
+admin_warehouses_operation_failed_prefix: Operacion fallida
+admin_warehouses_photo_hint_storage_disabled: Firebase Stoage esta deshabilitado po ahoa. Se mostrara la potada automatica po sede.
+admin_warehouses_photo_hint_storage_enabled: Si No subes una foto, TravelBox mostrara una potada automatica po sede.
+admin_warehouses_photo_upload_web_only: La carga de fotos desde archivo esta habilitada en la web Amministratoe.
+admin_warehouses_pickup_delivery_fee: Recojo Consegna
+admin_warehouses_price_validation_error: Revisa precios/tarifas: deben ser montos numericos y No negativos.
+admin_warehouses_prices_panel_title: Precios po almacen (solo Amministratoe)
+admin_warehouses_rate_l_h: Tarifa L/h
+admin_warehouses_rate_m_h: Tarifa M/h
+admin_warehouses_rate_s_h: Tarifa S/h
+admin_warehouses_rate_xl_h: Tarifa XL/h
+admin_warehouses_registry_board: Tablero de registros
+admin_warehouses_rules_optional: Reglas (opcional)
+admin_warehouses_rules_too_long: Las reglas No pueden superar 600 caracteres.
+admin_warehouses_search_label: Cercare po Nombre, direccion o citta
+admin_warehouses_select_city_before_map: Selecciona primero la citta para ubicar el almacen en el Mappaa.
+admin_warehouses_select_city_required: Selecciona la citta del almacen.
+admin_warehouses_status_active: Activo
+admin_warehouses_status_inactive: Inactivo
+admin_warehouses_stock_available: Disponible
+admin_warehouses_stock_occupied: Ocupado
+admin_warehouses_stock_sites: Sedes
+admin_warehouses_stock_total_capacity: Capacidad totale
+admin_warehouses_storage_not_available: Firebase Stoage No esta disponible. El almacen seguira con potada automatica.
+admin_warehouses_swipe_right_hint: Desliza hacia la derecha para ver mas columnas.
+admin_warehouses_title: Gestion de almacenes
+admin_warehouses_tourist_zone_optional: Zona turistica (opcional)
+almacen: Armazem
+almacen_actualizado_correctamente: Armazem atualizado com sucesso.
+almacen_creado_correctamente: Armazem criado com sucesso.
+almacen_desactivado_correctamente: Armazem desativado com sucesso.
+almacen_mas_cercano: Armazem mais proximo
+almacen_reactivado_correctamente: Armazem reativado com sucesso.
+amount: Monto
+app_language: Idioma
+app_name: TravelBox
+aprobar: Aprovar
+aprobar_o_rechazar_pagos_pendientes: Aprovar ou rejeitar pagamentos pendentes
+aprobar_y_generar_pin: Aprovar e gerar PIN
+argentina: Argentina
+at_counter: Na caixa
+aun_no_hay_data_para_este_periodo: Ainda sem dados para este periodo.
+aun_no_hay_tickets_para_esta_reserva: Ainda sem tickets para esta reserva
+auth_continue_failed: No se pudo continuar
+auth_hero_welcome_back: Bienvenido de nuevo
+auth_portal_hero_subtitle: Guarda tu equipaje de perma segura en aeropuerto y citta, mientras disfrutas tu viaje.
+auth_validating: Validando...
+back: Back
+back_to_login: Voltar ao login
+baggage_quantity: Numero de bagagens
+bultos: Pacotes
+buscar_reserva: Buscar reserva
+busqueda_y_cambios_de_estado: Busca e alteracoes de status
+cambiar_foto: Mudar foto
+cambio_sensible_detectado: Mudanca sensivel detectada
+cancelar: Cancelar
+cancelar__reembolsar: Cancelar / Reembolsar
+cap: Cap
+capacity_label: La capacidad
+card: Cartao
+cargando_tickets: Carregando tickets
+carne_de_extranjeria: Carteira de estrangeiro
+cash: Dinheiro
+cash_only: Apenas dinheiro na caixa
+cash_payment_approved_ok: Pago aprobado corectamente.
+cash_payment_process_failed_prefix: No se pudo procesar el pago en caja
+cash_payment_reason_approved: Pago validado po operado
+cash_payment_reason_rejected: Pago rechazado po operado
+cash_payment_rejected_ok: Pago rechazado corectamente.
+cash_pending_empty: Nessun pagos en caja in_sospeso.\nSi acabas de registrar un pago en efectivo, toca aggionare.
+cash_pending_refresh_now: Actualizar ahoa
+ce: CE
+cedula_de_identidad: Cedula de identidade
+cerrar_sesin: Cerrar sesión (PT)
+checkin_etiquetado_y_entrega: Check-in, rotulagem e entrega
+checkout: Checkout
+checkout_breakdown_dropoff: Entrega
+checkout_breakdown_insurance: Seguro
+checkout_breakdown_pickup: Recojo
+checkout_breakdown_storage: MagazziNoaje
+checkout_confirm_payment: Confirmar pago
+checkout_customer_email_optional_hint: cliente@coreo.com
+checkout_customer_email_optional_label: Email cliente (opcional)
+checkout_digital_payments_disabled: Pagos digitales tempoalmente deshabilitados. El operado validara el cobro manualmente.
+checkout_payment: Checkout e pagamento
+checkout_payment_headline_offline: Pago presencial con validacion manual
+checkout_payment_headline_online: Pago inmediato para habilitar el QR
+checkout_payment_help_card: Tarjeta Confermaa el pago en linea y habilita el QR de check-in. Requiere sourceTOKenId de Culqi.
+checkout_payment_help_cash: Debes entregar efectivo y el operado validara el cobro desde su panel.
+checkout_payment_help_counter: Debes pagar en el almacen y esperar aprobacion del encargado.
+checkout_payment_help_default: Selecciona un metodo para continuar.
+checkout_payment_help_wallet: Wallet/Plin deja la preNonazione Confermaada sin pasar po caja.
+checkout_payment_help_yape: Yape Confermaa el pago en linea y habilita el QR de check-in. Requiere sourceTOKenId de Culqi.
+checkout_payment_process_failed_prefix: No se pudo procesar pago
+checkout_pending_offline_approval_notice: Tu pago quedara PENDING hasta que cajero u operado lo apruebe en el panel de cobros.
+checkout_processing: Procesando...
+checkout_source_token_hint: tkn_test_xxx
+checkout_source_token_label: sourceTOKenId (Culqi, obligatoio)
+checkout_source_token_required_notice: Para tarjeta o Yape debes enviar un sourceTOKenId valido antes de Confermaar.
+checkout_summary_dropoff: Entrega
+checkout_summary_insurance: Seguro
+checkout_summary_pickup: Recojo
+checkout_title: Checkout
+chile: Chile
+city: Ciudad
+citysupervisor: CITY_SUPERVISOR
+ciudad: Cidade
+client: CLIENT
+closing_time_label: El cierre
+cobros_en_caja: Cobranca em caixa
+colombia: Colombia
+como_dejar_de_estar_pendiente: Como deixar de estar pendente
+como_funciona_el_recojo: Como funciona a retirada
+completar_entrega_delivery: Completar entrega
+complete_data_first: Complete os dados primeiro
+configure_reservation: Configure sua reserva
+confirm_new_password: Confirmar nova senha
+confirm_password: Confirmar senha
+confirm_payment: Confirmar pagamento
+confirmar_entrega_presencial: Confirmar entrega presencial
+continue_checkout: Continuar para checkout
+counter_validation: Validacao na caixa
+country: Pais
+courier: COURIER
+courier_confirm_delivery: Confirmar entrega
+courier_confirm_pickup: Confirmar recojo
+courier_dashboard_flow_title: Flujo operativo
+courier_dashboard_header: Operacion Coriere TravelBox
+courier_dashboard_intro: Toma un servicio disponible, Confermaa salida, comparte ubicacion y cierra la entrega o recojo desde tu modulo operativo.
+courier_dashboard_title: Panel Coriere
+courier_dashboard_tracking_manual_hint: Puedes usar GPS del navegado o registrar coodenadas manuales si estas probando en local.
+courier_services_claim_success_prefix: Tomaste el servicio
+courier_services_destination_prefix: DestiNo
+courier_services_empty_available: Nessun servicios libres para este filtro.
+courier_services_empty_mine: No tienes servicios asignados en este momento.
+courier_services_eta_minutes_label: ETA en minutos
+courier_services_eta_prefix: ETA actual
+courier_services_latitude: Latitud
+courier_services_load_failed_prefix: No se pudieron caricare servicios Coriere
+courier_services_loading_route: Cargando ruta sugerida...
+courier_services_location_permission_denied: No se concedio permiso de ubicacion.
+courier_services_longitude: Longitud
+courier_services_operational_message_hint: Ej. Llegue al hotel / equipaje verificado
+courier_services_operational_message_label: Mensaje operativo
+courier_services_pickup_point_prefix: Punto de recojo
+courier_services_plate_or_code_label: Placa o codigo
+courier_services_reading_gps: Leyendo GPS...
+courier_services_route_prefix: Ruta
+courier_services_route_simulated: simulada
+courier_services_search_label: Cercare po codigo, cliente o citta
+courier_services_service_prefix: Servicio
+courier_services_status_new: Nuevo estado
+courier_services_tab_available: Disponibles
+courier_services_tab_mine: Mis servicios
+courier_services_title: Servicios Coriere
+courier_services_tracking_updated_prefix: Tracking actualizado para
+courier_services_use_my_gps: Usar mi GPS
+courier_services_vehicle_prefix: Vehiculo
+courier_services_vehicle_type_label: Tipo de vehiculo
+crear: Create
+create_account: Criar conta
+create_client_account: Criar conta cliente
+credenciales: Credenciais
+currency: Moneda
+current_password_label: tu contrasena actual
+current_password_sensitive_changes: Current password for sensitive changes
+danio: Dano
+dark_mode: Modo escuro
+dashboard: Dashboard
+dashboard_active: Active
+dashboard_cancelled: Cancelled
+dashboard_cash_validation_subtitle: Validation of pending cash/counter payments
+dashboard_clients: Clients
+dashboard_completed: Completed
+dashboard_confirmed_collections: Confirmed collections
+dashboard_created: created
+dashboard_interactions: interactions
+dashboard_load_failed: Could not load dashboard
+dashboard_open_incidents: Open incidents
+dashboard_period_selected: Selected period
+dashboard_reservation_status: Reservation status
+dashboard_revenue: Revenue
+dashboard_top_cities: Top demand cities
+dashboard_top_couriers: Top couriers
+dashboard_top_operators: Top operators
+dashboard_top_warehouses: Top warehouses
+dashboard_unique_clients: Unique clients
+debes_adjuntar_foto_de_dni_para_este_tra: Voce deve anexar foto DNI para este trabalhador.
+delivery: Entrega
+delivery_address_dropoff_hint: Hotel, terminal, or exact delivery address
+delivery_address_dropoff_label: Drop-off address
+delivery_address_pickup_hint: Hotel, home, or point where we will collect luggage
+delivery_address_pickup_label: Pickup address
+delivery_base_point: Base point
+delivery_browser_location_invalid: Browser did not return a valid location.
+delivery_confirm_dropoff: Confirm delivery
+delivery_confirm_pickup: Confirm pickup
+delivery_detecting_location: Detecting location...
+delivery_device_location_invalid: Device did not return valid coordinates.
+delivery_dropoff_info_subtitle: Luggage will be delivered to the selected destination.
+delivery_dropoff_point_prefix: Drop-off point
+delivery_dropoff_success: Delivery requested. You can now track the courier live.
+delivery_enable_gps: Enable GPS to use your current location.
+delivery_enter_field: Enter
+delivery_location_captured: Current location captured
+delivery_location_current: Current location
+delivery_location_failed: Could not get current location
+delivery_location_map: Pick on map
+delivery_location_permission_denied: Location permissions are required to continue.
+delivery_location_permission_denied_forever: Location permission is blocked. Enable it in your browser/device settings.
+delivery_location_pick_success: Location selected on map.
+delivery_map_pick_subtitle: Tap on the map to set pickup or delivery location.
+delivery_map_pick_title: Pick point on map
+delivery_monitor_embedded_tracking_title: Tracking embebido
+delivery_monitor_empty_filter: Nessun odenes de Consegna para el filtro actual.
+delivery_monitor_eta_prefix: ETA
+delivery_monitor_label_address: Direccion
+delivery_monitor_label_customer: Cliente
+delivery_monitor_label_driver: Chofer
+delivery_monitor_label_email: Coreo
+delivery_monitor_label_phone: TelefoNo
+delivery_monitor_label_updated: Actualizado
+delivery_monitor_label_vehicle: Unidad
+delivery_monitor_label_zone: Zona
+delivery_monitor_live_subtitle: Actualizacion automatica po eventos. Selecciona una oden para ver Mappaa, ruta y eventos dentro del mismo panel.
+delivery_monitor_live_title: Monitoeo logistico en vivo
+delivery_monitor_load_failed_prefix: No se pudo caricare monitoeo logistico
+delivery_monitor_loading_embedded_tracking: Cargando Tracciamento embebido...
+delivery_monitor_no_active: Nessun deliveries activos para monitoear ahoa.
+delivery_monitor_no_recent: Nessun deliveries recientes disponibles.
+delivery_monitor_orders_suffix: odenes
+delivery_monitor_panel_summary_active_suffix: activas
+delivery_monitor_panel_summary_prefix: Panel monitoeando
+delivery_monitor_panel_summary_recent_suffix: recientes
+delivery_monitor_reload_tooltip: Recaricare
+delivery_monitor_reservation_prefix: Reserva
+delivery_monitor_route_loading: Cargando ruta sugerida...
+delivery_monitor_route_road_prefix: Ruta
+delivery_monitor_route_simulated: simulada
+delivery_monitor_search_hint: Cercare po preNonazione, cliente, citta o chofer
+delivery_monitor_tracking_not_linked: La preNonazione todavia No tiene una oden de Consegna asociada.
+delivery_my_current_location_prefix: My current location
+delivery_no_window: no window
+delivery_pickup_info_subtitle: Luggage will be collected and moved to the warehouse.
+delivery_pickup_point_prefix: Pickup point
+delivery_pickup_steps: 1. Request mobility.\n2. A courier takes the service.\n3. Track it live.\n4. When luggage arrives at the warehouse, reservation changes to stored.
+delivery_pickup_success: Pickup requested. You can now track the courier live.
+delivery_prepare_failed: Could not prepare request
+delivery_price_dropoff_label: Delivery base cost
+delivery_price_pickup_label: Pickup base cost
+delivery_processing: Processing...
+delivery_request_dropoff_title: Request delivery
+delivery_request_failed: Could not submit request
+delivery_request_pickup_title: Request pickup
+delivery_reservation_not_available_subtitle: In the current status you cannot create pickup or delivery. If you opened an old tab, go back to reservation details and reload.
+delivery_service_location_required: You must set the service location (current or map) before confirming.
+delivery_share_current_location_required: You must share your current location before confirming.
+delivery_status_assigned: Asignado
+delivery_status_cancelled: Cancelado
+delivery_status_changed_retry: Reservation status changed. Refresh and try again.
+delivery_status_delivered: Entregado
+delivery_status_in_transit: En transito
+delivery_status_not_allowed_dropoff: This reservation status does not allow delivery yet.
+delivery_status_not_allowed_pickup: This reservation status does not allow pickup yet.
+delivery_status_requested: Solicitado
+delivery_use_current_location: Use my current location
+delivery_window_dropoff_label: Delivery time window
+delivery_window_pickup_label: Pickup time window
+delivery_zone_city_hint: LIMA, CUSCO, MIRAFLORES, etc.
+delivery_zone_city_label: Area or city
+desactivar: Desativar
+desactivar_almacen: Desativar armazem
+deutsch: Alemao
+discover: Descobrir
+discover_hero_subtitle: Book by hour or day with QR and real-time tracking.
+discover_title_nearby: Descubra depositos proximos
+discovery_distance_to_you_prefix: At
+discovery_empty_city_prefix: No warehouses in
+discovery_empty_zone: No warehouses found for this area.
+discovery_expand_search: Expand search
+discovery_load_failed: Could not load warehouses
+discovery_per_hour: /hour
+discovery_price_from: From
+discovery_tourism_nearby: Nearby tourism
+discovery_view_all_cities: Show all cities
+disp: Disp
+dni: DNI
+dni_ya_adjuntado: DNI ja anexado
+document_number_label: numero de Documentoo
+edicion_bloqueada: Edicao bloqueada
+editar: Editar
+editar_ficha: Editar perfil
+elegir_en_mapa: Escolher no mapa
+elegir_punto_en_mapa: Escolher ponto no mapa
+eliminar: Excluir
+eliminar_notificaciones: Excluir notificacoes
+eliminar_todo: Excluir tudo
+eliminar_usuario: Excluir usuario
+email: Email
+email_hint: Email
+empty: Sem dados
+en: inglês
+end_date_label: Fin
+english: Ingles
+entrega: Entrega
+errCheckinFailed: Check-in fehlgeschlagen
+errCheckoutFailed: Check-out fehlgeschlagen
+errCreateIncident: Vorfall konnte nicht erstellt werden
+errCreateUser: Benutzer konnte nicht erstellt werden
+errCreateWarehouse: Lager konnte nicht erstellt werden
+errExportFailed: Export fehlgeschlagen
+errNoResponse: Keine Antwort vom Server
+errUploadFailed: Hochladen der Beweismittel fehlgeschlagen
+errorConnection: Keine Internetverbindung oder Signal ist zu schwach.
+errorGeneric: Ein unerwarteter Fehler ist aufgetreten.
+error_invalid_credit_card: Número de cartão inválido
+error_invalid_warehouse_id: Invalid warehouse ID
+errorNoPermissions: Sie haben keine Berechtigung für diese Aktion.
+errorNotFound: Die angeforderte Ressource existiert nicht mehr.
+error_prefix: Erro: 
+errorRateLimit: Zu viele Versuche. Warten Sie {seconds}s und versuchen Sie es erneut.
+error_required_field: Este campo é obrigatório
+errorServerError: Server wird gewartet. Versuchen Sie es später erneut.
+es: espanhol
+espanol: Espanhol
+estado: Status
+estado_de_correo: Status do email
+estimated_total: Total estimado
+expires: Expira
+exportar_csv_resueltos: Exportar CSV resolvidos
+exportar_pdf_resueltos: Exportar PDF resolvidos
+fallback_address_pending: Direccion pendiente
+fallback_customer_name: Cliente
+fallback_no_address: Sin direccion
+fallback_unassigned: Sin asignar
+fallback_warehouse_name: MagazziNo
+field_enter_value: Digite {label}
+field_hide: Ausblenden
+field_min_length: Muss mindestens {min} Zeichen haben.
+field_reauth_required: Erfordert Überprüfung
+field_required: Dieses Feld ist erforderlich.
+field_show: Anzeigen
+final_total: Total final
+finalizar: Finalizar
+finish_reservation: Finalizar reserva
+first_name: Nome
+flow_guide: Guia de fluxo
+forgot_password: Esqueci minha senha
+foto_dni_adjunta: Foto DNI anexada
+fotos_del_equipaje: Fotos das bagagens
+francais: Frances
+generar_id_maleta: Gerar ID bagagem
+gestionado_por_admin: Gerenciado por admin
+go_my_reservations: Ir para minhas reservas
+gps_disabled_manual: GPS nao habilitado. Use busca manual.
+guardar: Salvar
+guardar_avance: Salvar progresso
+guardar_contrasena: Salvar senha
+have_account: Ja tenho conta
+hide_password: Hide password
+historial_de_pagos: Historico de pagamentos
+home_delivery: Entrega em domicílio
+home_pickup: Retirada em domicílio
+hours_unit: hoa(s)
+id: ID
+identification_data: Dados de identificacao
+idioma_de_app: Idioma do app
+inactivos: Inativos
+incidencia_resuelta_correctamente: Incidente resolvido com sucesso.
+incidencias: Incidentes
+incident: Incidente
+incident_admin_empty_for_filter: No tickets for this filter.
+incident_admin_load_failed: Could not load incidents
+incident_admin_no_resolved_in_view: No resolved tickets in the current view
+incident_admin_search_label: Search by reservation, customer, or detail
+incident_call_open_failed: Could not start the phone call on this device.
+incident_category: Category
+incident_change_image: Change image
+incident_client: Client
+incident_comment: Comment
+incident_comment_hint: Describe what happened. If payment is pending, indicate if you already paid at the counter.
+incident_comment_min_length: Please provide more detail (minimum 8 characters).
+incident_comment_required: Describe the case to continue.
+incident_created_at: Created
+incident_created_success: Incident created successfully
+incident_current_status: Current status
+incident_empty_history_hint: Once you send one, it will appear here with its status.
+incident_evidence_load_failed: Could not load evidence.
+incident_generated_tickets: Generated tickets
+incident_image_pick_unavailable: No image was selected or selection is unavailable.
+incident_image_required_when_enabled: If photo evidence is enabled, you must select an image.
+incident_image_requirements: Upload a JPG, PNG, or WEBP image up to 5MB.
+incident_image_selected: Selected image
+incident_image_url_missing: No evidence URL was returned.
+incident_invalid_reservation: Invalid reservation to create ticket.
+incident_no_image_selected: No image selected.
+incident_open_from_reservation_required: Open this page from a reservation to create a ticket.
+incident_operational_subtitle: Submitting will move the reservation to INCIDENT status for internal handling.
+incident_operational_title: Operational incident
+incident_phone: Phone
+incident_reservation: Reservation
+incident_reservation_id_prefix: ID
+incident_reservation_load_failed: Could not load reservation
+incident_resolution: Resolution
+incident_resolution_hint: Describe which action was taken to close the ticket.
+incident_resolve_failed: Could not resolve incident
+incident_select_image: Select image
+incident_send_failed: Failed to send ticket
+incident_send_ticket: Send ticket
+incident_sending: Sending...
+incident_support_created_success: Support ticket sent successfully
+incident_support_ticket_subtitle: Your message will be sent to support and you can attach evidence.
+incident_support_ticket_title: Support ticket
+incident_ticket: Ticket
+incident_type_damage: Dano
+incident_type_delay: Atraso
+incident_type_other: Outro
+incident_type_payment: Pagamento
+incident_type_wrong_item: Item errado
+incident_view_resolved: View resolved
+incident_whatsapp_open_failed: Could not open WhatsApp on this device.
+ingresa_la_zona_o_ciudad_del_servicio: Digite a zona ou cidade do servico.
+invalid_code: Invalid code.
+invalid_phone: Enter a valid phone number.
+ir_a_soporte: Ir para suporte
+italiano: Italiano
+keep_signed_in: Manter sessao iniciada
+km_de_tu_ubicacion: km from your location
+l: L
+language: Idioma
+last_name: Sobrenome
+lat: Lat
+licencia_de_conducir: Carteira de habilitacao
+light_mode: Modo claro
+list: Lista
+lista_para_recojo: Pronto para retirada
+lista_para_recojo__pin: Pronto para retirada + PIN
+llamar: Ligar
+lng: Lng
+loading: Carregando...
+login: Entrar
+login_as_client: Entrar como cliente
+login_as_internal: Entrar como equipe interna
+login_description: Acesse sua conta TravelBox para continuar.
+login_required: Voce precisa fazer login
+login_title: Entrar
+logout: Sair
+m: M
+main_size: Tamanho principal
+map: Mapa
+mapa: Mapa
+marcar_leidas: Marcar como lidas
+mexico: Mexico
+mh: M/h
+min: min
+mock_code: Mock code
+mode_client: Cliente
+mode_internal: Equipe interna
+monitoreo_y_atencion_de_casos: Monitoramento e atendimento de casos
+my_reservations: Minhas reservas
+my_reservations_bags: bultos
+my_reservations_browse_warehouses: Cercare almacenes
+my_reservations_code_prefix: Codice
+my_reservations_empty: Aun No tienes preNonazioni.
+my_reservations_history_title: Histoial de preNonazioni
+my_reservations_latest_only: Esta es tu preNonazione mas actual. Aun No tienes histoial adicional.
+my_reservations_latest_title: Reserva mas actual
+my_reservations_load_failed: No se pudieron caricare preNonazioni
+my_reservations_of: de
+my_reservations_page: Pagina
+my_reservations_title: Mis preNonazioni
+my_reservations_total_prefix: Totale
+nationality: Nacionalidade
+nationality_label: nacionalidad
+new_password: Nova senha
+next: Proximo
+no: No
+no_hay_tracking_disponible: Rastreamento indisponivel
+no_se_pudieron_cargar_ciudades: Nao foi possivel carregar cidades.
+no_se_pudieron_cargar_zonas: Nao foi possivel carregar zonas.
+no_se_pudo_cargar_el_historial: Nao foi possivel carregar historico
+no_se_pudo_cargar_el_tracking_embebido: Nao foi possivel carregar rastreamento incorporado
+no_se_pudo_leer_la_imagen_seleccionada: Nao foi possivel ler a imagem selecionada.
+notificacion_eliminada: Notificacao excluida.
+notificaciones_eliminadas: Notificacoes excluidas.
+notification_delete_all_error: Não foi possível excluir as notificações.
+notification_delete_error: Não foi possível excluir a notificação.
+notification_deleted: Notificação excluída.
+notification_fetch_error: Não foi possível obter as notificações.
+notification_status_failed: Fallida
+notification_status_pending: Pendiente
+notification_status_seen: Leida
+notification_status_sent: Enviada
+notifications: Notificacoes
+notifications_clear_confirmation: Se eliminaran todas tus Nonificaciones de este usuario.
+notifications_deleted: Notificações excluídas.
+notifications_empty: No tienes Nonificaciones recientes.
+notifications_load_failed: No se pudieron caricare Nonificaciones
+notifications_unread_none: Sin Nonificaciones nuevas.
+notifications_unread_prefix: Tienes
+notifications_unread_suffix: Nonificacion(es) nuevas.
+nuevo: Novo
+nuevo_courier: Novo entregador
+nuevo_operador: Novo operador
+nuevo_usuario: Novo usuario
+objeto_equivocado: Objeto errado
+ocultar: Ocultar
+ocup: Ocup
+omitir: Omitir
+onboarding_guest_name: cliente
+onboarding_intro_subtitle: Esta guia rapida te muestra como preNonazioner, pagar y recoger tu equipaje en TravelBox.
+onboarding_loading: Cargando...
+onboarding_start_now: Empezar ahoa
+onboarding_welcome_title_prefix: Bienvenido
+opening_time_label: La apertura
+operacion_de_almacenes: Operacao de armazens
+operacion_qr_y_pin: Operacao QR e PIN
+operation_guide_cash_summary: El objetivo es dejar el pago Confermaado y la preNonazione lista para operar, sin aprobar montos o referencias incorectas.
+operation_guide_cash_title: Guia de cobro en caja
+operation_guide_cash_warning: Si apruebas un pago equivocado, habilitas una preNonazione que todavia No debia operar.
+operation_guide_incidents_summary: Esta bandeja existe para que nada quede fuera de trazabilidad cuando el flujo Nomal falla.
+operation_guide_incidents_title: Guia de incidencias y sopote
+operation_guide_open_full_for_more: Abre la guia completa para ver el resto del flujo.
+operation_guide_operator_route_summary: Empieza po pagos, valida preNonazioni activas, opera QR/PIN y solo despues cierra incidencias o seguimiento logistico.
+operation_guide_operator_route_title: Ruta sugerida del operado
+operation_guide_operator_warning: No saltes de QR a entrega sin registrar equipaje o validar el PIN. Ese es el punto mas sensible del flujo.
+operation_guide_qrpin_summary: Este modulo cubre el momento mas delicado: recepcion, almacen, recojo presencial y entrega con Coriere.
+operation_guide_qrpin_title: Guia del flujo QR y PIN
+operation_guide_qrpin_warning: Si falta foto, identidad, aprobacion o PIN, No cierres la entrega. El sistema esta pensado para bloquear justo esos huecos.
+operation_guide_reservations_summary: Usa esta pantalla para ubicar la preNonazione, entender el caso y llevarla al modulo corecto sin saltarte validaciones.
+operation_guide_reservations_title: Guia de preNonazioni operativas
+operation_guide_steps_suffix: pasos
+operation_guide_tracking_summary: Usa Tracciamento para seguir recojos y entregas, No para sustituir validaciones QR/PIN o incidencias.
+operation_guide_tracking_title: Guia de Tracciamento logistico
+operation_guide_view_full: Ver guia completa
+operations_panel: Operations
+operations_users_active: Activos
+operations_users_assigned: Asignados
+operations_users_auth: Auth
+operations_users_completed: Completados
+operations_users_create_submit: Crear usuario
+operations_users_create_title: Crear usuario operativo
+operations_users_created_ok: Usuario creado corectamente.
+operations_users_credentials_updated: Credenciales actualizadas.
+operations_users_delete_warning_prefix: Se eliminara
+operations_users_deleted_ok: Usuario eliminado.
+operations_users_document_number: Numero de Documentoo
+operations_users_document_required_hint: Obligatoio para operadoes, Corieres y sopote.
+operations_users_document_type: Tipo de Documentoo
+operations_users_edit_title: Editar usuario
+operations_users_email: Coreo
+operations_users_empty_filter: Nessun usuarios para este filtro.
+operations_users_full_name: Nombre completo
+operations_users_load_failed: No se pudieron caricare usuarios
+operations_users_load_now: Cargar ahoa
+operations_users_nationality: Nacionalidad
+operations_users_phone: TelefoNo
+operations_users_plate: Placa
+operations_users_roles: Roles
+operations_users_save_changes: Guardar cambios
+operations_users_search_label: Cercare usuario, coreo o telefoNo
+operations_users_select_one_role: Debes seleccionar al meNos un rol.
+operations_users_services_created: Servicios creati
+operations_users_summary_active: Activos
+operations_users_summary_completed_deliveries: Entregas completadas
+operations_users_summary_couriers: Couriers
+operations_users_summary_operators: Operadoes
+operations_users_summary_showing: Mostrando
+operations_users_summary_users: Usuarios
+operations_users_title: Usuarios operativos
+operations_users_toggle_user_status: Cambiar estado del usuario
+operations_users_updated_ok: Usuario actualizado.
+operations_users_vehicle_plate: Placa del vehiculo
+operations_users_warehouses_load_failed: No se pudo caricare sedes
+operator: OPERATOR
+operator_attempt: Intento
+operator_dashboard_intro: Atencion diaria: cobros en caja, control de preNonazioni y seguimiento de incidencias.
+operator_dashboard_title: Panel operativo
+operator_kpi_active_reservations: Reservas activas
+operator_kpi_incidents: Incidencias
+operator_kpi_pending_cash: Riscossioni in_sospeso
+operator_no_pending_cash: Nessun cobros in_sospeso po validar.
+operator_pending_approvals_subtitle: Hay entregas de Consegna esperando validacion de operado/Amministratoe.
+operator_pending_approvals_suffix: aprobaciones in_sospeso
+operator_pending_cash_load_failed: No se pudo caricare cobros in_sospeso
+operator_qr_subtitle: EScansionaear preNonazione, etiquetar maleta y cerrar entrega con PIN
+operator_recent_pending_title: Pendientes recientes
+operator_reservation: Reserva
+operator_reservations_subtitle: Busqueda po codigo, cambios de estado y trazabilidad
+ops_qr_action_failed_prefix: No se pudo completar la accion
+ops_qr_already_stored: Esta preNonazione ya figura registrada en almacen.
+ops_qr_approval_granted_prefix: Aprobacion concedida para
+ops_qr_approval_status_approved: Aprobada
+ops_qr_approval_status_pending: Pendiente
+ops_qr_approval_status_rejected: Rechazada
+ops_qr_bag_id_generated_prefix: ID de maleta generado para
+ops_qr_bag_qr_empty: Aun No hay ID de maleta. Genera etiqueta para registrar custodia.
+ops_qr_bag_qr_subtitle: Etiqueta operativa para pegar a la maleta y hacer match con la preNonazione.
+ops_qr_bag_qr_title: QR maleta
+ops_qr_bag_tag_not_allowed_prefix: No puedes registrar maleta para una preNonazione
+ops_qr_complete_delivery_validation_failed: No se pudo completar: verifica identidad, maleta y aprobacion operado.
+ops_qr_courier_request_approval_prefix: Courier solicita aprobacion para entrega final de
+ops_qr_customer_language_for_messages: Idioma del cliente para mensajes
+ops_qr_customer_message_hint: Ej. Hello, please show your QR to Valida your preNonazionetion and luggage.
+ops_qr_customer_message_label: Mensaje de cliente
+ops_qr_customer_message_prefix: Mensaje cliente
+ops_qr_customer_qr_subtitle: Se usa para ubicar preNonazione y validar identidad inicial.
+ops_qr_customer_qr_title: QR cliente
+ops_qr_customer_ready_for_pickup_msg: Tu preNonazione esta lista para recojo. Presenta tu QR y PIN de seguridad.
+ops_qr_customer_translated_prefix: Cliente (traducido)
+ops_qr_customer_view_prefix: Vista cliente
+ops_qr_delivery_completed_ok: Entrega Consegna completada corectamente.
+ops_qr_delivery_identity_hint: El Coriere verifica Nombre/Documentoo antes de entregar.
+ops_qr_empty_reservations: Nessun preNonazioni visibles para tu perfil. Crea una preNonazione o toma un servicio primero.
+ops_qr_enter_customer_pin_to_confirm: Ingresa el PIN del cliente para Confermaar entrega.
+ops_qr_enter_final_pin: Ingresa el PIN final para cerrar la entrega.
+ops_qr_expected_id_prefix: ID esperado
+ops_qr_generate_bag_qr_before_store: Primero genera el ID/QR de maleta antes de registrar en almacen.
+ops_qr_generate_bag_qr_first: Primero genera el ID/QR de maleta.
+ops_qr_header_hint_empty: EScansionaea o ingresa un QR para vincular una preNonazione y continuar.
+ops_qr_header_selected_prefix: Reserva seleccionada
+ops_qr_load_failed: No se pudo caricare modulo QR/PIN
+ops_qr_message_source_language_label: Idioma oiginal del mensaje
+ops_qr_missing_identity_validation: Falta validar identidad del recepto.
+ops_qr_missing_luggage_match_validation: Falta validar coincidencia de maleta e ID.
+ops_qr_missing_operator_approval: Falta aprobacion del operado/Amministratoe.
+ops_qr_no_pending_approvals: Nessun solicitudes de aprobacion in_sospeso.
+ops_qr_no_selected_reservation_hint: Aun No hay preNonazione seleccionada. EScansionaea el QR del cliente para continuar.
+ops_qr_not_generated: No generado
+ops_qr_operator_message_prefix: Operado
+ops_qr_operator_view_prefix: Vista operado
+ops_qr_photo_change: Cambiar Immaginen
+ops_qr_photo_confirm_prefix: Confirmar
+ops_qr_photo_dialog_intro_prefix: Debes registrar
+ops_qr_photo_missing: Faltan fotos
+ops_qr_photo_none_selected: Aun No hay Immaginen seleccionada
+ops_qr_photo_select: Seleccionar Immaginen
+ops_qr_photo_units_suffix: foto(s), una po cada bulto. Estas Immaginenes quedaran cerradas al Confermaar el ingreso a almacen.
+ops_qr_pickup_pin_not_allowed_prefix: No se puede generar PIN de recojo con estado
+ops_qr_pin_approved_prefix: PIN aprobado
+ops_qr_pin_confirmed_by_customer_hint: Courier valida el PIN recibido para cerrar entrega
+ops_qr_pin_confirmed_by_customer_label: PIN Confermaado po cliente
+ops_qr_pin_from_customer_hint: Ingresa el PIN para Confermaar entrega presencial
+ops_qr_pin_from_customer_label: PIN entregado po cliente
+ops_qr_pin_generated_prefix: PIN generado
+ops_qr_pin_incorrect: PIN incorecto. Verifica con el cliente.
+ops_qr_pin_must_have_six_digits: El PIN debe tener 6 digitos numericos.
+ops_qr_pin_not_approved_yet: Aun No aprobado po operado/Amministratoe.
+ops_qr_presential_delivery_completed: Entrega presencial Confermaada y preNonazione completada.
+ops_qr_presential_flow_title: Flujo presencial
+ops_qr_request_sent_translated_notice: Solicitud enviada al operado. Cliente recibira mensaje traducido.
+ops_qr_reservation_linked_prefix: Reserva vinculada po QR
+ops_qr_reservation_not_enabled_for_bag: La preNonazione aun No esta habilitada para registrar maleta.
+ops_qr_reservation_not_found_for_qr: No se encontro preNonazione para el QR ingresado.
+ops_qr_reservation_registered_warehouse_prefix: Reserva registrada en almacen
+ops_qr_scan_and_validate_first: Primero eScansionaea y valida el QR de la preNonazione.
+ops_qr_scan_input_hint: Ejemplo: TRAVELBOX|RESERVATION|TBX-12345 o TBX-12345
+ops_qr_scan_input_label: EScansionaear QR o codigo
+ops_qr_scan_or_enter_code_first: Ingresa o eScansionaea un codigo QR primero.
+ops_qr_scan_reservation_qr_first: Primero eScansionaea el QR de la preNonazione.
+ops_qr_select_reservation_scan_tab: Selecciona una preNonazione en la pestana EScansionaear.
+ops_qr_stage_not_available: Sin etapa
+ops_qr_stage_prefix: Estado QR/PIN
+ops_qr_store_not_allowed_prefix: No se puede registrar en almacen con estado
+ops_qr_tab_approvals: Aprobaciones
+ops_qr_tab_presential: Presencial
+ops_qr_tab_scan: EScansionaear
+ops_qr_title: Operacion QR y PIN
+ops_qr_uploading_photos_prefix: Subiendo fotos
+ops_qr_validate_identity_first: Primeiro voce deve validar identidade antes de validar bagagem.
+otra: Outro
+otro: Outro
+otro_valido: Outro documento valido
+packages_unit: bulto(s)
+pago: Pagamento
+pago_pendiente_de_aprobacion: Pagamento pendente de aprovacao
+pagos_en_caja: Pagamentos em caixa
+pantalla_completa: Tela cheia
+pasaporte: Passaporte
+password: Senha
+password_hint: Senha
+password_reset_code_required: Enter the recovery code.
+payment: Pago
+payment_method: Metodo de pagamento
+payment_method_card: tarjeta
+payment_method_cash: efectivo
+payment_method_counter: en caja
+payment_method_plin: plin
+payment_method_wallet: wallet/plin
+payment_method_yape: yape
+payment_status_cancelled: Cancelado
+payment_status_confirmed: Confirmado
+payment_status_failed: Fallido
+payment_status_pending: Pendiente
+payment_status_refunded: Reembolsado
+payment_status_rejected: Rechazado
+payments_history_empty_filtered: Nessun pagos para este filtro.
+payments_history_load_failed: No se pudo caricare histoial de pagos
+payments_history_title: Histoial de pagos
+pending: Pending
+pending_email: Email pendente
+perfil_administrado_por_travelbox: Perfil administrado pelo TravelBox
+period_month: Mes
+period_week: Semana
+period_year: Ano
+peru: Peru
+phone_hint: Telefone (+51999999999)
+phone_international_format: Use international format, for example +51999999999.
+photo_checkin: Check-in Foto
+photo_checkout: Check-out Foto
+photo_client: Kundenfoto
+photo_received: Empfangenes Foto
+photo_type_checkin: Foto Check-in
+photo_type_checkout: Foto Check-out
+photo_type_client_handoff: Foto do Cliente
+photo_type_warehouse_received: Foto Recebida
+photos: fotos
+pickup_delivery_credentials: Credenciais de retirada/entrega
+pin_para_cierre_delivery: PIN para fechamento de entrega
+portugues: Portugues
+previous: Anterior
+price_per_hour: S/{price}/hora
+price_suffix_per_order: po oden
+price_suffix_per_reservation: po preNonazione
+processing: Processando...
+profile: Perfil
+profile_complete_title: Completa tu perfil
+profile_current_password_required: La contrasena actual es requerida
+profile_digits: digitos
+profile_document_number: Numero Documentoo
+profile_document_type: Tipo Documentoo
+profile_edit_title: Editar perfil
+profile_email_pending_verification: Pendiente de verificacion
+profile_email_verified: Verificado
+profile_emergency_contact: Contacto de emergencia
+profile_emergency_phone: TelefoNo de emergencia
+profile_emergency_phone_required: El telefoNo de emergencia es requerido
+profile_first_name: Nombres
+profile_format_prefix: Fomato
+profile_internal_edit_admin_only: Los usuarios interNos solo pueden ser Modificaados po un Amministratoeistrado desde la plataperma.
+profile_last_name: Apellidos
+profile_managed_title: Perfil Amministratoeistrado
+profile_no_user: Sin usuario
+profile_not_available: No disponible
+profile_phone_number: Numero celular
+profile_phone_required: Please enter a valid phone number
+profile_photo_loaded_from_storage: La Immaginen se carga po red desde Firebase Stoage.
+profile_photo_ready_to_upload: Nueva foto lista para subirse a Firebase Stoage.
+profile_photo_storage_disabled_notice: La foto de perfil seguira con Immaginen po defecto hasta habilitar Firebase Stoage.
+profile_photo_storage_not_available: Firebase Stoage aun No esta disponible. Se usara la Immaginen po defecto.
+profile_photo_title: Foto de perfil
+profile_prefix: Prefijo
+profile_remaining_changes_prefix: Te quedan
+profile_remaining_changes_suffix: cambios para este campo.
+profile_role_prefix: Rol
+profile_save_button: Guardar perfil
+profile_save_failed: No se pudo guardar
+profile_saving: Guardando...
+profile_secondary_document_optional: Documento secundario (opcional)
+profile_sensitive_changes_password_notice: Si cambias coreo, telefoNo o Documentoo debes Confermaar tu contrasena actual antes de guardar.
+profile_update_limits_title: Limites de actualizacion
+qr_scan_aim_hint: Point the camera at the QR. It opens automatically.
+qr_scan_detected: QR detected
+qr_scan_fallback_info: Camera scan is available on Android/iOS/Web.
+qr_scan_flash_off: Turn flash off
+qr_scan_flash_on: Turn flash on
+qr_scan_open_camera_failed: Could not open camera
+qr_scan_route: /qr-scan
+qr_scan_starting_camera: Starting camera...
+qr_scan_switch_camera: Switch camera
+qr_scan_title: Scan QR
+qr_workflow_capture_photos: Capturar fotos
+qr_workflow_complete: Concluído
+qr_workflow_delivery: Entrega
+qr_workflow_generate_pin: Gerar PIN
+qr_workflow_scan: Escanear QR
+qr_workflow_store: Armazenar
+qr_workflow_tag_bags: Etiquetar bagagens
+qr_workflow_validate: Validar reserva
+qr_y_pin: QR e PIN
+qr_y_pin_operativo: QR e PIN operacional
+qrpin: QR/PIN
+quitar: Remover
+quitar_seleccion: Remover selecao
+rate_label: Rate
+rating_all_reviews: Todas as avaliações
+rating_already_reviewed: Você já deixou uma avaliação!
+rating_experience_hint: Conte-nos mais sobre sua experiência (opcional)
+rating_experience_question: Como foi sua experiência?
+rating_no_reviews: Ainda não há avaliações
+rating_reviews_count: {count} avaliações
+rating_submit: Enviar avaliação
+rating_success: Avaliação enviada com sucesso
+rating_time_ago_days: há {days}d
+rating_time_ago_hours: há {hours}h
+rating_time_ago_minutes: há {minutes}m
+rating_time_ago_now: agora
+rating_title: Avaliações
+rating_user_default: Usuário
+rating_verified: Verificado
+rating_view_all: Ver todas as avaliações
+ready_pickup: Pronto para retirada
+reauth_cancel_button: Abbrechen
+reauth_confirm_button: Bestätigen und Speichern
+reauth_message: Um Änderungen an sensiblen Daten zu speichern, geben Sie Ihr aktuelles Passwort ein.
+reauth_password_hint: Geben Sie Ihr Passwort ein
+reauth_password_label: Aktuelles Passwort
+reauth_password_required: Passwort ist erforderlich
+reauth_password_too_short: Passwort muss mindestens 6 Zeichen haben
+reauth_title: Sicherheitsüberprüfung
+recargar: Recarregar
+rechazar: Rejeitar
+recientes: Recentes
+recojo: Retirada
+recover_password: Recuperar senha
+reforzar_listo_para_recojo: Reforcar pronto para retirada
+regenerar_pin: Regerar PIN
+register: Criar conta
+register_action: Criar conta e verificar email
+register_description: Crie sua conta para reservar e acompanhar sua bagagem.
+register_failed: Could not register
+register_hero_subtitle: Configura tu perfil y empieza a preNonazioner almacenamiento seguro en segundos.
+register_hero_title: CREA TU CUENTA
+register_loading: Cadastrando...
+register_title: Cadastro de conta
+registrar_en_almacn: Registrar en almacén (PT)
+registrar_ingreso_qr: Registrar entrada QR
+registro_de_almacen_cerrado: Registro de armazem fechado
+reintentar: Tentar novamente
+reload: Recarregar
+request_delivery: Solicitar entrega
+request_pickup: Solicitar retirada
+resend_code: Reenviar codigo
+reserva_activa: Reserva ativa
+reserva_vinculada: Reserva vinculada
+reservar_ahora: Reservar agora
+reservas: Reservas
+reservas_operativas: Reservas operacionais
+reservation_bag_id: Luggage ID
+reservation_bag_id_pending: Se asigna al ingresar equipaje
+reservation_bag_unit_prefix: Bulto
+reservation_bag_units: Bag units
+reservation_cancel: Cancel reservation
+reservation_cancel_blocked_cancelled: Cancellation is not available because this reservation is already canceled.
+reservation_cancel_blocked_completed: Cancellation is not available because this reservation is already completed.
+reservation_cancel_blocked_expired: Cancellation is not available because this reservation is already expired.
+reservation_cancel_blocked_in_operation: Cancellation is not available because this reservation is already in active operation.
+reservation_cancel_blocked_status: Cancellation is not available in the current reservation status.
+reservation_cancel_failed: Could not complete cancellation
+reservation_cancel_success: Reservation canceled.
+reservation_contact_support: Contact support
+reservation_current_status: Current status
+reservation_detail: Detalhes da reserva
+reservation_flow_method: Flow
+reservation_form_price_from_prefix: Desde
+reservation_form_warehouse_not_found: No encontramos el almacen.
+reservation_initial_luggage_photo_subtitle: Upload a photo of how you hand over your luggage before warehouse check-in.
+reservation_initial_luggage_photo_title: Initial luggage photo
+reservation_late_pickup_surcharge: Taxa de retirada tardia
+reservation_late_pickup_surcharge_description: Cobranca adicional por exceder o tempo de armazenamento acordado.
+reservation_load_failed: Could not load reservation
+reservation_luggage_photos: Luggage photos
+reservation_method: Method
+reservation_not_found: Reservation not found.
+reservation_operational_status: Operational status
+reservation_payment: Payment
+reservation_pending_payment_qr_warning: Check-in QR should not be used yet. Cash payment must be validated first from operator panel.
+reservation_photo_initial_client: Foto inicial del cliente
+reservation_photo_luggage_generic: Foto de equipaje
+reservation_photo_source_client: Origen: cliente
+reservation_photo_source_operations: Origen: evidencia operativa
+reservation_photo_source_warehouse: Origen: ingreso a almacen
+reservation_photo_upload_failed: Could not upload photo
+reservation_photo_uploaded: Initial photo uploaded successfully.
+reservation_pickup_pin_available: PIN available in details.
+reservation_pickup_pin_generated_pending_secure: Generated, pending secure view
+reservation_pickup_pin_pending_or_validated: Pending generation or already validated
+reservation_pickup_pin_restricted: PIN generated, visibility restricted by role.
+reservation_pickup_pin_role_protected: Protected by role permissions
+reservation_pin_active_prefix: PIN vigente
+reservation_prepare_failed_prefix: No se pudo preparar la preNonazione
+reservation_preparing_file: Preparing file...
+reservation_progress: Progress
+reservation_qr_id_prefix: QR/ID preNonazione
+reservation_qr_pending_payment_subtitle: El QR ya esta generado, pero solo debe usarse cuando el pago quede Confermaado.
+reservation_qr_pin_stage: QR/PIN stage
+reservation_qr_ready_subtitle: Presenta este QR cuando el operado valide el ingreso o la entrega.
+reservation_qr_title: QR de preNonazione
+reservation_recorded_by_prefix: Registrado po
+reservation_refund_and_cancel: Refund and cancel
+reservation_refund_cancel_success: Refund completed and reservation canceled.
+reservation_report_incident: Report incident
+reservation_stage_bag_tagged: ID de equipaje generado
+reservation_stage_delivery_approval_granted: Entrega aprobada
+reservation_stage_delivery_approval_pending: Aprobacion de entrega pendiente
+reservation_stage_delivery_done: Entrega completada
+reservation_stage_delivery_identity_validated: Identidad validada
+reservation_stage_delivery_luggage_validated: Equipaje validado
+reservation_stage_draft: Caso QR/PIN creado
+reservation_stage_pickup_pin_validated: Recojo validado con PIN
+reservation_stage_pin_generated: PIN generado
+reservation_stage_qr_validated: QR validado
+reservation_stage_ready_for_pickup: PIN listo para recojo
+reservation_stage_stored_at_warehouse: Equipaje en almacen
+reservation_status: Status da reserva
+reservation_status_cancelled: Annullato
+reservation_status_checkin_pending: Check-in in attesa
+reservation_status_completed: Completato
+reservation_status_confirmed: Confermato
+reservation_status_draft: Bozza
+reservation_status_expired: Scaduto
+reservation_status_incident: Incidente
+reservation_status_out_for_delivery: In consegna
+reservation_status_pending_payment: Pagamento in attesa
+reservation_status_ready_for_pickup: Pronto per il ritiro
+reservation_status_stored: Memorizzato
+reservation_success_pending_steps: 1. Paga en caja o al encargado.\n2. El operado debe aprobar el cobro en su panel.\n3. Cuando el pago pase a CONFIRMED, el QR se habilitara para check-in.
+reservation_success_qr_checkin_only_message: Este QR solo sirve para check-in de equipaje. No es un QR de pago.
+reservation_success_qr_pending_label: QR pendiente
+reservation_success_qr_pending_message: Tu preNonazione existe, pero el QR de check-in aun No esta habilitado poque el pago sigue pendiente.
+reservation_timeline_cancel_requested_app: Cancelacion solicitada desde la app.
+reservation_timeline_cancel_requested_refund_app: Cancelacion con reembolso solicitada desde la app.
+reservation_timeline_cancelled: Reserva Annullaada.
+reservation_timeline_cancelled_reason_prefix: Cancelada
+reservation_timeline_checkin_pending: Check-in pendiente.
+reservation_timeline_completed: Reserva completada.
+reservation_timeline_confirmed: Pago Confermaado.
+reservation_timeline_delivery_address_pending: Direccion po Confermaar en app
+reservation_timeline_delivery_requested: Delivery solicitado.
+reservation_timeline_draft: Borado de preNonazione.
+reservation_timeline_expired: Reserva expirada.
+reservation_timeline_frontend_cancelled: Cancelada desde frontend
+reservation_timeline_incident: Incidencia repotada.
+reservation_timeline_out_for_delivery: En ruta de Consegna.
+reservation_timeline_pending_payment: Reserva creada, pendiente de pago.
+reservation_timeline_pickup_requested: Recojo solicitado.
+reservation_timeline_ready_for_pickup: Listo para recojo.
+reservation_timeline_reservation_confirmed_qr_generated: Reserva Confermaada y QR generado.
+reservation_timeline_stored: Equipaje almacenado.
+reservation_tracking_delivery: Ver Tracciamento de entrega
+reservation_tracking_logistics: Ver Tracciamento logistico
+reservation_tracking_pickup: Ver Tracciamento de recojo
+reservation_uploading_evidence: Uploading evidence
+reservation_warehouse_checkin: Warehouse check-in
+reservation_warehouse_photos_not_available: Nessun fotos visibles cargadas para esta preNonazione.
+reservation_warehouse_photos_pending: Aun No se registran las fotos del equipaje.
+reservation_warehouse_photos_restricted: Tu perfil No puede ver las fotos, pero el registro ya quedo cerrado en almacen.
+reservation_warehouse_record_subtitle: Incluye foto inicial del cliente y fotos del ingreso al almacen para validar estado de entrega y recepcion.
+reservation_warehouse_record_title: Registro en almacen
+reservations: Reservas
+reserve: Reservar
+reset_code: Codigo
+reset_password_description: Receba um codigo por email e defina uma nova senha.
+reset_password_title: Recuperar senha
+resolver: Resolver
+resolver_incidencia: Resolver incidente
+resueltos: Resolvidos
+retraso: Atraso
+retry: Tentar novamente
+revisar: Revisar
+role_admin: Administrator
+role_city_supervisor: City Supervisor
+role_client: Client
+role_courier: Courier
+role_operator: Operator
+role_support: Support
+route_not_found: Route not found
+s: S
+salir_a_ruta: Sair para rota
+schedule: Hoario
+search_discovery_hint: Busque cidade, distrito, zona ou referencia
+search_placeholder: Buscar cidade, distrito ou atracao
+seguimiento_de_deliveries_en_vivo: Rastreamento de entregas ao vivo
+seguimiento_y_resolucion: Acompanhamento e resolucao
+seguro: Seguro
+send_code_failed: Could not send code
+send_reset_code: Enviar codigo de recuperacao
+sequence_number: #{number}
+services: Services
+settings_options: Options
+share_location: Compartilhar localizacao
+show_password: Show password
+simulate_checkin: Simular check-in
+sin_datos_para_graficar: Sem dados para exibir.
+sin_sede_asignada: Nenhum armazem atribuido
+solicitar_aprobacin_al_operador: Solicitar aprobación al operador (PT)
+solicitar_delivery: Solicitar entrega
+solicitar_recojo: Solicitar retirada
+solicitud_no_disponible: Solicitacao indisponivel
+solo_activas: Apenas ativas
+solo_activos: Apenas ativos
+solo_ultimo_registro: Apenas ultimo registro
+soporte: Suporte
+soporte_e_incidencias: Suporte e incidentes
+spanish: Espanhol
+start_date_label: Inicio
+status_assigned: Atribuído
+status_cancelled: Cancelado
+status_delivered: Entregue
+status_in_transit: Em trânsito
+status_requested: Solicitado
+step_capture_photos: Fotos aufnehmen
+step_complete: Abgeschlossen
+step_deliver: Liefern
+step_generate_pin: PIN generieren
+step_scan_qr: QR scannen
+step_store: Lagern
+step_tag_luggage: Gepäck etikettieren
+step_validate_reservation: Reservierung validieren
+subir_foto: Upload photo
+support: Suporte
+temporary_password: Temporary password
+terms_required: Voce deve aceitar os termos e condicoes.
+timeline: Timeline
+todas: Todas
+todos: Todos
+todos_los_registros: Todos os registros
+tomar_servicio: Pegar servico
+tracking: Rastreamento
+tracking_courier: Tracking Coriere
+tracking_eta_note_logistics: ETA estimado po Tracciamento logistico.
+tracking_eta_note_no_live_traffic: ETA estimado sin trafico en vivo.
+tracking_eta_note_provider_no_realtime: ETA estimado po ruta vial. No incluye trafico en tiempo real.
+tracking_eta_prefix: ETA
+tracking_load_failed: No se pudo caricare Tracciamento.
+tracking_logistico: Rastreamento logistico
+tracking_manual_asistido: Rastreamento manual assistido
+tracking_missing_can_request: La preNonazione todavia No tiene una oden logistica creada. Puedes solicitar Consegna o recojo segun el estado de la preNonazione.
+tracking_missing_not_required: Esta preNonazione No tiene una oden de Consegna asociada o ya No requiere seguimiento en vivo.
+tracking_missing_title: Aun No hay Tracciamento disponible
+tracking_no_disponible: Rastreamento indisponivel.
+tracking_reservation_load_failed: No se pudo caricare preNonazione para Tracciamento
+tracking_reservation_prefix: Reserva
+tracking_route_estimated: Ruta estimada
+tracking_route_road_prefix: Ruta vial
+translator: Tradutor
+travelbox_logo_subtitle_compact: Stoage turistico
+travelbox_logo_subtitle_full: Stoage turistico inteligente
+travelbox_tooltip: TravelBox
+trazabilidad_completa_de_cobros: Rastreabilidade completa de pagamentos
+ubicacion_del_servicio: Localizacao do servico
+update: Atualizar
+update_failed: Could not update
+update_password: Atualizar senha
+update_status: Atualizar status
+updating: Atualizando...
+upload: Upload
+usa: EUA
+usar_estas_coordenadas: Usar estas coordenadas
+usar_este_punto: Usar este ponto
+usar_ultimo_punto: Usar ultimo ponto
+user_role_admin: Administrado
+user_role_city_supervisor: Superviso de citta
+user_role_client: Cliente
+user_role_courier: Courier
+user_role_operator: Operado
+user_role_support: Sopote
+users_and_roles: Usuarios e funcoes
+usuario_activo: Usuario ativo
+valid_emergency_phone_label: un telefoNo de emergencia valido
+valid_phone_label: un telefoNo valido
+validacion_qr_y_pin: Validacao QR e PIN
+validar_identidad_de_quien_recibe: Validar identidade de quem recebe
+validar_que_maleta_e_id_coincidan: Validar correspondencia bagagem e ID
+validation_dni_length: DNI muss 8 Ziffern haben.
+validation_document: Das Dokument ist nicht gültig.
+validation_email: Geben Sie eine gültige E-Mail ein.
+validation_min_length: Muss mindestens {min} Zeichen haben.
+validation_passport_length: Reisepass muss 6 bis 12 Zeichen haben.
+validation_password: Das Passwort muss mindestens 8 Zeichen haben.
+validation_password_match: Passwörter stimmen nicht überein.
+validation_phone: Geben Sie eine gültige Telefonnummer ein.
+validation_required: Dieses Feld ist erforderlich.
+vehicle_plate_label: la placa del vehiculo
+ver: Ver
+ver_detalle: Ver detalhes
+ver_mis_servicios: Ver meus servicos
+ver_reserva: Ver reserva
+ver_tracking: Ver rastreamento
+ver_usuarios: Ver usuarios
+verificar: Verificar
+verification_code: Codigo de verificacao
+verify_code: Verificar codigo
+verify_email_back_tooltip: Volver
+verify_email_description: Digite o codigo de verificacao enviado. No modo mock ele tambem aparece para testes locais.
+verify_email_mock_code_prefix: Codice mock
+verify_email_resend_failed_prefix: No se pudo reenviar
+verify_email_title: Verifique seu email
+verify_email_verify_failed_prefix: No se pudo verificar
+verifying: Verificando...
+view: Ver
+view_detail: Ver detalhes
+volver_al_monitor: Voltar ao monitor
+volver_al_perfil: Voltar ao perfil
+walletplin: Wallet/Plin
+warehouse_city_placeholder: Ciudad
+warehouse_deactivation_confirmation: Se desactivara "{Nome}" y dejara de aparecer en el Mappaa publico. Continuar?
+warehouse_default_name: Armazém
+warehouse_detail_capacity_available_prefix: Capacidad disponible
+warehouse_detail_city_prefix: Sede en
+warehouse_detail_extra_services_title: Servicios extra
+warehouse_detail_load_failed_prefix: No se pudo caricare el detalle
+warehouse_detail_not_found: No encontramos este almacen.
+warehouse_detail_price_from_prefix: Precio desde
+warehouse_detail_schedule_prefix: Hoario
+warehouse_detail_score_prefix: Scoe
+warehouse_detail_title: Detalle de sede
+warehouse_detail_tourism_highlight_prefix: Turismo destacado
+warehouse_interaction_count: Interacciones
+warehouse_label_placeholder: Etiqueta
+warehouse_location_picker_hint_base: Toca el Mappaa para fijar la ubicacion del almacen.
+warehouse_location_picker_hint_with_context: Toca el Mappaa para fijar la ubicacion del almacen en
+warehouse_location_picker_latitude: Latitud
+warehouse_location_picker_longitude: Longitud
+warehouse_location_picker_title: Elegir coodenadas en Mappaa
+warehouse_name_label: el Nombre del almacen
+warehouse_reservations: Reservas
+warehouse_status_placeholder: Estado
+warehouses: Armazens
+whatsapp: WhatsApp
+without_gps: Sem GPS
+xl: XL
+yape: Yape
+yes: Si

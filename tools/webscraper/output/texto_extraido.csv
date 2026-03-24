@@ -1,0 +1,41 @@
+texto,ruta,frecuencia
+"if ('serviceWorker' in navigator) {","/",4
+"navigator.serviceWorker.getRegistrations().then((registrations) => {","/",4
+"for (const registration of registrations) {","/",4
+"registration.unregister();","/",4
+"}","/",4
+"});","/",4
+"if ('caches' in window) {","/",4
+"caches.keys().then((keys) => {","/",4
+"for (const key of keys) {","/",4
+"caches.delete(key);","/",4
+"if ('serviceWorker' in navigator) {","/discover",4
+"navigator.serviceWorker.getRegistrations().then((registrations) => {","/discover",4
+"for (const registration of registrations) {","/discover",4
+"registration.unregister();","/discover",4
+"}","/discover",4
+"});","/discover",4
+"if ('caches' in window) {","/discover",4
+"caches.keys().then((keys) => {","/discover",4
+"for (const key of keys) {","/discover",4
+"caches.delete(key);","/discover",4
+"if ('serviceWorker' in navigator) {","/login",4
+"navigator.serviceWorker.getRegistrations().then((registrations) => {","/login",4
+"for (const registration of registrations) {","/login",4
+"registration.unregister();","/login",4
+"}","/login",4
+"});","/login",4
+"if ('caches' in window) {","/login",4
+"caches.keys().then((keys) => {","/login",4
+"for (const key of keys) {","/login",4
+"caches.delete(key);","/login",4
+"if ('serviceWorker' in navigator) {","/register",4
+"navigator.serviceWorker.getRegistrations().then((registrations) => {","/register",4
+"for (const registration of registrations) {","/register",4
+"registration.unregister();","/register",4
+"}","/register",4
+"});","/register",4
+"if ('caches' in window) {","/register",4
+"caches.keys().then((keys) => {","/register",4
+"for (const key of keys) {","/register",4
+"caches.delete(key);","/register",4

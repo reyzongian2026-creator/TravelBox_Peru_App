@@ -1,0 +1,514 @@
+{
+  "total_keys": 1246,
+  "total_values": 7498,
+  "by_language": {
+    "es": 1051,
+    "en": 457,
+    "de": 249,
+    "fr": 224,
+    "it": 247,
+    "pt": 338
+  },
+  "sample_detection": [
+    {
+      "key": "operator_dashboard_title",
+      "value": "Panel operativo",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_title",
+      "value": "Operations panel",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_title",
+      "value": "Panel operativo",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_title",
+      "value": "Panel operativo",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_title",
+      "value": "Panel operativo",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_title",
+      "value": "Panel operativo",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_intro",
+      "value": "Atencion diaria: cobros en caja, control de reservas y seguimiento de incidencia",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_intro",
+      "value": "Daily operations: cash desk approvals, reservation control, and incident follow-",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_intro",
+      "value": "Atencion diaria: cobros en caja, control de reservas y seguimiento de emcidencia",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_intro",
+      "value": "Atencion diaria: cobros en caja, control de Reservierungen y seguimiento de inci",
+      "detected": "de"
+    },
+    {
+      "key": "operator_dashboard_intro",
+      "value": "Atencion diaria: cobros en caja, control de reservationtions y seguimiento de da",
+      "detected": "es"
+    },
+    {
+      "key": "operator_dashboard_intro",
+      "value": "Atencion diaria: cobros en caja, control de preNonazioni y seguimiento de incide",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_pending_cash",
+      "value": "Cobros pendientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_pending_cash",
+      "value": "Pending cash approvals",
+      "detected": "en"
+    },
+    {
+      "key": "operator_kpi_pending_cash",
+      "value": "Cobranca pendentes",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_kpi_pending_cash",
+      "value": "Einziehungen ausstehend",
+      "detected": "de"
+    },
+    {
+      "key": "operator_kpi_pending_cash",
+      "value": "Encaissements en_attente",
+      "detected": "fr"
+    },
+    {
+      "key": "operator_kpi_pending_cash",
+      "value": "Riscossioni in_sospeso",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_active_reservations",
+      "value": "Reservas activas",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_kpi_active_reservations",
+      "value": "Active reservations",
+      "detected": "en"
+    },
+    {
+      "key": "operator_kpi_active_reservations",
+      "value": "Reservas activas",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_kpi_active_reservations",
+      "value": "Reservas activas",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_kpi_active_reservations",
+      "value": "Reservas activas",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_kpi_active_reservations",
+      "value": "Reservas activas",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_kpi_incidents",
+      "value": "Incidencias",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_incidents",
+      "value": "Incidents",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_incidents",
+      "value": "Incidencias",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_incidents",
+      "value": "Incidencias",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_incidents",
+      "value": "Incidencias",
+      "detected": "es"
+    },
+    {
+      "key": "operator_kpi_incidents",
+      "value": "Incidencias",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservations_subtitle",
+      "value": "Busqueda por codigo, cambios de estado y trazabilidad",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservations_subtitle",
+      "value": "Search by code, status updates, and traceability",
+      "detected": "en"
+    },
+    {
+      "key": "operator_reservations_subtitle",
+      "value": "Busqueda pou codigo, cambios de estado y trazabilidad",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservations_subtitle",
+      "value": "Busqueda poder codigo, cambios de estado y trazabilidad",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservations_subtitle",
+      "value": "Busqueda pou codigo, cambios de estado y trazabilidad",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservations_subtitle",
+      "value": "Busqueda po codigo, cambios de estado y trazabilidad",
+      "detected": "es"
+    },
+    {
+      "key": "operator_qr_subtitle",
+      "value": "Escanear reserva, etiquetar maleta y cerrar entrega con PIN",
+      "detected": "es"
+    },
+    {
+      "key": "operator_qr_subtitle",
+      "value": "Scan reservation, tag luggage, and close delivery with PIN",
+      "detected": "en"
+    },
+    {
+      "key": "operator_qr_subtitle",
+      "value": "EEscanearear reserva, etiquetar maleta y cerrar entrega con PIN",
+      "detected": "es"
+    },
+    {
+      "key": "operator_qr_subtitle",
+      "value": "EScannenear Reservierung, etiquetar maleta y cerrar entrega con PIN",
+      "detected": "es"
+    },
+    {
+      "key": "operator_qr_subtitle",
+      "value": "EScannerear reservation, etiquetar maleta y cerrar entrega con PIN",
+      "detected": "es"
+    },
+    {
+      "key": "operator_qr_subtitle",
+      "value": "EScansionaear preNonazione, etiquetar maleta y cerrar entrega con PIN",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_suffix",
+      "value": "aprobaciones pendientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_suffix",
+      "value": "pending approvals",
+      "detected": "en"
+    },
+    {
+      "key": "operator_pending_approvals_suffix",
+      "value": "aprobaciones pendentes",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_pending_approvals_suffix",
+      "value": "aprobaciones ausstehend",
+      "detected": "de"
+    },
+    {
+      "key": "operator_pending_approvals_suffix",
+      "value": "aprobaciones en_attente",
+      "detected": "fr"
+    },
+    {
+      "key": "operator_pending_approvals_suffix",
+      "value": "aprobaciones in_sospeso",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_subtitle",
+      "value": "Hay entregas de delivery esperando validacion de operador/admin.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_subtitle",
+      "value": "There are delivery handoffs waiting for operator/admin validation.",
+      "detected": "en"
+    },
+    {
+      "key": "operator_pending_approvals_subtitle",
+      "value": "Hay entregas de Entrega esperando validacion de operadou/Admemistradou.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_subtitle",
+      "value": "Hay entregas de Lieferung esperando validacion de operadoder/Administratoder.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_subtitle",
+      "value": "Hay entregas de Livraison esperando validacion de operadou/Admdansistrateur.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_approvals_subtitle",
+      "value": "Hay entregas de Consegna esperando validacion de operado/Amministratoe.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_no_pending_cash",
+      "value": "No hay cobros pendientes por validar.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_no_pending_cash",
+      "value": "There are no pending cash approvals.",
+      "detected": "en"
+    },
+    {
+      "key": "operator_no_pending_cash",
+      "value": "Nenhum cobros pendentes pou validar.",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_no_pending_cash",
+      "value": "Keine cobros ausstehend poder validar.",
+      "detected": "de"
+    },
+    {
+      "key": "operator_no_pending_cash",
+      "value": "Aucun cobros en_attente pou validar.",
+      "detected": "fr"
+    },
+    {
+      "key": "operator_no_pending_cash",
+      "value": "Nessun cobros in_sospeso po validar.",
+      "detected": "es"
+    },
+    {
+      "key": "operator_recent_pending_title",
+      "value": "Pendientes recientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_recent_pending_title",
+      "value": "Recent pending items",
+      "detected": "en"
+    },
+    {
+      "key": "operator_recent_pending_title",
+      "value": "Pendientes recientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_recent_pending_title",
+      "value": "Pendientes recientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_recent_pending_title",
+      "value": "Pendientes recientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_recent_pending_title",
+      "value": "Pendientes recientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_attempt",
+      "value": "Intento",
+      "detected": "es"
+    },
+    {
+      "key": "operator_attempt",
+      "value": "Attempt",
+      "detected": "es"
+    },
+    {
+      "key": "operator_attempt",
+      "value": "Intento",
+      "detected": "es"
+    },
+    {
+      "key": "operator_attempt",
+      "value": "Intento",
+      "detected": "es"
+    },
+    {
+      "key": "operator_attempt",
+      "value": "Intento",
+      "detected": "es"
+    },
+    {
+      "key": "operator_attempt",
+      "value": "Intento",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservation",
+      "value": "Reserva",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservation",
+      "value": "Reservation",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservation",
+      "value": "Reserva",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservation",
+      "value": "Reserva",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservation",
+      "value": "Reserva",
+      "detected": "es"
+    },
+    {
+      "key": "operator_reservation",
+      "value": "Reserva",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_cash_load_failed",
+      "value": "No se pudo cargar cobros pendientes",
+      "detected": "es"
+    },
+    {
+      "key": "operator_pending_cash_load_failed",
+      "value": "Could not load pending cash approvals",
+      "detected": "en"
+    },
+    {
+      "key": "operator_pending_cash_load_failed",
+      "value": "No se pudo carregar cobros pendentes",
+      "detected": "pt"
+    },
+    {
+      "key": "operator_pending_cash_load_failed",
+      "value": "No se pudo laden cobros ausstehend",
+      "detected": "de"
+    },
+    {
+      "key": "operator_pending_cash_load_failed",
+      "value": "No se pudo charger cobros en_attente",
+      "detected": "fr"
+    },
+    {
+      "key": "operator_pending_cash_load_failed",
+      "value": "No se pudo caricare cobros in_sospeso",
+      "detected": "es"
+    },
+    {
+      "key": "my_reservations_title",
+      "value": "Mis reservas",
+      "detected": "pt"
+    },
+    {
+      "key": "my_reservations_title",
+      "value": "My reservations",
+      "detected": "fr"
+    },
+    {
+      "key": "my_reservations_title",
+      "value": "Mis reservas",
+      "detected": "pt"
+    },
+    {
+      "key": "my_reservations_title",
+      "value": "Mis Reservierungen",
+      "detected": "de"
+    },
+    {
+      "key": "my_reservations_title",
+      "value": "Mis reservationtions",
+      "detected": "es"
+    },
+    {
+      "key": "my_reservations_title",
+      "value": "Mis preNonazioni",
+      "detected": "es"
+    },
+    {
+      "key": "my_reservations_load_failed",
+      "value": "No se pudieron cargar reservas",
+      "detected": "pt"
+    },
+    {
+      "key": "my_reservations_load_failed",
+      "value": "Could not load reservations",
+      "detected": "fr"
+    },
+    {
+      "key": "my_reservations_load_failed",
+      "value": "No se pudieron carregar reservas",
+      "detected": "pt"
+    },
+    {
+      "key": "my_reservations_load_failed",
+      "value": "No se pudieron laden Reservierungen",
+      "detected": "de"
+    },
+    {
+      "key": "my_reservations_load_failed",
+      "value": "No se pudieron charger reservationtions",
+      "detected": "es"
+    },
+    {
+      "key": "my_reservations_load_failed",
+      "value": "No se pudieron caricare preNonazioni",
+      "detected": "es"
+    },
+    {
+      "key": "my_reservations_empty",
+      "value": "Aun no tienes reservas.",
+      "detected": "pt"
+    },
+    {
+      "key": "my_reservations_empty",
+      "value": "You do not have reservations yet.",
+      "detected": "fr"
+    },
+    {
+      "key": "my_reservations_empty",
+      "value": "Aun Nao tienes reservas.",
+      "detected": "pt"
+    },
+    {
+      "key": "my_reservations_empty",
+      "value": "Aun Nein tienes Reservierungen.",
+      "detected": "de"
+    }
+  ]
+}

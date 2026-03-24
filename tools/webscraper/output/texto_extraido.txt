@@ -1,0 +1,15 @@
+TravelBox Peru - Texto Extraido
+Fecha: 2026-03-22 21:30:09
+Total textos unicos: 10
+==================================================
+
+- caches.delete(key);
+- caches.keys().then((keys) => {
+- for (const key of keys) {
+- for (const registration of registrations) {
+- if ('caches' in window) {
+- if ('serviceWorker' in navigator) {
+- navigator.serviceWorker.getRegistrations().then((registrations) => {
+- registration.unregister();
+- }
+- });

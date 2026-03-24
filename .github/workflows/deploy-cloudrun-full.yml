@@ -112,8 +112,6 @@ permissions:
 
 jobs:
   deploy-full:
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     uses: ./.github/workflows/deploy-cloudrun-all.yml
     with:
       deploy_target: full

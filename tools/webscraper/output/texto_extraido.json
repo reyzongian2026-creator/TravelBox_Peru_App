@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "scraped_at": "2026-03-22T21:30:09.712713",
+    "base_url": "https://travelbox-frontend-prod-82181537443.us-central1.run.app",
+    "total_routes": 4,
+    "total_unique_texts": 10
+  },
+  "text_by_route": {
+    "/": [
+      "if ('serviceWorker' in navigator) {",
+      "navigator.serviceWorker.getRegistrations().then((registrations) => {",
+      "for (const registration of registrations) {",
+      "registration.unregister();",
+      "}",
+      "});",
+      "if ('caches' in window) {",
+      "caches.keys().then((keys) => {",
+      "for (const key of keys) {",
+      "caches.delete(key);"
+    ],
+    "/discover": [
+      "if ('serviceWorker' in navigator) {",
+      "navigator.serviceWorker.getRegistrations().then((registrations) => {",
+      "for (const registration of registrations) {",
+      "registration.unregister();",
+      "}",
+      "});",
+      "if ('caches' in window) {",
+      "caches.keys().then((keys) => {",
+      "for (const key of keys) {",
+      "caches.delete(key);"
+    ],
+    "/login": [
+      "if ('serviceWorker' in navigator) {",
+      "navigator.serviceWorker.getRegistrations().then((registrations) => {",
+      "for (const registration of registrations) {",
+      "registration.unregister();",
+      "}",
+      "});",
+      "if ('caches' in window) {",
+      "caches.keys().then((keys) => {",
+      "for (const key of keys) {",
+      "caches.delete(key);"
+    ],
+    "/register": [
+      "if ('serviceWorker' in navigator) {",
+      "navigator.serviceWorker.getRegistrations().then((registrations) => {",
+      "for (const registration of registrations) {",
+      "registration.unregister();",
+      "}",
+      "});",
+      "if ('caches' in window) {",
+      "caches.keys().then((keys) => {",
+      "for (const key of keys) {",
+      "caches.delete(key);"
+    ]
+  },
+  "all_unique_text": [
+    "caches.delete(key);",
+    "caches.keys().then((keys) => {",
+    "for (const key of keys) {",
+    "for (const registration of registrations) {",
+    "if ('caches' in window) {",
+    "if ('serviceWorker' in navigator) {",
+    "navigator.serviceWorker.getRegistrations().then((registrations) => {",
+    "registration.unregister();",
+    "}",
+    "});"
+  ]
+}
