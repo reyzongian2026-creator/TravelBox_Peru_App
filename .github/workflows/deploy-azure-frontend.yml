@@ -100,9 +100,10 @@ jobs:
           FIREBASE_FACEBOOK_ENABLED: ${{ env.FIREBASE_FACEBOOK_ENABLED }}
           FIREBASE_FACEBOOK_APP_ID: ${{ env.FIREBASE_FACEBOOK_APP_ID }}
 
+      - name: Package web build
+        run: |
+          cd build/web && zip -r ../web.zip . && cd ..
+
       - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: build/web
+        run: |
+          az webapp deployment source config-zip --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.WEBAPP_NAME }} --src build/web.zip
