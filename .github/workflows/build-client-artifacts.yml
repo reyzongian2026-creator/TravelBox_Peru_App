@@ -110,7 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -120,7 +120,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v2
+        uses: azure/login@v5
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
@@ -239,7 +239,7 @@ jobs:
           flutter build apk --release $defines
 
       - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: travelbox-android-apk-release
           path: build/app/outputs/flutter-apk/app-release.apk
@@ -250,7 +250,7 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -260,7 +260,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v2
+        uses: azure/login@v5
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
@@ -385,7 +385,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app build/ios/travelbox-ios-runner.app.zip
 
       - name: Upload iOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: travelbox-ios-runner-app-unsigned
           path: build/ios/travelbox-ios-runner.app.zip
@@ -396,7 +396,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -406,7 +406,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v2
+        uses: azure/login@v5
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
@@ -540,7 +540,7 @@ jobs:
           Compress-Archive -Path "$releaseDir\\*" -DestinationPath $zipPath -Force
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: travelbox-windows-release
           path: build/windows/travelbox-windows-release.zip

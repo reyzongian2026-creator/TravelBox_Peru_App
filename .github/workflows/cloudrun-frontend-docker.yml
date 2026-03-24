@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout frontend repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select GCP auth method
         id: gcp_auth
@@ -121,7 +121,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v2
+        uses: azure/login@v5
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 

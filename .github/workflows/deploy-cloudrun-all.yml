@@ -276,11 +276,11 @@ jobs:
 
     steps:
       - name: Checkout frontend repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Checkout backend repo
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'backend_only' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ inputs.backend_repository }}
           ref: ${{ inputs.backend_ref }}
@@ -353,7 +353,7 @@ jobs:
 
       - name: Setup Java for backend checks
         if: ${{ inputs.deploy_target == 'full' || inputs.deploy_target == 'backend_only' }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -376,7 +376,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v2
+        uses: azure/login@v5
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
