@@ -1277,7 +1277,7 @@ class AppLocalizations {
   };
 }
 
-extension _BuildContextExtension on BuildContext {
+extension AppLocalizationX on BuildContext {
   AppLocalizations get l10n => AppLocalizations.of(this);
 }
 
