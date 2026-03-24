@@ -6,7 +6,7 @@ import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/utils/app_exception.dart';
-import 'firebase_client_auth_service.dart' as firebase;
+import '../../../deprecated/firebase_client_auth_service.dart' as firebase;
 import 'entra_client_auth_service.dart';
 import '../domain/auth_repository.dart';
 
