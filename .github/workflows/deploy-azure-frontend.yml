@@ -1,0 +1,108 @@
+name: Deploy to Azure (Frontend)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      app_env:
+        description: "Environment"
+        required: true
+        default: prod
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  APP_ENV: ${{ inputs.app_env || 'prod' }}
+  AZURE_SUBSCRIPTION: "33815caa-4cfb-4a9e-b60a-8fee5caa2b08"
+  RESOURCE_GROUP: "travelbox-peru-rg"
+  WEBAPP_NAME: "travelbox-frontend-prod"
+  BACKEND_URL: "https://travelbox-backend-prod.azurewebsites.net/api/v1"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Login Azure (keyvault mode)
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
+
+      - name: Load FIREBASE_* from Azure Key Vault
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $vault = "kvtravelboxpe"
+          $map = @(
+            @{ secret = "tbx-app-firebase-api-key"; env = "FIREBASE_API_KEY"; required = $true },
+            @{ secret = "tbx-app-firebase-project-id"; env = "FIREBASE_PROJECT_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-messaging-sender-id"; env = "FIREBASE_MESSAGING_SENDER_ID"; required = $true },
+            @{ secret = "tbx-app-firebase-storage-bucket"; env = "FIREBASE_STORAGE_BUCKET"; required = $false },
+            @{ secret = "tbx-app-firebase-auth-domain"; env = "FIREBASE_AUTH_DOMAIN"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-bundle-id"; env = "FIREBASE_IOS_BUNDLE_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
+            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false },
+            @{ secret = "tbx-auth-facebook-app-id"; env = "FIREBASE_FACEBOOK_APP_ID"; required = $false }
+          )
+
+          foreach ($item in $map) {
+            $value = az keyvault secret show --vault-name $vault --name $item.secret --query value -o tsv 2>$null
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($value)) {
+              if ($item.required) {
+                throw "Falta secret requerido en Key Vault: $($item.secret)"
+              }
+              continue
+            }
+            "$($item.env)=$value" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          }
+          $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
+          if ([string]::IsNullOrWhiteSpace($fbEnabled)) { $fbEnabled = "true" }
+          "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build Flutter web
+        run: flutter build web --release
+        env:
+          APP_ENV: ${{ env.APP_ENV }}
+          API_BASE_URL: ${{ env.BACKEND_URL }}
+          FIREBASE_API_KEY: ${{ env.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ env.FIREBASE_PROJECT_ID }}
+          FIREBASE_MESSAGING_SENDER_ID: ${{ env.FIREBASE_MESSAGING_SENDER_ID }}
+          FIREBASE_STORAGE_BUCKET: ${{ env.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_AUTH_DOMAIN: ${{ env.FIREBASE_AUTH_DOMAIN }}
+          FIREBASE_IOS_BUNDLE_ID: ${{ env.FIREBASE_IOS_BUNDLE_ID }}
+          FIREBASE_ANDROID_APP_ID: ${{ env.FIREBASE_ANDROID_APP_ID }}
+          FIREBASE_IOS_APP_ID: ${{ env.FIREBASE_IOS_APP_ID }}
+          FIREBASE_WEB_APP_ID: ${{ env.FIREBASE_WEB_APP_ID }}
+          FIREBASE_FACEBOOK_ENABLED: ${{ env.FIREBASE_FACEBOOK_ENABLED }}
+          FIREBASE_FACEBOOK_APP_ID: ${{ env.FIREBASE_FACEBOOK_APP_ID }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: build/web
