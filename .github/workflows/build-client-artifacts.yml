@@ -120,7 +120,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v4
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
@@ -260,7 +260,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v4
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
@@ -406,7 +406,7 @@ jobs:
 
       - name: Login Azure (keyvault mode)
         if: ${{ inputs.secrets_mode == 'keyvault' }}
-        uses: azure/login@v4
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
