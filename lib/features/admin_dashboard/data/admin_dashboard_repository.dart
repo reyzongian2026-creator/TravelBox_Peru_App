@@ -22,6 +22,8 @@ abstract class AdminDashboardRepository {
   Future<SystemHealthInfo> getSystemHealth();
   
   Future<List<AuditLogEntry>> getAuditLog({int limit = 100, String? entityType, int? entityId, String? action, String? performedBy});
+
+  Future<AzureResourcesInfo> getAzureResources();
 }
 
 class RankingItem {
@@ -597,6 +599,105 @@ class AuditLogEntry {
   }
 }
 
+class AzureResourcesInfo {
+  final String generatedAt;
+  final List<AzureResource> resources;
+  final EstimatedCosts estimatedCosts;
+
+  AzureResourcesInfo({
+    required this.generatedAt,
+    required this.resources,
+    required this.estimatedCosts,
+  });
+
+  factory AzureResourcesInfo.fromJson(Map<String, dynamic> json) {
+    return AzureResourcesInfo(
+      generatedAt: json['generatedAt']?.toString() ?? '',
+      resources: (json['resources'] as List<dynamic>?)
+              ?.map((e) => AzureResource.fromJson(e as Map<String, dynamic>))
+              .toList() ?? [],
+      estimatedCosts: EstimatedCosts.fromJson(json['estimatedCosts'] as Map<String, dynamic>? ?? {}),
+    );
+  }
+}
+
+class AzureResource {
+  final String name;
+  final String resourceName;
+  final String sku;
+  final String status;
+  final Map<String, dynamic> metrics;
+  final String? expiresAt;
+  final String portalUrl;
+
+  AzureResource({
+    required this.name,
+    required this.resourceName,
+    required this.sku,
+    required this.status,
+    required this.metrics,
+    this.expiresAt,
+    required this.portalUrl,
+  });
+
+  factory AzureResource.fromJson(Map<String, dynamic> json) {
+    return AzureResource(
+      name: json['name']?.toString() ?? '',
+      resourceName: json['resourceName']?.toString() ?? '',
+      sku: json['sku']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'Unknown',
+      metrics: json['metrics'] as Map<String, dynamic>? ?? {},
+      expiresAt: json['expiresAt']?.toString(),
+      portalUrl: json['portalUrl']?.toString() ?? '',
+    );
+  }
+}
+
+class EstimatedCosts {
+  final String currency;
+  final List<CostItem> items;
+  final double totalMonthly;
+
+  EstimatedCosts({
+    required this.currency,
+    required this.items,
+    required this.totalMonthly,
+  });
+
+  factory EstimatedCosts.fromJson(Map<String, dynamic> json) {
+    return EstimatedCosts(
+      currency: json['currency']?.toString() ?? 'USD',
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => CostItem.fromJson(e as Map<String, dynamic>))
+              .toList() ?? [],
+      totalMonthly: (json['totalMonthly'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class CostItem {
+  final String service;
+  final String sku;
+  final double amount;
+  final String period;
+
+  CostItem({
+    required this.service,
+    required this.sku,
+    required this.amount,
+    required this.period,
+  });
+
+  factory CostItem.fromJson(Map<String, dynamic> json) {
+    return CostItem(
+      service: json['service']?.toString() ?? '',
+      sku: json['sku']?.toString() ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      period: json['period']?.toString() ?? '',
+    );
+  }
+}
+
 final adminDashboardRepositoryProvider = Provider<AdminDashboardRepository>((ref) {
   return AdminDashboardRepositoryImpl(dio: ref.watch(dioProvider));
 });
@@ -860,6 +961,25 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<AzureResourcesInfo> getAzureResources() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/admin/system/azure-resources',
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException.withCode(AppErrorCode.errFetchFailed, backendMessage: 'Azure resources not available');
+      }
+      return AzureResourcesInfo.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      if (e is AppException) rethrow;
       throw AppException.fromError(e);
     }
   }

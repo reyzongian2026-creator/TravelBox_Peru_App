@@ -14,6 +14,10 @@ final auditLogProvider = FutureProvider<List<AuditLogEntry>>((ref) async {
   return ref.read(adminDashboardRepositoryProvider).getAuditLog(limit: 50);
 });
 
+final azureResourcesProvider = FutureProvider<AzureResourcesInfo>((ref) async {
+  return ref.read(adminDashboardRepositoryProvider).getAzureResources();
+});
+
 class SystemAdminPage extends ConsumerWidget {
   const SystemAdminPage({super.key});
 
@@ -22,13 +26,14 @@ class SystemAdminPage extends ConsumerWidget {
     final l10n = context.l10n;
     
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(
         children: [
           TabBar(
             tabs: [
               Tab(text: l10n.t('system_health')),
               Tab(text: l10n.t('audit_log')),
+              Tab(text: 'Azure Resources'),
             ],
           ),
           Expanded(
@@ -36,6 +41,7 @@ class SystemAdminPage extends ConsumerWidget {
               children: [
                 _SystemHealthTab(),
                 _AuditLogTab(),
+                _AzureResourcesTab(),
               ],
             ),
           ),
@@ -293,5 +299,275 @@ class _AuditLogTab extends ConsumerWidget {
     if (action.contains('LOGIN') || action.contains('LOGIN')) return Icons.login;
     if (action.contains('LOGOUT') || action.contains('LOGOUT')) return Icons.logout;
     return Icons.info;
+  }
+}
+
+class _AzureResourcesTab extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resourcesAsync = ref.watch(azureResourcesProvider);
+    final l10n = context.l10n;
+    final responsive = context.responsive;
+
+    return resourcesAsync.when(
+      data: (resources) {
+        return ListView(
+          padding: responsive.pageInsets(),
+          children: [
+            Card(
+              child: Padding(
+                padding: EdgeInsets.all(responsive.cardPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.cloud, color: Colors.blue, size: 28),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Azure Resources',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Updated: ${resources.generatedAt}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: responsive.itemGap),
+            ...resources.resources.map((resource) => Card(
+              child: Padding(
+                padding: EdgeInsets.all(responsive.cardPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _ResourceIcon(resource.name),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                resource.name,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                resource.resourceName,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _StatusBadge(resource.status),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MetricChip(label: 'SKU', value: resource.sku),
+                        ...resource.metrics.entries.map((e) => _MetricChip(
+                          label: e.key,
+                          value: e.value.toString(),
+                        )),
+                      ],
+                    ),
+                    if (resource.expiresAt != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time, size: 16, color: Colors.orange),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Expires: ${resource.expiresAt}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.orange),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            )),
+            SizedBox(height: responsive.itemGap),
+            Card(
+              color: Colors.blue.shade50,
+              child: Padding(
+                padding: EdgeInsets.all(responsive.cardPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.attach_money, color: Colors.blue.shade700),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Estimated Monthly Cost',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ...resources.estimatedCosts.items.map((item) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: Text(item.service)),
+                          Text(
+                            '\$${item.amount.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    )),
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'TOTAL (${resources.estimatedCosts.currency})',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '\$${resources.estimatedCosts.totalMonthly.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: responsive.itemGap),
+            OutlinedButton.icon(
+              onPressed: () => ref.invalidate(azureResourcesProvider),
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.t('recargar')),
+            ),
+          ],
+        );
+      },
+      loading: () => const LoadingStateView(),
+      error: (e, _) => ErrorStateView(
+        message: '$e',
+        onRetry: () => ref.invalidate(azureResourcesProvider),
+      ),
+    );
+  }
+}
+
+class _ResourceIcon extends StatelessWidget {
+  final String name;
+  const _ResourceIcon(this.name);
+
+  @override
+  Widget build(BuildContext context) {
+    IconData icon;
+    Color color;
+    if (name.contains('App Service')) {
+      icon = Icons.web;
+      color = Colors.blue;
+    } else if (name.contains('PostgreSQL')) {
+      icon = Icons.storage;
+      color = Colors.purple;
+    } else if (name.contains('AI') || name.contains('Translator')) {
+      icon = Icons.translate;
+      color = Colors.orange;
+    } else if (name.contains('Maps')) {
+      icon = Icons.map;
+      color = Colors.green;
+    } else if (name.contains('Key Vault')) {
+      icon = Icons.vpn_key;
+      color = Colors.red;
+    } else {
+      icon = Icons.cloud;
+      color = Colors.grey;
+    }
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(icon, color: color, size: 24),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  const _StatusBadge(this.status);
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    if (status == 'Running' || status == 'Active') {
+      color = Colors.green;
+    } else if (status == 'Warning') {
+      color = Colors.orange;
+    } else {
+      color = Colors.red;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  final String label;
+  final String value;
+  const _MetricChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
   }
 }
