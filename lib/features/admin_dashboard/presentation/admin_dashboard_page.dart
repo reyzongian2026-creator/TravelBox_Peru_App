@@ -82,12 +82,7 @@ class _DashboardContent extends ConsumerWidget {
     final trend = _asList(stats['trend']);
     final statusBreakdown = _asList(stats['statusBreakdown']);
     final bestWarehouse = _asMap(stats['bestWarehouse']);
-    final localeCode = Localizations.localeOf(
-      context,
-    ).languageCode.trim().toLowerCase();
-    final currencyLocale = localeCode == 'es' ? 'es_PE' : localeCode;
-
-    final formatter = NumberFormat.simpleCurrency(locale: currencyLocale);
+    final formatter = NumberFormat.simpleCurrency(locale: 'es_PE');
     final l10n = context.l10n;
     final kpiCards = <_KpiStat>[
       _KpiStat(
