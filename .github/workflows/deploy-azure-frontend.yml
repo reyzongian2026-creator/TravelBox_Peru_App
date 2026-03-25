@@ -5,23 +5,10 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      app_env:
-        description: "Environment"
-        required: true
-        default: prod
-        type: choice
-        options:
-          - dev
-          - staging
-          - prod
 
 env:
-  APP_ENV: ${{ inputs.app_env || 'prod' }}
   AZURE_SUBSCRIPTION: "33815caa-4cfb-4a9e-b60a-8fee5caa2b08"
-  RESOURCE_GROUP: "travelbox-peru-rg"
-  WEBAPP_NAME: "travelbox-frontend-prod"
-  BACKEND_URL: "https://travelbox-backend-prod.azurewebsites.net/api/v1"
+  STATIC_WEB_APP_NAME: "travelbox-frontend"
 
 permissions:
   contents: read
@@ -40,14 +27,15 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.41.5'
           cache: true
 
-      - name: Login Azure (keyvault mode)
+      - name: Login Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
-      - name: Load FIREBASE_* from Azure Key Vault
+      - name: Load secrets from Key Vault
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -60,10 +48,7 @@ jobs:
             @{ secret = "tbx-app-firebase-auth-domain"; env = "FIREBASE_AUTH_DOMAIN"; required = $false },
             @{ secret = "tbx-app-firebase-ios-bundle-id"; env = "FIREBASE_IOS_BUNDLE_ID"; required = $false },
             @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
-            @{ secret = "tbx-app-firebase-ios-app-id"; env = "FIREBASE_IOS_APP_ID"; required = $false },
-            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false },
-            @{ secret = "tbx-app-firebase-facebook-enabled"; env = "FIREBASE_FACEBOOK_ENABLED"; required = $false },
-            @{ secret = "tbx-auth-facebook-app-id"; env = "FIREBASE_FACEBOOK_APP_ID"; required = $false }
+            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false }
           )
 
           foreach ($item in $map) {
@@ -76,9 +61,6 @@ jobs:
             }
             "$($item.env)=$value" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           }
-          $fbEnabled = $env:FIREBASE_FACEBOOK_ENABLED
-          if ([string]::IsNullOrWhiteSpace($fbEnabled)) { $fbEnabled = "true" }
-          "FIREBASE_FACEBOOK_ENABLED=$fbEnabled" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Flutter pub get
         run: flutter pub get
@@ -86,8 +68,7 @@ jobs:
       - name: Build Flutter web
         run: flutter build web --release
         env:
-          APP_ENV: ${{ env.APP_ENV }}
-          API_BASE_URL: ${{ env.BACKEND_URL }}
+          API_BASE_URL: "https://travelbox-backend-prod.azurewebsites.net/api/v1"
           FIREBASE_API_KEY: ${{ env.FIREBASE_API_KEY }}
           FIREBASE_PROJECT_ID: ${{ env.FIREBASE_PROJECT_ID }}
           FIREBASE_MESSAGING_SENDER_ID: ${{ env.FIREBASE_MESSAGING_SENDER_ID }}
@@ -95,15 +76,14 @@ jobs:
           FIREBASE_AUTH_DOMAIN: ${{ env.FIREBASE_AUTH_DOMAIN }}
           FIREBASE_IOS_BUNDLE_ID: ${{ env.FIREBASE_IOS_BUNDLE_ID }}
           FIREBASE_ANDROID_APP_ID: ${{ env.FIREBASE_ANDROID_APP_ID }}
-          FIREBASE_IOS_APP_ID: ${{ env.FIREBASE_IOS_APP_ID }}
           FIREBASE_WEB_APP_ID: ${{ env.FIREBASE_WEB_APP_ID }}
-          FIREBASE_FACEBOOK_ENABLED: ${{ env.FIREBASE_FACEBOOK_ENABLED }}
-          FIREBASE_FACEBOOK_APP_ID: ${{ env.FIREBASE_FACEBOOK_APP_ID }}
 
-      - name: Package web build
-        run: |
-          cd build/web && zip -r ../web.zip . && cd ..
-
-      - name: Deploy to Azure App Service
-        run: |
-          az webapp deployment source config-zip --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.WEBAPP_NAME }} --src build/web.zip
+      - name: Deploy to Azure Static Web Apps
+        id: deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/build/web"
+          output_location: "/"
