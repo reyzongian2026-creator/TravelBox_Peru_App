@@ -35,9 +35,7 @@ jobs:
           az webapp deploy \
             --name travelbox-frontend-prod \
             --resource-group travelbox-peru-rg \
-            --type static \
-            --src-path web.zip \
-            --ignore-stack true
+            --src-path web.zip
         shell: bash
 
       - name: Restart App Service
