@@ -37,7 +37,7 @@ jobs:
             --resource-group travelbox-peru-rg \
             --type static \
             --src-path web.zip \
-            --ignore-stack:true
+            --ignore-stack true
         shell: bash
 
       - name: Restart App Service
