@@ -10,6 +10,7 @@ import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/country_catalog.dart';
+import '../../../shared/utils/image_upload_validator.dart';
 import '../../../shared/utils/form_validators.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../incidents/data/selected_evidence_image.dart';
@@ -25,14 +26,7 @@ class EditProfilePage extends ConsumerStatefulWidget {
 }
 
 class _EditProfilePageState extends ConsumerState<EditProfilePage> {
-  static const _languageOptions = <String, String>{
-    'es': 'Espanol',
-    'en': 'English',
-    'de': 'Deutsch',
-    'fr': 'Francais',
-    'it': 'Italiano',
-    'pt': 'Portugues',
-  };
+  static const _supportedLanguages = <String>{'es', 'en'};
 
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _firstNameController;
@@ -110,7 +104,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         : _dialingCountry.countryName;
     final preferred =
         user?.preferredLanguage ?? _dialingCountry.defaultLanguage;
-    _preferredLanguage = _languageOptions.containsKey(preferred)
+    _preferredLanguage = _supportedLanguages.contains(preferred)
         ? preferred
         : _dialingCountry.defaultLanguage;
     _documentType = user?.documentType ?? 'PASSPORT';
@@ -136,6 +130,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final languageOptions = <String, String>{
+      'es': l10n.t('spanish'),
+      'en': l10n.t('english'),
+    };
     final user = ref.watch(sessionControllerProvider).user;
     if (user == null) {
       return const SizedBox.shrink();
@@ -299,7 +297,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             DropdownButtonFormField<String>(
               initialValue: _preferredLanguage,
               decoration: InputDecoration(labelText: l10n.t('language')),
-              items: _languageOptions.entries
+              items: languageOptions.entries
                   .map(
                     (item) => DropdownMenuItem(
                       value: item.key,
@@ -479,6 +477,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       );
       return;
     }
+    final t = context.l10n.t;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
@@ -488,6 +487,17 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ? result.files.first
         : null;
     if (file == null || file.bytes == null) {
+      return;
+    }
+    final validationMessage = await validateSelectedImageForUpload(
+      bytes: file.bytes!,
+      t: t,
+    );
+    if (validationMessage != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validationMessage)));
       return;
     }
     setState(() {

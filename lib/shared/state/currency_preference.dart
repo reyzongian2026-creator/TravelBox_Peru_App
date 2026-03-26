@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum CurrencyCode { pen, usd, eur }
@@ -12,7 +13,7 @@ extension CurrencyCodeExtension on CurrencyCode {
       case CurrencyCode.usd:
         return '\$';
       case CurrencyCode.eur:
-        return '€';
+        return '\u20AC';
     }
   }
 
@@ -32,7 +33,7 @@ extension CurrencyCodeExtension on CurrencyCode {
       case CurrencyCode.pen:
         return 'Soles';
       case CurrencyCode.usd:
-        return 'Dólares';
+        return 'Dolares';
       case CurrencyCode.eur:
         return 'Euros';
     }
@@ -45,7 +46,18 @@ extension CurrencyCodeExtension on CurrencyCode {
       case CurrencyCode.usd:
         return const Locale('en', 'US');
       case CurrencyCode.eur:
-         return const Locale('es', 'PE');
+        return const Locale('de', 'DE');
+    }
+  }
+
+  String get intlLocale {
+    switch (this) {
+      case CurrencyCode.pen:
+        return 'es_PE';
+      case CurrencyCode.usd:
+        return 'en_US';
+      case CurrencyCode.eur:
+        return 'de_DE';
     }
   }
 }
@@ -59,14 +71,15 @@ class CurrencyRates {
 
   static double convert(double amount, CurrencyCode from, CurrencyCode to) {
     if (from == to) return amount;
-    
+
     final amountInPEN = amount / _ratesFromPEN[from]!;
     return amountInPEN * _ratesFromPEN[to]!;
   }
 }
 
 class CurrencyPreferenceNotifier extends StateNotifier<CurrencyCode> {
-  static const String _key = 'user_currency Preference';
+  static const String _key = 'user_currency_preference';
+  static const String _legacyKey = 'user_currency Preference';
   final SharedPreferences _prefs;
 
   CurrencyPreferenceNotifier(this._prefs) : super(CurrencyCode.pen) {
@@ -74,12 +87,16 @@ class CurrencyPreferenceNotifier extends StateNotifier<CurrencyCode> {
   }
 
   void _load() {
-    final saved = _prefs.getString(_key);
+    final saved = _prefs.getString(_key) ?? _prefs.getString(_legacyKey);
     if (saved != null) {
-      state = CurrencyCode.values.firstWhere(
+      final currency = CurrencyCode.values.firstWhere(
         (c) => c.code == saved,
         orElse: () => CurrencyCode.pen,
       );
+      state = currency;
+      if (_prefs.getString(_key) == null) {
+        _prefs.setString(_key, currency.code);
+      }
     }
   }
 
@@ -89,13 +106,18 @@ class CurrencyPreferenceNotifier extends StateNotifier<CurrencyCode> {
   }
 }
 
-final currencyPreferenceProvider = StateNotifierProvider<CurrencyPreferenceNotifier, CurrencyCode>((ref) {
-  throw UnimplementedError('Debe ser sobreescrito en bootstrap');
-});
+final currencyPreferenceProvider =
+    StateNotifierProvider<CurrencyPreferenceNotifier, CurrencyCode>((ref) {
+      throw UnimplementedError('Debe ser sobreescrito en bootstrap');
+    });
 
 String formatCurrency(double amount, CurrencyCode currency) {
-  final formatted = amount.toStringAsFixed(2);
-  return '${currency.symbol}$formatted';
+  final formatter = NumberFormat.currency(
+    locale: currency.intlLocale,
+    symbol: currency.symbol,
+    decimalDigits: 2,
+  );
+  return formatter.format(amount);
 }
 
 double getExchangeRate(CurrencyCode from, CurrencyCode to) {

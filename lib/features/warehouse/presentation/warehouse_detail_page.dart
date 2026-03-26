@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
@@ -12,6 +11,7 @@ import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/state/warehouse_catalog_sync.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
+import '../../../shared/widgets/currency_widgets.dart';
 import '../../../shared/widgets/peru_flat_scene.dart';
 import '../../map_discovery/data/discovery_repository_impl.dart';
 
@@ -125,9 +125,24 @@ class WarehouseDetailPage extends ConsumerWidget {
                         '${context.l10n.t('warehouse_detail_capacity_available_prefix')}: '
                         '${warehouse.availableSlots}',
                       ),
-                      Text(
-                        '${context.l10n.t('warehouse_detail_price_from_prefix')}: '
-                        '${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.priceFromPerHour)}',
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${context.l10n.t('warehouse_detail_price_from_prefix')}:',
+                          ),
+                          PriceDisplayWithOriginal(
+                            priceInPEN: warehouse.priceFromPerHour,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                            secondaryStyle: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Theme.of(context).hintColor),
+                          ),
+                        ],
                       ),
                       if (warehouse.score > 0) ...[
                         Text(
@@ -194,8 +209,7 @@ class WarehouseDetailPage extends ConsumerWidget {
         error: (error, _) => ErrorStateView(
           message: AppErrorFormatter.readable(
             error,
-            (String key, {Map<String, dynamic>? params}) =>
-                context.l10n.t(key),
+            (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
           ),
           onRetry: () => ref.invalidate(warehouseDetailProvider(warehouseId)),
         ),

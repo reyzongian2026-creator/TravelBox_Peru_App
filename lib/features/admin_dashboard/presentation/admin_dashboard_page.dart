@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../shared/state/currency_preference.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../domain/dashboard_optimized_provider.dart';
 
@@ -82,8 +81,16 @@ class _DashboardContent extends ConsumerWidget {
     final trend = _asList(stats['trend']);
     final statusBreakdown = _asList(stats['statusBreakdown']);
     final bestWarehouse = _asMap(stats['bestWarehouse']);
-    final formatter = NumberFormat.simpleCurrency(locale: 'es_PE');
+    final currency = ref.watch(currencyPreferenceProvider);
     final l10n = context.l10n;
+    String formatAmount(double amountInPen) {
+      final converted = CurrencyRates.convert(
+        amountInPen,
+        CurrencyCode.pen,
+        currency,
+      );
+      return formatCurrency(converted, currency);
+    }
     final kpiCards = <_KpiStat>[
       _KpiStat(
         title: l10n.t('reservas'),
@@ -93,7 +100,7 @@ class _DashboardContent extends ConsumerWidget {
       ),
       _KpiStat(
         title: l10n.t('dashboard_revenue'),
-        value: formatter.format(_asDouble(summary['confirmedRevenue'])),
+        value: formatAmount(_asDouble(summary['confirmedRevenue'])),
         subtitle: l10n.t('dashboard_confirmed_collections'),
         colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
       ),
@@ -219,38 +226,6 @@ class _DashboardContent extends ConsumerWidget {
                 },
               ),
               SizedBox(height: sectionGap),
-              Card(
-                child: Padding(
-                  padding: EdgeInsets.all(cardPadding),
-                  child: Wrap(
-                    spacing: itemGap,
-                    runSpacing: itemGap,
-                    children: [
-                      FilledButton.icon(
-                        onPressed: () => context.go('/admin/tracking'),
-                        icon: const Icon(Icons.route_outlined),
-                        label: Text(context.l10n.t('tracking_logistico')),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => context.go('/admin/incidents'),
-                        icon: Icon(Icons.support_agent_outlined),
-                        label: Text(context.l10n.t('soporte')),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () =>
-                            context.go('/admin/reservations'),
-                        icon: Icon(Icons.luggage_outlined),
-                        label: Text(context.l10n.t('reservas')),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => context.go('/ops/qr-handoff'),
-                        icon: Icon(Icons.qr_code_scanner_outlined),
-                        label: Text(context.l10n.t('qr_y_pin')),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               if (bestWarehouse.isNotEmpty) ...[
                 SizedBox(height: sectionGap),
                 Card(
@@ -260,7 +235,7 @@ class _DashboardContent extends ConsumerWidget {
                       '${context.l10n.t('admin_dashboard_best_warehouse_prefix')}: ${bestWarehouse['warehouseName'] ?? '-'}',
                     ),
                     subtitle: Text(
-                      '${bestWarehouse['city'] ?? '-'} - ${_asInt(bestWarehouse['interactionCount'])} ${context.l10n.t('dashboard_interactions')} - ${formatter.format(_asDouble(bestWarehouse['confirmedRevenue']))}',
+                      '${bestWarehouse['city'] ?? '-'} - ${_asInt(bestWarehouse['interactionCount'])} ${context.l10n.t('dashboard_interactions')} - ${formatAmount(_asDouble(bestWarehouse['confirmedRevenue']))}',
                     ),
                   ),
                 ),
@@ -283,7 +258,7 @@ class _DashboardContent extends ConsumerWidget {
                       _TrendChart(
                         points: trend,
                         selectedPeriod: selectedPeriod,
-                        formatter: formatter,
+                        currency: currency,
                       ),
                     ],
                   ),
@@ -330,7 +305,7 @@ class _DashboardContent extends ConsumerWidget {
                                         '-',
                                     subtitle:
                                         '${item['city'] ?? '-'} - ${_asInt(item['interactionCount'])} ${context.l10n.t('dashboard_interactions')}',
-                                    trailing: formatter.format(
+                                    trailing: formatAmount(
                                       _asDouble(item['confirmedRevenue']),
                                     ),
                                     progress: _ratio(
@@ -365,7 +340,7 @@ class _DashboardContent extends ConsumerWidget {
                                         item['city']?.toString() ?? '-',
                                     subtitle:
                                         '${_asInt(item['interactionCount'])} ${context.l10n.t('reservas')} - ${_asInt(item['incidentCount'])} ${context.l10n.t('incidencias')}',
-                                    trailing: formatter.format(
+                                    trailing: formatAmount(
                                       _asDouble(item['confirmedRevenue']),
                                     ),
                                     progress: _ratio(
@@ -501,12 +476,12 @@ class _TrendChart extends StatelessWidget {
   const _TrendChart({
     required this.points,
     required this.selectedPeriod,
-    required this.formatter,
+    required this.currency,
   });
 
   final List<dynamic> points;
   final AdminDashboardPeriodOption selectedPeriod;
-  final NumberFormat formatter;
+  final CurrencyCode currency;
 
   @override
   Widget build(BuildContext context) {
@@ -521,6 +496,11 @@ class _TrendChart extends StatelessWidget {
         children: points.map((rawPoint) {
           final point = _asMap(rawPoint);
           final revenue = _asDouble(point['confirmedRevenue']);
+          final convertedRevenue = CurrencyRates.convert(
+            revenue,
+            CurrencyCode.pen,
+            currency,
+          );
           final height = maxRevenue == 0
               ? 0.18
               : (revenue / maxRevenue).clamp(0.18, 1.0);
@@ -552,7 +532,7 @@ class _TrendChart extends StatelessWidget {
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
                 Text(
-                  formatter.format(revenue),
+                  formatCurrency(convertedRevenue, currency),
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
               ],

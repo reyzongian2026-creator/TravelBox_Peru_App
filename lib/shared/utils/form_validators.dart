@@ -19,9 +19,15 @@ class FormValidators {
   }) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
-      return _msg6('Ingresa este campo.', 'Enter this field.',
-        'Geben Sie dieses Feld ein.', 'Entrez ce champ.', 'Inserisci questo campo.',
-        'Preencha este campo.', l10n);
+      return _msg6(
+        'Ingresa este campo.',
+        'Enter this field.',
+        'Geben Sie dieses Feld ein.',
+        'Entrez ce champ.',
+        'Inserisci questo campo.',
+        'Preencha este campo.',
+        l10n,
+      );
     }
     if (text.length < minLength) {
       return _msg6(
@@ -37,19 +43,35 @@ class FormValidators {
     return null;
   }
 
-  static String? email(String? value, {bool required = true, AppLocalizations? l10n}) {
+  static String? email(
+    String? value, {
+    bool required = true,
+    AppLocalizations? l10n,
+  }) {
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
       return required
-          ? _msg6('Ingresa un correo valido.', 'Enter a valid email.',
-              'Geben Sie eine gultige E-Mail ein.', 'Entrez un email valide.',
-              'Inserisci un email valido.', 'Digite um email valido.', l10n)
+          ? _msg6(
+              'Ingresa un correo valido.',
+              'Enter a valid email.',
+              'Geben Sie eine gultige E-Mail ein.',
+              'Entrez un email valide.',
+              'Inserisci un email valido.',
+              'Digite um email valido.',
+              l10n,
+            )
           : null;
     }
     if (!_emailPattern.hasMatch(text)) {
-      return _msg6('Ingresa un correo valido.', 'Enter a valid email.',
-          'Geben Sie eine gultige E-Mail ein.', 'Entrez un email valide.',
-          'Inserisci un email valido.', 'Digite um email valido.', l10n);
+      return _msg6(
+        'Ingresa un correo valido.',
+        'Enter a valid email.',
+        'Geben Sie eine gultige E-Mail ein.',
+        'Entrez un email valide.',
+        'Inserisci un email valido.',
+        'Digite um email valido.',
+        l10n,
+      );
     }
     return null;
   }
@@ -63,27 +85,49 @@ class FormValidators {
     final text = value?.trim() ?? '';
     if (text.isEmpty) {
       return required
-          ? _msg6('Ingresa un telefono valido.', 'Enter a valid phone number.',
-              'Geben Sie eine gultige Telefonnummer ein.', 'Entrez un numero de telephone valide.',
-              'Inserisci un numero di telefono valido.', 'Digite um numero de telefone valido.', l10n)
+          ? _msg6(
+              'Ingresa un telefono valido.',
+              'Enter a valid phone number.',
+              'Geben Sie eine gultige Telefonnummer ein.',
+              'Entrez un numero de telephone valide.',
+              'Inserisci un numero di telefono valido.',
+              'Digite um numero de telefone valido.',
+              l10n,
+            )
           : null;
     }
     final digits = text.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 7 || digits.length > 15) {
-      return _msg6('Ingresa un telefono valido.', 'Enter a valid phone number.',
-          'Geben Sie eine gultige Telefonnummer ein.', 'Entrez un numero de telephone valide.',
-          'Inserisci un numero di telefono valido.', 'Digite um numero de telefone valido.', l10n);
+      return _msg6(
+        'Ingresa un telefono valido.',
+        'Enter a valid phone number.',
+        'Geben Sie eine gultige Telefonnummer ein.',
+        'Entrez un numero de telephone valide.',
+        'Inserisci un numero di telefono valido.',
+        'Digite um numero de telefone valido.',
+        l10n,
+      );
     }
     return null;
   }
 
-  static String? password(String? value, {bool required = true, AppLocalizations? l10n}) {
+  static String? password(
+    String? value, {
+    bool required = true,
+    AppLocalizations? l10n,
+  }) {
     final text = value ?? '';
     if (text.isEmpty) {
       return required
-          ? _msg6('Ingresa tu contrasena.', 'Enter your password.',
-              'Geben Sie Ihr Passwort ein.', 'Entrez votre mot de passe.',
-              'Inserisci la tua password.', 'Digite sua senha.', l10n)
+          ? _msg6(
+              'Ingresa tu contrasena.',
+              'Enter your password.',
+              'Geben Sie Ihr Passwort ein.',
+              'Entrez votre mot de passe.',
+              'Inserisci la tua password.',
+              'Digite sua senha.',
+              l10n,
+            )
           : null;
     }
     if (text.length < 8) {
@@ -112,13 +156,23 @@ class FormValidators {
     return null;
   }
 
-  static String? strongPassword(String? value, {bool required = true, AppLocalizations? l10n}) {
+  static String? strongPassword(
+    String? value, {
+    bool required = true,
+    AppLocalizations? l10n,
+  }) {
     final text = value ?? '';
     if (text.isEmpty) {
       return required
-          ? _msg6('Ingresa tu contrasena.', 'Enter your password.',
-              'Geben Sie Ihr Passwort ein.', 'Entrez votre mot de passe.',
-              'Inserisci la tua password.', 'Digite sua senha.', l10n)
+          ? _msg6(
+              'Ingresa tu contrasena.',
+              'Enter your password.',
+              'Geben Sie Ihr Passwort ein.',
+              'Entrez votre mot de passe.',
+              'Inserisci la tua password.',
+              'Digite sua senha.',
+              l10n,
+            )
           : null;
     }
     if (text.length < 8) {
@@ -149,17 +203,33 @@ class FormValidators {
     return null;
   }
 
-  static String? confirmPassword(String? value, String password, {AppLocalizations? l10n}) {
+  static String? confirmPassword(
+    String? value,
+    String password, {
+    AppLocalizations? l10n,
+  }) {
     final text = value ?? '';
     if (text.isEmpty) {
-      return _msg6('Confirma tu contrasena.', 'Confirm your password.',
-          'Bestatigen Sie Ihr Passwort.', 'Confirmez votre mot de passe.',
-          'Conferma la tua password.', 'Confirme sua senha.', l10n);
+      return _msg6(
+        'Confirma tu contrasena.',
+        'Confirm your password.',
+        'Bestatigen Sie Ihr Passwort.',
+        'Confirmez votre mot de passe.',
+        'Conferma la tua password.',
+        'Confirme sua senha.',
+        l10n,
+      );
     }
     if (text != password) {
-      return _msg6('Las contrasenas no coinciden.', 'Passwords do not match.',
-          'Passworter stimmen nicht uberein.', 'Les mots de passe ne correspondent pas.',
-          'Le password non corrispondono.', 'As senhas nao coincidem.', l10n);
+      return _msg6(
+        'Las contrasenas no coinciden.',
+        'Passwords do not match.',
+        'Passworter stimmen nicht uberein.',
+        'Les mots de passe ne correspondent pas.',
+        'Le password non corrispondono.',
+        'As senhas nao coincidem.',
+        l10n,
+      );
     }
     return null;
   }
@@ -218,7 +288,11 @@ class FormValidators {
     return null;
   }
 
-  static String? positiveInt(String? value, {required String label, AppLocalizations? l10n}) {
+  static String? positiveInt(
+    String? value, {
+    required String label,
+    AppLocalizations? l10n,
+  }) {
     final parsed = int.tryParse(value?.trim() ?? '');
     if (parsed == null || parsed <= 0) {
       return _msg6(
@@ -234,7 +308,11 @@ class FormValidators {
     return null;
   }
 
-  static String? hour(String? value, {required String label, AppLocalizations? l10n}) {
+  static String? hour(
+    String? value, {
+    required String label,
+    AppLocalizations? l10n,
+  }) {
     if (parseHourAsMinutes(value) == null) {
       return _msg6(
         'Ingresa una hora con formato HH:mm.',
@@ -249,7 +327,11 @@ class FormValidators {
     return null;
   }
 
-  static String? hourRange(String? openHour, String? closeHour, {AppLocalizations? l10n}) {
+  static String? hourRange(
+    String? openHour,
+    String? closeHour, {
+    AppLocalizations? l10n,
+  }) {
     final open = parseHourAsMinutes(openHour);
     final close = parseHourAsMinutes(closeHour);
     if (open == null || close == null) {
@@ -259,10 +341,10 @@ class FormValidators {
       return _msg6(
         'La hora de cierre debe ser posterior a la apertura.',
         'Closing time must be after opening time.',
-        'Die Schlusszeit muss nach der Offnungszeit liegen.',
-        'L\'heure de fermeture doit etre apres l\'heure d\'ouverture.',
-        'L\'ora di chiusura deve essere successiva all\'ora di apertura.',
-        'O horario de fechamento deve ser posterior ao horario de abertura.',
+        '',
+        '',
+        '',
+        '',
         l10n,
       );
     }
@@ -348,13 +430,12 @@ class FormValidators {
   ) {
     if (l10n == null) return en;
     switch (l10n.locale.languageCode) {
-      case 'es': return es;
-      case 'en': return en;
-      case 'de': return de;
-      case 'fr': return fr;
-      case 'it': return it;
-      case 'pt': return pt;
-      default: return en;
+      case 'es':
+        return es;
+      case 'en':
+        return en;
+      default:
+        return en;
     }
   }
 

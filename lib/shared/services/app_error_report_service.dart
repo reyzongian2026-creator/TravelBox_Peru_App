@@ -7,23 +7,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppErrorReportService {
   AppErrorReportService(this._dio);
-  
+
   final Dio _dio;
   final List<AppErrorEntry> _pendingErrors = [];
   Timer? _flushTimer;
   bool _isReporting = false;
-  
+
   static const _storageKey = 'app_pending_errors';
+  static const _sessionStateKey = 'travelbox.session.v2';
   static const _batchSize = 10;
   static const _flushInterval = Duration(seconds: 5);
-  
+
   static AppErrorReportService? _instance;
   static AppErrorReportService? _preInitializedInstance;
-  
+
   static void setPreInitializedInstance(AppErrorReportService service) {
     _preInitializedInstance = service;
   }
-  
+
   static Future<AppErrorReportService> getInstance(Dio dio) async {
     if (_instance != null) return _instance!;
     if (_preInitializedInstance != null) {
@@ -34,7 +35,7 @@ class AppErrorReportService {
     await _instance!._loadFromStorage();
     return _instance!;
   }
-  
+
   Future<void> _loadFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -42,10 +43,12 @@ class AppErrorReportService {
       if (stored != null && stored.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(stored);
         _pendingErrors.addAll(
-          decoded.map((e) => AppErrorEntry.fromJson(e as Map<String, dynamic>))
+          decoded.map((e) => AppErrorEntry.fromJson(e as Map<String, dynamic>)),
         );
         if (kDebugMode) {
-          debugPrint('[ERROR] Loaded ${_pendingErrors.length} pending errors from storage');
+          debugPrint(
+            '[ERROR] Loaded ${_pendingErrors.length} pending errors from storage',
+          );
         }
       }
     } catch (e) {
@@ -54,11 +57,13 @@ class AppErrorReportService {
       }
     }
   }
-  
+
   Future<void> _saveToStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final encoded = jsonEncode(_pendingErrors.map((e) => e.toJson()).toList());
+      final encoded = jsonEncode(
+        _pendingErrors.map((e) => e.toJson()).toList(),
+      );
       await prefs.setString(_storageKey, encoded);
     } catch (e) {
       if (kDebugMode) {
@@ -66,8 +71,13 @@ class AppErrorReportService {
       }
     }
   }
-  
-  void reportI18nError(String locale, String key, String? context, String? userId) {
+
+  void reportI18nError(
+    String locale,
+    String key,
+    String? context,
+    String? userId,
+  ) {
     final entry = AppErrorEntry(
       id: '${DateTime.now().millisecondsSinceEpoch}_i18n_${key.hashCode}',
       type: ErrorType.i18n,
@@ -82,8 +92,14 @@ class AppErrorReportService {
     );
     _addError(entry);
   }
-  
-  void reportNetworkError(String endpoint, int? statusCode, String message, String? stackTrace, String? requestBody) {
+
+  void reportNetworkError(
+    String endpoint,
+    int? statusCode,
+    String message,
+    String? stackTrace,
+    String? requestBody,
+  ) {
     final entry = AppErrorEntry(
       id: '${DateTime.now().millisecondsSinceEpoch}_net_${endpoint.hashCode}',
       type: ErrorType.network,
@@ -103,8 +119,12 @@ class AppErrorReportService {
     );
     _addError(entry);
   }
-  
-  void reportFlutterError(Object error, StackTrace? stackTrace, String? context) {
+
+  void reportFlutterError(
+    Object error,
+    StackTrace? stackTrace,
+    String? context,
+  ) {
     final entry = AppErrorEntry(
       id: '${DateTime.now().millisecondsSinceEpoch}_flutter_${error.hashCode}',
       type: ErrorType.flutter,
@@ -119,7 +139,7 @@ class AppErrorReportService {
     );
     _addError(entry);
   }
-  
+
   void reportValidationError(String field, String message, String? context) {
     final entry = AppErrorEntry(
       id: '${DateTime.now().millisecondsSinceEpoch}_val_${field.hashCode}',
@@ -135,8 +155,13 @@ class AppErrorReportService {
     );
     _addError(entry);
   }
-  
-  void reportOperationError(String operation, String message, String? stackTrace, {String? userId}) {
+
+  void reportOperationError(
+    String operation,
+    String message,
+    String? stackTrace, {
+    String? userId,
+  }) {
     final entry = AppErrorEntry(
       id: '${DateTime.now().millisecondsSinceEpoch}_op_${operation.hashCode}',
       type: ErrorType.operation,
@@ -151,7 +176,7 @@ class AppErrorReportService {
     );
     _addError(entry);
   }
-  
+
   void reportFirebaseError(String service, String code, String message) {
     final entry = AppErrorEntry(
       id: '${DateTime.now().millisecondsSinceEpoch}_fb_${code.hashCode}',
@@ -163,57 +188,64 @@ class AppErrorReportService {
       reportedBy: 'system',
       message: '$service: $code - $message',
       stackTrace: null,
-      additionalData: {'errorType': 'firebase', 'service': service, 'code': code},
+      additionalData: {
+        'errorType': 'firebase',
+        'service': service,
+        'code': code,
+      },
     );
     _addError(entry);
   }
-  
+
   void _addError(AppErrorEntry entry) {
     _pendingErrors.add(entry);
     _saveToStorage();
-    
+
     if (kDebugMode) {
       debugPrint('[ERROR] Reported ${entry.type.name} error: ${entry.message}');
     }
-    
+
     if (_pendingErrors.length >= _batchSize) {
       _flush();
     } else {
       _scheduleFlush();
     }
   }
-  
+
   void _scheduleFlush() {
     _flushTimer?.cancel();
     _flushTimer = Timer(_flushInterval, _flush);
   }
-  
+
   Future<void> _flush() async {
     if (_isReporting || _pendingErrors.isEmpty) return;
-    
+    if (!await _canSyncToAdminEndpoint()) return;
+
     _isReporting = true;
     final errorsToSend = List<AppErrorEntry>.from(_pendingErrors);
     _pendingErrors.clear();
     await _saveToStorage();
-    
+
     try {
       await _dio.post(
-        '/api/v1/admin/i18n-report/errors',
+        '/admin/i18n-report/errors',
         data: {
           'locale': _getMostCommonLocale(errorsToSend),
           'keys': errorsToSend.map((e) => '${e.type.name}:${e.key}').toList(),
-          'context': errorsToSend.map((e) => '${e.type.name}:${e.context}').join('|'),
+          'context': errorsToSend
+              .map((e) => '${e.type.name}:${e.context}')
+              .join('|'),
           'reportedBy': _getMostCommonReporter(errorsToSend),
         },
       );
-      
+
       if (kDebugMode) {
         debugPrint('[ERROR] Synced ${errorsToSend.length} errors to backend');
       }
     } catch (e) {
       _pendingErrors.addAll(errorsToSend);
       await _saveToStorage();
-      
+
       if (kDebugMode) {
         debugPrint('[ERROR] Failed to sync errors: $e');
       }
@@ -221,7 +253,29 @@ class AppErrorReportService {
       _isReporting = false;
     }
   }
-  
+
+  Future<bool> _canSyncToAdminEndpoint() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rawSession = prefs.getString(_sessionStateKey);
+      if (rawSession == null || rawSession.isEmpty) {
+        return false;
+      }
+      final decoded = jsonDecode(rawSession);
+      if (decoded is! Map<String, dynamic>) {
+        return false;
+      }
+      final user = decoded['user'];
+      if (user is! Map<String, dynamic>) {
+        return false;
+      }
+      final role = user['role']?.toString().trim().toUpperCase() ?? '';
+      return role == 'ADMIN';
+    } catch (_) {
+      return false;
+    }
+  }
+
   String _getMostCommonLocale(List<AppErrorEntry> errors) {
     if (errors.isEmpty) return 'unknown';
     final localeCounts = <String, int>{};
@@ -230,7 +284,7 @@ class AppErrorReportService {
     }
     return localeCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
   }
-  
+
   String _getMostCommonReporter(List<AppErrorEntry> errors) {
     if (errors.isEmpty) return 'anonymous';
     final reporterCounts = <String, int>{};
@@ -238,32 +292,34 @@ class AppErrorReportService {
       final reporter = error.reportedBy ?? 'anonymous';
       reporterCounts[reporter] = (reporterCounts[reporter] ?? 0) + 1;
     }
-    final maxEntry = reporterCounts.entries.reduce((a, b) => a.value > b.value ? a : b);
+    final maxEntry = reporterCounts.entries.reduce(
+      (a, b) => a.value > b.value ? a : b,
+    );
     return maxEntry.key;
   }
-  
+
   Future<void> forceFlush() async {
     await _flush();
   }
-  
+
   Future<void> clearErrors() async {
     _pendingErrors.clear();
     await _saveToStorage();
   }
-  
+
   List<AppErrorEntry> getPendingErrors() {
     return List.unmodifiable(_pendingErrors);
   }
-  
+
   int get pendingCount => _pendingErrors.length;
-  
+
   String exportToJsonSync() {
     final errors = getPendingErrors();
     final byType = <String, int>{};
     for (final error in errors) {
       byType[error.type.name] = (byType[error.type.name] ?? 0) + 1;
     }
-    
+
     final report = {
       'application': 'TravelBox Peru',
       'version': '1.0',
@@ -274,13 +330,21 @@ class AppErrorReportService {
     };
     return const JsonEncoder.withIndent('  ').convert(report);
   }
-  
+
   void dispose() {
     _flushTimer?.cancel();
   }
 }
 
-enum ErrorType { i18n, network, flutter, validation, operation, firebase, unknown }
+enum ErrorType {
+  i18n,
+  network,
+  flutter,
+  validation,
+  operation,
+  firebase,
+  unknown,
+}
 
 class AppErrorEntry {
   AppErrorEntry({
@@ -295,7 +359,7 @@ class AppErrorEntry {
     this.stackTrace,
     this.additionalData,
   });
-  
+
   final String id;
   final ErrorType type;
   final String key;
@@ -306,7 +370,7 @@ class AppErrorEntry {
   final String message;
   final String? stackTrace;
   final Map<String, dynamic>? additionalData;
-  
+
   factory AppErrorEntry.fromJson(Map<String, dynamic> json) {
     return AppErrorEntry(
       id: json['id'] as String,
@@ -324,7 +388,7 @@ class AppErrorEntry {
       additionalData: json['additionalData'] as Map<String, dynamic>?,
     );
   }
-  
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'type': type.name,
@@ -340,23 +404,27 @@ class AppErrorEntry {
 }
 
 class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
-  AppErrorReportNotifier(Dio? dio) : _dio = dio, super(AppErrorReportState(errors: [], isLoading: false, isSyncing: false)) {
+  AppErrorReportNotifier(Dio? dio)
+    : _dio = dio,
+      super(
+        AppErrorReportState(errors: [], isLoading: false, isSyncing: false),
+      ) {
     _init();
   }
-  
+
   final Dio? _dio;
   AppErrorReportService? _service;
-  
+
   static AppErrorReportService? _globalService;
-  
+
   static void setGlobalService(AppErrorReportService service) {
     _globalService = service;
   }
-  
+
   static AppErrorReportService? getGlobalService() {
     return _globalService;
   }
-  
+
   static Future<String> exportAndClearBeforeLogout() async {
     if (_globalService != null) {
       await _globalService!.forceFlush();
@@ -366,7 +434,7 @@ class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
     }
     return '{"application": "TravelBox Peru", "version": "1.0", "exportedAt": "${DateTime.now().toIso8601String()}", "totalErrors": 0, "errors": [], "errorsByType": {}}';
   }
-  
+
   Future<void> _init() async {
     state = state.copyWith(isLoading: true);
     try {
@@ -378,16 +446,13 @@ class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        lastError: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, lastError: e.toString());
     }
   }
-  
+
   Future<void> syncNow() async {
     if (_service == null) return;
-    
+
     state = state.copyWith(isSyncing: true);
     try {
       await _service!.forceFlush();
@@ -397,20 +462,17 @@ class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
         lastSyncTime: DateTime.now(),
       );
     } catch (e) {
-      state = state.copyWith(
-        isSyncing: false,
-        lastError: e.toString(),
-      );
+      state = state.copyWith(isSyncing: false, lastError: e.toString());
     }
   }
-  
+
   Future<String> exportToJson() async {
     final errors = _service?.getPendingErrors() ?? [];
     final byType = <String, int>{};
     for (final error in errors) {
       byType[error.type.name] = (byType[error.type.name] ?? 0) + 1;
     }
-    
+
     final report = {
       'application': 'TravelBox Peru',
       'version': '1.0',
@@ -421,12 +483,12 @@ class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
     };
     return const JsonEncoder.withIndent('  ').convert(report);
   }
-  
+
   Future<void> clearLocal() async {
     await _service?.clearErrors();
     state = state.copyWith(errors: []);
   }
-  
+
   Future<String> syncAndExportBeforeLogout() async {
     await syncNow();
     final json = await exportToJson();
@@ -443,13 +505,13 @@ class AppErrorReportState {
     this.lastSyncTime,
     this.lastError,
   });
-  
+
   final List<AppErrorEntry> errors;
   final bool isLoading;
   final bool isSyncing;
   final DateTime? lastSyncTime;
   final String? lastError;
-  
+
   AppErrorReportState copyWith({
     List<AppErrorEntry>? errors,
     bool? isLoading,
@@ -467,6 +529,7 @@ class AppErrorReportState {
   }
 }
 
-final appErrorReportNotifierProvider = StateNotifierProvider<AppErrorReportNotifier, AppErrorReportState>((ref) {
-  return AppErrorReportNotifier(null);
-});
+final appErrorReportNotifierProvider =
+    StateNotifierProvider<AppErrorReportNotifier, AppErrorReportState>((ref) {
+      return AppErrorReportNotifier(null);
+    });

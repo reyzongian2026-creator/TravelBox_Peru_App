@@ -14,6 +14,7 @@ import '../../../shared/models/reservation.dart';
 import '../../../shared/state/notification_center_controller.dart';
 import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/app_smart_image.dart';
+import '../../../shared/widgets/currency_widgets.dart';
 import 'reservation_providers.dart';
 
 final reservationSuccessPaymentStatusProvider =
@@ -180,7 +181,13 @@ class ReservationSuccessPage extends ConsumerWidget {
                   subtitle: Text(
                     '${item.warehouse.address}\n${context.l10n.t('reservation_status')}: ${item.status.localizedLabel(context)}',
                   ),
-                  trailing: Text('S/${item.totalPrice.toStringAsFixed(2)}'),
+                  trailing: PriceDisplayWithOriginal(
+                    priceInPEN: item.totalPrice,
+                    alignment: CrossAxisAlignment.end,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../../../shared/widgets/currency_widgets.dart';
 import '../../warehouse/presentation/warehouse_detail_page.dart';
 import '../data/reservation_repository_impl.dart';
 import '../domain/reservation_repository.dart';
@@ -76,9 +76,23 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                 child: ListTile(
                   title: Text(warehouse.name),
                   subtitle: Text('${warehouse.address}, ${warehouse.district}'),
-                  trailing: Text(
-                    '${context.l10n.t('reservation_form_price_from_prefix')} '
-                    'S/${warehouse.pricePerHourSmall.toStringAsFixed(2)}/h',
+                  trailing: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        context.l10n.t('reservation_form_price_from_prefix'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      PriceDisplayWithOriginal(
+                        priceInPEN: warehouse.pricePerHourSmall,
+                        suffix: '/h',
+                        alignment: CrossAxisAlignment.end,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -143,9 +157,28 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                         },
                       ),
                       SizedBox(height: 6),
-                      Text(
-                        '${context.l10n.t('rate_label')} ${size.toUpperCase()}: ${NumberFormat.simpleCurrency(locale: 'es_PE').format(warehouse.rateForSize(size))} ${context.l10n.t('price_suffix_per_hour_per_package')}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${context.l10n.t('rate_label')} ${size.toUpperCase()}:',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          PriceDisplayWithOriginal(
+                            priceInPEN: warehouse.rateForSize(size),
+                            suffix: context.l10n.t(
+                              'price_suffix_per_hour_per_package',
+                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                            secondaryStyle: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: Theme.of(context).hintColor),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       _DateSelector(
@@ -185,8 +218,14 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                           });
                         },
                         title: Text(context.l10n.t('additional_insurance')),
-                        subtitle: Text(
-                          'S/${warehouse.insuranceFee.toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_reservation')}',
+                        subtitle: PriceDisplayWithOriginal(
+                          priceInPEN: warehouse.insuranceFee,
+                          suffix: context.l10n.t(
+                            'price_suffix_per_reservation',
+                          ),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          secondaryStyle: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Theme.of(context).hintColor),
                         ),
                       ),
                       SwitchListTile(
@@ -197,8 +236,12 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                           });
                         },
                         title: Text(context.l10n.t('home_pickup')),
-                        subtitle: Text(
-                          'S/${warehouse.pickupFee.toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_order')}',
+                        subtitle: PriceDisplayWithOriginal(
+                          priceInPEN: warehouse.pickupFee,
+                          suffix: context.l10n.t('price_suffix_per_order'),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          secondaryStyle: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Theme.of(context).hintColor),
                         ),
                       ),
                       SwitchListTile(
@@ -209,8 +252,12 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                           });
                         },
                         title: Text(context.l10n.t('home_delivery')),
-                        subtitle: Text(
-                          'S/${warehouse.dropoffFee.toStringAsFixed(2)} ${context.l10n.t('price_suffix_per_order')}',
+                        subtitle: PriceDisplayWithOriginal(
+                          priceInPEN: warehouse.dropoffFee,
+                          suffix: context.l10n.t('price_suffix_per_order'),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          secondaryStyle: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Theme.of(context).hintColor),
                         ),
                       ),
                     ],
@@ -224,9 +271,12 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                   subtitle: Text(
                     '${draft.billableHours()} ${context.l10n.t('hours_unit')} - ${draft.bagCount} ${context.l10n.t('packages_unit')}',
                   ),
-                  trailing: Text(
-                    'S/${draft.estimatePrice().toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.titleLarge,
+                  trailing: PriceDisplayWithOriginal(
+                    priceInPEN: draft.estimatePrice(),
+                    alignment: CrossAxisAlignment.end,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
@@ -248,8 +298,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
         error: (error, _) => ErrorStateView(
           message: AppErrorFormatter.readable(
             error,
-            (String key, {Map<String, dynamic>? params}) =>
-                context.l10n.t(key),
+            (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
           ),
           onRetry: () =>
               ref.invalidate(warehouseDetailProvider(widget.warehouseId)),

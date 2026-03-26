@@ -245,7 +245,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     setState(() {
                       _nationality = value;
                       if (value != 'Other') {
-                        _preferredLanguage = _getDefaultLanguageForCountry(value);
+                        _preferredLanguage = _getDefaultLanguageForCountry(
+                          value,
+                        );
                       }
                     });
                   }
@@ -262,22 +264,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   DropdownMenuItem(
                     value: 'en',
                     child: Text(context.l10n.t('english')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'pt',
-                    child: Text(context.l10n.t('portugues')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'fr',
-                    child: Text(context.l10n.t('francais')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'de',
-                    child: Text(context.l10n.t('deutsch')),
-                  ),
-                  DropdownMenuItem(
-                    value: 'it',
-                    child: Text(context.l10n.t('italiano')),
                   ),
                 ],
                 onChanged: (value) {

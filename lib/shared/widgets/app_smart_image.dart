@@ -63,11 +63,6 @@ class AppSmartImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
       errorBuilder: (_, error, stackTrace) {
         return _fallbackWithDebug(resolvedUrl, error);
       },
@@ -138,6 +133,10 @@ String? resolveAppMediaUrl(String? raw) {
   }
   final parsed = Uri.tryParse(trimmed);
   if (parsed != null && parsed.hasScheme) {
+    final proxiedAzureUrl = _tryMapAzureBlobUrlToBackendProxy(parsed);
+    if (proxiedAzureUrl != null) {
+      return _normalizeForAndroidEmulator(proxiedAzureUrl).toString();
+    }
     return _normalizeForAndroidEmulator(parsed).toString();
   }
 
@@ -187,4 +186,41 @@ String _addCacheBuster(String url) {
   final params = Map<String, String>.from(uri.queryParameters);
   params['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
   return uri.replace(queryParameters: params).toString();
+}
+
+Uri? _tryMapAzureBlobUrlToBackendProxy(Uri uri) {
+  final host = uri.host.trim().toLowerCase();
+  if (!host.endsWith('.blob.core.windows.net')) {
+    return null;
+  }
+
+  final segments = uri.pathSegments
+      .where((segment) => segment.isNotEmpty)
+      .toList();
+  if (segments.length < 2) {
+    return null;
+  }
+
+  final container = segments.first.trim().toLowerCase();
+  final filename = segments.last.trim();
+  if (filename.isEmpty) {
+    return null;
+  }
+
+  final category = switch (container) {
+    'travelbox-profiles' => 'profiles',
+    'travelbox-warehouses' => 'warehouses',
+    'travelbox-documents' => 'documents',
+    'travelbox-evidences' => 'evidences',
+    'travelbox-images' => 'images',
+    'travelbox-reports' => 'reports',
+    'travelbox-exports' => 'exports',
+    _ => null,
+  };
+  if (category == null) {
+    return null;
+  }
+
+  final baseUri = _normalizeForAndroidEmulator(Uri.parse(AppEnv.apiBaseUrl));
+  return baseUri.resolve('/api/v1/files/$category/$filename');
 }

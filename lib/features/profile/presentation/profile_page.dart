@@ -156,7 +156,7 @@ class ProfilePage extends ConsumerWidget {
                     width: responsive.isMobile ? 116 : 150,
                     child: DropdownButtonFormField<String>(
                       initialValue: session.locale.languageCode,
-                      items: const ['es', 'en', 'de', 'fr', 'it', 'pt']
+                      items: const ['es', 'en']
                           .map(
                             (code) => DropdownMenuItem(
                               value: code,
@@ -180,27 +180,32 @@ class ProfilePage extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: () async {
               final refreshToken = session.refreshToken?.trim();
-              
+
               try {
-                final jsonReporte = await AppErrorReportNotifier.exportAndClearBeforeLogout();
-                
+                final jsonReporte =
+                    await AppErrorReportNotifier.exportAndClearBeforeLogout();
+
                 if (!context.mounted) return;
-                
+
                 final shouldLogout = await showDialog<bool>(
                   context: context,
                   barrierDismissible: false,
-                  builder: (context) => _ErrorReportDialog(jsonReporte: jsonReporte),
+                  builder: (context) =>
+                      _ErrorReportDialog(jsonReporte: jsonReporte),
                 );
-                
+
                 if (shouldLogout != true) return;
-                
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error al exportar reporte: $e')),
+                  SnackBar(
+                    content: Text(
+                      '${context.l10n.t('error_exporting_report_prefix')}: $e',
+                    ),
+                  ),
                 );
               }
-              
+
               await ref.read(sessionControllerProvider.notifier).signOut();
               if (!context.mounted) return;
               context.go('/login');
@@ -246,16 +251,19 @@ class _ErrorReportDialog extends StatelessWidget {
     } catch (_) {
       parsed = null;
     }
-    
+
     final totalErrors = parsed?['totalErrors'] ?? 0;
     final errorsByType = parsed?['errorsByType'] as Map<String, dynamic>? ?? {};
-    
+
     return AlertDialog(
       title: Row(
         children: [
-          Icon(Icons.bug_report, color: totalErrors > 0 ? Colors.orange : Colors.green),
+          Icon(
+            Icons.bug_report,
+            color: totalErrors > 0 ? Colors.orange : Colors.green,
+          ),
           const SizedBox(width: 8),
-          const Text('Reporte de errores'),
+          Text(context.l10n.t('report_errors')),
         ],
       ),
       content: SizedBox(
@@ -268,22 +276,27 @@ class _ErrorReportDialog extends StatelessWidget {
               totalErrors == 0
                   ? 'No se encontraron errores durante la sesión.'
                   : 'Se encontraron $totalErrors errores durante la sesión. '
-                    'Puedes copiar el reporte antes de cerrar.',
+                        'Puedes copiar el reporte antes de cerrar.',
             ),
             if (errorsByType.isNotEmpty) ...[
               const SizedBox(height: 12),
-              const Text('Resumen por tipo:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Resumen por tipo:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
-              ...errorsByType.entries.map((e) => Padding(
-                padding: const EdgeInsets.only(left: 8, top: 2),
-                child: Row(
-                  children: [
-                    Icon(_getIconForType(e.key), size: 16),
-                    const SizedBox(width: 4),
-                    Text('${e.key}: ${e.value}'),
-                  ],
+              ...errorsByType.entries.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(left: 8, top: 2),
+                  child: Row(
+                    children: [
+                      Icon(_getIconForType(e.key), size: 16),
+                      const SizedBox(width: 4),
+                      Text('${e.key}: ${e.value}'),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
             const SizedBox(height: 16),
             Container(
@@ -296,7 +309,7 @@ class _ErrorReportDialog extends StatelessWidget {
               constraints: const BoxConstraints(maxHeight: 250),
               child: SingleChildScrollView(
                 child: SelectableText(
-                  jsonReporte.length > 4000 
+                  jsonReporte.length > 4000
                       ? '${jsonReporte.substring(0, 4000)}...\n\n(Contenido truncado - descarga el archivo completo)'
                       : jsonReporte,
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 10),
@@ -309,7 +322,7 @@ class _ErrorReportDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Saltar'),
+          child: Text(context.l10n.t('omitir')),
         ),
         FilledButton.icon(
           onPressed: () {
@@ -317,7 +330,7 @@ class _ErrorReportDialog extends StatelessWidget {
             Navigator.of(context).pop(true);
           },
           icon: const Icon(Icons.copy, size: 18),
-          label: const Text('Copiar reporte'),
+          label: Text(context.l10n.t('copy_report')),
         ),
       ],
     );
@@ -325,22 +338,29 @@ class _ErrorReportDialog extends StatelessWidget {
 
   IconData _getIconForType(String type) {
     switch (type) {
-      case 'i18n': return Icons.translate;
-      case 'network': return Icons.wifi_off;
-      case 'flutter': return Icons.error_outline;
-      case 'validation': return Icons.warning;
-      case 'operation': return Icons.play_arrow;
-      case 'firebase': return Icons.cloud_off;
-      default: return Icons.help_outline;
+      case 'i18n':
+        return Icons.translate;
+      case 'network':
+        return Icons.wifi_off;
+      case 'flutter':
+        return Icons.error_outline;
+      case 'validation':
+        return Icons.warning;
+      case 'operation':
+        return Icons.play_arrow;
+      case 'firebase':
+        return Icons.cloud_off;
+      default:
+        return Icons.help_outline;
     }
   }
 
   void _copyToClipboard(BuildContext context, String text) {
     debugPrint('[ERROR REPORT] Reporte copiado al portapapeles');
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Reporte copiado. Disponible también en consola.'),
+      SnackBar(
+        content: Text(context.l10n.t('report_copied')),
         duration: Duration(seconds: 5),
       ),
     );

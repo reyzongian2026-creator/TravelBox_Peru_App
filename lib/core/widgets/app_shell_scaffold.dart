@@ -1042,10 +1042,6 @@ class _SettingsComboMenu extends ConsumerWidget {
   static const _items = <MapEntry<String, String>>[
     MapEntry('es', 'ES'),
     MapEntry('en', 'EN'),
-    MapEntry('pt', 'PT'),
-    MapEntry('fr', 'FR'),
-    MapEntry('de', 'DE'),
-    MapEntry('it', 'IT'),
   ];
 
   @override

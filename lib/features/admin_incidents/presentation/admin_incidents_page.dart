@@ -290,7 +290,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                 backgroundColor: const Color(0xFF168F64),
                               ),
                               icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('PDF Report'),
+                              label: Text(context.l10n.t('pdf_report')),
                             ),
                             FilledButton.icon(
                               onPressed: _saving
@@ -302,7 +302,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                 backgroundColor: const Color(0xFF168F64),
                               ),
                               icon: const Icon(Icons.table_chart),
-                              label: const Text('Excel Report'),
+                              label: Text(context.l10n.t('excel_report')),
                             ),
                             if (resolvedItems.isEmpty)
                               Chip(
@@ -712,7 +712,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to generate PDF: ${_errorMessage(error)}'),
+          content: Text(
+            '${context.l10n.t('error_generating_pdf_prefix')}: ${_errorMessage(error)}',
+          ),
         ),
       );
     } finally {
@@ -749,7 +751,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to generate Excel: ${_errorMessage(error)}'),
+          content: Text(
+            '${context.l10n.t('error_generating_excel_prefix')}: ${_errorMessage(error)}',
+          ),
         ),
       );
     } finally {

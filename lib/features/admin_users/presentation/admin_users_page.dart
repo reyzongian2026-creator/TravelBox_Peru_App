@@ -14,7 +14,9 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/image_upload_validator.dart';
 import '../../../shared/utils/form_validators.dart';
+import '../../../shared/widgets/app_smart_image.dart';
 import '../../incidents/data/selected_evidence_image.dart';
 import '../data/admin_users_repository.dart';
 
@@ -26,18 +28,26 @@ final adminUsersCurrentPageProvider = StateProvider<int>((ref) => 0);
 final adminUsersPageSizeProvider = StateProvider<int>((ref) => 20);
 final adminUsersBulkSelectedProvider = StateProvider<Set<int>>((ref) => {});
 
-final adminUsersPagedProvider = FutureProvider<AdminUsersPagedResult>((ref) async {
+final adminUsersPagedProvider = FutureProvider<AdminUsersPagedResult>((
+  ref,
+) async {
   ref.watch(realtimeAppEventCursorProvider);
   final shouldLoad = ref.watch(adminUsersLoadRequestedProvider);
   if (!shouldLoad) {
-    return AdminUsersPagedResult(items: [], page: 0, size: 20, totalElements: 0, totalPages: 0);
+    return AdminUsersPagedResult(
+      items: [],
+      page: 0,
+      size: 20,
+      totalElements: 0,
+      totalPages: 0,
+    );
   }
   final dio = ref.read(dioProvider);
   final query = ref.watch(adminUsersAppliedSearchProvider).trim();
   final role = ref.watch(adminUsersAppliedRoleProvider);
   final page = ref.watch(adminUsersCurrentPageProvider);
   final size = ref.watch(adminUsersPageSizeProvider);
-  
+
   final response = await dio.get<Map<String, dynamic>>(
     '/admin/users/page',
     queryParameters: {
@@ -47,16 +57,26 @@ final adminUsersPagedProvider = FutureProvider<AdminUsersPagedResult>((ref) asyn
       'size': size,
     },
   );
-  
+
   final data = response.data;
   if (data == null) {
-    return AdminUsersPagedResult(items: [], page: 0, size: size, totalElements: 0, totalPages: 0);
+    return AdminUsersPagedResult(
+      items: [],
+      page: 0,
+      size: size,
+      totalElements: 0,
+      totalPages: 0,
+    );
   }
-  
-  final content = (data['content'] as List<dynamic>?)
-      ?.map((item) => AdminUserPagedItem.fromJson(item as Map<String, dynamic>))
-      .toList() ?? [];
-  
+
+  final content =
+      (data['content'] as List<dynamic>?)
+          ?.map(
+            (item) => AdminUserPagedItem.fromJson(item as Map<String, dynamic>),
+          )
+          .toList() ??
+      [];
+
   return AdminUsersPagedResult(
     items: content,
     page: data['number'] as int? ?? 0,
@@ -72,7 +92,7 @@ class AdminUsersPagedResult {
   final int size;
   final int totalElements;
   final int totalPages;
-  
+
   AdminUsersPagedResult({
     required this.items,
     required this.page,
@@ -80,7 +100,7 @@ class AdminUsersPagedResult {
     required this.totalElements,
     required this.totalPages,
   });
-  
+
   bool get hasNext => page < totalPages - 1;
   bool get hasPrevious => page > 0;
 }
@@ -93,7 +113,7 @@ class AdminUserPagedItem {
   final bool active;
   final List<int> warehouseIds;
   final DateTime createdAt;
-  
+
   AdminUserPagedItem({
     required this.id,
     required this.fullName,
@@ -103,7 +123,7 @@ class AdminUserPagedItem {
     required this.warehouseIds,
     required this.createdAt,
   });
-  
+
   factory AdminUserPagedItem.fromJson(Map<String, dynamic> json) {
     return AdminUserPagedItem(
       id: json['id'] as int,
@@ -111,10 +131,14 @@ class AdminUserPagedItem {
       email: json['email'] as String? ?? '',
       roles: json['roles'] as String? ?? '',
       active: json['active'] as bool? ?? true,
-      warehouseIds: (json['warehouseIds'] as List<dynamic>?)
-          ?.map((e) => e as int)
-          .toList() ?? [],
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      warehouseIds:
+          (json['warehouseIds'] as List<dynamic>?)
+              ?.map((e) => e as int)
+              .toList() ??
+          [],
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
@@ -454,7 +478,11 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     });
   }
 
-  Widget _buildBulkActionBar(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+  Widget _buildBulkActionBar(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
     final selected = ref.watch(adminUsersBulkSelectedProvider);
     if (selected.isEmpty) {
       return const SizedBox.shrink();
@@ -467,11 +495,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       ),
       child: Row(
         children: [
-          Text('${selected.length} ${l10n.t('seleccionados')}',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            '${selected.length} ${l10n.t('seleccionados')}',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const Spacer(),
           TextButton.icon(
-            onPressed: () => ref.read(adminUsersBulkSelectedProvider.notifier).state = {},
+            onPressed: () =>
+                ref.read(adminUsersBulkSelectedProvider.notifier).state = {},
             icon: const Icon(Icons.close, size: 18),
             label: Text(l10n.t('deseleccionar')),
           ),
@@ -488,19 +519,30 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
           ),
           TextButton.icon(
             onPressed: () => _bulkDelete(context, ref),
-            icon: Icon(Icons.delete_outline, size: 18, color: Theme.of(context).colorScheme.error),
-            label: Text(l10n.t('eliminar'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            icon: Icon(
+              Icons.delete_outline,
+              size: 18,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            label: Text(
+              l10n.t('eliminar'),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPaginationControls(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+  Widget _buildPaginationControls(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
     final pagedData = ref.watch(adminUsersPagedProvider);
     final currentPage = ref.watch(adminUsersCurrentPageProvider);
     final pageSize = ref.watch(adminUsersPageSizeProvider);
-    
+
     return pagedData.when(
       data: (result) {
         if (result.totalElements == 0) {
@@ -517,7 +559,9 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                 tooltip: l10n.t('primera_pagina'),
               ),
               IconButton(
-                onPressed: result.hasPrevious ? () => _goToPage(ref, currentPage - 1) : null,
+                onPressed: result.hasPrevious
+                    ? () => _goToPage(ref, currentPage - 1)
+                    : null,
                 icon: const Icon(Icons.chevron_left),
                 tooltip: l10n.t('pagina_anterior'),
               ),
@@ -528,12 +572,16 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: result.hasNext ? () => _goToPage(ref, currentPage + 1) : null,
+                onPressed: result.hasNext
+                    ? () => _goToPage(ref, currentPage + 1)
+                    : null,
                 icon: const Icon(Icons.chevron_right),
                 tooltip: l10n.t('siguiente_pagina'),
               ),
               IconButton(
-                onPressed: result.hasNext ? () => _goToPage(ref, result.totalPages - 1) : null,
+                onPressed: result.hasNext
+                    ? () => _goToPage(ref, result.totalPages - 1)
+                    : null,
                 icon: const Icon(Icons.last_page),
                 tooltip: l10n.t('ultima_pagina'),
               ),
@@ -542,9 +590,12 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               const SizedBox(width: 8),
               DropdownButton<int>(
                 value: pageSize,
-                items: [10, 20, 50, 100].map((size) => 
-                  DropdownMenuItem(value: size, child: Text('$size'))
-                ).toList(),
+                items: [10, 20, 50, 100]
+                    .map(
+                      (size) =>
+                          DropdownMenuItem(value: size, child: Text('$size')),
+                    )
+                    .toList(),
                 onChanged: (value) {
                   if (value != null) {
                     ref.read(adminUsersPageSizeProvider.notifier).state = value;
@@ -566,24 +617,33 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     ref.invalidate(adminUsersPagedProvider);
   }
 
-  Future<void> _bulkActivate(BuildContext context, WidgetRef ref, bool active) async {
+  Future<void> _bulkActivate(
+    BuildContext context,
+    WidgetRef ref,
+    bool active,
+  ) async {
     final selected = ref.read(adminUsersBulkSelectedProvider);
     if (selected.isEmpty) return;
-    
+
     try {
       final repo = ref.read(adminUsersRepositoryProvider);
       final result = repo.bulkUpdateActive(selected, active);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
       }
       ref.read(adminUsersBulkSelectedProvider.notifier).state = {};
       ref.invalidate(adminUsersPagedProvider);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_update_error')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              '${context.l10n.t('admin_users_bulk_update_error')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -592,12 +652,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   Future<void> _bulkDelete(BuildContext context, WidgetRef ref) async {
     final selected = ref.read(adminUsersBulkSelectedProvider);
     if (selected.isEmpty) return;
-    
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(dialogContext.l10n.t('confirmar_eliminacion')),
-        content: Text('${selected.length} ${dialogContext.l10n.t('usuarios_seran_eliminados')}'),
+        content: Text(
+          '${selected.length} ${dialogContext.l10n.t('usuarios_seran_eliminados')}',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -605,28 +667,36 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(dialogContext.l10n.t('eliminar'), style: const TextStyle(color: Colors.red)),
+            child: Text(
+              dialogContext.l10n.t('eliminar'),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
-    
+
     if (confirm != true) return;
-    
+
     try {
       final repo = ref.read(adminUsersRepositoryProvider);
       final result = repo.bulkDelete(selected);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(result.message)));
       }
       ref.read(adminUsersBulkSelectedProvider.notifier).state = {};
       ref.invalidate(adminUsersPagedProvider);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${context.l10n.t('admin_users_bulk_delete_error')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              '${context.l10n.t('admin_users_bulk_delete_error')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -637,14 +707,14 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     final url = repo.getExportUrl();
     final query = ref.read(adminUsersAppliedSearchProvider);
     final role = ref.read(adminUsersAppliedRoleProvider);
-    
+
     var fullUrl = url;
     if (query.isNotEmpty || role != 'ALL') {
       fullUrl += '?';
       if (query.isNotEmpty) fullUrl += 'query=$query';
       if (role != 'ALL') fullUrl += '&role=$role';
     }
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${context.l10n.t('descargando')}... $fullUrl')),
     );
@@ -691,6 +761,12 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       return;
     }
     await _runAdminAction(() async {
+      String? uploadedProfilePhotoPath = payload.profilePhotoPath;
+      if (payload.profilePhotoFile != null) {
+        uploadedProfilePhotoPath = await _uploadProfilePhoto(
+          payload.profilePhotoFile!,
+        );
+      }
       String? uploadedDocumentPhotoPath = payload.documentPhotoPath;
       if (payload.documentPhotoFile != null) {
         uploadedDocumentPhotoPath = await _uploadDocumentPhoto(
@@ -702,6 +778,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
           .post<Map<String, dynamic>>(
             '/admin/users',
             data: payload.toCreatePayload(
+              uploadedProfilePhotoPath: uploadedProfilePhotoPath,
               uploadedDocumentPhotoPath: uploadedDocumentPhotoPath,
             ),
           );
@@ -725,6 +802,12 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       return;
     }
     await _runAdminAction(() async {
+      String? uploadedProfilePhotoPath = payload.profilePhotoPath;
+      if (payload.profilePhotoFile != null) {
+        uploadedProfilePhotoPath = await _uploadProfilePhoto(
+          payload.profilePhotoFile!,
+        );
+      }
       String? uploadedDocumentPhotoPath = payload.documentPhotoPath;
       if (payload.documentPhotoFile != null) {
         uploadedDocumentPhotoPath = await _uploadDocumentPhoto(
@@ -736,6 +819,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
           .put<Map<String, dynamic>>(
             '/admin/users/${user.id}',
             data: payload.toUpdatePayload(
+              uploadedProfilePhotoPath: uploadedProfilePhotoPath,
               uploadedDocumentPhotoPath: uploadedDocumentPhotoPath,
             ),
           );
@@ -814,6 +898,29 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     return url;
   }
 
+  Future<String> _uploadProfilePhoto(SelectedEvidenceImage file) async {
+    final l10n = context.l10n;
+    final contentType = MediaType.parse(file.mimeType);
+    final response = await ref
+        .read(dioProvider)
+        .post<Map<String, dynamic>>(
+          '/admin/users/profile-photo',
+          data: FormData.fromMap({
+            'file': MultipartFile.fromBytes(
+              file.bytes,
+              filename: file.filename,
+              contentType: contentType,
+            ),
+          }),
+        );
+    final data = response.data ?? const <String, dynamic>{};
+    final url = data['url']?.toString().trim() ?? '';
+    if (url.isEmpty) {
+      throw StateError(l10n.t('admin_users_missing_profile_photo_url'));
+    }
+    return url;
+  }
+
   Future<void> _runAdminAction(
     Future<void> Function() operation, {
     required String successMessage,
@@ -825,7 +932,13 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       ref.invalidate(adminUsersSummaryProvider);
       _showSnack(successMessage);
     } catch (error) {
-      _showSnack(AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key)), isError: true);
+      _showSnack(
+        AppErrorFormatter.readable(
+          error,
+          (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -963,12 +1076,28 @@ class AdminUsersSummaryData {
   }
 }
 
+String _adminRoleLabel(BuildContext context, String role) {
+  return switch (role.trim().toUpperCase()) {
+    'CLIENT' => context.l10n.t('role_client'),
+    'COURIER' => context.l10n.t('role_courier'),
+    'OPERATOR' => context.l10n.t('role_operator'),
+    'CITY_SUPERVISOR' => context.l10n.t('role_city_supervisor'),
+    'SUPPORT' => context.l10n.t('role_support'),
+    'ADMIN' => context.l10n.t('role_admin'),
+    _ => role,
+  };
+}
+
+String _adminLanguageLabel(BuildContext context, String code) {
+  return switch (code.trim().toLowerCase()) {
+    'es' => context.l10n.t('espanol'),
+    'en' => context.l10n.t('english'),
+    _ => code,
+  };
+}
+
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.title,
-    required this.value,
-    this.colors,
-  });
+  const _SummaryCard({required this.title, required this.value, this.colors});
 
   final String title;
   final String value;
@@ -986,7 +1115,9 @@ class _SummaryCard extends StatelessWidget {
           decoration: colors != null
               ? BoxDecoration(
                   gradient: LinearGradient(
-                    colors: colors!.map((c) => c.withValues(alpha: 0.15)).toList(),
+                    colors: colors!
+                        .map((c) => c.withValues(alpha: 0.15))
+                        .toList(),
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1011,9 +1142,9 @@ class _SummaryCard extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors?.first,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors?.first),
                 ),
               ),
               Text(
@@ -1060,7 +1191,10 @@ class _AdminUserCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _UserAvatar(photoPath: user.profilePhotoPath, size: 56),
+                SizedBox(width: itemGap),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1096,7 +1230,7 @@ class _AdminUserCard extends StatelessWidget {
               children: [
                 ...user.roles.map(
                   (role) => Chip(
-                    label: Text(role),
+                    label: Text(_adminRoleLabel(context, role)),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
@@ -1114,7 +1248,7 @@ class _AdminUserCard extends StatelessWidget {
                 if (user.preferredLanguage.isNotEmpty)
                   Chip(
                     label: Text(
-                      '${context.l10n.t('language')} ${user.preferredLanguage}',
+                      '${context.l10n.t('language')} ${_adminLanguageLabel(context, user.preferredLanguage)}',
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -1269,6 +1403,201 @@ class _MetricBadge extends StatelessWidget {
   }
 }
 
+class _UserAvatar extends StatelessWidget {
+  const _UserAvatar({required this.photoPath, this.size = 52});
+
+  final String? photoPath;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ClipOval(
+        child: AppSmartImage(
+          source: photoPath,
+          fit: BoxFit.cover,
+          fallback: Container(
+            color: const Color(0xFFE6F0F4),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.person_outline,
+              size: size * 0.42,
+              color: const Color(0xFF4B5D73),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminUserPhotoField extends StatelessWidget {
+  const _AdminUserPhotoField({
+    required this.title,
+    required this.remotePhotoPath,
+    required this.selectedPhoto,
+    required this.buttonLabel,
+    required this.attachedLabel,
+    required this.onPickPhoto,
+  });
+
+  final String title;
+  final String? remotePhotoPath;
+  final SelectedEvidenceImage? selectedPhoto;
+  final String buttonLabel;
+  final String attachedLabel;
+  final VoidCallback onPickPhoto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            height: 72,
+            child: ClipOval(
+              child: selectedPhoto != null
+                  ? Image.memory(selectedPhoto!.bytes, fit: BoxFit.cover)
+                  : AppSmartImage(
+                      source: remotePhotoPath,
+                      fit: BoxFit.cover,
+                      fallback: Container(
+                        color: const Color(0xFFE6F0F4),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.person_outline),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onPickPhoto,
+                  icon: const Icon(Icons.photo_camera_back_outlined),
+                  label: Text(buttonLabel),
+                ),
+                const SizedBox(height: 8),
+                if (selectedPhoto != null)
+                  Text(
+                    selectedPhoto!.filename,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  )
+                else if (remotePhotoPath?.trim().isNotEmpty == true)
+                  Text(
+                    attachedLabel,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminUserDocumentField extends StatelessWidget {
+  const _AdminUserDocumentField({
+    required this.title,
+    required this.remotePhotoPath,
+    required this.selectedPhoto,
+    required this.buttonLabel,
+    required this.attachedLabel,
+    required this.onPickPhoto,
+  });
+
+  final String title;
+  final String? remotePhotoPath;
+  final SelectedEvidenceImage? selectedPhoto;
+  final String buttonLabel;
+  final String attachedLabel;
+  final VoidCallback onPickPhoto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 112,
+              height: 84,
+              child: selectedPhoto != null
+                  ? Image.memory(selectedPhoto!.bytes, fit: BoxFit.cover)
+                  : AppSmartImage(
+                      source: remotePhotoPath,
+                      fit: BoxFit.cover,
+                      fallback: Container(
+                        color: const Color(0xFFE6F0F4),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.badge_outlined),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onPickPhoto,
+                  icon: const Icon(Icons.upload_file_outlined),
+                  label: Text(buttonLabel),
+                ),
+                const SizedBox(height: 8),
+                if (selectedPhoto != null)
+                  Text(
+                    selectedPhoto!.filename,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  )
+                else if (remotePhotoPath?.trim().isNotEmpty == true)
+                  Text(
+                    attachedLabel,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AdminUserFormDialog extends StatefulWidget {
   const _AdminUserFormDialog({
     required this.title,
@@ -1326,7 +1655,9 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
   late bool _active;
   late String _preferredLanguage;
   late String _documentType;
+  String? _existingProfilePhotoPath;
   String? _existingDocumentPhotoPath;
+  SelectedEvidenceImage? _profilePhotoFile;
   SelectedEvidenceImage? _documentPhotoFile;
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
@@ -1335,6 +1666,8 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
   bool get _requiresWarehouseScope =>
       _selectedRoles.any(_warehouseScopedRoles.contains);
   bool get _requiresWorkerDocument => _selectedRoles.any(_workerRoles.contains);
+  bool get _supportsManagedProfilePhoto =>
+      _selectedRoles.any((role) => role != 'CLIENT');
 
   @override
   void initState() {
@@ -1365,6 +1698,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
     _documentType = initial?.documentType?.trim().isNotEmpty == true
         ? initial!.documentType!.trim().toUpperCase()
         : 'DNI';
+    _existingProfilePhotoPath = initial?.profilePhotoPath;
     _existingDocumentPhotoPath = initial?.documentPhotoPath;
   }
 
@@ -1403,6 +1737,21 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (_supportsManagedProfilePhoto) ...[
+                    _AdminUserPhotoField(
+                      title: context.l10n.t('admin_users_profile_photo'),
+                      remotePhotoPath: _existingProfilePhotoPath,
+                      selectedPhoto: _profilePhotoFile,
+                      buttonLabel: context.l10n.t(
+                        'admin_users_add_profile_photo',
+                      ),
+                      attachedLabel: context.l10n.t(
+                        'admin_users_profile_photo_attached',
+                      ),
+                      onPickPhoto: _pickProfilePhoto,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   TextFormField(
                     controller: _fullNameController,
                     decoration: InputDecoration(
@@ -1442,11 +1791,11 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     items: [
                       DropdownMenuItem(
                         value: 'es',
-                        child: Text(context.l10n.t('es')),
+                        child: Text(context.l10n.t('spanish')),
                       ),
                       DropdownMenuItem(
                         value: 'en',
-                        child: Text(context.l10n.t('en')),
+                        child: Text(context.l10n.t('english')),
                       ),
                     ],
                     onChanged: (value) {
@@ -1512,24 +1861,13 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     },
                   ),
                   const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _pickDocumentPhoto,
-                          icon: const Icon(Icons.upload_file_outlined),
-                          label: Text(context.l10n.t('adjuntar_foto_dni')),
-                        ),
-                        if (_documentPhotoFile != null)
-                          Chip(label: Text(_documentPhotoFile!.filename))
-                        else if (_existingDocumentPhotoPath?.isNotEmpty == true)
-                          Chip(label: Text(context.l10n.t('dni_ya_adjuntado'))),
-                      ],
-                    ),
+                  _AdminUserDocumentField(
+                    title: context.l10n.t('adjuntar_foto_dni'),
+                    remotePhotoPath: _existingDocumentPhotoPath,
+                    selectedPhoto: _documentPhotoFile,
+                    buttonLabel: context.l10n.t('adjuntar_foto_dni'),
+                    attachedLabel: context.l10n.t('dni_ya_adjuntado'),
+                    onPickPhoto: _pickDocumentPhoto,
                   ),
                   SizedBox(height: 12),
                   TextFormField(
@@ -1628,7 +1966,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     (role) => CheckboxListTile(
                       value: _selectedRoles.contains(role),
                       contentPadding: EdgeInsets.zero,
-                      title: Text(role),
+                      title: Text(_adminRoleLabel(context, role)),
                       onChanged: (checked) {
                         setState(() {
                           if (checked == true) {
@@ -1751,6 +2089,14 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
         documentNumber: _requiresWorkerDocument
             ? _documentNumberController.text.trim()
             : null,
+        profilePhotoPath: _supportsManagedProfilePhoto
+            ? (_profilePhotoFile == null
+                  ? _existingProfilePhotoPath?.trim()
+                  : null)
+            : null,
+        profilePhotoFile: _supportsManagedProfilePhoto
+            ? _profilePhotoFile
+            : null,
         documentPhotoPath: _documentPhotoFile == null
             ? _existingDocumentPhotoPath?.trim()
             : null,
@@ -1765,6 +2111,29 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
   }
 
   Future<void> _pickDocumentPhoto() async {
+    final image = await _pickImageFile();
+    if (image == null) {
+      return;
+    }
+    setState(() {
+      _documentPhotoFile = image;
+      _existingDocumentPhotoPath = null;
+    });
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    final image = await _pickImageFile();
+    if (image == null) {
+      return;
+    }
+    setState(() {
+      _profilePhotoFile = image;
+      _existingProfilePhotoPath = null;
+    });
+  }
+
+  Future<SelectedEvidenceImage?> _pickImageFile() async {
+    final t = context.l10n.t;
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: false,
       withData: true,
@@ -1772,13 +2141,13 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
       allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
     );
     if (result == null || result.files.isEmpty) {
-      return;
+      return null;
     }
     final file = result.files.first;
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
       if (!mounted) {
-        return;
+        return null;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1787,17 +2156,27 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
           ),
         ),
       );
-      return;
+      return null;
+    }
+    final validationMessage = await validateSelectedImageForUpload(
+      bytes: bytes,
+      t: t,
+    );
+    if (validationMessage != null) {
+      if (!mounted) {
+        return null;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validationMessage)));
+      return null;
     }
     final extension = (file.extension ?? '').toLowerCase().trim();
-    setState(() {
-      _documentPhotoFile = SelectedEvidenceImage(
-        filename: file.name,
-        mimeType: _guessMimeType(extension),
-        bytes: bytes,
-      );
-      _existingDocumentPhotoPath = null;
-    });
+    return SelectedEvidenceImage(
+      filename: file.name,
+      mimeType: _guessMimeType(extension),
+      bytes: bytes,
+    );
   }
 
   String _guessMimeType(String extension) {
@@ -1944,6 +2323,8 @@ class _AdminUserFormData {
     required this.warehouseIds,
     required this.documentType,
     required this.documentNumber,
+    required this.profilePhotoPath,
+    required this.profilePhotoFile,
     required this.documentPhotoPath,
     required this.documentPhotoFile,
     required this.vehiclePlate,
@@ -1960,13 +2341,18 @@ class _AdminUserFormData {
   final List<int> warehouseIds;
   final String? documentType;
   final String? documentNumber;
+  final String? profilePhotoPath;
+  final SelectedEvidenceImage? profilePhotoFile;
   final String? documentPhotoPath;
   final SelectedEvidenceImage? documentPhotoFile;
   final String? vehiclePlate;
   final bool active;
   final String? password;
 
-  Map<String, dynamic> toCreatePayload({String? uploadedDocumentPhotoPath}) {
+  Map<String, dynamic> toCreatePayload({
+    String? uploadedProfilePhotoPath,
+    String? uploadedDocumentPhotoPath,
+  }) {
     return {
       'fullName': fullName,
       'email': email,
@@ -1976,6 +2362,7 @@ class _AdminUserFormData {
       'warehouseIds': warehouseIds,
       'documentType': documentType,
       'documentNumber': documentNumber,
+      'profilePhotoPath': uploadedProfilePhotoPath ?? profilePhotoPath,
       'documentPhotoPath': uploadedDocumentPhotoPath ?? documentPhotoPath,
       'vehiclePlate': vehiclePlate,
       'nationality': nationality,
@@ -1984,7 +2371,10 @@ class _AdminUserFormData {
     };
   }
 
-  Map<String, dynamic> toUpdatePayload({String? uploadedDocumentPhotoPath}) {
+  Map<String, dynamic> toUpdatePayload({
+    String? uploadedProfilePhotoPath,
+    String? uploadedDocumentPhotoPath,
+  }) {
     return {
       'fullName': fullName,
       'email': email,
@@ -1993,6 +2383,7 @@ class _AdminUserFormData {
       'warehouseIds': warehouseIds,
       'documentType': documentType,
       'documentNumber': documentNumber,
+      'profilePhotoPath': uploadedProfilePhotoPath ?? profilePhotoPath,
       'documentPhotoPath': uploadedDocumentPhotoPath ?? documentPhotoPath,
       'vehiclePlate': vehiclePlate,
       'nationality': nationality,
@@ -2014,6 +2405,7 @@ class AdminUserItem {
     required this.managedByAdmin,
     required this.documentType,
     required this.documentNumber,
+    required this.profilePhotoPath,
     required this.documentPhotoPath,
     required this.vehiclePlate,
     required this.active,
@@ -2037,6 +2429,7 @@ class AdminUserItem {
   final bool managedByAdmin;
   final String? documentType;
   final String? documentNumber;
+  final String? profilePhotoPath;
   final String? documentPhotoPath;
   final String? vehiclePlate;
   final bool active;
@@ -2082,6 +2475,7 @@ class AdminUserItem {
       managedByAdmin: json['managedByAdmin'] as bool? ?? false,
       documentType: json['documentType']?.toString(),
       documentNumber: json['documentNumber']?.toString(),
+      profilePhotoPath: json['profilePhotoPath']?.toString(),
       documentPhotoPath: json['documentPhotoPath']?.toString(),
       vehiclePlate: json['vehiclePlate']?.toString(),
       active: json['active'] as bool? ?? true,

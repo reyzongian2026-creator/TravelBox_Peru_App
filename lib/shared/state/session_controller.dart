@@ -125,23 +125,30 @@ class SessionState {
   factory SessionState.fromJson(Map<String, dynamic> json) {
     // Use saved locale and sessionLanguage if available, otherwise default to Spanish
     final savedLocaleCode = json['locale']?.toString().trim().toLowerCase();
-    final savedSessionLang = json['sessionLanguage']?.toString().trim().toLowerCase();
-    
+    final savedSessionLang = json['sessionLanguage']
+        ?.toString()
+        .trim()
+        .toLowerCase();
+
     Locale finalLocale;
     String finalSessionLang;
-    
-    if (savedLocaleCode != null && savedLocaleCode.isNotEmpty && _supportedLanguageCodes.contains(savedLocaleCode)) {
+
+    if (savedLocaleCode != null &&
+        savedLocaleCode.isNotEmpty &&
+        _supportedLanguageCodes.contains(savedLocaleCode)) {
       finalLocale = Locale(savedLocaleCode);
     } else {
       finalLocale = const Locale('es');
     }
-    
-    if (savedSessionLang != null && savedSessionLang.isNotEmpty && _supportedLanguageCodes.contains(savedSessionLang)) {
+
+    if (savedSessionLang != null &&
+        savedSessionLang.isNotEmpty &&
+        _supportedLanguageCodes.contains(savedSessionLang)) {
       finalSessionLang = savedSessionLang;
     } else {
       finalSessionLang = 'es';
     }
-    
+
     return SessionState(
       locale: finalLocale,
       sessionLanguage: finalSessionLang,
@@ -247,13 +254,20 @@ class SessionController extends StateNotifier<SessionState> {
   }
 
   Future<void> setLocale(Locale locale) async {
-    state = state.copyWith(locale: _normalizeLocale(locale.languageCode));
+    final normalizedLocale = _normalizeLocale(locale.languageCode);
+    state = state.copyWith(
+      locale: normalizedLocale,
+      sessionLanguage: normalizedLocale.languageCode,
+    );
     await _persist();
   }
 
   Future<void> setSessionLanguage(String languageCode) async {
     final normalized = _normalizeSessionLanguage(languageCode);
-    state = state.copyWith(sessionLanguage: normalized);
+    state = state.copyWith(
+      sessionLanguage: normalized,
+      locale: Locale(normalized),
+    );
     await _persist();
   }
 
@@ -274,23 +288,28 @@ class SessionController extends StateNotifier<SessionState> {
         state.user != null &&
         state.user!.id == user.id &&
         state.locale.languageCode.trim().isNotEmpty;
-    
+
     // Always default to Spanish, only use user preferredLanguage if explicitly set
     final userPreferredLang = user.preferredLanguage.trim().toLowerCase();
-    final isValidUserLang = userPreferredLang.isNotEmpty && 
-                            userPreferredLang != 'es' &&
-                            _supportedLanguageCodes.contains(userPreferredLang);
-    
+    final isValidUserLang =
+        userPreferredLang.isNotEmpty &&
+        userPreferredLang != 'es' &&
+        _supportedLanguageCodes.contains(userPreferredLang);
+
     final nextLocale = keepCurrentLocale
         ? state.locale
-        : (isValidUserLang ? _normalizeLocale(userPreferredLang) : const Locale('es'));
-    
+        : (isValidUserLang
+              ? _normalizeLocale(userPreferredLang)
+              : const Locale('es'));
+
     var nextState = state.copyWith(
       user: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
       locale: nextLocale,
-      sessionLanguage: isValidUserLang ? userPreferredLang : 'es',  // Sync sessionLanguage
+      sessionLanguage: isValidUserLang
+          ? userPreferredLang
+          : 'es', // Sync sessionLanguage
       pendingVerificationCode: pendingVerificationCode,
       onboardingCompleted: _isOnboardingCompleted(user),
     );
@@ -337,10 +356,7 @@ class SessionController extends StateNotifier<SessionState> {
   }
 
   Future<void> signOut() async {
-    state = state.copyWith(
-      clearSession: true,
-      sessionLanguage: 'es',
-    );
+    state = state.copyWith(clearSession: true, sessionLanguage: 'es');
     await _persist();
   }
 
@@ -563,7 +579,7 @@ class SessionController extends StateNotifier<SessionState> {
   }
 }
 
-const _supportedLanguageCodes = {'es', 'en', 'de', 'fr', 'it', 'pt'};
+const _supportedLanguageCodes = {'es', 'en'};
 
 Locale _normalizeLocale(String? raw) {
   final code = raw?.trim().toLowerCase() ?? 'es';

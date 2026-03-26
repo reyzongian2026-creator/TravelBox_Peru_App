@@ -2019,7 +2019,7 @@ class WarehouseFormData {
 }
 
 String? _readWarehouseImageUrl(Map<String, dynamic> json) {
-  const keys = ['coverImageUrl', 'imageUrl', 'photoUrl', 'image', 'imagen', 'url'];
+  const keys = ['imageUrl', 'photoUrl', 'coverImageUrl', 'image', 'imagen', 'url'];
   for (final key in keys) {
     final value = json[key]?.toString();
     if (value != null && value.trim().isNotEmpty) {

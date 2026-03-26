@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../shared/state/currency_preference.dart';
 
 class CurrencySelector extends ConsumerWidget {
@@ -8,7 +9,7 @@ class CurrencySelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentCurrency = ref.watch(currencyPreferenceProvider);
-    
+
     return PopupMenuButton<CurrencyCode>(
       initialValue: currentCurrency,
       onSelected: (currency) {
@@ -21,7 +22,10 @@ class CurrencySelector extends ConsumerWidget {
             children: [
               Text(
                 currency.symbol,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(width: 8),
               Text(currency.name),
@@ -60,25 +64,60 @@ class PriceDisplay extends StatelessWidget {
     required this.priceInPEN,
     this.showCurrencySelector = false,
     this.style,
+    this.suffix,
+    this.showOriginalIfConverted = false,
+    this.secondaryStyle,
+    this.alignment = CrossAxisAlignment.start,
   });
 
   final double priceInPEN;
   final bool showCurrencySelector;
   final TextStyle? style;
+  final String? suffix;
+  final bool showOriginalIfConverted;
+  final TextStyle? secondaryStyle;
+  final CrossAxisAlignment alignment;
 
   @override
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
         final userCurrency = ref.watch(currencyPreferenceProvider);
-        final convertedPrice = CurrencyRates.convert(priceInPEN, CurrencyCode.pen, userCurrency);
-        
+        final convertedPrice = CurrencyRates.convert(
+          priceInPEN,
+          CurrencyCode.pen,
+          userCurrency,
+        );
+        final primaryText = suffix == null || suffix!.trim().isEmpty
+            ? formatCurrency(convertedPrice, userCurrency)
+            : '${formatCurrency(convertedPrice, userCurrency)} $suffix';
+        final originalText =
+            showOriginalIfConverted && userCurrency != CurrencyCode.pen
+            ? formatCurrency(priceInPEN, CurrencyCode.pen)
+            : null;
+
         return Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              formatCurrency(convertedPrice, userCurrency),
-              style: style,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: alignment,
+              children: [
+                Text(primaryText, style: style),
+                if (originalText != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    originalText,
+                    style:
+                        secondaryStyle ??
+                        Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).hintColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ],
+              ],
             ),
             if (showCurrencySelector) ...[
               const SizedBox(width: 4),
@@ -95,39 +134,31 @@ class PriceDisplayWithOriginal extends StatelessWidget {
   const PriceDisplayWithOriginal({
     super.key,
     required this.priceInPEN,
+    this.suffix,
+    this.style,
+    this.secondaryStyle,
+    this.alignment = CrossAxisAlignment.start,
   });
 
   final double priceInPEN;
+  final String? suffix;
+  final TextStyle? style;
+  final TextStyle? secondaryStyle;
+  final CrossAxisAlignment alignment;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final userCurrency = ref.watch(currencyPreferenceProvider);
-        final convertedPrice = CurrencyRates.convert(priceInPEN, CurrencyCode.pen, userCurrency);
-        
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              formatCurrency(convertedPrice, userCurrency),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (userCurrency != CurrencyCode.pen) ...[
-              const SizedBox(width: 4),
-              Text(
-                '(S/${priceInPEN.toStringAsFixed(2)})',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).hintColor,
-                ),
-              ),
-            ],
-          ],
-        );
-      },
+    return PriceDisplay(
+      priceInPEN: priceInPEN,
+      suffix: suffix,
+      showOriginalIfConverted: true,
+      alignment: alignment,
+      style:
+          style ??
+          Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      secondaryStyle: secondaryStyle,
     );
   }
 }

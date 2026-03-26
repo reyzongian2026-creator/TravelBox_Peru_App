@@ -574,7 +574,7 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error downloading: $message'),
+          content: Text('${l10n.t('download_error_prefix')}: $message'),
           backgroundColor: Colors.red,
         ),
       );

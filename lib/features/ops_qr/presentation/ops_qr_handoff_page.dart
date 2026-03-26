@@ -209,7 +209,10 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                                 selectedReservation,
                                 selectedCase,
                               ),
-                              _buildDeliveryTab(selectedReservation, selectedCase),
+                              _buildDeliveryTab(
+                                selectedReservation,
+                                selectedCase,
+                              ),
                               _buildApprovalsTab(
                                 selectedReservation: selectedReservation,
                                 selectedCase: selectedCase,
@@ -584,7 +587,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
               ? null
               : (value) => _runAction(() async {
                   if (!selectedCase.identityValidated) {
-                    _showMessage(context.l10n.t('ops_qr_validate_identity_first'));
+                    _showMessage(
+                      context.l10n.t('ops_qr_validate_identity_first'),
+                    );
                     return;
                   }
                   await ref
@@ -619,7 +624,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
           decoration: InputDecoration(
             labelText: context.l10n.t('ops_qr_message_source_language_label'),
           ),
-          items: const ['es', 'en', 'de', 'fr', 'it', 'pt']
+          items: const ['es', 'en']
               .map(
                 (code) => DropdownMenuItem(
                   value: code,
@@ -1165,7 +1170,10 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       await action();
     } catch (error) {
       if (!mounted) return;
-      final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+      final readable = AppErrorFormatter.readable(
+        error,
+        (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+      );
       _showMessage(
         '${context.l10n.t('ops_qr_action_failed_prefix')}: $readable',
       );

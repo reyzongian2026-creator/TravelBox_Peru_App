@@ -115,14 +115,6 @@ String languageLabel(String languageCode) {
       return 'Español';
     case 'en':
       return 'English';
-    case 'de':
-      return 'Deutsch';
-    case 'fr':
-      return 'Français';
-    case 'it':
-      return 'Italiano';
-    case 'pt':
-      return 'Português';
     default:
       return languageCode.toUpperCase();
   }
