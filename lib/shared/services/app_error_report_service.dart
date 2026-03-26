@@ -242,6 +242,22 @@ class AppErrorReportService {
       if (kDebugMode) {
         debugPrint('[ERROR] Synced ${errorsToSend.length} errors to backend');
       }
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode ?? 0;
+      if (statusCode == 401 || statusCode == 403) {
+        if (kDebugMode) {
+          debugPrint(
+            '[ERROR] Skipping admin error sync due to auth status $statusCode',
+          );
+        }
+        return;
+      }
+      _pendingErrors.addAll(errorsToSend);
+      await _saveToStorage();
+
+      if (kDebugMode) {
+        debugPrint('[ERROR] Failed to sync errors: $e');
+      }
     } catch (e) {
       _pendingErrors.addAll(errorsToSend);
       await _saveToStorage();

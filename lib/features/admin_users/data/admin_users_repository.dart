@@ -168,14 +168,18 @@ class PagedResult<T> {
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJsonT,
   ) {
-    final contentList = json['content'] as List<dynamic>? ?? json['content'] as List<dynamic>? ?? [];
+    final contentList =
+        json['items'] as List<dynamic>? ??
+        json['content'] as List<dynamic>? ??
+        [];
+    final hasNext = json['hasNext'] as bool? ?? false;
     return PagedResult(
       content: contentList.map((e) => fromJsonT(e as Map<String, dynamic>)).toList(),
       page: (json['page'] as int?) ?? 0,
       size: (json['size'] as int?) ?? json['pageSize'] as int? ?? 20,
       totalElements: (json['totalElements'] as int?) ?? json['total'] as int? ?? 0,
       totalPages: (json['totalPages'] as int?) ?? json['pages'] as int? ?? 0,
-      last: (json['last'] as bool?) ?? true,
+      last: (json['last'] as bool?) ?? !hasNext,
     );
   }
 }
