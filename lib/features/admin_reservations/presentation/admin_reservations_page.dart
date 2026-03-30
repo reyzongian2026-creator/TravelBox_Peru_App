@@ -7,6 +7,9 @@ import 'package:dio/dio.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/responsive_filter_panel.dart';
+import '../../../core/widgets/responsive_page_header_actions.dart';
+import '../../../core/widgets/responsive_pagination_bar.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
@@ -69,8 +72,10 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
               responsive.horizontalPadding,
               0,
             ),
-            child: Column(
-              children: [
+            child: ResponsiveFilterPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 TextField(
                   controller: _searchController,
                   onChanged: (value) {
@@ -105,30 +110,25 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                   },
                 ),
                 SizedBox(height: itemGap),
-                Row(
-                  children: [
-                    OutlinedButton.icon(
+                ResponsivePageHeaderActions(
+                  actions: [
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('recargar'),
+                      icon: Icons.refresh,
                       onPressed: _refreshReservations,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 40),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      icon: const Icon(Icons.refresh),
-                      label: Text(context.l10n.t('recargar')),
+                      primary: true,
                     ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('exportar'),
+                      icon: Icons.download,
                       onPressed: () => _exportReservations(context),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 40),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      icon: const Icon(Icons.download),
-                      label: Text(context.l10n.t('exportar')),
                     ),
                   ],
+                  mobileVisibleCount: 1,
+                  tabletVisibleCount: 2,
                 ),
-              ],
+                ],
+              ),
             ),
           ),
           SizedBox(height: itemGap),
@@ -153,31 +153,17 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                       final totalPages = pageResult.totalPages <= 0
                           ? 1
                           : pageResult.totalPages;
-                      return Align(
-                        alignment: Alignment.centerRight,
-                        child: Wrap(
-                          spacing: itemGap,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              '${context.l10n.t('my_reservations_page')} ${pageResult.page + 1} ${context.l10n.t('my_reservations_of')} $totalPages',
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: pageResult.hasPrevious
-                                  ? _goToPreviousPage
-                                  : null,
-                              icon: const Icon(Icons.chevron_left),
-                              label: Text(context.l10n.t('previous')),
-                            ),
-                            FilledButton.icon(
-                              onPressed: pageResult.hasNext
-                                  ? _goToNextPage
-                                  : null,
-                              icon: const Icon(Icons.chevron_right),
-                              label: Text(context.l10n.t('next')),
-                            ),
-                          ],
-                        ),
+                      return ResponsivePaginationBar(
+                        pageLabel:
+                            '${pageResult.page + 1} / $totalPages',
+                        totalLabel:
+                            '${context.l10n.t('my_reservations_page')} ${pageResult.page + 1} ${context.l10n.t('my_reservations_of')} $totalPages',
+                        canGoFirst: false,
+                        canGoPrevious: pageResult.hasPrevious,
+                        canGoNext: pageResult.hasNext,
+                        canGoLast: false,
+                        onPrevious: _goToPreviousPage,
+                        onNext: _goToNextPage,
                       );
                     }
                     final item = items[index];

@@ -122,6 +122,23 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
       if (session.user != null) _HeaderProfileChip(userName: session.user!.name),
     ];
 
+    final mobileHeaderActions = <Widget>[
+      if (session.isAuthenticated)
+        _NotificationBellButton(
+          unreadCount: notificationsState.unreadCount,
+          onPressed: () {
+            if (widget.currentRoute.startsWith('/notifications')) return;
+            context.push('/notifications');
+          },
+        ),
+      _SettingsComboMenu(compact: true),
+      if (session.user != null)
+        _HeaderProfileChip(
+          userName: session.user!.name,
+          compact: true,
+        ),
+    ];
+
     final content = Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF11182D) : Colors.white,
@@ -225,12 +242,16 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
         },
       ),
       appBar: AppBar(
-        title: _ShellCompactTitle(title: localizedTitle),
+        titleSpacing: 0,
+        title: _ShellCompactTitle(
+          title: localizedTitle,
+          compact: responsive.isMobile,
+        ),
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        actions: headerActions,
+        actions: responsive.isMobile ? mobileHeaderActions : headerActions,
       ),
       floatingActionButton: widget.floatingActionButton,
       body: Container(
@@ -653,12 +674,31 @@ class _DesktopShellHeader extends StatelessWidget {
 }
 
 class _ShellCompactTitle extends StatelessWidget {
-  const _ShellCompactTitle({required this.title});
+  const _ShellCompactTitle({required this.title, this.compact = false});
 
   final String title;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+    if (compact) {
+      return Text(
+        title,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w800,
+          fontSize: responsive.adaptiveFont(
+            mobileSmall: 18,
+            mobile: 20,
+            tablet: 20,
+            desktopSmall: 20,
+            desktop: 20,
+          ),
+        ),
+      );
+    }
     return Row(
       children: [
         const Expanded(
@@ -765,9 +805,13 @@ class _NotificationBellButton extends StatelessWidget {
 }
 
 class _HeaderProfileChip extends StatelessWidget {
-  const _HeaderProfileChip({required this.userName});
+  const _HeaderProfileChip({
+    required this.userName,
+    this.compact = false,
+  });
 
   final String userName;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -778,6 +822,24 @@ class _HeaderProfileChip extends StatelessWidget {
         .take(2)
         .map((part) => part.trim().substring(0, 1).toUpperCase())
         .join();
+    if (compact) {
+      return Container(
+        margin: const EdgeInsets.only(left: 4, right: 4),
+        child: CircleAvatar(
+          radius: 18,
+          backgroundColor: TravelBoxBrand.primaryBlue,
+          child: Text(
+            initials.isEmpty ? 'I' : initials,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -821,12 +883,14 @@ class _HeaderProfileChip extends StatelessWidget {
 }
 
 class _SettingsComboMenu extends ConsumerWidget {
-  const _SettingsComboMenu();
+  const _SettingsComboMenu({this.compact = false});
 
   static const _items = <MapEntry<String, String>>[
     MapEntry('es', 'ES'),
     MapEntry('en', 'EN'),
   ];
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -839,7 +903,7 @@ class _SettingsComboMenu extends ConsumerWidget {
 
     return PopupMenuButton<String>(
       tooltip: l10n.t('settings_options'),
-      icon: const Icon(Icons.tune_rounded),
+      icon: Icon(compact ? Icons.more_horiz_rounded : Icons.tune_rounded),
       onSelected: (value) {
         if (value == 'theme') {
           ref.read(themeModeControllerProvider.notifier).toggle();

@@ -8,6 +8,8 @@ import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/responsive_filter_panel.dart';
+import '../../../core/widgets/responsive_page_header_actions.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
@@ -125,61 +127,99 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
               responsive.horizontalPadding,
               0,
             ),
-            child: Wrap(
-              spacing: itemGap,
-              runSpacing: itemGap,
-              children: [
-                SizedBox(
-                  width: responsive.isMobile ? double.infinity : 360,
-                  child: TextField(
+            child: ResponsiveFilterPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
                     controller: _searchController,
                     onChanged: (value) {
-                      ref.read(adminIncidentsSearchProvider.notifier).state =
-                          value;
+                      ref.read(adminIncidentsSearchProvider.notifier).state = value;
                       ref.read(adminIncidentsPageProvider.notifier).state = 0;
                     },
                     decoration: InputDecoration(
                       labelText: context.l10n.t('incident_admin_search_label'),
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
-                ),
-                DropdownButton<String>(
-                  value: status,
-                  items: [
-                    DropdownMenuItem(
-                      value: 'OPEN',
-                      child: Text(context.l10n.t('abiertos')),
+                  SizedBox(height: itemGap),
+                  if (responsive.isMobile)
+                    DropdownButtonFormField<String>(
+                      initialValue: status,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t('estado'),
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'OPEN',
+                          child: Text(context.l10n.t('abiertos')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'RESOLVED',
+                          child: Text(context.l10n.t('resueltos')),
+                        ),
+                        DropdownMenuItem(
+                          value: 'ALL',
+                          child: Text(context.l10n.t('todos')),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          ref.read(adminIncidentsStatusProvider.notifier).state =
+                              value;
+                          ref.read(adminIncidentsPageProvider.notifier).state = 0;
+                        }
+                      },
+                    )
+                  else
+                    Wrap(
+                      spacing: itemGap,
+                      runSpacing: itemGap,
+                      children: [
+                        DropdownButton<String>(
+                          value: status,
+                          items: [
+                            DropdownMenuItem(
+                              value: 'OPEN',
+                              child: Text(context.l10n.t('abiertos')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'RESOLVED',
+                              child: Text(context.l10n.t('resueltos')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'ALL',
+                              child: Text(context.l10n.t('todos')),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              ref.read(adminIncidentsStatusProvider.notifier).state =
+                                  value;
+                              ref.read(adminIncidentsPageProvider.notifier).state = 0;
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                    DropdownMenuItem(
-                      value: 'RESOLVED',
-                      child: Text(context.l10n.t('resueltos')),
-                    ),
-                    DropdownMenuItem(
-                      value: 'ALL',
-                      child: Text(context.l10n.t('todos')),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref.read(adminIncidentsStatusProvider.notifier).state =
-                          value;
-                      ref.read(adminIncidentsPageProvider.notifier).state = 0;
-                    }
-                  },
-                ),
-                OutlinedButton.icon(
-                  onPressed: _saving
-                      ? null
-                      : () => ref.invalidate(adminIncidentsProvider),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
+                  SizedBox(height: itemGap),
+                  ResponsivePageHeaderActions(
+                    actions: [
+                      ResponsiveHeaderAction(
+                        label: context.l10n.t('recargar'),
+                        icon: Icons.refresh,
+                        onPressed: _saving
+                            ? null
+                            : () => ref.invalidate(adminIncidentsProvider),
+                        primary: true,
+                      ),
+                    ],
+                    mobileVisibleCount: 1,
+                    tabletVisibleCount: 1,
                   ),
-                  icon: Icon(Icons.refresh),
-                  label: Text(context.l10n.t('recargar')),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           SizedBox(height: itemGap),

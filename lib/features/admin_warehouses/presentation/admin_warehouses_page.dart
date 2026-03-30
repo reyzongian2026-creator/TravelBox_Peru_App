@@ -13,6 +13,8 @@ import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/responsive_filter_panel.dart';
+import '../../../core/widgets/responsive_page_header_actions.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/state/warehouse_catalog_sync.dart';
@@ -277,48 +279,57 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wideRow = constraints.maxWidth >= 1080;
-        if (wideRow) {
-          final statusWidth = (constraints.maxWidth * 0.2)
-              .clamp(180.0, 260.0)
-              .toDouble();
-          return Row(
+    return ResponsiveFilterPanel(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wideRow = constraints.maxWidth >= 1080 && !responsive.isMobile;
+          if (wideRow) {
+            final statusWidth = (constraints.maxWidth * 0.2)
+                .clamp(180.0, 260.0)
+                .toDouble();
+            return Row(
+              children: [
+                Expanded(child: buildSearchField()),
+                SizedBox(width: itemGap),
+                SizedBox(width: statusWidth, child: buildStatusFilter()),
+                SizedBox(width: itemGap),
+                buildCreateButton(),
+                SizedBox(width: itemGap),
+                buildRefreshButton(),
+              ],
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: buildSearchField()),
-              SizedBox(width: itemGap),
-              SizedBox(width: statusWidth, child: buildStatusFilter()),
-              SizedBox(width: itemGap),
-              buildCreateButton(),
-              SizedBox(width: itemGap),
-              buildRefreshButton(),
+              buildSearchField(),
+              SizedBox(height: itemGap),
+              buildStatusFilter(),
+              SizedBox(height: itemGap),
+              ResponsivePageHeaderActions(
+                actions: [
+                  ResponsiveHeaderAction(
+                    label: l10n.t('nuevo'),
+                    icon: Icons.add,
+                    onPressed: _saving ? null : _createWarehouse,
+                    primary: true,
+                  ),
+                  ResponsiveHeaderAction(
+                    label: l10n.t('recargar'),
+                    icon: Icons.refresh,
+                    onPressed: _saving
+                        ? null
+                        : () => ref.invalidate(adminWarehousesProvider),
+                  ),
+                ],
+                mobileVisibleCount: 1,
+                tabletVisibleCount: 2,
+              ),
             ],
           );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            buildSearchField(),
-            SizedBox(height: itemGap),
-            AdaptiveWrapGrid(
-              spacing: itemGap,
-              runSpacing: itemGap,
-              mobileColumns: 1,
-              tabletColumns: 2,
-              desktopSmallColumns: 3,
-              desktopColumns: 3,
-              minItemWidth: 170,
-              children: [
-                SizedBox(width: double.infinity, child: buildCreateButton()),
-                buildStatusFilter(),
-                SizedBox(width: double.infinity, child: buildRefreshButton()),
-              ],
-            ),
-          ],
-        );
-      },
+        },
+      ),
     );
   }
 

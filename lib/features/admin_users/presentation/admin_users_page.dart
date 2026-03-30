@@ -11,6 +11,10 @@ import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/adaptive_wrap_grid.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/compact_record_actions_menu.dart';
+import '../../../core/widgets/responsive_filter_panel.dart';
+import '../../../core/widgets/responsive_page_header_actions.dart';
+import '../../../core/widgets/responsive_pagination_bar.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/utils/app_error_formatter.dart';
@@ -247,143 +251,156 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
               responsive.horizontalPadding,
               0,
             ),
-            child: Wrap(
-              spacing: itemGap,
-              runSpacing: itemGap,
-              children: [
-                SizedBox(
-                  width: responsive.isMobile ? double.infinity : 360,
-                  child: TextField(
+            child: ResponsiveFilterPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
                     controller: _searchController,
                     onChanged: (_) => _scheduleFilterApplyFromTyping(),
                     onSubmitted: (_) => _applyUserFilters(),
                     decoration: InputDecoration(
                       labelText: l10n.t('admin_users_search_label'),
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
-                ),
-                DropdownButton<String>(
-                  value: _draftRole,
-                  items: [
-                    DropdownMenuItem(
-                      value: 'ALL',
-                      child: Text(context.l10n.t('todos')),
+                  SizedBox(height: itemGap),
+                  if (responsive.isMobile)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          initialValue: _draftRole,
+                          isExpanded: true,
+                          decoration: const InputDecoration(labelText: 'Rol'),
+                          items: _roleItems(context),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _draftRole = value);
+                              _maybeApplyFiltersAfterFirstLoad();
+                            }
+                          },
+                        ),
+                        SizedBox(height: itemGap),
+                        SizedBox(
+                          height: 40,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              ChoiceChip(
+                                label: Text(context.l10n.t('solo_ultimo_registro')),
+                                selected: _draftLatestOnly,
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (_) {
+                                  setState(() => _draftLatestOnly = true);
+                                  _maybeApplyFiltersAfterFirstLoad();
+                                },
+                              ),
+                              SizedBox(width: itemGap),
+                              ChoiceChip(
+                                label: Text(context.l10n.t('todos_los_registros')),
+                                selected: !_draftLatestOnly,
+                                visualDensity: VisualDensity.compact,
+                                onSelected: (_) {
+                                  setState(() => _draftLatestOnly = false);
+                                  _maybeApplyFiltersAfterFirstLoad();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Wrap(
+                      spacing: itemGap,
+                      runSpacing: itemGap,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: responsive.isTablet ? 260 : 220,
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _draftRole,
+                            isExpanded: true,
+                            decoration: const InputDecoration(labelText: 'Rol'),
+                            items: _roleItems(context),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _draftRole = value);
+                                _maybeApplyFiltersAfterFirstLoad();
+                              }
+                            },
+                          ),
+                        ),
+                        ChoiceChip(
+                          label: Text(context.l10n.t('solo_ultimo_registro')),
+                          selected: _draftLatestOnly,
+                          visualDensity: VisualDensity.compact,
+                          onSelected: (_) {
+                            setState(() => _draftLatestOnly = true);
+                            _maybeApplyFiltersAfterFirstLoad();
+                          },
+                        ),
+                        ChoiceChip(
+                          label: Text(context.l10n.t('todos_los_registros')),
+                          selected: !_draftLatestOnly,
+                          visualDensity: VisualDensity.compact,
+                          onSelected: (_) {
+                            setState(() => _draftLatestOnly = false);
+                            _maybeApplyFiltersAfterFirstLoad();
+                          },
+                        ),
+                      ],
                     ),
-                    DropdownMenuItem(
-                      value: 'CLIENT',
-                      child: Text(context.l10n.t('role_client')),
-                    ),
-                    DropdownMenuItem(
-                      value: 'COURIER',
-                      child: Text(context.l10n.t('role_courier')),
-                    ),
-                    DropdownMenuItem(
-                      value: 'OPERATOR',
-                      child: Text(context.l10n.t('role_operator')),
-                    ),
-                    DropdownMenuItem(
-                      value: 'CITY_SUPERVISOR',
-                      child: Text(context.l10n.t('role_city_supervisor')),
-                    ),
-                    DropdownMenuItem(
-                      value: 'SUPPORT',
-                      child: Text(context.l10n.t('role_support')),
-                    ),
-                    DropdownMenuItem(
-                      value: 'ADMIN',
-                      child: Text(context.l10n.t('role_admin')),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _draftRole = value);
-                      _maybeApplyFiltersAfterFirstLoad();
-                    }
-                  },
-                ),
-                ChoiceChip(
-                  label: Text(context.l10n.t('solo_ultimo_registro')),
-                  selected: _draftLatestOnly,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: (_) {
-                    setState(() => _draftLatestOnly = true);
-                    _maybeApplyFiltersAfterFirstLoad();
-                  },
-                ),
-                ChoiceChip(
-                  label: Text(context.l10n.t('todos_los_registros')),
-                  selected: !_draftLatestOnly,
-                  visualDensity: VisualDensity.compact,
-                  onSelected: (_) {
-                    setState(() => _draftLatestOnly = false);
-                    _maybeApplyFiltersAfterFirstLoad();
-                  },
-                ),
-                FilledButton.icon(
-                  onPressed: _saving ? null : _applyUserFilters,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
+                  SizedBox(height: itemGap),
+                  ResponsivePageHeaderActions(
+                    actions: [
+                      ResponsiveHeaderAction(
+                        label: context.l10n.t('ver_usuarios'),
+                        icon: Icons.filter_alt_outlined,
+                        onPressed: _saving ? null : _applyUserFilters,
+                        primary: true,
+                      ),
+                      ResponsiveHeaderAction(
+                        label: context.l10n.t('nuevo_usuario'),
+                        icon: Icons.person_add_alt_1_outlined,
+                        onPressed: _saving ? null : () => _openCreateDialog(),
+                        prominentOnTablet: true,
+                      ),
+                      ResponsiveHeaderAction(
+                        label: context.l10n.t('nuevo_operador'),
+                        icon: Icons.badge_outlined,
+                        onPressed: _saving
+                            ? null
+                            : () => _openCreateDialog(presetRoles: const {'OPERATOR'}),
+                      ),
+                      ResponsiveHeaderAction(
+                        label: context.l10n.t('nuevo_courier'),
+                        icon: Icons.delivery_dining_outlined,
+                        onPressed: _saving
+                            ? null
+                            : () => _openCreateDialog(presetRoles: const {'COURIER'}),
+                      ),
+                      ResponsiveHeaderAction(
+                        label: context.l10n.t('recargar'),
+                        icon: Icons.refresh,
+                        onPressed: _saving
+                            ? null
+                            : loadRequested
+                                ? _reloadUsers
+                                : _applyUserFilters,
+                      ),
+                      ResponsiveHeaderAction(
+                        label: l10n.t('exportar'),
+                        icon: Icons.download,
+                        onPressed: () => _exportUsers(context, ref),
+                      ),
+                    ],
+                    mobileVisibleCount: 2,
+                    tabletVisibleCount: 2,
                   ),
-                  icon: Icon(Icons.filter_alt_outlined),
-                  label: Text(context.l10n.t('ver_usuarios')),
-                ),
-                FilledButton.icon(
-                  onPressed: _saving ? null : () => _openCreateDialog(),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: Icon(Icons.person_add_alt_1_outlined),
-                  label: Text(context.l10n.t('nuevo_usuario')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _saving
-                      ? null
-                      : () =>
-                            _openCreateDialog(presetRoles: const {'OPERATOR'}),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: Icon(Icons.badge_outlined),
-                  label: Text(context.l10n.t('nuevo_operador')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _saving
-                      ? null
-                      : () => _openCreateDialog(presetRoles: const {'COURIER'}),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: Icon(Icons.delivery_dining_outlined),
-                  label: Text(context.l10n.t('nuevo_courier')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _saving
-                      ? null
-                      : loadRequested
-                      ? _reloadUsers
-                      : _applyUserFilters,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: Icon(Icons.refresh),
-                  label: Text(context.l10n.t('recargar')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _exportUsers(context, ref),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: Icon(Icons.download),
-                  label: Text(l10n.t('exportar')),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           SizedBox(height: itemGap),
@@ -488,51 +505,84 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     if (selected.isEmpty) {
       return const SizedBox.shrink();
     }
+    final responsive = context.responsive;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        children: [
-          Text(
-            '${selected.length} ${l10n.t('seleccionados')}',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: () =>
-                ref.read(adminUsersBulkSelectedProvider.notifier).state = {},
-            icon: const Icon(Icons.close, size: 18),
-            label: Text(l10n.t('deseleccionar')),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () => _bulkActivate(context, ref, true),
-            icon: const Icon(Icons.check_circle_outline, size: 18),
-            label: Text(l10n.t('activar')),
-          ),
-          TextButton.icon(
-            onPressed: () => _bulkActivate(context, ref, false),
-            icon: const Icon(Icons.cancel_outlined, size: 18),
-            label: Text(l10n.t('desactivar')),
-          ),
-          TextButton.icon(
-            onPressed: () => _bulkDelete(context, ref),
-            icon: Icon(
-              Icons.delete_outline,
-              size: 18,
-              color: Theme.of(context).colorScheme.error,
+      child: responsive.isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${selected.length} ${l10n.t('seleccionados')}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: responsive.itemGap,
+                  runSpacing: responsive.itemGap,
+                  children: _bulkButtons(context, ref, l10n),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Text(
+                  '${selected.length} ${l10n.t('seleccionados')}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                ..._bulkButtons(context, ref, l10n, desktop: true),
+              ],
             ),
-            label: Text(
-              l10n.t('eliminar'),
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
-      ),
     );
+  }
+
+  List<Widget> _bulkButtons(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n, {
+    bool desktop = false,
+  }) {
+    final widgets = <Widget>[
+      TextButton.icon(
+        onPressed: () => ref.read(adminUsersBulkSelectedProvider.notifier).state = {},
+        icon: const Icon(Icons.close, size: 18),
+        label: Text(l10n.t('deseleccionar')),
+      ),
+      TextButton.icon(
+        onPressed: () => _bulkActivate(context, ref, true),
+        icon: const Icon(Icons.check_circle_outline, size: 18),
+        label: Text(l10n.t('activar')),
+      ),
+      TextButton.icon(
+        onPressed: () => _bulkActivate(context, ref, false),
+        icon: const Icon(Icons.cancel_outlined, size: 18),
+        label: Text(l10n.t('desactivar')),
+      ),
+      TextButton.icon(
+        onPressed: () => _bulkDelete(context, ref),
+        icon: Icon(
+          Icons.delete_outline,
+          size: 18,
+          color: Theme.of(context).colorScheme.error,
+        ),
+        label: Text(
+          l10n.t('eliminar'),
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
+    ];
+    if (!desktop) {
+      return widgets;
+    }
+    return widgets
+        .expand((widget) => [widget, const SizedBox(width: 8)])
+        .toList()
+      ..removeLast();
   }
 
   Widget _buildPaginationControls(
@@ -549,63 +599,34 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
         if (result.totalElements == 0) {
           return const SizedBox.shrink();
         }
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                onPressed: result.hasPrevious ? () => _goToPage(ref, 0) : null,
-                icon: const Icon(Icons.first_page),
-                tooltip: l10n.t('primera_pagina'),
-              ),
-              IconButton(
-                onPressed: result.hasPrevious
-                    ? () => _goToPage(ref, currentPage - 1)
-                    : null,
-                icon: const Icon(Icons.chevron_left),
-                tooltip: l10n.t('pagina_anterior'),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${result.page + 1} / ${result.totalPages}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: result.hasNext
-                    ? () => _goToPage(ref, currentPage + 1)
-                    : null,
-                icon: const Icon(Icons.chevron_right),
-                tooltip: l10n.t('siguiente_pagina'),
-              ),
-              IconButton(
-                onPressed: result.hasNext
-                    ? () => _goToPage(ref, result.totalPages - 1)
-                    : null,
-                icon: const Icon(Icons.last_page),
-                tooltip: l10n.t('ultima_pagina'),
-              ),
-              const SizedBox(width: 16),
-              Text('${result.totalElements} ${l10n.t('total_elementos')}'),
-              const SizedBox(width: 8),
-              DropdownButton<int>(
-                value: pageSize,
-                items: [10, 20, 50, 100]
-                    .map(
-                      (size) =>
-                          DropdownMenuItem(value: size, child: Text('$size')),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    ref.read(adminUsersPageSizeProvider.notifier).state = value;
-                    ref.invalidate(adminUsersPagedProvider);
-                  }
-                },
-              ),
-            ],
-          ),
+        return ResponsivePaginationBar(
+          pageLabel: '${result.page + 1} / ${result.totalPages}',
+          totalLabel: '${result.totalElements} ${l10n.t('total_elementos')}',
+          canGoFirst: result.hasPrevious,
+          canGoPrevious: result.hasPrevious,
+          canGoNext: result.hasNext,
+          canGoLast: result.hasNext,
+          onFirst: () => _goToPage(ref, 0),
+          onPrevious: () => _goToPage(ref, currentPage - 1),
+          onNext: () => _goToPage(ref, currentPage + 1),
+          onLast: () => _goToPage(ref, result.totalPages - 1),
+          trailing: context.responsive.isMobile
+              ? null
+              : DropdownButton<int>(
+                  value: pageSize,
+                  items: [10, 20, 50, 100]
+                      .map(
+                        (size) =>
+                            DropdownMenuItem(value: size, child: Text('$size')),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(adminUsersPageSizeProvider.notifier).state = value;
+                      ref.invalidate(adminUsersPagedProvider);
+                    }
+                  },
+                ),
         );
       },
       loading: () => const SizedBox.shrink(),
@@ -616,6 +637,36 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   void _goToPage(WidgetRef ref, int page) {
     ref.read(adminUsersCurrentPageProvider.notifier).state = page;
     ref.invalidate(adminUsersPagedProvider);
+  }
+
+  List<DropdownMenuItem<String>> _roleItems(BuildContext context) {
+    return [
+      DropdownMenuItem(value: 'ALL', child: Text(context.l10n.t('todos'))),
+      DropdownMenuItem(
+        value: 'CLIENT',
+        child: Text(context.l10n.t('role_client')),
+      ),
+      DropdownMenuItem(
+        value: 'COURIER',
+        child: Text(context.l10n.t('role_courier')),
+      ),
+      DropdownMenuItem(
+        value: 'OPERATOR',
+        child: Text(context.l10n.t('role_operator')),
+      ),
+      DropdownMenuItem(
+        value: 'CITY_SUPERVISOR',
+        child: Text(context.l10n.t('role_city_supervisor')),
+      ),
+      DropdownMenuItem(
+        value: 'SUPPORT',
+        child: Text(context.l10n.t('role_support')),
+      ),
+      DropdownMenuItem(
+        value: 'ADMIN',
+        child: Text(context.l10n.t('role_admin')),
+      ),
+    ];
   }
 
   Future<void> _bulkActivate(
@@ -1228,45 +1279,59 @@ class _AdminUserCard extends StatelessWidget {
     final responsive = context.responsive;
     final itemGap = responsive.itemGap;
     final sectionGap = responsive.sectionGap;
+    final compactLayout = responsive.isMobile;
     return Card(
       child: Padding(
         padding: EdgeInsets.all(responsive.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _UserAvatar(photoPath: user.profilePhotoPath, size: 56),
-                SizedBox(width: itemGap),
-                Expanded(
-                  child: Column(
+            if (compactLayout)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        user.fullName,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      SizedBox(height: itemGap / 2),
-                      Text(user.email),
-                      Text(user.phone),
+                      _UserAvatar(photoPath: user.profilePhotoPath, size: 48),
+                      SizedBox(width: itemGap),
+                      Expanded(child: _buildIdentityBlock(context, itemGap)),
                     ],
                   ),
-                ),
-                Tooltip(
-                  message: user.isAdmin
-                      ? context.l10n.t(
-                          'admin_users_admin_cannot_disable_tooltip',
-                        )
-                      : context.l10n.t('admin_users_toggle_user_status'),
-                  child: Switch(
-                    value: user.active,
-                    onChanged: (saving || user.isAdmin) ? null : onToggleActive,
+                  SizedBox(height: itemGap / 2),
+                  Tooltip(
+                    message: user.isAdmin
+                        ? context.l10n.t(
+                            'admin_users_admin_cannot_disable_tooltip',
+                          )
+                        : context.l10n.t('admin_users_toggle_user_status'),
+                    child: Switch(
+                      value: user.active,
+                      onChanged: (saving || user.isAdmin) ? null : onToggleActive,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _UserAvatar(photoPath: user.profilePhotoPath, size: 56),
+                  SizedBox(width: itemGap),
+                  Expanded(child: _buildIdentityBlock(context, itemGap)),
+                  Tooltip(
+                    message: user.isAdmin
+                        ? context.l10n.t(
+                            'admin_users_admin_cannot_disable_tooltip',
+                          )
+                        : context.l10n.t('admin_users_toggle_user_status'),
+                    child: Switch(
+                      value: user.active,
+                      onChanged: (saving || user.isAdmin) ? null : onToggleActive,
+                    ),
+                  ),
+                ],
+              ),
             SizedBox(height: itemGap),
             Wrap(
               spacing: itemGap,
@@ -1274,13 +1339,17 @@ class _AdminUserCard extends StatelessWidget {
               children: [
                 ...user.roles.map(
                   (role) => Chip(
-                    label: Text(_adminRoleLabel(context, role)),
+                    label: Text(
+                      _adminRoleLabel(context, role),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
                 Chip(
                   label: Text(
                     '${context.l10n.t('admin_users_auth')} ${user.authProvider}',
+                    overflow: TextOverflow.ellipsis,
                   ),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -1298,28 +1367,42 @@ class _AdminUserCard extends StatelessWidget {
                   ),
                 if (user.nationality.isNotEmpty)
                   Chip(
-                    label: Text(user.nationality),
+                    label: Text(user.nationality, overflow: TextOverflow.ellipsis),
                     visualDensity: VisualDensity.compact,
                   ),
+              ],
+            ),
+            if (user.documentNumber?.trim().isNotEmpty == true ||
+                user.documentPhotoPath?.trim().isNotEmpty == true ||
+                user.vehiclePlate?.trim().isNotEmpty == true ||
+                user.warehouseNames.isNotEmpty ||
+                (user.requiresWarehouseScope && user.warehouseNames.isEmpty)) ...[
+              SizedBox(height: itemGap),
+              Wrap(
+                spacing: itemGap,
+                runSpacing: itemGap,
+                children: [
                 if (user.documentNumber?.trim().isNotEmpty == true)
                   Chip(
-                    avatar: Icon(Icons.badge_outlined, size: 16),
+                    avatar: const Icon(Icons.badge_outlined, size: 16),
                     label: Text(
                       '${user.documentType ?? 'DOC'} ${user.documentNumber}',
+                      overflow: TextOverflow.ellipsis,
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
                 if (user.documentPhotoPath?.trim().isNotEmpty == true)
                   Chip(
-                    avatar: Icon(Icons.photo_camera_outlined, size: 16),
+                    avatar: const Icon(Icons.photo_camera_outlined, size: 16),
                     label: Text(context.l10n.t('foto_dni_adjunta')),
                     visualDensity: VisualDensity.compact,
                   ),
                 if (user.vehiclePlate?.trim().isNotEmpty == true)
                   Chip(
-                    avatar: Icon(Icons.local_shipping_outlined, size: 16),
+                    avatar: const Icon(Icons.local_shipping_outlined, size: 16),
                     label: Text(
                       '${context.l10n.t('admin_users_plate')} ${user.vehiclePlate}',
+                      overflow: TextOverflow.ellipsis,
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -1329,18 +1412,19 @@ class _AdminUserCard extends StatelessWidget {
                       Icons.store_mall_directory_outlined,
                       size: 16,
                     ),
-                    label: Text(warehouseName),
+                    label: Text(warehouseName, overflow: TextOverflow.ellipsis),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
                 if (user.requiresWarehouseScope && user.warehouseNames.isEmpty)
                   Chip(
-                    backgroundColor: Color(0xFFFFE4E4),
+                    backgroundColor: const Color(0xFFFFE4E4),
                     label: Text(context.l10n.t('sin_sede_asignada')),
                     visualDensity: VisualDensity.compact,
                   ),
-              ],
-            ),
+                ],
+              ),
+            ],
             SizedBox(height: itemGap),
             Wrap(
               spacing: itemGap,
@@ -1373,49 +1457,59 @@ class _AdminUserCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: sectionGap),
-            Wrap(
-              spacing: itemGap,
-              runSpacing: itemGap,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: saving ? null : onEdit,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: Text(context.l10n.t('editar_ficha')),
-                ),
-                OutlinedButton.icon(
+            CompactRecordActionsMenu(
+              primaryAction: CompactRecordAction(
+                label: context.l10n.t('editar_ficha'),
+                icon: Icons.edit_outlined,
+                onPressed: saving ? null : onEdit,
+              ),
+              secondaryActions: [
+                CompactRecordAction(
+                  label: context.l10n.t('credenciales'),
+                  icon: Icons.lock_reset_outlined,
                   onPressed: saving ? null : onPassword,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: Icon(Icons.lock_reset_outlined),
-                  label: Text(context.l10n.t('credenciales')),
                 ),
-                Tooltip(
-                  message: user.isAdmin
-                      ? context.l10n.t(
-                          'admin_users_admin_cannot_delete_tooltip',
-                        )
-                      : context.l10n.t('eliminar_usuario'),
-                  child: OutlinedButton.icon(
-                    onPressed: (saving || user.isAdmin) ? null : onDelete,
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 40),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    icon: Icon(Icons.delete_outline),
-                    label: Text(context.l10n.t('eliminar')),
-                  ),
+                CompactRecordAction(
+                  label: context.l10n.t('eliminar'),
+                  icon: Icons.delete_outline,
+                  onPressed: (saving || user.isAdmin) ? null : onDelete,
+                  destructive: true,
                 ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildIdentityBlock(BuildContext context, double itemGap) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          user.fullName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        SizedBox(height: itemGap / 2),
+        Text(
+          user.email,
+          softWrap: true,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (user.phone.trim().isNotEmpty)
+          Text(
+            user.phone,
+            softWrap: true,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
     );
   }
 }
