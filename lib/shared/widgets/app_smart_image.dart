@@ -145,6 +145,17 @@ String? resolveAppMediaUrl(String? raw) {
       .toString();
 }
 
+bool isGeneratedWarehouseImageUrl(String? raw) {
+  final trimmed = raw?.trim();
+  if (trimmed == null || trimmed.isEmpty) {
+    return false;
+  }
+
+  final parsed = Uri.tryParse(trimmed);
+  final path = (parsed?.path ?? trimmed).trim().toLowerCase();
+  return RegExp(r'^/api/v1/warehouses/\d+/image$').hasMatch(path);
+}
+
 bool _isSvgDataUrl(String value) {
   return value.startsWith('data:image/svg+xml');
 }
