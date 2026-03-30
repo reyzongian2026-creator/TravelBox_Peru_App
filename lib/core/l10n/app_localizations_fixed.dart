@@ -1032,8 +1032,30 @@ class AppLocalizations {
       'card': 'Tarjeta',
       'ce': 'CE',
       'cerrar_sesin': 'Cerrar sesión',
+      'checkout_breakdown_dropoff': 'Entrega',
       'checkout_breakdown_insurance': 'Seguro',
+      'checkout_breakdown_pickup': 'Recojo',
+      'checkout_breakdown_storage': 'Almacenaje',
+      'checkout_customer_email_optional_hint': 'viajero@correo.com',
+      'checkout_customer_email_optional_label':
+          'Correo para recibir la confirmaciÃ³n (opcional)',
+      'checkout_payment_help_card':
+          'Completa el pago en lÃ­nea para confirmar tu reserva. El token de Culqi sigue visible solo para pruebas internas.',
+      'checkout_payment_help_cash':
+          'Paga en efectivo y el operador validarÃ¡ el cobro desde su panel.',
+      'checkout_payment_help_counter':
+          'Paga directamente en el almacÃ©n y espera la aprobaciÃ³n del encargado.',
+      'checkout_payment_help_default':
+          'Elige cÃ³mo deseas completar el pago de tu reserva.',
+      'checkout_payment_help_wallet':
+          'Usa tu billetera o Plin para registrar el pago de forma mÃ¡s Ã¡gil.',
+      'checkout_payment_help_yape':
+          'Completa el pago con Yape para confirmar tu reserva. El token de Culqi sigue visible solo para pruebas internas.',
+      'checkout_source_token_hint': 'Ejemplo: tkn_test_xxx',
+      'checkout_source_token_label': 'Token de prueba Culqi',
+      'checkout_summary_dropoff': 'Entrega',
       'checkout_summary_insurance': 'Seguro',
+      'checkout_summary_pickup': 'Recojo',
       'chile': 'Chile',
       'city': 'Ciudad',
       'ciudad': 'Ciudad',
@@ -1609,27 +1631,34 @@ class AppLocalizations {
       'cash_pending_refresh_now': 'Refresh now',
       'checkout_breakdown_dropoff': 'Delivery',
       'checkout_breakdown_pickup': 'Pickup',
+      'checkout_breakdown_storage': 'Storage',
       'checkout_confirm_payment': 'Confirm payment',
-      'checkout_customer_email_optional_hint': 'client@email.com',
-      'checkout_customer_email_optional_label': 'Customer email (optional)',
+      'checkout_customer_email_optional_hint': 'traveler@email.com',
+      'checkout_customer_email_optional_label':
+          'Email to receive confirmation (optional)',
       'checkout_digital_payments_disabled':
           'Digital payments are temporarily disabled. The operator will validate manual collection.',
       'checkout_payment_headline_offline':
           'In-person payment with manual validation',
       'checkout_payment_headline_online': 'Immediate payment to enable QR',
       'checkout_payment_help_card':
-          'Card confirms payment online and enables check-in QR. Requires Culqi sourceTokenId.',
+          'Complete the payment online to confirm your reservation. The Culqi token stays visible only for internal testing.',
       'checkout_payment_help_cash':
-          'You must pay cash and operator will validate collection from their panel.',
+          'Pay in cash and the operator will validate collection from their panel.',
       'checkout_payment_help_counter':
-          'You must pay at warehouse and wait for staff approval.',
+          'Pay directly at the warehouse and wait for staff approval.',
+      'checkout_payment_help_default':
+          'Choose how you want to complete the payment for your reservation.',
+      'checkout_payment_help_wallet':
+          'Use your wallet or Plin to register the payment more quickly.',
       'checkout_payment_help_yape':
-          'Yape confirms payment online and enables check-in QR. Requires Culqi sourceTokenId.',
+          'Complete the payment with Yape to confirm your reservation. The Culqi token stays visible only for internal testing.',
       'checkout_payment_process_failed_prefix': 'Could not process payment',
       'checkout_pending_offline_approval_notice':
           'Your payment will remain PENDING until cashier or operator approves it from the collections panel.',
       'checkout_processing': 'Processing...',
-      'checkout_source_token_label': 'sourceTokenId (Culqi, required)',
+      'checkout_source_token_hint': 'Example: tkn_test_xxx',
+      'checkout_source_token_label': 'Culqi test token',
       'checkout_summary_dropoff': 'Delivery',
       'checkout_summary_pickup': 'Pickup',
       'closing_time_label': 'closing time',

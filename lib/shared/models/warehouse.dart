@@ -19,6 +19,7 @@ class Warehouse {
     required this.score,
     required this.availableSlots,
     required this.extraServices,
+    this.currencyCode = 'PEN',
     this.imageUrl,
   });
 
@@ -41,6 +42,7 @@ class Warehouse {
   final double score;
   final int availableSlots;
   final List<String> extraServices;
+  final String currencyCode;
   final String? imageUrl;
 
   double rateForSize(String rawSize) {
@@ -112,6 +114,7 @@ class Warehouse {
       score: (json['score'] as num?)?.toDouble() ?? 0,
       availableSlots: available ?? (capacity > 0 ? capacity - occupied : 0),
       extraServices: _parseExtraServices(json),
+      currencyCode: _readCurrencyCode(json),
       imageUrl: _readImageUrl(json),
     );
   }
@@ -137,6 +140,7 @@ class Warehouse {
       'score': score,
       'availableSlots': availableSlots,
       'extraServices': extraServices,
+      'currencyCode': currencyCode,
       'imageUrl': imageUrl,
     };
   }
@@ -158,7 +162,14 @@ List<String> _parseExtraServices(Map<String, dynamic> json) {
 }
 
 String? _readImageUrl(Map<String, dynamic> json) {
-  const keys = ['coverImageUrl', 'imageUrl', 'photoUrl', 'image', 'imagen', 'url'];
+  const keys = [
+    'coverImageUrl',
+    'imageUrl',
+    'photoUrl',
+    'image',
+    'imagen',
+    'url',
+  ];
   for (final key in keys) {
     final value = json[key]?.toString();
     if (value != null && value.trim().isNotEmpty) {
@@ -166,4 +177,15 @@ String? _readImageUrl(Map<String, dynamic> json) {
     }
   }
   return null;
+}
+
+String _readCurrencyCode(Map<String, dynamic> json) {
+  const keys = ['currencyCode', 'currency', 'moneda', 'currency_code'];
+  for (final key in keys) {
+    final value = json[key]?.toString().trim();
+    if (value != null && value.isNotEmpty) {
+      return value.toUpperCase();
+    }
+  }
+  return 'PEN';
 }

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/payment_constants.dart';
 import '../../../core/env/app_env.dart';
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/app_back_button.dart';
+import '../../../shared/state/currency_preference.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../data/reservation_repository_impl.dart';
+import '../domain/reservation_repository.dart';
 import 'reservation_providers.dart';
 
 class CheckoutPage extends ConsumerStatefulWidget {
@@ -74,26 +76,67 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         padding: const EdgeInsets.all(16),
         children: [
           Card(
-            child: ListTile(
-              title: Text(draft.warehouse.name),
-              subtitle: Text(
-                '${draft.startAt} - ${draft.endAt}\n'
-                '${draft.bagCount} ${context.l10n.t('bultos')}, ${context.l10n.t('main_size')} ${draft.size}\n'
-                '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}'
-                ' - ${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}'
-                ' - ${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    draft.warehouse.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _CheckoutInfoRow(
+                    icon: Icons.schedule_outlined,
+                    label: _reservationWindowLabel(context),
+                    value: _formatReservationWindow(context, draft),
+                  ),
+                  const SizedBox(height: 10),
+                  _CheckoutInfoRow(
+                    icon: Icons.luggage_outlined,
+                    label: _reservationSummaryLabel(context),
+                    value:
+                        '${draft.bagCount} ${context.l10n.t('bultos')} - ${context.l10n.t('main_size')} ${draft.size}',
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _SummaryChip(
+                        label:
+                            '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                      ),
+                      _SummaryChip(
+                        label:
+                            '${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                      ),
+                      _SummaryChip(
+                        label:
+                            '${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(context.l10n.t('payment_method')),
-                  SizedBox(height: 8),
+                  Text(
+                    context.l10n.t('payment_method'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   if (forceCashOnly)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -132,7 +175,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         if (value == null) return;
                         setState(() => paymentMethod = value);
                       },
-                      decoration: InputDecoration(border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   if (!forceCashOnly &&
                       (selectedPaymentMethod == PaymentConstants.methodCard ||
@@ -141,11 +186,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     const SizedBox(height: 10),
                     TextField(
                       controller: _sourceTokenController,
+                      autocorrect: false,
                       decoration: InputDecoration(
-                        labelText: context.l10n.t(
-                          'checkout_source_token_label',
-                        ),
-                        hintText: context.l10n.t('checkout_source_token_hint'),
+                        labelText: _sourceTokenLabel(context),
+                        hintText: _sourceTokenHint(context),
+                        helperText: _sourceTokenHelper(context),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ],
@@ -158,13 +204,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     const SizedBox(height: 10),
                     TextField(
                       controller: _customerEmailController,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        labelText: context.l10n.t(
-                          'checkout_customer_email_optional_label',
-                        ),
-                        hintText: context.l10n.t(
-                          'checkout_customer_email_optional_hint',
-                        ),
+                        labelText: _customerEmailLabel(context),
+                        hintText: _customerEmailHint(context),
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                   ],
@@ -174,21 +218,55 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           ),
           const SizedBox(height: 12),
           Card(
-            child: ListTile(
-              title: Text(context.l10n.t('final_total')),
-              subtitle: Text(
-                '${context.l10n.t('checkout_breakdown_storage')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.storageSubtotal())} '
-                '+ ${context.l10n.t('checkout_breakdown_pickup')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.pickupCost())} '
-                '+ ${context.l10n.t('checkout_breakdown_dropoff')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.dropoffCost())} '
-                '+ ${context.l10n.t('checkout_breakdown_insurance')} ${NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.insuranceCost())}',
-              ),
-              trailing: Text(
-                NumberFormat.simpleCurrency(locale: 'es_PE').format(draft.estimatePrice()),
-                style: Theme.of(context).textTheme.titleLarge,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.t('final_total'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _totalBreakdownCaption(context),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _CheckoutAmountRow(
+                    label: context.l10n.t('checkout_breakdown_storage'),
+                    value: _formatMoney(draft.storageSubtotal(), draft),
+                  ),
+                  if (draft.pickupCost() > 0)
+                    _CheckoutAmountRow(
+                      label: context.l10n.t('checkout_breakdown_pickup'),
+                      value: _formatMoney(draft.pickupCost(), draft),
+                    ),
+                  if (draft.dropoffCost() > 0)
+                    _CheckoutAmountRow(
+                      label: context.l10n.t('checkout_breakdown_dropoff'),
+                      value: _formatMoney(draft.dropoffCost(), draft),
+                    ),
+                  if (draft.insuranceCost() > 0)
+                    _CheckoutAmountRow(
+                      label: context.l10n.t('checkout_breakdown_insurance'),
+                      value: _formatMoney(draft.insuranceCost(), draft),
+                    ),
+                  const Divider(height: 24),
+                  _CheckoutAmountRow(
+                    label: context.l10n.t('final_total'),
+                    value: _formatMoney(draft.estimatePrice(), draft),
+                    emphasize: true,
+                  ),
+                ],
               ),
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Card(
             child: ListTile(
               leading: Icon(
@@ -197,9 +275,23 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     : Icons.payments_outlined,
               ),
               title: Text(_paymentHeadline(selectedPaymentMethod)),
-              subtitle: Text(_paymentHelp(selectedPaymentMethod)),
+              subtitle: Text(_paymentHelp(context, selectedPaymentMethod)),
             ),
           ),
+          if (!forceCashOnly &&
+              (selectedPaymentMethod == PaymentConstants.methodCard ||
+                  selectedPaymentMethod == PaymentConstants.methodYape))
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Card(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: ListTile(
+                  leading: const Icon(Icons.science_outlined),
+                  title: Text(_testingNoticeTitle(context)),
+                  subtitle: Text(_testingNoticeBody(context)),
+                ),
+              ),
+            ),
           if (selectedPaymentMethod == PaymentConstants.methodCounter ||
               selectedPaymentMethod == PaymentConstants.methodCash)
             Padding(
@@ -292,7 +384,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   }
 
   String _errorMessage(Object error) {
-    return AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+    return AppErrorFormatter.readable(
+      error,
+      (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+    );
   }
 
   bool _isOfflinePaymentMethod(String method) {
@@ -306,7 +401,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     return context.l10n.t('checkout_payment_headline_online');
   }
 
-  String _paymentHelp(String method) {
+  String _paymentHelp(BuildContext context, String method) {
     switch (method) {
       case PaymentConstants.methodCard:
         return context.l10n.t('checkout_payment_help_card');
@@ -321,5 +416,219 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       default:
         return context.l10n.t('checkout_payment_help_default');
     }
+  }
+
+  String _formatReservationWindow(
+    BuildContext context,
+    ReservationDraft draft,
+  ) {
+    final locale = _dateLocale(context);
+    final start = draft.startAt.toLocal();
+    final end = draft.endAt.toLocal();
+    final sameDay =
+        start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day;
+
+    final dayFormatter = DateFormat('EEE d MMM', locale);
+    final dateTimeFormatter = DateFormat('EEE d MMM, HH:mm', locale);
+    final timeFormatter = DateFormat('HH:mm', locale);
+
+    if (sameDay) {
+      return '${_capitalize(dayFormatter.format(start))} · ${timeFormatter.format(start)} - ${timeFormatter.format(end)}';
+    }
+    return '${_capitalize(dateTimeFormatter.format(start))} - ${_capitalize(dateTimeFormatter.format(end))}';
+  }
+
+  String _formatMoney(double amount, ReservationDraft draft) {
+    final currency = _transactionCurrency(draft);
+    return formatCurrency(amount, currency);
+  }
+
+  CurrencyCode _transactionCurrency(ReservationDraft draft) {
+    switch (draft.warehouse.currencyCode.trim().toUpperCase()) {
+      case 'USD':
+        return CurrencyCode.usd;
+      case 'EUR':
+        return CurrencyCode.eur;
+      case 'PEN':
+      default:
+        return CurrencyCode.pen;
+    }
+  }
+
+  String _dateLocale(BuildContext context) {
+    final locale = Localizations.localeOf(context);
+    final countryCode = locale.countryCode;
+    if (countryCode == null || countryCode.isEmpty) {
+      return locale.languageCode;
+    }
+    return '${locale.languageCode}_$countryCode';
+  }
+
+  String _capitalize(String value) {
+    if (value.isEmpty) {
+      return value;
+    }
+    return value[0].toUpperCase() + value.substring(1);
+  }
+
+  String _reservationWindowLabel(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Reservation schedule'
+        : 'Fecha y horario';
+  }
+
+  String _reservationSummaryLabel(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Reservation details'
+        : 'Detalle de la reserva';
+  }
+
+  String _sourceTokenLabel(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Culqi test token'
+        : 'Token de prueba Culqi';
+  }
+
+  String _sourceTokenHint(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Example: tkn_test_xxx'
+        : 'Ejemplo: tkn_test_xxx';
+  }
+
+  String _sourceTokenHelper(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Visible only for internal payment tests. The backend still sends this value as sourceTokenId.'
+        : 'Visible solo para pruebas internas de pago. Internamente se seguirá enviando como sourceTokenId.';
+  }
+
+  String _customerEmailLabel(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Email to receive confirmation (optional)'
+        : 'Correo para recibir la confirmación (opcional)';
+  }
+
+  String _customerEmailHint(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'traveler@email.com'
+        : 'viajero@correo.com';
+  }
+
+  String _totalBreakdownCaption(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Review the reservation amount before confirming your payment.'
+        : 'Revisa el desglose de tu reserva antes de confirmar el pago.';
+  }
+
+  String _testingNoticeTitle(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Internal test mode'
+        : 'Modo de prueba interna';
+  }
+
+  String _testingNoticeBody(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'This field remains visible only while validating Culqi internally. For users, the final flow will hide this step.'
+        : 'Este campo se mantiene visible solo mientras validamos Culqi internamente. Para usuarios finales, este paso se ocultará.';
+  }
+}
+
+class _CheckoutInfoRow extends StatelessWidget {
+  const _CheckoutInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Theme.of(context).hintColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(value),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryChip extends StatelessWidget {
+  const _SummaryChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _CheckoutAmountRow extends StatelessWidget {
+  const _CheckoutAmountRow({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = emphasize
+        ? Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)
+        : Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Text(label, style: style)),
+          const SizedBox(width: 12),
+          Text(value, textAlign: TextAlign.end, style: style),
+        ],
+      ),
+    );
   }
 }
