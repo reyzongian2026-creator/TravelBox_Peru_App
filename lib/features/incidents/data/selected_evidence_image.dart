@@ -10,4 +10,6 @@ class SelectedEvidenceImage {
   final String filename;
   final String mimeType;
   final Uint8List bytes;
+
+  int get sizeBytes => bytes.length;
 }

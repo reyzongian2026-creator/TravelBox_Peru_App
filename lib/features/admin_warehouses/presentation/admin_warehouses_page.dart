@@ -361,12 +361,14 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 
     setState(() => _saving = true);
     try {
-      await ref
-          .read(dioProvider)
-          .put<Map<String, dynamic>>(
-            '/admin/warehouses/${warehouse.id}',
-            data: form.toJson(),
-          );
+      if (!form.photoOnly) {
+        await ref
+            .read(dioProvider)
+            .put<Map<String, dynamic>>(
+              '/admin/warehouses/${warehouse.id}',
+              data: form.toJson(),
+            );
+      }
       if (form.selectedPhoto != null && AppEnv.azureStorageUploadsEnabled) {
         await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
       }
@@ -374,7 +376,11 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.l10n.t('almacen_actualizado_correctamente')),
+          content: Text(
+            form.photoOnly
+                ? 'Foto actualizada correctamente.'
+                : context.l10n.t('almacen_actualizado_correctamente'),
+          ),
         ),
       );
     } catch (error) {
@@ -774,6 +780,16 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                         ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                if (_selectedPhoto != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Archivo listo: ${_selectedPhoto!.filename} (${_formatSelectedPhotoSize(_selectedPhoto!)})',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF2563EB),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _nameController,
@@ -1119,6 +1135,12 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(context.l10n.t('cancelar')),
         ),
+        if (isEditing && _selectedPhoto != null)
+          FilledButton.tonalIcon(
+            onPressed: () => Navigator.of(context).pop(_buildPhotoOnlyFormData()),
+            icon: const Icon(Icons.photo_camera_back_outlined),
+            label: const Text('Guardar solo foto'),
+          ),
         FilledButton(
           onPressed: () {
             final isValid = _formKey.currentState!.validate();
@@ -1198,6 +1220,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 dropoffFee: dropoffFee,
                 insuranceFee: insuranceFee,
                 selectedPhoto: _selectedPhoto,
+                photoOnly: false,
               ),
             );
           },
@@ -1219,6 +1242,41 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
 
   String _formatMoneyInput(double value) {
     return value.toStringAsFixed(2);
+  }
+
+  String _formatSelectedPhotoSize(SelectedEvidenceImage image) {
+    final bytes = image.sizeBytes;
+    if (bytes >= 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / 1024).toStringAsFixed(0)} KB';
+  }
+
+  WarehouseFormData _buildPhotoOnlyFormData() {
+    final initial = widget.initial!;
+    return WarehouseFormData(
+      cityId: _selectedCityId ?? initial.cityId,
+      zoneId: _selectedZoneId ?? initial.zoneId,
+      name: _nameController.text.trim().isEmpty ? initial.name : _nameController.text.trim(),
+      address: _addressController.text.trim().isEmpty ? initial.address : _addressController.text.trim(),
+      imageUrl: initial.imageUrl,
+      latitude: FormValidators.parseDouble(_latitudeController.text) ?? initial.latitude,
+      longitude: FormValidators.parseDouble(_longitudeController.text) ?? initial.longitude,
+      capacity: int.tryParse(_capacityController.text.trim()) ?? initial.capacity,
+      openHour: _openHourController.text.trim().isEmpty ? initial.openHour : _openHourController.text.trim(),
+      closeHour: _closeHourController.text.trim().isEmpty ? initial.closeHour : _closeHourController.text.trim(),
+      rules: _rulesController.text.trim(),
+      active: _active,
+      pricePerHourSmall: _parseNonNegativeMoney(_pricePerHourSmallController.text) ?? initial.pricePerHourSmall,
+      pricePerHourMedium: _parseNonNegativeMoney(_pricePerHourMediumController.text) ?? initial.pricePerHourMedium,
+      pricePerHourLarge: _parseNonNegativeMoney(_pricePerHourLargeController.text) ?? initial.pricePerHourLarge,
+      pricePerHourExtraLarge: _parseNonNegativeMoney(_pricePerHourExtraLargeController.text) ?? initial.pricePerHourExtraLarge,
+      pickupFee: _parseNonNegativeMoney(_pickupFeeController.text) ?? initial.pickupFee,
+      dropoffFee: _parseNonNegativeMoney(_dropoffFeeController.text) ?? initial.dropoffFee,
+      insuranceFee: _parseNonNegativeMoney(_insuranceFeeController.text) ?? initial.insuranceFee,
+      selectedPhoto: _selectedPhoto,
+      photoOnly: true,
+    );
   }
 
   Future<void> _openMapPicker({
@@ -1823,6 +1881,7 @@ class AdminWarehouse {
       dropoffFee: dropoffFee,
       insuranceFee: insuranceFee,
       selectedPhoto: null,
+      photoOnly: false,
     );
   }
 
@@ -1934,6 +1993,7 @@ class WarehouseFormData {
     required this.dropoffFee,
     required this.insuranceFee,
     required this.selectedPhoto,
+    required this.photoOnly,
   });
 
   final int cityId;
@@ -1956,6 +2016,7 @@ class WarehouseFormData {
   final double dropoffFee;
   final double insuranceFee;
   final SelectedEvidenceImage? selectedPhoto;
+  final bool photoOnly;
 
   Map<String, dynamic> toJson() {
     return {
