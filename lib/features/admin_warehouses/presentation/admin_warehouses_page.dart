@@ -337,15 +337,7 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
           createdId.isNotEmpty &&
           AppEnv.azureStorageUploadsEnabled &&
           form.selectedPhoto != null) {
-        final newImageUrl = await _uploadWarehousePhoto(createdId, form.selectedPhoto!);
-        if (newImageUrl != null) {
-          await ref
-              .read(dioProvider)
-              .put<Map<String, dynamic>>(
-                '/admin/warehouses/$createdId',
-                data: form.toJsonWithImageUrl(newImageUrl),
-              );
-        }
+        await _uploadWarehousePhoto(createdId, form.selectedPhoto!);
       }
       _refreshWarehouseViews();
       _searchController.clear();
@@ -369,22 +361,15 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 
     setState(() => _saving = true);
     try {
-      Map<String, dynamic> updateData = form.toJson();
-      if (form.selectedPhoto != null) {
-        final newImageUrl = await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
-        if (newImageUrl != null) {
-          updateData = form.toJsonWithImageUrl(newImageUrl);
-        }
-      } else if (form.imageUrl != null && form.imageUrl!.isNotEmpty) {
-        updateData = form.toJsonWithImageUrl(form.imageUrl!);
-      }
-
       await ref
           .read(dioProvider)
           .put<Map<String, dynamic>>(
             '/admin/warehouses/${warehouse.id}',
-            data: updateData,
+            data: form.toJson(),
           );
+      if (form.selectedPhoto != null && AppEnv.azureStorageUploadsEnabled) {
+        await _uploadWarehousePhoto(warehouse.id, form.selectedPhoto!);
+      }
       _refreshWarehouseViews();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1576,7 +1561,6 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
               dataRowMaxHeight: compact ? 58 : 62,
               columns: [
                 const DataColumn(label: SizedBox.shrink()),
-                DataColumn(label: Text(context.l10n.t('foto'))),
                 DataColumn(label: Text(context.l10n.t('id'))),
                 DataColumn(label: Text(context.l10n.t('almacen'))),
                 DataColumn(label: Text(context.l10n.t('ciudad'))),
@@ -1625,20 +1609,8 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
                           ),
                         ),
                         DataCell(
-                          SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: AppSmartImage(
-                                source: item.imageUrl,
-                                width: 48,
-                                height: 48,
-                              ),
-                            ),
-                          ),
+                          Text(item.id),
                         ),
-                        DataCell(Text(item.id)),
                         DataCell(Text(item.name)),
                         DataCell(
                           Text('${item.cityName}/${item.zoneName ?? '-'}'),
