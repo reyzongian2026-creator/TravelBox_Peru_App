@@ -531,7 +531,7 @@ class SessionController extends StateNotifier<SessionState> {
   Dio _buildOnboardingClient(String accessToken) {
     return Dio(
       BaseOptions(
-        baseUrl: AppEnv.apiBaseUrl,
+        baseUrl: AppEnv.resolvedApiBaseUrl,
         connectTimeout: const Duration(seconds: 4),
         receiveTimeout: const Duration(seconds: 6),
         headers: {
@@ -617,7 +617,7 @@ bool _isMockTokenAllowed() {
   if (!AppEnv.useMockFallback) {
     return false;
   }
-  final uri = Uri.tryParse(AppEnv.apiBaseUrl);
+  final uri = Uri.tryParse(AppEnv.resolvedApiBaseUrl);
   final host = uri?.host.trim().toLowerCase() ?? '';
   return host == 'localhost' ||
       host == '127.0.0.1' ||

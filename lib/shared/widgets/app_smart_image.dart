@@ -139,7 +139,9 @@ String? resolveAppMediaUrl(String? raw) {
     return _normalizeForAndroidEmulator(parsed).toString();
   }
 
-  final baseUri = _normalizeForAndroidEmulator(Uri.parse(AppEnv.apiBaseUrl));
+  final baseUri = _normalizeForAndroidEmulator(
+    Uri.parse(AppEnv.resolvedApiBaseUrl),
+  );
   return baseUri
       .resolve(trimmed.startsWith('/') ? trimmed : '/$trimmed')
       .toString();
@@ -223,6 +225,8 @@ Uri? _tryMapAzureBlobUrlToBackendProxy(Uri uri) {
     return null;
   }
 
-  final baseUri = _normalizeForAndroidEmulator(Uri.parse(AppEnv.apiBaseUrl));
+  final baseUri = _normalizeForAndroidEmulator(
+    Uri.parse(AppEnv.resolvedApiBaseUrl),
+  );
   return baseUri.resolve('/api/v1/files/$category/$filename');
 }

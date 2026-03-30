@@ -23,7 +23,7 @@ Future<void> bootstrap() async {
 
   final errorService = await AppErrorReportService.getInstance(
     Dio(BaseOptions(
-      baseUrl: AppEnv.apiBaseUrl,
+      baseUrl: AppEnv.resolvedApiBaseUrl,
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 45),
     )),

@@ -141,7 +141,7 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
   }
 
   Uri _buildWebSocketUrl() {
-    final baseUrl = AppEnv.apiBaseUrl;
+    final baseUrl = AppEnv.resolvedApiBaseUrl;
     final wsScheme = baseUrl.startsWith('https') ? 'wss' : 'ws';
     final host = baseUrl.replaceFirst(RegExp(r'^https?://'), '');
     return Uri.parse('$wsScheme://$host/ws?token=${Uri.encodeComponent(_accessToken ?? '')}');

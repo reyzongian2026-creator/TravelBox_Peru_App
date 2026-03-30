@@ -1,4 +1,7 @@
 class AppEnv {
+  static const _localApiBaseUrl = 'http://localhost:8080/api/v1';
+  static const _productionApiBaseUrl = 'https://api.inkavoy.pe/api/v1';
+
   static const appEnvironment = String.fromEnvironment(
     'APP_ENV',
     defaultValue: 'dev',
@@ -6,8 +9,22 @@ class AppEnv {
 
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8080/api/v1',
+    defaultValue: _localApiBaseUrl,
   );
+
+  static String get resolvedApiBaseUrl {
+    final configured = apiBaseUrl.trim();
+    if (configured.isEmpty) {
+      return _fallbackApiBaseUrlForCurrentHost();
+    }
+
+    final uri = Uri.tryParse(configured);
+    final host = uri?.host.trim().toLowerCase() ?? '';
+    if (_isLocalHost(host) && !_isCurrentHostLocal()) {
+      return _fallbackApiBaseUrlForCurrentHost();
+    }
+    return configured;
+  }
 
   static const useMockFallback = bool.fromEnvironment(
     'USE_MOCK_FALLBACK',
@@ -78,7 +95,8 @@ class AppEnv {
         'Configuracion insegura: faltan AZURE_MAPS_API_KEY o GOOGLE_MAPS_API_KEY en APP_ENV=prod.',
       );
     }
-    final apiHost = Uri.tryParse(apiBaseUrl)?.host.trim().toLowerCase() ?? '';
+    final apiHost =
+        Uri.tryParse(resolvedApiBaseUrl)?.host.trim().toLowerCase() ?? '';
     if (apiHost.isEmpty ||
         apiHost == 'localhost' ||
         apiHost == '127.0.0.1' ||
@@ -89,5 +107,26 @@ class AppEnv {
         'Configuracion insegura: API_BASE_URL apunta a host local en APP_ENV=prod.',
       );
     }
+  }
+
+  static bool _isCurrentHostLocal() {
+    final currentHost = Uri.base.host.trim().toLowerCase();
+    return _isLocalHost(currentHost) || currentHost.isEmpty;
+  }
+
+  static bool _isLocalHost(String host) {
+    return host == 'localhost' ||
+        host == '127.0.0.1' ||
+        host == '::1' ||
+        host == '10.0.2.2' ||
+        host == '10.0.3.2';
+  }
+
+  static String _fallbackApiBaseUrlForCurrentHost() {
+    final currentHost = Uri.base.host.trim().toLowerCase();
+    if (_isLocalHost(currentHost) || currentHost.isEmpty) {
+      return _localApiBaseUrl;
+    }
+    return _productionApiBaseUrl;
   }
 }

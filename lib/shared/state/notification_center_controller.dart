@@ -220,7 +220,7 @@ class NotificationCenterController
     }
     _liveEventsConnected = true;
     _liveEventsClient.connect(
-      apiBaseUrl: AppEnv.apiBaseUrl,
+      apiBaseUrl: AppEnv.resolvedApiBaseUrl,
       accessToken: accessToken,
       lastEventId: lastEventId ?? state.cursor,
       onNotification: (event) {

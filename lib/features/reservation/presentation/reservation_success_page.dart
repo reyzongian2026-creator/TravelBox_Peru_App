@@ -98,7 +98,7 @@ class ReservationSuccessPage extends ConsumerWidget {
                         _ReservationQrView(
                           reservation: item,
                           fallbackUrl:
-                              '${AppEnv.apiBaseUrl}/reservations/${item.id}/qr',
+                              '${AppEnv.resolvedApiBaseUrl}/reservations/${item.id}/qr',
                         ),
                       const SizedBox(height: 8),
                       Text(

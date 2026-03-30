@@ -17,7 +17,7 @@ final dioProvider = Provider<Dio>((ref) {
   ref.watch(sessionControllerProvider);
   final dio = Dio(
     BaseOptions(
-      baseUrl: AppEnv.apiBaseUrl,
+      baseUrl: AppEnv.resolvedApiBaseUrl,
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 45),
       headers: {'Content-Type': 'application/json'},
@@ -85,7 +85,7 @@ final dioProvider = Provider<Dio>((ref) {
               if (refreshToken != null && refreshToken.isNotEmpty) {
                 final refreshDio = Dio(
                   BaseOptions(
-                    baseUrl: AppEnv.apiBaseUrl,
+                    baseUrl: AppEnv.resolvedApiBaseUrl,
                     connectTimeout: const Duration(seconds: 20),
                     receiveTimeout: const Duration(seconds: 45),
                     headers: {'Content-Type': 'application/json'},
