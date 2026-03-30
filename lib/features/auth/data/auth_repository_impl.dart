@@ -522,11 +522,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
   String _nameFromEmail(String? email) {
     if (email == null || email.trim().isEmpty) {
-      return 'TravelBox User';
+      return 'InkaVoy User';
     }
     final username = email.split('@').first.trim();
     if (username.isEmpty) {
-      return 'TravelBox User';
+      return 'InkaVoy User';
     }
     return username[0].toUpperCase() + username.substring(1);
   }
@@ -554,7 +554,7 @@ class AuthRepositoryImpl implements AuthRepository {
     return AuthSession(
       user: AppUser(
         id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
-        name: name ?? 'TravelBox User',
+        name: name ?? 'InkaVoy User',
         email: email,
         role: role,
         firstName: firstName ?? '',

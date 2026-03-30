@@ -60,9 +60,9 @@ class MobilePushService {
     const details = NotificationDetails(
       android: AndroidNotificationDetails(
         'travelbox_live_events',
-        'TravelBox Live Events',
+        'InkaVoy Live Events',
         channelDescription:
-            'Operational updates and reservation notifications in real time.',
+            'Operational updates and reservation notifications in real time for InkaVoy.',
         importance: Importance.high,
         priority: Priority.high,
       ),
@@ -75,7 +75,7 @@ class MobilePushService {
 
     await _plugin.show(
       DateTime.now().millisecondsSinceEpoch % 2147483647,
-      normalizedTitle.isEmpty ? 'TravelBox' : normalizedTitle,
+      normalizedTitle.isEmpty ? 'InkaVoy' : normalizedTitle,
       normalizedBody,
       details,
       payload: payload,

@@ -1,5 +1,5 @@
 class AppConstants {
-  static const appName = 'TravelBox';
+  static const appName = 'InkaVoy';
   static const apiVersion = 'v1';
   static const sessionTimeoutMinutes = 45;
 

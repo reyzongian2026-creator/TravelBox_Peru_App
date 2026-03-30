@@ -112,7 +112,7 @@ class AuthSplitScaffold extends StatelessWidget {
     required this.formChild,
     required this.heroTitle,
     required this.heroSubtitle,
-    this.heroLabel = 'TravelBox',
+    this.heroLabel = 'InkaVoy',
     this.showGuardianBear = true,
     this.showCompactHero = true,
     this.heroAnimation = 'idle',

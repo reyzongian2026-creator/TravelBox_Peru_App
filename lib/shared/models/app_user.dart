@@ -257,7 +257,7 @@ class AppUser {
 
     return AppUser(
       id: json['id']?.toString() ?? '',
-      name: resolvedName.isEmpty ? 'Usuario TravelBox' : resolvedName,
+      name: resolvedName.isEmpty ? 'Usuario InkaVoy' : resolvedName,
       email: _readString(json, ['email']) ?? '',
       role: _parseUserRole(roleValue),
       firstName: firstName ?? '',

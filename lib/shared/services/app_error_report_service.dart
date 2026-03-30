@@ -337,7 +337,7 @@ class AppErrorReportService {
     }
 
     final report = {
-      'application': 'TravelBox Peru',
+      'application': 'InkaVoy Peru',
       'version': '1.0',
       'exportedAt': DateTime.now().toIso8601String(),
       'totalErrors': errors.length,
@@ -448,7 +448,7 @@ class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
       await _globalService!.clearErrors();
       return json;
     }
-    return '{"application": "TravelBox Peru", "version": "1.0", "exportedAt": "${DateTime.now().toIso8601String()}", "totalErrors": 0, "errors": [], "errorsByType": {}}';
+    return '{"application": "InkaVoy Peru", "version": "1.0", "exportedAt": "${DateTime.now().toIso8601String()}", "totalErrors": 0, "errors": [], "errorsByType": {}}';
   }
 
   Future<void> _init() async {
@@ -490,7 +490,7 @@ class AppErrorReportNotifier extends StateNotifier<AppErrorReportState> {
     }
 
     final report = {
-      'application': 'TravelBox Peru',
+      'application': 'InkaVoy Peru',
       'version': '1.0',
       'exportedAt': DateTime.now().toIso8601String(),
       'totalErrors': errors.length,

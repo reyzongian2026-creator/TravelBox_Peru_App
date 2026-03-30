@@ -34,7 +34,7 @@ class TravelBoxLogo extends StatelessWidget {
             compact && hasBoundedWidth && maxWidth < 220;
         final resolvedShowWordmark = showWordmark && !hideWordmarkByWidth;
         final resolvedShowSubtitle = showSubtitle && !hideSubtitleByWidth;
-        const brandTitle = 'TravelBox';
+        const brandTitle = 'InkaVoy';
 
         return Row(
           mainAxisSize: hasBoundedWidth ? MainAxisSize.max : MainAxisSize.min,

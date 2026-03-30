@@ -21,7 +21,7 @@ class TravelBoxApp extends ConsumerWidget {
     LocalizationRuntime.languageCode = session.sessionLanguage;
 
     return MaterialApp.router(
-      title: 'TravelBox',
+      title: 'InkaVoy',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

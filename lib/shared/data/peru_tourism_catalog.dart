@@ -81,7 +81,7 @@ class PeruTourismCatalog {
     return const PeruTourismInfo(
       city: 'Perú',
       region: 'Nacional',
-      heroLandmark: 'Ruta turística TravelBox',
+      heroLandmark: 'Ruta turística InkaVoy',
       highlights: ['Destinos históricos', 'Playas y costa', 'Andes y selva'],
       shortDescription:
           'Cobertura para viajeros en principales destinos del país.',

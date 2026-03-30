@@ -5,7 +5,7 @@ class DemoData {
   static List<Warehouse> warehouses = const [
     Warehouse(
       id: 'wh-lim-mir-01',
-      name: 'TravelBox Miraflores',
+      name: 'InkaVoy Miraflores',
       address: 'Av. Jose Larco 812',
       city: 'Lima',
       district: 'Miraflores',
@@ -26,7 +26,7 @@ class DemoData {
     ),
     Warehouse(
       id: 'wh-lim-bar-02',
-      name: 'TravelBox Barranco',
+      name: 'InkaVoy Barranco',
       address: 'Jiron Perez Roca 450',
       city: 'Lima',
       district: 'Barranco',
@@ -47,7 +47,7 @@ class DemoData {
     ),
     Warehouse(
       id: 'wh-cus-cen-01',
-      name: 'TravelBox Cusco Centro',
+      name: 'InkaVoy Cusco Centro',
       address: 'Calle Plateros 310',
       city: 'Cusco',
       district: 'Centro Historico',
