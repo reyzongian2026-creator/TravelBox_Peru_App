@@ -21,7 +21,10 @@ jobs:
           flutter pub get
 
       - name: Build Flutter Web
-        run: flutter build web --release --base-href=/
+        run: |
+          flutter build web --release --base-href=/ \
+            --dart-define=USE_MOCK_FALLBACK=false \
+            --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1
 
       - name: Login to Azure
         uses: azure/login@v2

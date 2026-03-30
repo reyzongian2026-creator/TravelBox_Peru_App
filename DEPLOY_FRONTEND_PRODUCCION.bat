@@ -28,7 +28,9 @@ echo [OK] Dependencias obtenidas.
 echo.
 
 echo [3/4] Compilando Flutter Web en Release (Produccion)...
-call flutter build web --release
+call flutter build web --release ^
+  --dart-define=USE_MOCK_FALLBACK=false ^
+  --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1
 if errorlevel 1 (
     echo [ERROR] Fallo la compilacion
     pause

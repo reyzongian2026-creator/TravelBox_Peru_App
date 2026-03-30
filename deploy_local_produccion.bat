@@ -23,7 +23,9 @@ if errorlevel 1 (
 )
 
 echo [3/4] Compilando Flutter Web (Production)...
-call flutter build web --release
+call flutter build web --release ^
+  --dart-define=USE_MOCK_FALLBACK=false ^
+  --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1
 if errorlevel 1 (
     echo [ERROR] Fallo flutter build web
     pause

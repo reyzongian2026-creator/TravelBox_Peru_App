@@ -57,9 +57,8 @@ class AppSmartImage extends StatelessWidget {
       return _fallback();
     }
 
-    final cacheBustedUrl = _addCacheBuster(resolvedUrl);
     return Image.network(
-      cacheBustedUrl,
+      resolvedUrl,
       width: width,
       height: height,
       fit: fit,
@@ -178,14 +177,6 @@ Uri _normalizeForAndroidEmulator(Uri input) {
     return input;
   }
   return input.replace(host: '10.0.2.2');
-}
-
-String _addCacheBuster(String url) {
-  final uri = Uri.tryParse(url);
-  if (uri == null) return url;
-  final params = Map<String, String>.from(uri.queryParameters);
-  params['_t'] = DateTime.now().millisecondsSinceEpoch.toString();
-  return uri.replace(queryParameters: params).toString();
 }
 
 Uri? _tryMapAzureBlobUrlToBackendProxy(Uri uri) {

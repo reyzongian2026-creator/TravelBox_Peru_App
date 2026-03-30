@@ -58,10 +58,12 @@ class HomeDiscoveryPage extends ConsumerStatefulWidget {
 
 class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
   final _searchController = TextEditingController();
+  Timer? _searchDebounce;
   bool _showHighlightsStrip = true;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -148,18 +150,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                 children: [
                   TextField(
                     controller: _searchController,
-                    onChanged: (value) {
-                      ref.read(discoveryQueryProvider.notifier).state = value;
-                      final pickedCity = ref.read(
-                        discoveryFeaturedCityProvider,
-                      );
-                      if (pickedCity != null &&
-                          value.trim().toLowerCase() !=
-                              pickedCity.trim().toLowerCase()) {
-                        ref.read(discoveryFeaturedCityProvider.notifier).state =
-                            null;
-                      }
-                    },
+                    onChanged: _onSearchChanged,
                     decoration: InputDecoration(
                       hintText: l10n.t('search_discovery_hint'),
                       prefixIcon: const Icon(Icons.search),
@@ -429,6 +420,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
   }
 
   void _clearDiscoveryFilters() {
+    _searchDebounce?.cancel();
     _searchController.clear();
     ref.read(discoveryQueryProvider.notifier).state = '';
     ref.read(discoveryFeaturedCityProvider.notifier).state = null;
@@ -453,11 +445,31 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
     }
 
     final position = await Geolocator.getCurrentPosition();
+    _searchDebounce?.cancel();
     ref.read(currentPositionProvider.notifier).state = position;
     ref.read(discoveryFeaturedCityProvider.notifier).state = null;
     _searchController.clear();
     ref.read(discoveryQueryProvider.notifier).state = '';
     ref.invalidate(discoveryWarehousesProvider);
+  }
+
+  void _onSearchChanged(String value) {
+    final pickedCity = ref.read(discoveryFeaturedCityProvider);
+    if (pickedCity != null &&
+        value.trim().toLowerCase() != pickedCity.trim().toLowerCase()) {
+      ref.read(discoveryFeaturedCityProvider.notifier).state = null;
+    }
+
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      final nextQuery = value.trim();
+      final currentQuery = ref.read(discoveryQueryProvider);
+      if (currentQuery == nextQuery) {
+        return;
+      }
+      ref.read(discoveryQueryProvider.notifier).state = nextQuery;
+    });
   }
 }
 
@@ -783,7 +795,7 @@ class _MapView extends StatelessWidget {
             urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
                 ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
                 : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.travelbox.peru.app',
+            userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
           ),
           flutter_map.MarkerLayer(markers: warehouseMarkers),
         ],
@@ -831,7 +843,7 @@ class _MapView extends StatelessWidget {
             urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
                 ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
                 : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.travelbox.peru.app',
+            userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
           ),
           flutter_map.MarkerLayer(markers: warehouseMarkers),
         ],

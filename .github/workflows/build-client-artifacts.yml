@@ -22,7 +22,7 @@ on:
       api_base_url:
         required: false
         type: string
-        default: https://travelbox-backend-prod-otpbbcgoeq-uc.a.run.app/api/v1
+        default: https://api.inkavoy.pe/api/v1
       force_cash_payments_only:
         required: false
         type: string
@@ -55,6 +55,14 @@ on:
       FIREBASE_FACEBOOK_APP_ID:
         required: false
       GOOGLE_MAPS_API_KEY:
+        required: false
+      ANDROID_RELEASE_KEYSTORE_BASE64:
+        required: false
+      ANDROID_RELEASE_STORE_PASSWORD:
+        required: false
+      ANDROID_RELEASE_KEY_ALIAS:
+        required: false
+      ANDROID_RELEASE_KEY_PASSWORD:
         required: false
   workflow_dispatch:
     inputs:
@@ -89,7 +97,7 @@ on:
       api_base_url:
         description: "API_BASE_URL para la app"
         required: true
-        default: https://travelbox-backend-prod-otpbbcgoeq-uc.a.run.app/api/v1
+        default: https://api.inkavoy.pe/api/v1
         type: string
       force_cash_payments_only:
         description: "FORCE_CASH_PAYMENTS_ONLY"
@@ -214,6 +222,28 @@ jobs:
 
       - name: Flutter pub get
         run: flutter pub get
+
+      - name: Configure Android release signing
+        shell: bash
+        env:
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          : "${ANDROID_RELEASE_KEYSTORE_BASE64:?Missing ANDROID_RELEASE_KEYSTORE_BASE64}"
+          : "${ANDROID_RELEASE_STORE_PASSWORD:?Missing ANDROID_RELEASE_STORE_PASSWORD}"
+          : "${ANDROID_RELEASE_KEY_ALIAS:?Missing ANDROID_RELEASE_KEY_ALIAS}"
+          : "${ANDROID_RELEASE_KEY_PASSWORD:?Missing ANDROID_RELEASE_KEY_PASSWORD}"
+
+          echo "$ANDROID_RELEASE_KEYSTORE_BASE64" | base64 --decode > android/inkavoy-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=../inkavoy-release.jks
+          storePassword=$ANDROID_RELEASE_STORE_PASSWORD
+          keyAlias=$ANDROID_RELEASE_KEY_ALIAS
+          keyPassword=$ANDROID_RELEASE_KEY_PASSWORD
+          EOF
 
       - name: Build Android APK (release)
         shell: pwsh

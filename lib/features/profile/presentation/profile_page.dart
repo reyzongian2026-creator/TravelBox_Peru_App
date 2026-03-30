@@ -180,6 +180,7 @@ class ProfilePage extends ConsumerWidget {
           FilledButton.tonal(
             onPressed: () async {
               final refreshToken = session.refreshToken?.trim();
+              final authRepository = ref.read(authRepositoryProvider);
 
               try {
                 final jsonReporte =
@@ -207,12 +208,9 @@ class ProfilePage extends ConsumerWidget {
               }
 
               await ref.read(sessionControllerProvider.notifier).signOut();
-              if (!context.mounted) return;
-              context.go('/login');
               if (refreshToken != null && refreshToken.isNotEmpty) {
                 unawaited(
-                  ref
-                      .read(authRepositoryProvider)
+                  authRepository
                       .logout(refreshToken: refreshToken)
                       .catchError((_) {}),
                 );
@@ -348,7 +346,7 @@ class _ErrorReportDialog extends StatelessWidget {
         return Icons.warning;
       case 'operation':
         return Icons.play_arrow;
-      case 'firebase':
+      case 'socialAuth':
         return Icons.cloud_off;
       default:
         return Icons.help_outline;

@@ -41,14 +41,8 @@ jobs:
           $ErrorActionPreference = "Stop"
           $vault = "kvtravelboxpe"
           $map = @(
-            @{ secret = "tbx-app-firebase-api-key"; env = "FIREBASE_API_KEY"; required = $true },
-            @{ secret = "tbx-app-firebase-project-id"; env = "FIREBASE_PROJECT_ID"; required = $true },
-            @{ secret = "tbx-app-firebase-messaging-sender-id"; env = "FIREBASE_MESSAGING_SENDER_ID"; required = $true },
-            @{ secret = "tbx-app-firebase-storage-bucket"; env = "FIREBASE_STORAGE_BUCKET"; required = $false },
-            @{ secret = "tbx-app-firebase-auth-domain"; env = "FIREBASE_AUTH_DOMAIN"; required = $false },
-            @{ secret = "tbx-app-firebase-ios-bundle-id"; env = "FIREBASE_IOS_BUNDLE_ID"; required = $false },
-            @{ secret = "tbx-app-firebase-android-app-id"; env = "FIREBASE_ANDROID_APP_ID"; required = $false },
-            @{ secret = "tbx-app-firebase-web-app-id"; env = "FIREBASE_WEB_APP_ID"; required = $false }
+            @{ secret = "tbx-azure-client-id"; env = "AZURE_CLIENT_ID"; required = $false },
+            @{ secret = "tbx-azure-tenant-id"; env = "AZURE_TENANT_ID"; required = $false }
           )
 
           foreach ($item in $map) {
@@ -68,15 +62,10 @@ jobs:
       - name: Build Flutter web
         run: |
           flutter build web --release \
-            --dart-define=API_BASE_URL=https://travelbox-backend-prod.azurewebsites.net/api/v1 \
-            --dart-define=FIREBASE_API_KEY=${{ env.FIREBASE_API_KEY }} \
-            --dart-define=FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }} \
-            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ env.FIREBASE_MESSAGING_SENDER_ID }} \
-            --dart-define=FIREBASE_STORAGE_BUCKET=${{ env.FIREBASE_STORAGE_BUCKET }} \
-            --dart-define=FIREBASE_AUTH_DOMAIN=${{ env.FIREBASE_AUTH_DOMAIN }} \
-            --dart-define=FIREBASE_IOS_BUNDLE_ID=${{ env.FIREBASE_IOS_BUNDLE_ID }} \
-            --dart-define=FIREBASE_ANDROID_APP_ID=${{ env.FIREBASE_ANDROID_APP_ID }} \
-            --dart-define=FIREBASE_WEB_APP_ID=${{ env.FIREBASE_WEB_APP_ID }}
+            --dart-define=USE_MOCK_FALLBACK=false \
+            --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1 \
+            --dart-define=AZURE_CLIENT_ID=${{ env.AZURE_CLIENT_ID }} \
+            --dart-define=AZURE_TENANT_ID=${{ env.AZURE_TENANT_ID }}
 
       - name: Deploy to Azure Static Web Apps
         id: deploy

@@ -19,7 +19,6 @@ dependencies:
   flare_flutter:
     path: third_party/flare_flutter
   flutter_secure_storage: ^9.2.4
-  flutter_facebook_auth: ^7.1.2
   flutter_map: ^8.2.2
   google_maps_flutter: ^2.10.0
   flutter_local_notifications: ^19.4.2
@@ -36,8 +35,8 @@ dependencies:
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
   web_socket_channel: ^3.0.2
-  msal_flutter: ^2.0.1
-  google_sign_in: ^7.0.0
+  msal_flutter:
+    path: third_party/msal_flutter
 
 dev_dependencies:
   flutter_test:

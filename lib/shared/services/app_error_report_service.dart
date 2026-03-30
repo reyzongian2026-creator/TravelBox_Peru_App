@@ -177,19 +177,19 @@ class AppErrorReportService {
     _addError(entry);
   }
 
-  void reportFirebaseError(String service, String code, String message) {
+  void reportSocialAuthError(String service, String code, String message) {
     final entry = AppErrorEntry(
-      id: '${DateTime.now().millisecondsSinceEpoch}_fb_${code.hashCode}',
-      type: ErrorType.firebase,
-      key: 'FIREBASE_ERROR',
-      locale: 'firebase',
+      id: '${DateTime.now().millisecondsSinceEpoch}_social_${code.hashCode}',
+      type: ErrorType.socialAuth,
+      key: 'SOCIAL_AUTH_ERROR',
+      locale: 'social-auth',
       timestamp: DateTime.now(),
       context: service,
       reportedBy: 'system',
       message: '$service: $code - $message',
       stackTrace: null,
       additionalData: {
-        'errorType': 'firebase',
+        'errorType': 'social-auth',
         'service': service,
         'code': code,
       },
@@ -358,7 +358,7 @@ enum ErrorType {
   flutter,
   validation,
   operation,
-  firebase,
+  socialAuth,
   unknown,
 }
 

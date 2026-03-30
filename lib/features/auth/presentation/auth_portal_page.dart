@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -117,9 +118,12 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
         onInternalLogin: _handleLogin,
         onGoogleLogin: () => _handleSocialLogin('GOOGLE'),
         onFacebookLogin: () => _handleSocialLogin('FACEBOOK'),
+        onMicrosoftLogin: () => _handleSocialLogin('MICROSOFT'),
         onEmailTyping: _handleEmailTyping,
         onPasswordTyping: _handlePasswordTyping,
-        isFacebookEnabled: AppEnv.firebaseFacebookProviderEnabled,
+        showGoogleLogin: kIsWeb,
+        showFacebookLogin: kIsWeb,
+        showMicrosoftLogin: !kIsWeb && AppEnv.hasEntraAuthConfig,
         onEmailRegisterPressed: () => context.go('/register'),
         onPasswordResetPressed: () => context.go('/password-reset'),
       ),
@@ -291,9 +295,12 @@ class _AuthPanel extends StatelessWidget {
     required this.onInternalLogin,
     required this.onGoogleLogin,
     required this.onFacebookLogin,
+    required this.onMicrosoftLogin,
     required this.onEmailTyping,
     required this.onPasswordTyping,
-    required this.isFacebookEnabled,
+    required this.showGoogleLogin,
+    required this.showFacebookLogin,
+    required this.showMicrosoftLogin,
     required this.onEmailRegisterPressed,
     required this.onPasswordResetPressed,
   });
@@ -317,9 +324,12 @@ class _AuthPanel extends StatelessWidget {
   final Future<void> Function() onInternalLogin;
   final Future<void> Function() onGoogleLogin;
   final Future<void> Function() onFacebookLogin;
+  final Future<void> Function() onMicrosoftLogin;
   final ValueChanged<String> onEmailTyping;
   final ValueChanged<String> onPasswordTyping;
-  final bool isFacebookEnabled;
+  final bool showGoogleLogin;
+  final bool showFacebookLogin;
+  final bool showMicrosoftLogin;
   final VoidCallback onEmailRegisterPressed;
   final VoidCallback onPasswordResetPressed;
 
@@ -549,53 +559,78 @@ class _AuthPanel extends StatelessWidget {
           ),
           if (isClient) ...[
             const SizedBox(height: 14),
-            if (width < 380)
+            if ((showGoogleLogin || showFacebookLogin || showMicrosoftLogin) &&
+                width < 380)
               Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: _SocialGhostButton(
-                      icon: Icons.g_mobiledata,
-                      label: 'Google',
-                      onTap: authState.isLoading ? null : onGoogleLogin,
+                  if (showGoogleLogin)
+                    SizedBox(
+                      width: double.infinity,
+                      child: _SocialGhostButton(
+                        icon: Icons.language_outlined,
+                        label: 'Google',
+                        onTap: authState.isLoading ? null : onGoogleLogin,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _SocialGhostButton(
-                      icon: Icons.facebook,
-                      label: 'Facebook',
-                      onTap: authState.isLoading || !isFacebookEnabled
-                          ? null
-                          : onFacebookLogin,
+                  if (showGoogleLogin && (showFacebookLogin || showMicrosoftLogin))
+                    const SizedBox(height: 8),
+                  if (showFacebookLogin)
+                    SizedBox(
+                      width: double.infinity,
+                      child: _SocialGhostButton(
+                        icon: Icons.facebook_outlined,
+                        label: 'Facebook',
+                        onTap: authState.isLoading ? null : onFacebookLogin,
+                      ),
                     ),
-                  ),
+                  if (showFacebookLogin && showMicrosoftLogin)
+                    const SizedBox(height: 8),
+                  if (showMicrosoftLogin)
+                    SizedBox(
+                      width: double.infinity,
+                      child: _SocialGhostButton(
+                        icon: Icons.business_center_outlined,
+                        label: 'Microsoft',
+                        onTap: authState.isLoading ? null : onMicrosoftLogin,
+                      ),
+                    ),
                 ],
               )
-            else
+            else if (showGoogleLogin || showFacebookLogin || showMicrosoftLogin)
               Row(
                 children: [
-                  Expanded(
-                    child: _SocialGhostButton(
-                      icon: Icons.g_mobiledata,
-                      label: 'Google',
-                      onTap: authState.isLoading ? null : onGoogleLogin,
+                  if (showGoogleLogin)
+                    Expanded(
+                      child: _SocialGhostButton(
+                        icon: Icons.language_outlined,
+                        label: 'Google',
+                        onTap: authState.isLoading ? null : onGoogleLogin,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SocialGhostButton(
-                      icon: Icons.facebook,
-                      label: 'Facebook',
-                      onTap: authState.isLoading || !isFacebookEnabled
-                          ? null
-                          : onFacebookLogin,
+                  if (showGoogleLogin && (showFacebookLogin || showMicrosoftLogin))
+                    const SizedBox(width: 8),
+                  if (showFacebookLogin)
+                    Expanded(
+                      child: _SocialGhostButton(
+                        icon: Icons.facebook_outlined,
+                        label: 'Facebook',
+                        onTap: authState.isLoading ? null : onFacebookLogin,
+                      ),
                     ),
-                  ),
+                  if (showFacebookLogin && showMicrosoftLogin)
+                    const SizedBox(width: 8),
+                  if (showMicrosoftLogin)
+                    Expanded(
+                      child: _SocialGhostButton(
+                        icon: Icons.business_center_outlined,
+                        label: 'Microsoft',
+                        onTap: authState.isLoading ? null : onMicrosoftLogin,
+                      ),
+                    ),
                 ],
               ),
-            const SizedBox(height: 10),
+            if (showGoogleLogin || showFacebookLogin || showMicrosoftLogin)
+              const SizedBox(height: 10),
             TextButton.icon(
               onPressed: authState.isLoading ? null : onEmailRegisterPressed,
               icon: const Icon(Icons.person_add_alt_1_outlined),

@@ -6,7 +6,9 @@ steps:
       - |
         flutter config --no-analytics
         flutter pub get
-        flutter build web --release
+        flutter build web --release \
+          --dart-define=USE_MOCK_FALLBACK=false \
+          --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1
 
   - name: 'gcr.io/cloud-builders/docker'
     args:

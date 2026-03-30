@@ -18,59 +18,6 @@ class AppEnv {
     'FORCE_CASH_PAYMENTS_ONLY',
     defaultValue: false,
   );
-
-  static const firebaseApiKey = String.fromEnvironment(
-    'FIREBASE_API_KEY',
-    defaultValue: '',
-  );
-  static const firebaseProjectId = String.fromEnvironment(
-    'FIREBASE_PROJECT_ID',
-    defaultValue: '',
-  );
-  static const firebaseMessagingSenderId = String.fromEnvironment(
-    'FIREBASE_MESSAGING_SENDER_ID',
-    defaultValue: '',
-  );
-  static const firebaseStorageBucket = String.fromEnvironment(
-    'FIREBASE_STORAGE_BUCKET',
-    defaultValue: '',
-  );
-  static const firebaseAuthDomain = String.fromEnvironment(
-    'FIREBASE_AUTH_DOMAIN',
-    defaultValue: '',
-  );
-  static const firebaseIosBundleId = String.fromEnvironment(
-    'FIREBASE_IOS_BUNDLE_ID',
-    defaultValue: '',
-  );
-  static const firebaseAndroidAppId = String.fromEnvironment(
-    'FIREBASE_ANDROID_APP_ID',
-    defaultValue: '',
-  );
-  static const firebaseIosAppId = String.fromEnvironment(
-    'FIREBASE_IOS_APP_ID',
-    defaultValue: '',
-  );
-  static const firebaseWebAppId = String.fromEnvironment(
-    'FIREBASE_WEB_APP_ID',
-    defaultValue: '',
-  );
-  static const firebaseGoogleServerClientId = String.fromEnvironment(
-    'FIREBASE_GOOGLE_SERVER_CLIENT_ID',
-    defaultValue: '',
-  );
-  static const firebaseFacebookProviderEnabled = bool.fromEnvironment(
-    'FIREBASE_FACEBOOK_ENABLED',
-    defaultValue: true,
-  );
-  static const firebaseFacebookAppId = String.fromEnvironment(
-    'FIREBASE_FACEBOOK_APP_ID',
-    defaultValue: '',
-  );
-  static const firebaseFacebookSdkVersion = String.fromEnvironment(
-    'FIREBASE_FACEBOOK_SDK_VERSION',
-    defaultValue: 'v22.0',
-  );
   static const azureStorageUploadsEnabled = bool.fromEnvironment(
     'AZURE_STORAGE_UPLOADS_ENABLED',
     defaultValue: true,
@@ -101,11 +48,6 @@ class AppEnv {
     defaultValue: '',
   );
 
-  static bool get hasFirebaseClientAuthConfig =>
-      firebaseApiKey.trim().isNotEmpty &&
-      firebaseProjectId.trim().isNotEmpty &&
-      firebaseMessagingSenderId.trim().isNotEmpty;
-
   static bool get hasEntraAuthConfig =>
       azureClientId.trim().isNotEmpty &&
       azureTenantId.trim().isNotEmpty;
@@ -126,9 +68,9 @@ class AppEnv {
         'Configuracion insegura: USE_MOCK_FALLBACK=true en APP_ENV=prod.',
       );
     }
-    if (!hasEntraAuthConfig && !hasFirebaseClientAuthConfig) {
+    if (!hasEntraAuthConfig) {
       throw StateError(
-        'Configuracion insegura: faltan AZURE_CLIENT_ID/AZURE_TENANT_ID o FIREBASE_API_KEY en APP_ENV=prod.',
+        'Configuracion insegura: faltan AZURE_CLIENT_ID y AZURE_TENANT_ID en APP_ENV=prod.',
       );
     }
     if (!hasAzureMapsConfig && googleMapsApiKey.trim().isEmpty) {

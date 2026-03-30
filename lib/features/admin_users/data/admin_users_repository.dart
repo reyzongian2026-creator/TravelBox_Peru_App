@@ -14,8 +14,6 @@ abstract class AdminUsersRepository {
   Future<void> updateUserPassword(int userId, String newPassword);
   Future<String> uploadDocumentPhoto(String filePath);
   Future<void> deleteUser(int userId);
-  Future<void> deleteFirebaseAccount(int userId);
-  Future<void> createFirebaseAccount(int userId, String email);
   BulkOperationResult bulkDelete(Set<int> ids);
   BulkOperationResult bulkUpdateActive(Set<int> ids, bool active);
   BulkOperationResult bulkUpdateRoles(Set<int> ids, List<String> roles);
@@ -398,34 +396,6 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
   Future<void> deleteUser(int userId) async {
     try {
       await _dio.delete<void>('/admin/users/$userId');
-    } on DioException catch (e) {
-      throw AppException.fromDioError(e);
-    } catch (e) {
-      throw AppException.fromError(e);
-    }
-  }
-
-  @override
-  Future<void> deleteFirebaseAccount(int userId) async {
-    try {
-      await _dio.delete<void>(
-        '/admin/users/firebase/account',
-        data: {'userId': userId},
-      );
-    } on DioException catch (e) {
-      throw AppException.fromDioError(e);
-    } catch (e) {
-      throw AppException.fromError(e);
-    }
-  }
-
-  @override
-  Future<void> createFirebaseAccount(int userId, String email) async {
-    try {
-      await _dio.post<void>(
-        '/admin/users/firebase/account',
-        data: {'userId': userId, 'email': email},
-      );
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {

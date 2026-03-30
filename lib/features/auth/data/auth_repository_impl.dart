@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,22 +8,15 @@ import '../../../core/env/app_env.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/utils/app_exception.dart';
-import '../../../deprecated/firebase_client_auth_service.dart' as firebase;
 import 'entra_client_auth_service.dart';
+import 'social_web_redirect.dart';
 import '../domain/auth_repository.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(
     ref.watch(dioProvider),
-    ref.watch(firebaseClientAuthServiceProvider),
     ref.watch(entraClientAuthServiceProvider),
   );
-});
-
-final firebaseClientAuthServiceProvider = Provider<firebase.FirebaseClientAuthService>((
-  ref,
-) {
-  return firebase.FirebaseClientAuthService();
 });
 
 final entraClientAuthServiceProvider = Provider<EntraClientAuthService>((ref) {
@@ -29,10 +24,9 @@ final entraClientAuthServiceProvider = Provider<EntraClientAuthService>((ref) {
 });
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._dio, this._firebaseClientAuthService, this._entraClientAuthService);
+  AuthRepositoryImpl(this._dio, this._entraClientAuthService);
 
   final Dio _dio;
-  final firebase.FirebaseClientAuthService _firebaseClientAuthService;
   final EntraClientAuthService _entraClientAuthService;
 
   @override
@@ -139,40 +133,22 @@ class AuthRepositoryImpl implements AuthRepository {
     required bool termsAccepted,
   }) async {
     final normalizedProvider = provider.trim().toUpperCase();
-    
-    if (normalizedProvider == 'MICROSOFT' || normalizedProvider == 'ENTRA' || normalizedProvider == 'AZURE') {
-      return _signInWithEntra(termsAccepted: termsAccepted);
+
+    if (kIsWeb &&
+        (normalizedProvider == 'GOOGLE' || normalizedProvider == 'FACEBOOK')) {
+      await _startWebSocialSignIn(normalizedProvider);
+      return Completer<AuthSession>().future;
     }
-    
-    final socialProvider = switch (normalizedProvider) {
-      'GOOGLE' => firebase.SocialAuthProvider.google,
-      'FACEBOOK' => firebase.SocialAuthProvider.facebook,
-      _ => throw UnsupportedError('Proveedor social no soportado: $provider'),
-    };
-    final socialResult = await _firebaseClientAuthService.signIn(
-      socialProvider,
-    );
-    try {
-      final response = await _dio.post<Map<String, dynamic>>(
-        '/auth/firebase/social',
-        data: {
-          'idToken': socialResult.idToken,
-          'provider': socialResult.provider.backendCode,
-          'termsAccepted': termsAccepted,
-          if (socialResult.displayName?.trim().isNotEmpty == true)
-            'displayName': socialResult.displayName!.trim(),
-          if (socialResult.photoUrl?.trim().isNotEmpty == true)
-            'profilePhotoUrl': socialResult.photoUrl!.trim(),
-        },
+
+    if (normalizedProvider != 'MICROSOFT' &&
+        normalizedProvider != 'ENTRA' &&
+        normalizedProvider != 'AZURE') {
+      throw UnsupportedError(
+        'Solo Google, Facebook o Microsoft Entra estan disponibles en esta version.',
       );
-      return _mapSession(response.data ?? <String, dynamic>{});
-    } catch (error) {
-      await _firebaseClientAuthService.signOut();
-      if (error is DioException) {
-        throw AppException.fromDioError(error);
-      }
-      throw AppException.fromError(error);
     }
+
+    return _signInWithEntra(termsAccepted: termsAccepted);
   }
 
   Future<AuthSession> _signInWithEntra({required bool termsAccepted}) async {
@@ -181,10 +157,15 @@ class AuthRepositoryImpl implements AuthRepository {
         'Microsoft Entra is not configured. Set AZURE_CLIENT_ID and AZURE_TENANT_ID.',
       );
     }
-    
+    if (kIsWeb) {
+      throw UnsupportedError(
+        'Microsoft Entra aun no esta habilitado en Flutter Web. Usa email y contrasena en la web.',
+      );
+    }
+
     try {
       final entraResult = await _entraClientAuthService.signIn(SocialAuthProvider.microsoft);
-      
+
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/entra/social',
         data: {
@@ -205,6 +186,26 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       throw AppException.fromError(error);
     }
+  }
+
+  Future<void> _startWebSocialSignIn(String provider) async {
+    final apiUri = Uri.parse(AppEnv.apiBaseUrl);
+    final backendBaseUri = Uri(
+      scheme: apiUri.scheme,
+      host: apiUri.host,
+      port: apiUri.hasPort ? apiUri.port : null,
+    );
+    final callbackUri = Uri(
+      scheme: Uri.base.scheme,
+      host: Uri.base.host,
+      port: Uri.base.hasPort ? Uri.base.port : null,
+      path: '/auth/callback',
+    );
+    final startUri = backendBaseUri.replace(
+      path: '/api/v1/auth/oauth/${provider.toLowerCase()}/start',
+      queryParameters: {'redirectUri': callbackUri.toString()},
+    );
+    await redirectToWebUrl(startUri.toString());
   }
 
   @override
@@ -231,7 +232,6 @@ class AuthRepositoryImpl implements AuthRepository {
     } on DioException catch (error) {
       dioError = error;
     } finally {
-      await _firebaseClientAuthService.signOut();
       await _entraClientAuthService.signOut();
     }
     if (dioError != null) {

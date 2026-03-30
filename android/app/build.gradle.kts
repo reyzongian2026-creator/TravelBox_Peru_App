@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val signingProperties = Properties()
+val signingPropertiesFile = rootProject.file("key.properties")
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.inputStream().use(signingProperties::load)
 }
 
 android {
@@ -25,7 +33,7 @@ android {
         applicationId = "com.travelbox.peru.travelbox_peru_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -35,9 +43,30 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            val releaseStoreFile = signingProperties.getProperty("storeFile")
+            val releaseStorePassword = signingProperties.getProperty("storePassword")
+            val releaseKeyAlias = signingProperties.getProperty("keyAlias")
+            val releaseKeyPassword = signingProperties.getProperty("keyPassword")
+
+            if (
+                releaseStoreFile.isNullOrBlank() ||
+                releaseStorePassword.isNullOrBlank() ||
+                releaseKeyAlias.isNullOrBlank() ||
+                releaseKeyPassword.isNullOrBlank()
+            ) {
+                throw GradleException(
+                    "Missing Android release signing configuration. Provide android/key.properties.",
+                )
+            }
+
+            signingConfig = signingConfigs.create("release").apply {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }

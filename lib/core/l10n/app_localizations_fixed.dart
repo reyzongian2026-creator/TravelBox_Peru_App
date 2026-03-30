@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 // ============================================================================
 // FIXED TRANSLATIONS - Smart Clean
 // ============================================================================
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/foundation.dart';
+import 'app_localizations.dart' as legacy_l10n;
 
 typedef I18nErrorReporter =
     void Function(String locale, String key, String? context, String? userId);
@@ -26,7 +29,7 @@ class AppLocalizations {
   String t(String k) {
     final ck = "${locale.languageCode}:$k";
     if (_cache.containsKey(ck)) return _cache[ck]!;
-    final r = _tr(k);
+    final r = _normalizeSpanishText(_normalizeForLocale(_tr(k)));
     _cache[ck] = r;
     return r;
   }
@@ -40,12 +43,121 @@ class AppLocalizations {
     if (r != null && r.isNotEmpty) return r;
     r = _t[l]?[k];
     if (r != null && r.isNotEmpty) return r;
+    final legacyValue = legacy_l10n.AppLocalizations(locale).t(k);
+    if (legacyValue.isNotEmpty && legacyValue != k) return legacyValue;
     if (kAssumeLocaleSupported) {
       debugPrint('[L10N] Missing translation for key "$k" in locale "$l"');
       _missingKeys.add('$l:$k');
       _reportError(l, k);
     }
-    return k;
+    return _humanizeKey(k);
+  }
+
+  String _humanizeKey(String key) {
+    final normalized = key.trim();
+    if (normalized.isEmpty) {
+      return key;
+    }
+    final withSpaces = normalized.replaceAll('_', ' ').replaceAll('.', ' ');
+    final compact = withSpaces.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (compact.isEmpty) {
+      return key;
+    }
+    return compact[0].toUpperCase() + compact.substring(1);
+  }
+
+  String _normalizeForLocale(String value) {
+    var normalized = value;
+    if (normalized.contains('Ã') ||
+        normalized.contains('Â') ||
+        normalized.contains('â')) {
+      try {
+        normalized = utf8.decode(latin1.encode(normalized));
+      } catch (_) {
+        // Keep the original value if the mojibake repair fails.
+      }
+    }
+
+    if (locale.languageCode == 'es') {
+      final replacements = <String, String>{
+        'Contrasena': 'Contraseña',
+        'contrasena': 'contraseña',
+        'Telefono': 'Teléfono',
+        'telefono': 'teléfono',
+        'Sesion': 'Sesión',
+        'sesion': 'sesión',
+        'Codigo': 'Código',
+        'codigo': 'código',
+        'Operacion': 'Operación',
+        'operacion': 'operación',
+        'Pais': 'País',
+        'pais': 'país',
+        'Vehiculo': 'Vehículo',
+        'vehiculo': 'vehículo',
+        'Almacen': 'Almacén',
+        'almacen': 'almacén',
+      };
+      replacements.forEach((from, to) {
+        normalized = normalized.replaceAll(from, to);
+      });
+    }
+    return normalized;
+  }
+
+  String _normalizeSpanishText(String value) {
+    var normalized = value;
+    if (locale.languageCode != 'es') {
+      return normalized;
+    }
+
+    if (normalized.contains('Ã') ||
+        normalized.contains('Â') ||
+        normalized.contains('â')) {
+      try {
+        normalized = utf8.decode(latin1.encode(normalized));
+      } catch (_) {
+        // Keep the original value if the mojibake repair fails.
+      }
+    }
+
+    final replacements = <String, String>{
+      'Contrasena': 'Contraseña',
+      'contrasena': 'contraseña',
+      'Telefono': 'Teléfono',
+      'telefono': 'teléfono',
+      'Sesion': 'Sesión',
+      'sesion': 'sesión',
+      'Codigo': 'Código',
+      'codigo': 'código',
+      'Operacion': 'Operación',
+      'operacion': 'operación',
+      'Pais': 'País',
+      'pais': 'país',
+      'Vehiculo': 'Vehículo',
+      'vehiculo': 'vehículo',
+      'Almacen': 'Almacén',
+      'almacen': 'almacén',
+      'Direccion': 'Dirección',
+      'direccion': 'dirección',
+      'Verificacion': 'Verificación',
+      'verificacion': 'verificación',
+      'Digitos': 'Dígitos',
+      'digitos': 'dígitos',
+      'Invalido': 'Inválido',
+      'invalido': 'inválido',
+      'Auditoria': 'Auditoría',
+      'auditoria': 'auditoría',
+      'Pagina': 'Página',
+      'pagina': 'página',
+      'Ultima': 'Última',
+      'ultima': 'última',
+      'Aun': 'Aún',
+      'aun': 'aún',
+    };
+    replacements.forEach((from, to) {
+      normalized = normalized.replaceAll(from, to);
+    });
+    return normalized;
   }
 
   static void _reportError(String locale, String key) {
@@ -60,6 +172,7 @@ class AppLocalizations {
       'access_client': 'Acceso cliente',
       'access_internal': 'Acceso interno',
       'app_language': 'Idioma de la app',
+      'auth_hero_welcome_back': 'Bienvenido de nuevo',
       'auth_continue_failed': 'No se pudo continuar.',
       'auth_portal_hero_subtitle':
           'Ingresa con tu cuenta para gestionar reservas, entregas y tu perfil.',
@@ -442,6 +555,7 @@ class AppLocalizations {
       'app_language': 'App language',
       'app_name': 'TravelBox',
       'argentina': 'Argentina',
+      'auth_hero_welcome_back': 'Welcome back',
       'auth_continue_failed': 'Could not continue.',
       'auth_portal_hero_subtitle':
           'Sign in to manage reservations, deliveries, and your profile.',

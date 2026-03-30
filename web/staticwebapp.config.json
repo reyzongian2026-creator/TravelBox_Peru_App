@@ -1,0 +1,30 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/icons/*",
+      "/*.css",
+      "/*.gif",
+      "/*.ico",
+      "/*.jpg",
+      "/*.js",
+      "/*.json",
+      "/*.png",
+      "/*.svg",
+      "/*.txt",
+      "/canvaskit/*"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/auth/callback",
+      "rewrite": "/index.html"
+    }
+  ],
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html"
+    }
+  }
+}

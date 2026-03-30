@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 enum SocialAuthProvider { google, facebook }
 
 extension SocialAuthProviderX on SocialAuthProvider {

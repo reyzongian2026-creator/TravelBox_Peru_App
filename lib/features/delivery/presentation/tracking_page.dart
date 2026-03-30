@@ -197,7 +197,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
               urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
                   ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
                   : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.travelbox.peru.app',
+              userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
             ),
             if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
             flutter_map.MarkerLayer(markers: markers),
@@ -253,7 +253,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
               urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
                   ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
                   : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.travelbox.peru.app',
+              userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
             ),
             if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
             flutter_map.MarkerLayer(markers: markers),

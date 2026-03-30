@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/env/app_env.dart';
-import 'deprecated/firebase/travelbox_firebase.dart';
 import 'core/l10n/app_localizations_fixed.dart';
 import 'shared/services/app_error_report_service.dart';
 import 'shared/services/mobile_push_service.dart';
@@ -18,7 +17,6 @@ import 'shared/state/session_token_storage.dart';
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppEnv.validateProductionSafetyOrThrow();
-  await TravelBoxFirebase.initializeIfConfigured();
   await MobilePushService.instance.initialize();
   final prefs = await SharedPreferences.getInstance();
   final tokenStorage = SecureSessionTokenStorage();

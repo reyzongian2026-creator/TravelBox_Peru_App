@@ -10,6 +10,7 @@ import '../../features/auth/presentation/login_page.dart';
 import '../../features/auth/presentation/onboarding_page.dart';
 import '../../features/auth/presentation/password_reset_page.dart';
 import '../../features/auth/presentation/register_page.dart';
+import '../../features/auth/presentation/social_auth_callback_page.dart';
 import '../../features/delivery/presentation/delivery_request_page.dart';
 import '../../features/delivery/presentation/delivery_monitor_page.dart';
 import '../../features/delivery/presentation/tracking_page.dart';
@@ -37,13 +38,23 @@ import '../l10n/app_localizations_fixed.dart';
 import '../../shared/state/session_controller.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final session = ref.watch(sessionControllerProvider);
+  final sessionController = ref.watch(sessionControllerProvider.notifier);
+  final refreshListenable = _SessionRouterRefreshListenable(sessionController);
+  ref.onDispose(refreshListenable.dispose);
 
   return GoRouter(
     initialLocation: '/auth',
+    refreshListenable: refreshListenable,
     redirect: (context, state) {
+      final session = ref.read(sessionControllerProvider);
       final path = state.matchedLocation;
-      const publicPaths = {'/auth', '/login', '/register', '/password-reset'};
+      const publicPaths = {
+        '/auth',
+        '/auth/callback',
+        '/login',
+        '/register',
+        '/password-reset',
+      };
       const verificationPath = '/verify-email';
       const onboardingPath = '/onboarding';
       const completionPath = '/profile/complete';
@@ -153,6 +164,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ? AuthPortalMode.register
               : AuthPortalMode.login,
         ),
+      ),
+      GoRoute(
+        path: '/auth/callback',
+        builder: (context, state) => const SocialAuthCallbackPage(),
       ),
       GoRoute(path: '/login', builder: (context, state) => LoginPage()),
       GoRoute(path: '/register', builder: (context, state) => RegisterPage()),
@@ -420,4 +435,20 @@ String _defaultLandingRoute(SessionState session) {
     return '/operator/panel';
   }
   return '/discovery';
+}
+
+class _SessionRouterRefreshListenable extends ChangeNotifier {
+  _SessionRouterRefreshListenable(SessionController controller) {
+    _removeListener = controller.addListener((_) {
+      notifyListeners();
+    }, fireImmediately: false);
+  }
+
+  late final void Function() _removeListener;
+
+  @override
+  void dispose() {
+    _removeListener();
+    super.dispose();
+  }
 }

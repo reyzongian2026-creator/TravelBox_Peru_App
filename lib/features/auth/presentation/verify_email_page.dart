@@ -183,9 +183,5 @@ class _VerifyEmailPageState extends ConsumerState<VerifyEmailPage> {
 
   Future<void> _exitToLogin() async {
     await ref.read(sessionControllerProvider.notifier).signOut();
-    if (!mounted) {
-      return;
-    }
-    context.go('/login');
   }
 }
