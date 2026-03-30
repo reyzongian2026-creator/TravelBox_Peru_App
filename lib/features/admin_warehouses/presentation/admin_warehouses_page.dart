@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart' as latlong_pkg;
@@ -17,8 +18,8 @@ import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/state/warehouse_catalog_sync.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
+import '../../../shared/utils/image_upload_validator.dart';
 import '../../../shared/widgets/app_smart_image.dart';
-import '../../incidents/data/evidence_picker.dart';
 import '../../incidents/data/selected_evidence_image.dart';
 import 'warehouse_location_picker_dialog.dart';
 
@@ -659,48 +660,70 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
       );
       return;
     }
-    final image = await pickEvidenceImage();
+    final image = await _pickWarehouseImageFile();
     if (image == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No se pudo leer la imagen seleccionada. Prueba con JPG, PNG o WEBP y vuelve a intentarlo.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      if (kIsWeb) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.t('admin_warehouses_photo_upload_web_only'),
-          ),
-        ),
-      );
-      return;
-    }
-
-    final validationError = _validateImageSize(image);
-    if (validationError != null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validationError), backgroundColor: Colors.red),
-      );
       return;
     }
 
     setState(() => _selectedPhoto = image);
   }
 
-  String? _validateImageSize(SelectedEvidenceImage image) {
-    const minSizeBytes = 5 * 1024;
-
-    if (image.bytes.length < minSizeBytes) {
-      return 'La imagen es muy pequena. Tamano minimo: 5KB';
+  Future<SelectedEvidenceImage?> _pickWarehouseImageFile() async {
+    final t = context.l10n.t;
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      withData: true,
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
+    );
+    if (result == null || result.files.isEmpty) {
+      return null;
     }
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      if (!mounted) {
+        return null;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.l10n.t('no_se_pudo_leer_la_imagen_seleccionada'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+    final validationMessage = await validateSelectedImageForUpload(
+      bytes: bytes,
+      t: t,
+    );
+    if (validationMessage != null) {
+      if (!mounted) {
+        return null;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(validationMessage), backgroundColor: Colors.red),
+      );
+      return null;
+    }
+    final extension = (file.extension ?? '').toLowerCase().trim();
+    return SelectedEvidenceImage(
+      filename: file.name,
+      mimeType: _guessMimeType(extension),
+      bytes: bytes,
+    );
+  }
 
-    return null;
+  String _guessMimeType(String extension) {
+    return switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'jpg' || 'jpeg' => 'image/jpeg',
+      _ => 'image/jpeg',
+    };
   }
 
   void _clearPhotoSelection() {
