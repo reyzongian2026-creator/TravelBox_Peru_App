@@ -13,6 +13,7 @@ import 'package:latlong2/latlong.dart' as latlong_pkg;
 import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
+import '../../../core/theme/brand_tokens.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';
@@ -88,10 +89,10 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
     final itemGap = responsive.itemGap;
     final cardPadding = responsive.cardPadding;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final controlSurface = isDark ? const Color(0xFF111827) : Colors.white;
+    final controlSurface = isDark ? const Color(0xFF1B1718) : Colors.white;
     final controlBorder = isDark
-        ? const Color(0xFF273449)
-        : const Color(0xFFDCEAF0);
+        ? const Color(0xFF4A3934)
+        : TravelBoxBrand.border;
 
     return AppShellScaffold(
       title: l10n.t('discover_title_nearby'),
@@ -143,8 +144,16 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
               padding: EdgeInsets.all(cardPadding),
               decoration: BoxDecoration(
                 color: controlSurface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: controlBorder),
+                boxShadow: [
+                  if (!isDark)
+                    BoxShadow(
+                      color: const Color(0x164C2512),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                ],
               ),
               child: Column(
                 children: [
@@ -212,7 +221,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                                 onPressed: () => _locateUser(context),
                                 style: FilledButton.styleFrom(
                                   minimumSize: const Size(0, 42),
-                                  backgroundColor: const Color(0xFF0B8B8C),
+                                  backgroundColor: TravelBoxBrand.primaryBlue,
                                   foregroundColor: Colors.white,
                                 ),
                                 icon: const Icon(Icons.my_location_outlined),
@@ -243,7 +252,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
                               onPressed: () => _locateUser(context),
                               style: FilledButton.styleFrom(
                                 minimumSize: const Size(0, 42),
-                                backgroundColor: const Color(0xFF0B8B8C),
+                                backgroundColor: TravelBoxBrand.primaryBlue,
                                 foregroundColor: Colors.white,
                               ),
                               icon: const Icon(Icons.my_location_outlined),
@@ -490,12 +499,15 @@ class _DiscoveryHero extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0E8E8E), Color(0xFF38A7D1)],
-              ),
-              borderRadius: BorderRadius.circular(20),
+              gradient: TravelBoxBrand.discoveryGradient,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.14),
+                  blurRadius: 24,
+                  offset: const Offset(0, 14),
+                ),
+              ],
             ),
             child: Row(
               children: [
@@ -632,11 +644,11 @@ class _CityCarouselCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBackground = selected
-        ? (isDark ? const Color(0xFF173B49) : const Color(0xFFEAF7FB))
-        : (isDark ? const Color(0xFF111827) : Colors.white);
+        ? (isDark ? const Color(0xFF3A2621) : const Color(0xFFF3E4D2))
+        : (isDark ? const Color(0xFF1B1718) : Colors.white);
     final borderColor = selected
-        ? const Color(0xFF0B8B8C)
-        : (isDark ? const Color(0xFF334155) : const Color(0xFFD9E8EF));
+        ? TravelBoxBrand.copper
+        : (isDark ? const Color(0xFF4A3934) : TravelBoxBrand.border);
     final titleColor = isDark
         ? const Color(0xFFF8FAFC)
         : const Color(0xFF17212F);
@@ -647,15 +659,23 @@ class _CityCarouselCard extends StatelessWidget {
     return SizedBox(
       width: 188,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: cardBackground,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: borderColor, width: selected ? 1.6 : 1),
+            boxShadow: [
+              if (!isDark)
+                BoxShadow(
+                  color: const Color(0x124C2512),
+                  blurRadius: 12,
+                  offset: const Offset(0, 8),
+                ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -868,9 +888,12 @@ class _NearestWarehouseCard extends StatelessWidget {
         : const Color(0xFF334155);
     final tourism = PeruTourismCatalog.forCity(info.warehouse.city);
     return Card(
-      color: isDark ? const Color(0xFF15363A) : const Color(0xFFE8F7F5),
+      color: isDark ? const Color(0xFF2B201D) : const Color(0xFFF4E7D9),
       child: ListTile(
-        leading: const Icon(Icons.near_me_outlined, color: Color(0xFF0B8B8C)),
+        leading: Icon(
+          Icons.near_me_outlined,
+          color: TravelBoxBrand.terracotta,
+        ),
         title: Text(
           context.l10n.t('almacen_mas_cercano'),
           style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
@@ -892,6 +915,8 @@ class _NearestWarehouseCard extends StatelessWidget {
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, 40),
               padding: const EdgeInsets.symmetric(horizontal: 12),
+              backgroundColor: TravelBoxBrand.primaryBlue,
+              foregroundColor: Colors.white,
             ),
             child: Text(context.l10n.t('ver')),
           ),

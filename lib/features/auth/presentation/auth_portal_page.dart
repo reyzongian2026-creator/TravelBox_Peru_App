@@ -358,11 +358,11 @@ class _AuthPanel extends StatelessWidget {
       desktop: 20,
     );
     final headlineColor = isDark
-        ? const Color(0xFFE2E8F0)
-        : const Color(0xFF1C2434);
+        ? const Color(0xFFF6ECDE)
+        : TravelBoxBrand.ink;
     final descriptionColor = isDark
-        ? Colors.white.withValues(alpha: 0.68)
-        : Colors.black.withValues(alpha: 0.36);
+        ? Colors.white.withValues(alpha: 0.72)
+        : TravelBoxBrand.textMuted;
     return Form(
       key: loginFormKey,
       autovalidateMode: showValidation

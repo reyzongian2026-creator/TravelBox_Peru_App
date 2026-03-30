@@ -217,20 +217,20 @@ class AuthSplitScaffold extends StatelessWidget {
 
                     return Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                        borderRadius: BorderRadius.circular(30),
+                        color: isDark ? const Color(0xFF171112) : TravelBoxBrand.mist,
+                        borderRadius: BorderRadius.circular(36),
                         border: Border.all(
                           color: isDark
-                              ? const Color(0xFF273449)
+                              ? const Color(0xFF4A3934)
                               : TravelBoxBrand.border,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
-                              alpha: isDark ? 0.24 : 0.06,
+                              alpha: isDark ? 0.28 : 0.09,
                             ),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
+                            blurRadius: 36,
+                            offset: const Offset(0, 16),
                           ),
                         ],
                       ),
@@ -320,11 +320,56 @@ class AuthHeroPanel extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: TravelBoxBrand.brandGradient,
+        gradient: TravelBoxBrand.heroGradient,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.14),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
+          ),
+        ],
       ),
       child: Stack(
         children: [
           Positioned.fill(child: CustomPaint(painter: _AuthHeroPainter())),
+          Positioned(
+            right: compact ? -20 : -28,
+            bottom: compact ? -24 : -30,
+            child: Container(
+              width: compact ? 150 : 210,
+              height: compact ? 150 : 210,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            left: compact ? 10 : 16,
+            top: compact ? 54 : 66,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? 10 : 12,
+                vertical: compact ? 5 : 6,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.14),
+                ),
+              ),
+              child: Text(
+                compact ? 'Peru travel storage' : 'Storage para viajeros en Peru',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: compact ? 10 : 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+          ),
           if (showGuardianBear)
             Positioned(
               right: compact ? 8 : 14,
@@ -364,9 +409,9 @@ class AuthHeroPanel extends StatelessWidget {
                     label.toUpperCase(),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.86),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.4,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
                     ),
                   ),
                 ],
@@ -376,8 +421,9 @@ class AuthHeroPanel extends StatelessWidget {
                 context.l10n.t('auth_hero_welcome_back'),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.95),
-                  fontSize: compact ? 22 : 32,
+                  fontSize: compact ? 19 : 28,
                   fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
                 ),
               ),
               const SizedBox(height: 8),
@@ -385,28 +431,33 @@ class AuthHeroPanel extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: compact ? 34 : 58,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
-                  height: 0.98,
+                  fontSize: compact ? 34 : 54,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.8,
+                  height: 0.94,
                 ),
               ),
               const SizedBox(height: 10),
               Container(
-                width: 54,
+                width: compact ? 62 : 82,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF7D67F), Color(0xFFFFE6B0)],
+                  ),
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
               const SizedBox(height: 14),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: compact ? 12 : 13,
-                  height: 1.45,
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: compact ? 260 : 360),
+                child: Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: compact ? 12 : 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
               if (!compact) const SizedBox(height: 24),
@@ -429,11 +480,19 @@ class AuthLineField extends StatelessWidget {
     return Container(
       height: 52,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFD),
-        borderRadius: BorderRadius.circular(10),
+        color: isDark ? const Color(0xFF1D1718) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF273449) : TravelBoxBrand.border,
+          color: isDark ? const Color(0xFF4A3934) : TravelBoxBrand.border,
         ),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: const Color(0x144C2512),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
+        ],
       ),
       child: Row(
         children: [
@@ -442,8 +501,12 @@ class AuthLineField extends StatelessWidget {
             height: double.infinity,
             margin: const EdgeInsets.only(right: 10),
             decoration: BoxDecoration(
-              color: TravelBoxBrand.primaryBlue,
-              borderRadius: BorderRadius.circular(10),
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [TravelBoxBrand.terracotta, TravelBoxBrand.copper],
+              ),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
           Expanded(
@@ -476,17 +539,17 @@ class AuthStripeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = onPressed == null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = filled ? AuthUi.actionColor : Colors.white;
+    final background = filled ? TravelBoxBrand.primaryBlue : Colors.white;
     final foreground = filled
         ? Colors.white
-        : (isDark ? const Color(0xFFE2E8F0) : const Color(0xFF1C2434));
+        : (isDark ? const Color(0xFFF2E9DE) : TravelBoxBrand.ink);
     final borderColor = filled
-        ? AuthUi.actionColor
-        : (isDark ? const Color(0xFF273449) : TravelBoxBrand.border);
+        ? TravelBoxBrand.primaryBlue
+        : (isDark ? const Color(0xFF4A3934) : TravelBoxBrand.border);
     final iconBg = filled
         ? Colors.white.withValues(alpha: 0.16)
-        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF2F5FD));
-    final iconColor = filled ? Colors.white : AuthUi.actionColor;
+        : (isDark ? const Color(0xFF2A2021) : const Color(0xFFF7EFE5));
+    final iconColor = filled ? Colors.white : TravelBoxBrand.terracotta;
 
     return Opacity(
       opacity: disabled ? 0.55 : 1,
@@ -498,10 +561,11 @@ class AuthStripeButton extends StatelessWidget {
           child: Ink(
             height: 52,
             decoration: BoxDecoration(
+              gradient: filled ? TravelBoxBrand.discoveryGradient : null,
               color: filled
-                  ? background
-                  : (isDark ? const Color(0xFF111827) : background),
-              borderRadius: BorderRadius.circular(14),
+                  ? null
+                  : (isDark ? const Color(0xFF1C1617) : background),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(color: borderColor),
             ),
             child: Row(
@@ -525,7 +589,7 @@ class AuthStripeButton extends StatelessWidget {
                     style: TextStyle(
                       color: foreground,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.1,
+                      letterSpacing: 0.15,
                     ),
                   ),
                 ),
@@ -542,9 +606,9 @@ class _AuthHeroPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.11)
+      ..color = Colors.white.withValues(alpha: 0.08)
       ..strokeWidth = 1;
-    const step = 42.0;
+    const step = 36.0;
     for (double x = 0; x <= size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
     }
@@ -553,45 +617,56 @@ class _AuthHeroPainter extends CustomPainter {
     }
 
     final topWave = Path()
-      ..moveTo(0, size.height * 0.15)
+      ..moveTo(0, size.height * 0.18)
       ..quadraticBezierTo(
-        size.width * 0.2,
-        size.height * 0.32,
-        size.width * 0.42,
-        size.height * 0.18,
+        size.width * 0.22,
+        size.height * 0.34,
+        size.width * 0.46,
+        size.height * 0.16,
       )
-      ..quadraticBezierTo(size.width * 0.72, 0, size.width, size.height * 0.14)
+      ..quadraticBezierTo(
+        size.width * 0.74,
+        size.height * -0.02,
+        size.width,
+        size.height * 0.12,
+      )
       ..lineTo(size.width, 0)
       ..lineTo(0, 0)
       ..close();
     canvas.drawPath(
       topWave,
-      Paint()..color = Colors.white.withValues(alpha: 0.14),
+      Paint()..color = const Color(0x20F4C98A),
     );
 
     final bottomWave = Path()
-      ..moveTo(0, size.height * 0.9)
+      ..moveTo(0, size.height * 0.92)
       ..quadraticBezierTo(
-        size.width * 0.16,
-        size.height * 0.72,
-        size.width * 0.36,
-        size.height * 0.86,
+        size.width * 0.15,
+        size.height * 0.73,
+        size.width * 0.34,
+        size.height * 0.84,
       )
       ..quadraticBezierTo(
-        size.width * 0.72,
-        size.height * 1.02,
+        size.width * 0.52,
+        size.height * 0.96,
+        size.width * 0.67,
+        size.height * 0.82,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.82,
+        size.height * 0.71,
         size.width,
-        size.height * 0.84,
+        size.height * 0.85,
       )
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
     canvas.drawPath(
       bottomWave,
-      Paint()..color = Colors.black.withValues(alpha: 0.08),
+      Paint()..color = Colors.black.withValues(alpha: 0.12),
     );
 
-    final dotPaint = Paint()..color = Colors.white.withValues(alpha: 0.23);
+    final dotPaint = Paint()..color = Colors.white.withValues(alpha: 0.2);
     canvas.drawCircle(
       Offset(size.width * 0.08, size.height * 0.28),
       16,
@@ -609,11 +684,11 @@ class _AuthHeroPainter extends CustomPainter {
     );
 
     final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
+      ..color = Colors.white.withValues(alpha: 0.16)
       ..strokeWidth = 1.4;
     canvas.drawLine(
-      Offset(size.width * 0.44, size.height * 0.12),
-      Offset(size.width * 0.82, size.height * 0.36),
+      Offset(size.width * 0.44, size.height * 0.16),
+      Offset(size.width * 0.82, size.height * 0.55),
       linePaint,
     );
     canvas.drawLine(

@@ -66,11 +66,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       desktop: 38,
     );
     final headlineColor = isDark
-        ? const Color(0xFFE2E8F0)
-        : const Color(0xFF2948B0);
+        ? const Color(0xFFF6ECDE)
+        : TravelBoxBrand.ink;
     final descriptionColor = isDark
-        ? Colors.white.withValues(alpha: 0.68)
-        : Colors.black.withValues(alpha: 0.35);
+        ? Colors.white.withValues(alpha: 0.72)
+        : TravelBoxBrand.textMuted;
 
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       final success = previous?.isLoading == true && next.hasValue;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/peru_tourism_catalog.dart';
+import '../../core/theme/brand_tokens.dart';
 
 class PeruFlatScene extends StatelessWidget {
   const PeruFlatScene({
@@ -28,9 +29,9 @@ class PeruFlatScene extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFE7F5FA), Color(0xFFF2F9FF)],
+          colors: [Color(0xFFF7EEE0), Color(0xFFF8F5ED)],
         ),
-        border: Border.all(color: const Color(0xFFD1E4EE)),
+        border: Border.all(color: TravelBoxBrand.border),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -48,7 +49,7 @@ class PeruFlatScene extends StatelessWidget {
                   width: sunSize,
                   height: sunSize,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFF8C24D),
+                    color: TravelBoxBrand.sand,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -60,7 +61,7 @@ class PeruFlatScene extends StatelessWidget {
                 child: Container(
                   height: constraints.maxHeight * 0.24,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD7E5F0),
+                    color: const Color(0xFFDCC7AF),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -72,7 +73,7 @@ class PeruFlatScene extends StatelessWidget {
                 child: Container(
                   height: constraints.maxHeight * 0.22,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC8DCEE),
+                    color: const Color(0xFFC7D7D4),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -84,7 +85,7 @@ class PeruFlatScene extends StatelessWidget {
                 child: Container(
                   height: constraints.maxHeight * 0.26,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8EFF5),
+                    color: const Color(0xFFE9DED0),
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -94,7 +95,7 @@ class PeruFlatScene extends StatelessWidget {
                 bottom: constraints.maxHeight * 0.19,
                 child: Icon(
                   icon,
-                  color: const Color(0xFF1D6F90),
+                  color: TravelBoxBrand.primaryBlue,
                   size: landmarkSize,
                 ),
               ),
@@ -123,7 +124,7 @@ class PeruFlatScene extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: const Color(0xFF1B3A4B),
+                        color: TravelBoxBrand.ink,
                         fontWeight: FontWeight.w700,
                         fontSize: isCompact ? 9 : 12,
                       ),
@@ -164,7 +165,7 @@ class _RouteProgressStrip extends StatelessWidget {
                 child: Container(
                   height: compact ? 3 : 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF90AEC5),
+                    color: const Color(0xFFAF9E8D),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -177,7 +178,7 @@ class _RouteProgressStrip extends StatelessWidget {
                     width: markerSize,
                     height: markerSize,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF3D7EA6),
+                      color: TravelBoxBrand.terracotta,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -189,9 +190,9 @@ class _RouteProgressStrip extends StatelessWidget {
                   bottom: 0,
                   child: Row(
                     children: const [
-                      Icon(Icons.person, color: Color(0xFF3D7EA6), size: 14),
+                      Icon(Icons.person, color: TravelBoxBrand.terracotta, size: 14),
                       SizedBox(width: 1),
-                      Icon(Icons.luggage, color: Color(0xFF3D7EA6), size: 13),
+                      Icon(Icons.luggage, color: TravelBoxBrand.primaryBlue, size: 13),
                     ],
                   ),
                 ),
