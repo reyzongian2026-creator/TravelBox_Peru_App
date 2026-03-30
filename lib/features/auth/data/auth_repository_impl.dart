@@ -164,7 +164,9 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     try {
-      final entraResult = await _entraClientAuthService.signIn(SocialAuthProvider.microsoft);
+      final entraResult = await _entraClientAuthService.signIn(
+        SocialAuthProvider.microsoft,
+      );
 
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/entra/social',
@@ -315,6 +317,46 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<EmailVerificationResult> requestRealEmailCompletion({
+    required String email,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/auth/real-email/request',
+        data: {'email': email.trim()},
+      );
+      final data = response.data ?? <String, dynamic>{};
+      return EmailVerificationResult(
+        emailVerified: data['emailVerified'] as bool? ?? false,
+        message:
+            data['message']?.toString() ??
+            'Te enviamos un codigo para verificar tu correo.',
+        verificationCodePreview: data['verificationCodePreview']?.toString(),
+      );
+    } on DioException catch (error) {
+      if (!_canUseMockFallbackForError(error)) {
+        throw AppException.fromDioError(error);
+      }
+      _warnMockFallback('requestRealEmailCompletion', error);
+      return const EmailVerificationResult(
+        emailVerified: false,
+        message: 'Verification code generated in mock mode.',
+        verificationCodePreview: '123456',
+      );
+    } catch (error) {
+      if (!_allowStrictMockFallback) {
+        throw AppException.fromError(error);
+      }
+      _warnMockFallback('requestRealEmailCompletion', error);
+      return const EmailVerificationResult(
+        emailVerified: false,
+        message: 'Verification code generated in mock mode.',
+        verificationCodePreview: '123456',
+      );
+    }
+  }
+
+  @override
   Future<PasswordResetResult> requestPasswordReset({
     required String email,
   }) async {
@@ -394,7 +436,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<EmailChangeResult> initiateEmailChange({required String newEmail}) async {
+  Future<EmailChangeResult> initiateEmailChange({
+    required String newEmail,
+  }) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/email-change/initiate',
@@ -403,7 +447,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final data = response.data ?? <String, dynamic>{};
       return EmailChangeResult(
         success: data['success'] as bool? ?? true,
-        message: data['message']?.toString() ?? 'Verification code sent to new email.',
+        message:
+            data['message']?.toString() ??
+            'Verification code sent to new email.',
         expiresAtIso: data['expiresAt']?.toString(),
       );
     } on DioException catch (error) {
@@ -435,10 +481,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         '/auth/email-change/verify',
-        data: {
-          'code': code.trim(),
-          'newEmail': newEmail.trim(),
-        },
+        data: {'code': code.trim(), 'newEmail': newEmail.trim()},
       );
       final data = response.data ?? <String, dynamic>{};
       return EmailChangeResult(

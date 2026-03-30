@@ -57,16 +57,16 @@ class _SocialAuthCallbackPageState
         throw const FormatException('Missing session fields');
       }
 
-      final user = AppUser.fromJson(
-        Map<String, dynamic>.from(rawUser),
-      );
+      final user = AppUser.fromJson(Map<String, dynamic>.from(rawUser));
 
-      await ref.read(sessionControllerProvider.notifier).signIn(
+      await ref
+          .read(sessionControllerProvider.notifier)
+          .signIn(
             user: user,
             accessToken: accessToken,
             refreshToken: refreshToken,
-            pendingVerificationCode:
-                decoded['verificationCodePreview']?.toString(),
+            pendingVerificationCode: decoded['verificationCodePreview']
+                ?.toString(),
           );
       if (!mounted) return;
       context.go(_postAuthRoute(ref.read(sessionControllerProvider)));
@@ -90,6 +90,7 @@ class _SocialAuthCallbackPageState
   }
 
   String _postAuthRoute(SessionState session) {
+    if (session.needsRealEmailCompletion) return '/complete-social-email';
     if (session.needsEmailVerification) return '/verify-email';
     if (session.needsOnboarding) return '/onboarding';
     if (session.needsProfileCompletion) return '/profile/complete';

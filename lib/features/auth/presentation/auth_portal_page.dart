@@ -263,6 +263,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   }
 
   String _postAuthRoute(SessionState session) {
+    if (session.needsRealEmailCompletion) return '/complete-social-email';
     if (session.needsEmailVerification) return '/verify-email';
     if (session.needsOnboarding) return '/onboarding';
     if (session.needsProfileCompletion) return '/profile/complete';
@@ -357,9 +358,7 @@ class _AuthPanel extends StatelessWidget {
       desktopSmall: 20,
       desktop: 20,
     );
-    final headlineColor = isDark
-        ? const Color(0xFFF6ECDE)
-        : TravelBoxBrand.ink;
+    final headlineColor = isDark ? const Color(0xFFF6ECDE) : TravelBoxBrand.ink;
     final descriptionColor = isDark
         ? Colors.white.withValues(alpha: 0.72)
         : TravelBoxBrand.textMuted;
@@ -572,7 +571,8 @@ class _AuthPanel extends StatelessWidget {
                         onTap: authState.isLoading ? null : onGoogleLogin,
                       ),
                     ),
-                  if (showGoogleLogin && (showFacebookLogin || showMicrosoftLogin))
+                  if (showGoogleLogin &&
+                      (showFacebookLogin || showMicrosoftLogin))
                     const SizedBox(height: 8),
                   if (showFacebookLogin)
                     SizedBox(
@@ -607,7 +607,8 @@ class _AuthPanel extends StatelessWidget {
                         onTap: authState.isLoading ? null : onGoogleLogin,
                       ),
                     ),
-                  if (showGoogleLogin && (showFacebookLogin || showMicrosoftLogin))
+                  if (showGoogleLogin &&
+                      (showFacebookLogin || showMicrosoftLogin))
                     const SizedBox(width: 8),
                   if (showFacebookLogin)
                     Expanded(

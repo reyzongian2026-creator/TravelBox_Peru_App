@@ -80,6 +80,7 @@ class AppUser {
     this.vehiclePlate,
     this.profilePhotoPath,
     this.emailVerified = true,
+    this.requiresRealEmailCompletion = false,
     this.profileCompleted = true,
     this.emailChangeRemaining = 3,
     this.phoneChangeRemaining = 3,
@@ -91,6 +92,7 @@ class AppUser {
     this.country = '',
     this.documentType,
     this.documentNumber,
+    this.pendingRealEmail,
     this.secondaryDocumentType,
     this.secondaryDocumentNumber,
     this.emergencyContactName,
@@ -114,6 +116,7 @@ class AppUser {
   final String? vehiclePlate;
   final String? profilePhotoPath;
   final bool emailVerified;
+  final bool requiresRealEmailCompletion;
   final bool profileCompleted;
   final int emailChangeRemaining;
   final int phoneChangeRemaining;
@@ -125,6 +128,7 @@ class AppUser {
   final String country;
   final String? documentType;
   final String? documentNumber;
+  final String? pendingRealEmail;
   final String? secondaryDocumentType;
   final String? secondaryDocumentNumber;
   final String? emergencyContactName;
@@ -148,6 +152,7 @@ class AppUser {
     String? vehiclePlate,
     String? profilePhotoPath,
     bool? emailVerified,
+    bool? requiresRealEmailCompletion,
     bool? profileCompleted,
     int? emailChangeRemaining,
     int? phoneChangeRemaining,
@@ -159,6 +164,7 @@ class AppUser {
     String? country,
     String? documentType,
     String? documentNumber,
+    String? pendingRealEmail,
     String? secondaryDocumentType,
     String? secondaryDocumentNumber,
     String? emergencyContactName,
@@ -182,6 +188,8 @@ class AppUser {
       vehiclePlate: vehiclePlate ?? this.vehiclePlate,
       profilePhotoPath: profilePhotoPath ?? this.profilePhotoPath,
       emailVerified: emailVerified ?? this.emailVerified,
+      requiresRealEmailCompletion:
+          requiresRealEmailCompletion ?? this.requiresRealEmailCompletion,
       profileCompleted: profileCompleted ?? this.profileCompleted,
       emailChangeRemaining: emailChangeRemaining ?? this.emailChangeRemaining,
       phoneChangeRemaining: phoneChangeRemaining ?? this.phoneChangeRemaining,
@@ -194,6 +202,7 @@ class AppUser {
       country: country ?? this.country,
       documentType: documentType ?? this.documentType,
       documentNumber: documentNumber ?? this.documentNumber,
+      pendingRealEmail: pendingRealEmail ?? this.pendingRealEmail,
       secondaryDocumentType:
           secondaryDocumentType ?? this.secondaryDocumentType,
       secondaryDocumentNumber:
@@ -224,6 +233,7 @@ class AppUser {
       'vehiclePlate': vehiclePlate,
       'profilePhotoPath': profilePhotoPath,
       'emailVerified': emailVerified,
+      'requiresRealEmailCompletion': requiresRealEmailCompletion,
       'profileCompleted': profileCompleted,
       'emailChangeRemaining': emailChangeRemaining,
       'phoneChangeRemaining': phoneChangeRemaining,
@@ -235,6 +245,7 @@ class AppUser {
       'country': country,
       'documentType': documentType,
       'documentNumber': documentNumber,
+      'pendingRealEmail': pendingRealEmail,
       'secondaryDocumentType': secondaryDocumentType,
       'secondaryDocumentNumber': secondaryDocumentNumber,
       'emergencyContactName': emergencyContactName,
@@ -254,18 +265,23 @@ class AppUser {
           firstName,
           lastName,
         ].where((value) => value != null && value.isNotEmpty).join(' ').trim();
+    final resolvedEmail = _readString(json, ['email']) ?? '';
+    final authProvider = _readString(json, ['authProvider']) ?? 'LOCAL';
+    final inferredRealEmailCompletion =
+        authProvider.trim().toUpperCase() == 'FACEBOOK' &&
+        resolvedEmail.trim().toLowerCase().endsWith('@social.inkavoy.pe');
 
     return AppUser(
       id: json['id']?.toString() ?? '',
       name: resolvedName.isEmpty ? 'Usuario InkaVoy' : resolvedName,
-      email: _readString(json, ['email']) ?? '',
+      email: resolvedEmail,
       role: _parseUserRole(roleValue),
       firstName: firstName ?? '',
       lastName: lastName ?? '',
       phone: _readString(json, ['phone']) ?? '',
       nationality: _readString(json, ['nationality']) ?? '',
       preferredLanguage: _readString(json, ['preferredLanguage']) ?? 'es',
-      authProvider: _readString(json, ['authProvider']) ?? 'LOCAL',
+      authProvider: authProvider,
       managedByAdmin: _readBool(json, ['managedByAdmin'], fallback: false),
       canSelfEditProfile: _readBool(json, [
         'canSelfEditProfile',
@@ -273,6 +289,9 @@ class AppUser {
       vehiclePlate: _readString(json, ['vehiclePlate']),
       profilePhotoPath: _readString(json, ['profilePhotoPath', 'photoPath']),
       emailVerified: _readBool(json, ['emailVerified'], fallback: true),
+      requiresRealEmailCompletion: _readBool(json, [
+        'requiresRealEmailCompletion',
+      ], fallback: inferredRealEmailCompletion),
       profileCompleted: _readBool(json, ['profileCompleted'], fallback: true),
       emailChangeRemaining: _readInt(json, [
         'emailChangeRemaining',
@@ -290,6 +309,7 @@ class AppUser {
       country: _readString(json, ['country', 'countryName']) ?? '',
       documentType: _readString(json, ['documentType']),
       documentNumber: _readString(json, ['documentNumber']),
+      pendingRealEmail: _readString(json, ['pendingRealEmail']),
       secondaryDocumentType: _readString(json, ['secondaryDocumentType']),
       secondaryDocumentNumber: _readString(json, ['secondaryDocumentNumber']),
       emergencyContactName: _readString(json, ['emergencyContactName']),

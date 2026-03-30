@@ -6,6 +6,7 @@ import '../../features/admin_dashboard/presentation/admin_shell_page.dart';
 import '../../features/admin_incidents/presentation/admin_incidents_page.dart';
 import '../../features/admin_reservations/presentation/admin_reservations_page.dart';
 import '../../features/auth/presentation/auth_portal_page.dart';
+import '../../features/auth/presentation/complete_social_email_page.dart';
 import '../../features/auth/presentation/login_page.dart';
 import '../../features/auth/presentation/onboarding_page.dart';
 import '../../features/auth/presentation/password_reset_page.dart';
@@ -55,12 +56,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         '/register',
         '/password-reset',
       };
+      const realEmailPath = '/complete-social-email';
       const verificationPath = '/verify-email';
       const onboardingPath = '/onboarding';
       const completionPath = '/profile/complete';
 
       if (!session.isAuthenticated && !publicPaths.contains(path)) {
         return '/login';
+      }
+
+      if (session.isAuthenticated && session.needsRealEmailCompletion) {
+        if (path != realEmailPath) {
+          return realEmailPath;
+        }
+        return null;
       }
 
       if (session.isAuthenticated && session.needsEmailVerification) {
@@ -88,6 +97,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           (publicPaths.contains(path) ||
               path == onboardingPath ||
               path == verificationPath ||
+              path == realEmailPath ||
               path == completionPath)) {
         return _defaultLandingRoute(session);
       }
@@ -154,6 +164,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
+        path: '/complete-social-email',
+        builder: (context, state) => const CompleteSocialEmailPage(),
+      ),
+      GoRoute(
         path: '/onboarding',
         builder: (context, state) => OnboardingPage(),
       ),
@@ -192,11 +206,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/warehouse/:warehouseId/ratings',
         builder: (context, state) {
-          final warehouseId = int.tryParse(state.pathParameters['warehouseId'] ?? '');
+          final warehouseId = int.tryParse(
+            state.pathParameters['warehouseId'] ?? '',
+          );
           final warehouseName = state.uri.queryParameters['name'] ?? '';
           if (warehouseId == null) {
             return Scaffold(
-              body: Center(child: Text(context.l10n.t('error_invalid_warehouse_id'))),
+              body: Center(
+                child: Text(context.l10n.t('error_invalid_warehouse_id')),
+              ),
             );
           }
           return WarehouseRatingsPage(

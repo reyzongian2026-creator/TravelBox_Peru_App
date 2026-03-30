@@ -70,6 +70,10 @@ abstract class AuthRepository {
 
   Future<EmailVerificationResult> resendVerification();
 
+  Future<EmailVerificationResult> requestRealEmailCompletion({
+    required String email,
+  });
+
   Future<PasswordResetResult> requestPasswordReset({required String email});
 
   Future<PasswordResetResult> confirmPasswordReset({

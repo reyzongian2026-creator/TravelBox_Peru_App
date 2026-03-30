@@ -67,6 +67,8 @@ class SessionState {
   bool get isCourier => user?.role.isCourier ?? false;
   bool get isSupport => user?.role.isSupport ?? false;
   bool get canAccessAdmin => user?.role.canAccessBackoffice ?? false;
+  bool get needsRealEmailCompletion =>
+      isAuthenticated && (user?.requiresRealEmailCompletion ?? false);
   bool get needsEmailVerification =>
       isAuthenticated && !(user?.emailVerified ?? true);
   bool get needsProfileCompletion =>
@@ -349,7 +351,12 @@ class SessionController extends StateNotifier<SessionState> {
     final currentUser = state.user;
     if (currentUser == null) return;
     state = state.copyWith(
-      user: currentUser.copyWith(emailVerified: true),
+      user: currentUser.copyWith(
+        email: currentUser.pendingRealEmail ?? currentUser.email,
+        emailVerified: true,
+        requiresRealEmailCompletion: false,
+        pendingRealEmail: null,
+      ),
       pendingVerificationCode: null,
     );
     await _persist();
