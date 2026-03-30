@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/layout/responsive_layout.dart';
 import '../../../../core/l10n/app_localizations_fixed.dart';
 import '../../../../core/theme/brand_tokens.dart';
+import '../../../../shared/widgets/travelbox_logo.dart';
 import 'auth_teddy_animation.dart';
 
 class AuthUi {
@@ -44,9 +45,9 @@ class AuthPageScaffold extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFF060E1C),
-                    Color(0xFF0B1220),
-                    Color(0xFF111827),
+                    Color(0xFF0E152A),
+                    Color(0xFF121A31),
+                    Color(0xFF172039),
                   ],
                 )
               : AuthUi.backgroundGradient,
@@ -87,10 +88,10 @@ class AuthCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : Colors.white,
+        color: isDark ? const Color(0xFF151A30) : Colors.white,
         borderRadius: BorderRadius.circular(AuthUi.cardRadius),
         border: Border.all(
-          color: isDark ? const Color(0xFF273449) : TravelBoxBrand.border,
+          color: isDark ? const Color(0xFF2B3550) : TravelBoxBrand.border,
         ),
         boxShadow: [
           BoxShadow(
@@ -217,11 +218,11 @@ class AuthSplitScaffold extends StatelessWidget {
 
                     return Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF171112) : TravelBoxBrand.mist,
+                        color: isDark ? const Color(0xFF11182D) : TravelBoxBrand.mist,
                         borderRadius: BorderRadius.circular(36),
                         border: Border.all(
                           color: isDark
-                              ? const Color(0xFF4A3934)
+                              ? const Color(0xFF2B3550)
                               : TravelBoxBrand.border,
                         ),
                         boxShadow: [
@@ -241,10 +242,10 @@ class AuthSplitScaffold extends StatelessWidget {
                             flex: 6,
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(
-                                20,
-                                20,
-                                20,
-                                20,
+                                18,
+                                18,
+                                18,
+                                18,
                               ),
                               child: AuthHeroPanel(
                                 label: heroLabel,
@@ -271,10 +272,10 @@ class AuthSplitScaffold extends StatelessWidget {
                               ),
                               child: AuthCard(
                                 padding: const EdgeInsets.fromLTRB(
+                                  30,
                                   28,
-                                  26,
+                                  30,
                                   28,
-                                  26,
                                 ),
                                 child: formChild,
                               ),
@@ -316,7 +317,7 @@ class AuthHeroPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(compact ? 18 : 28),
+      padding: EdgeInsets.all(compact ? 18 : 30),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -346,7 +347,7 @@ class AuthHeroPanel extends StatelessWidget {
           ),
           Positioned(
             left: compact ? 10 : 16,
-            top: compact ? 54 : 66,
+            top: compact ? 56 : 72,
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: compact ? 10 : 12,
@@ -360,11 +361,11 @@ class AuthHeroPanel extends StatelessWidget {
                 ),
               ),
               child: Text(
-                compact ? 'Peru travel storage' : 'Storage para viajeros en Peru',
+                compact ? 'Plataforma operativa' : 'Almacenaje y operaciones para viajeros',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: Colors.white.withValues(alpha: 0.92),
                   fontSize: compact ? 10 : 11,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -385,33 +386,11 @@ class AuthHeroPanel extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    label.toUpperCase(),
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.86),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
+                  Flexible(
+                    child: TravelBoxLogo(
+                      compact: compact,
+                      darkBackground: true,
+                      showSubtitle: false,
                     ),
                   ),
                 ],
@@ -421,9 +400,9 @@ class AuthHeroPanel extends StatelessWidget {
                 context.l10n.t('auth_hero_welcome_back'),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.95),
-                  fontSize: compact ? 19 : 28,
+                  fontSize: compact ? 16 : 20,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0.1,
                 ),
               ),
               const SizedBox(height: 8),
@@ -431,19 +410,19 @@ class AuthHeroPanel extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: compact ? 34 : 54,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.8,
-                  height: 0.94,
+                  fontSize: compact ? 30 : 46,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  height: 0.96,
                 ),
               ),
               const SizedBox(height: 10),
               Container(
-                width: compact ? 62 : 82,
-                height: 6,
+                width: compact ? 72 : 88,
+                height: 5,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFF7D67F), Color(0xFFFFE6B0)],
+                    colors: [Color(0xFFFFFFFF), Color(0xFFD6E4FF)],
                   ),
                   borderRadius: BorderRadius.circular(999),
                 ),

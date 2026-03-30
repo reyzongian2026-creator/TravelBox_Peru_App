@@ -14,22 +14,22 @@ class AppTheme {
       onSurfaceVariant: TravelBoxBrand.textBody,
       error: Color(0xFFB42318),
     );
-    final baseText = GoogleFonts.manropeTextTheme();
+    final baseText = GoogleFonts.interTextTheme();
 
     return _themeFrom(scheme: scheme, textTheme: baseText, isDark: false);
   }
 
   static ThemeData get darkTheme {
     const scheme = ColorScheme.dark(
-      primary: Color(0xFF5EA4B0),
-      secondary: Color(0xFFD59A62),
-      tertiary: Color(0xFFD4745E),
-      surface: Color(0xFF191414),
-      onSurface: Color(0xFFF7F1E7),
-      onSurfaceVariant: Color(0xFFD7CBBE),
+      primary: Color(0xFF7AA2FF),
+      secondary: Color(0xFF9BB4FF),
+      tertiary: Color(0xFF56CCFF),
+      surface: Color(0xFF151A30),
+      onSurface: Color(0xFFF3F6FF),
+      onSurfaceVariant: Color(0xFFB3BED9),
       error: Color(0xFFF87171),
     );
-    final baseText = GoogleFonts.manropeTextTheme(
+    final baseText = GoogleFonts.interTextTheme(
       ThemeData(brightness: Brightness.dark).textTheme,
     );
 
@@ -41,16 +41,16 @@ class AppTheme {
     required TextTheme textTheme,
     required bool isDark,
   }) {
-    final surface = isDark ? const Color(0xFF1E1818) : Colors.white;
-    final fieldFill = isDark ? const Color(0xFF221C1C) : TravelBoxBrand.surfaceSoft;
+    final surface = isDark ? const Color(0xFF151A30) : Colors.white;
+    final fieldFill = isDark ? const Color(0xFF1A213A) : const Color(0xFFF7F9FC);
     final borderColor = isDark
-        ? const Color(0xFF4A3D39)
+        ? const Color(0xFF29324D)
         : TravelBoxBrand.border;
-    final scaffold = isDark ? const Color(0xFF130F10) : TravelBoxBrand.surface;
+    final scaffold = isDark ? const Color(0xFF101426) : TravelBoxBrand.surface;
     final warmShadow = isDark
         ? const Color(0x55000000)
-        : const Color(0x1A4C2512);
-    final headlineFont = GoogleFonts.marcellus();
+        : const Color(0x163564C8);
+    final headlineFont = GoogleFonts.inter();
 
     return ThemeData(
       useMaterial3: true,
@@ -66,8 +66,8 @@ class AppTheme {
         titleTextStyle: headlineFont.copyWith(
           color: scheme.onSurface,
           fontSize: 24,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.2,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.2,
         ),
       ),
       textTheme: textTheme.copyWith(
@@ -75,27 +75,30 @@ class AppTheme {
           fontSize: 52,
           height: 1,
           color: scheme.onSurface,
+          fontWeight: FontWeight.w800,
         ),
         displayMedium: headlineFont.copyWith(
           fontSize: 44,
           height: 1,
           color: scheme.onSurface,
+          fontWeight: FontWeight.w800,
         ),
         headlineMedium: headlineFont.copyWith(
           fontSize: 34,
           height: 1.05,
           color: scheme.onSurface,
+          fontWeight: FontWeight.w800,
         ),
         headlineSmall: textTheme.headlineSmall?.copyWith(
           fontFamily: headlineFont.fontFamily,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.1,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.15,
           color: scheme.onSurface,
         ),
         titleLarge: textTheme.titleLarge?.copyWith(
           fontFamily: headlineFont.fontFamily,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.1,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.1,
           color: scheme.onSurface,
         ),
         titleMedium: textTheme.titleMedium?.copyWith(
@@ -121,7 +124,7 @@ class AppTheme {
         shadowColor: warmShadow,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           side: BorderSide(color: borderColor),
         ),
       ),
@@ -175,7 +178,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(0, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
@@ -187,7 +190,7 @@ class AppTheme {
           side: BorderSide(color: borderColor),
           foregroundColor: scheme.onSurface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(fontWeight: FontWeight.w800),
         ),
@@ -219,7 +222,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? const Color(0xFF2B201C) : const Color(0xFF2F231E),
+        backgroundColor: isDark ? const Color(0xFF19213D) : const Color(0xFF243B7A),
         contentTextStyle: const TextStyle(color: Colors.white),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
