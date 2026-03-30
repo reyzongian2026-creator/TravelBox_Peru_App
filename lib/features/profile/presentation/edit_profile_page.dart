@@ -314,18 +314,36 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               controller: _addressController,
               decoration: InputDecoration(labelText: l10n.t('address')),
               textInputAction: TextInputAction.next,
+              validator: (value) {
+                if (value != null && value.isNotEmpty && value.trim().length < 3) {
+                  return l10n.t('validation_min_length').replaceAll('{min}', '3');
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _cityController,
               decoration: InputDecoration(labelText: l10n.t('city')),
               textInputAction: TextInputAction.next,
+              validator: (value) {
+                if (value != null && value.isNotEmpty && value.trim().length < 2) {
+                  return l10n.t('validation_min_length').replaceAll('{min}', '2');
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _countryController,
               decoration: InputDecoration(labelText: l10n.t('country')),
               textInputAction: TextInputAction.next,
+              validator: (value) {
+                if (value != null && value.isNotEmpty && value.trim().length < 2) {
+                  return l10n.t('validation_min_length').replaceAll('{min}', '2');
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(

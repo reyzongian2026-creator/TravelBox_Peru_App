@@ -1294,7 +1294,7 @@ class _SummaryCard extends StatelessWidget {
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: Container(
-          decoration: colors != null
+          decoration: colors != null && colors!.length >= 2
               ? BoxDecoration(
                   gradient: LinearGradient(
                     colors: colors!
@@ -1309,7 +1309,7 @@ class _SummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (colors != null)
+              if (colors != null && colors!.isNotEmpty)
                 Container(
                   width: 4,
                   height: 16,

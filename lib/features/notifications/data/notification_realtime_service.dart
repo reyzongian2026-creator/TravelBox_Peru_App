@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/state/session_controller.dart';
@@ -135,7 +137,13 @@ class NotificationRealtimeServiceNotifier extends StateNotifier<NotificationReal
                     yield notification;
                     _addRecentNotification(notification);
                   }
-                } catch (_) {}
+                } catch (e) {
+                  // Log SSE parse errors for debugging instead of silently swallowing
+                  assert(() {
+                    debugPrint('SSE parse error: $e for data: $jsonStr');
+                    return true;
+                  }());
+                }
               }
             }
           }
@@ -166,16 +174,9 @@ class NotificationRealtimeServiceNotifier extends StateNotifier<NotificationReal
     try {
       final trimmed = jsonStr.trim();
       if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-        int braceCount = 0;
-        for (int i = 0; i < trimmed.length; i++) {
-          if (trimmed[i] == '{') braceCount++;
-          if (trimmed[i] == '}') {
-            braceCount--;
-            if (braceCount == 0) {
-              return {};
-            }
-          }
-        }
+        final decoded = Uri.decodeFull(trimmed);
+        final result = (const JsonDecoder().convert(decoded)) as Map<String, dynamic>?;
+        return result;
       }
     } catch (_) {}
     return null;
@@ -200,6 +201,27 @@ class NotificationRealtimeServiceNotifier extends StateNotifier<NotificationReal
     state = state.copyWith(isConnecting: true, error: null);
 
     try {
+      final session = _ref.read(sessionControllerProvider);
+      final token = session.accessToken;
+
+      if (token == null || token.isEmpty) {
+        state = state.copyWith(isConnecting: false, error: 'No auth token available');
+        return;
+      }
+
+      _sseSubscription?.cancel();
+      _sseSubscription = notificationStream.listen(
+        (_) {},
+        onError: (e) {
+          state = state.copyWith(isConnected: false, error: e.toString());
+          _scheduleReconnect();
+        },
+        onDone: () {
+          state = state.copyWith(isConnected: false);
+          _scheduleReconnect();
+        },
+      );
+
       state = state.copyWith(isConnected: true, isConnecting: false);
     } catch (e) {
       state = state.copyWith(

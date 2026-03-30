@@ -274,12 +274,13 @@ class DeliveryOrdersRepositoryImpl implements DeliveryOrdersRepository {
   @override
   Future<void> updateDeliveryProgress(String orderId, String status, {String? notes}) async {
     try {
+      final payload = <String, dynamic>{
+        'status': status,
+        'notes': notes,
+      }..removeWhere((key, value) => value == null);
       await _dio.patch<Map<String, dynamic>>(
         '/delivery-orders/$orderId/progress',
-        data: {
-          'status': status,
-          'notes': ?notes,
-        },
+        data: payload,
       );
     } on DioException catch (e) {
       throw AppException.fromDioError(e);

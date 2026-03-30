@@ -280,11 +280,13 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
       _selectedReservationId = null;
       return null;
     }
-    final selected = items.where(
-      (item) => item.reservationId == _selectedReservationId,
-    );
-    if (selected.isNotEmpty) {
-      return selected.first;
+    final currentId = _selectedReservationId;
+    if (currentId != null) {
+      for (final item in items) {
+        if (item.reservationId == currentId) {
+          return item;
+        }
+      }
     }
     _selectedReservationId = items.first.reservationId;
     return items.first;

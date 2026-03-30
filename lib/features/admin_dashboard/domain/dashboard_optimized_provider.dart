@@ -129,6 +129,9 @@ class DashboardStatsNotifier extends StateNotifier<AsyncValue<Map<String, dynami
       );
 
       if (response.statusCode == 304) {
+        if (cached != null) {
+          state = AsyncValue.data(cached);
+        }
         return;
       }
 
@@ -182,15 +185,15 @@ final dashboardKPIsProvider = Provider<Map<String, dynamic>?>((ref) {
 
 final dashboardTopWarehousesProvider = Provider<List<Map<String, dynamic>>>((ref) {
   final stats = ref.watch(dashboardStatsProvider);
-  return (stats.valueOrNull?['topWarehouses'] as List?)?.cast() ?? [];
+  return (stats.valueOrNull?['topWarehouses'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 });
 
 final dashboardTopCitiesProvider = Provider<List<Map<String, dynamic>>>((ref) {
   final stats = ref.watch(dashboardStatsProvider);
-  return (stats.valueOrNull?['topCities'] as List?)?.cast() ?? [];
+  return (stats.valueOrNull?['topCities'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 });
 
 final dashboardTrendProvider = Provider<List<Map<String, dynamic>>>((ref) {
   final stats = ref.watch(dashboardStatsProvider);
-  return (stats.valueOrNull?['trend'] as List?)?.cast() ?? [];
+  return (stats.valueOrNull?['trend'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 });

@@ -528,7 +528,9 @@ class AuthRepositoryImpl implements AuthRepository {
     if (username.isEmpty) {
       return 'InkaVoy User';
     }
-    return username[0].toUpperCase() + username.substring(1);
+    return username.length == 1
+        ? username.toUpperCase()
+        : username[0].toUpperCase() + username.substring(1);
   }
 
   AuthSession _mockSession({

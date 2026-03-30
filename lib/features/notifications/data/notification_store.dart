@@ -58,8 +58,8 @@ class NotificationStore extends StateNotifier<AsyncValue<List<AppNotification>>>
       if (state.valueOrNull != null && !showLoading) {
         final existing = state.valueOrNull!;
         final newIds = notifications.map((n) => n.id).toSet();
-        final uniqueNew = notifications.where((n) => !newIds.contains(n.id)).toList();
-        state = AsyncValue.data([...notifications, ...existing, ...uniqueNew]);
+        final uniqueExisting = existing.where((n) => !newIds.contains(n.id)).toList();
+        state = AsyncValue.data([...notifications, ...uniqueExisting]);
       } else {
         state = AsyncValue.data(notifications);
       }
