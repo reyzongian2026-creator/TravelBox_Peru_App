@@ -416,7 +416,13 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       if (kDebugMode) print('No data in response');
       return null;
     }
-    final possibleKeys = ['imageUrl', 'coverImageUrl', 'url', 'image', 'photoUrl'];
+    final possibleKeys = [
+      'imageUrl',
+      'coverImageUrl',
+      'url',
+      'image',
+      'photoUrl',
+    ];
     for (final key in possibleKeys) {
       if (data.containsKey(key) && data[key] != null) {
         final url = data[key].toString();
@@ -426,7 +432,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
         }
       }
     }
-    if (kDebugMode) print('No imageUrl found in response. Keys: ${data.keys.toList()}');
+    if (kDebugMode) {
+      print('No imageUrl found in response. Keys: ${data.keys.toList()}');
+    }
     return null;
   }
 
@@ -436,7 +444,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       builder: (context) => AlertDialog(
         title: Text(context.l10n.t('desactivar_almacen')),
         content: Text(
-          context.l10n.t('warehouse_deactivation_confirmation').replaceAll('{name}', warehouse.name),
+          context.l10n
+              .t('warehouse_deactivation_confirmation')
+              .replaceAll('{name}', warehouse.name),
         ),
         actions: [
           TextButton(
@@ -516,7 +526,10 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
 
   void _showError(Object error) {
     if (!mounted) return;
-    final message = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+    final message = AppErrorFormatter.readable(
+      error,
+      (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -648,7 +661,16 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     }
     final image = await pickEvidenceImage();
     if (image == null) {
-      if (!mounted || kIsWeb) return;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudo leer la imagen seleccionada. Prueba con JPG, PNG o WEBP y vuelve a intentarlo.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      if (kIsWeb) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -663,10 +685,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     if (validationError != null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(validationError),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(validationError), backgroundColor: Colors.red),
       );
       return;
     }
@@ -694,6 +713,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     final citiesAsync = ref.watch(adminCitiesProvider);
     final zonesAsync = ref.watch(adminZonesProvider(_selectedCityId ?? 0));
     final isEditing = widget.initial != null;
+    final hasExistingUploadedPhoto =
+        widget.initial?.imageUrl != null &&
+        !isGeneratedWarehouseImageUrl(widget.initial!.imageUrl);
     final media = MediaQuery.of(context);
     final maxDialogWidth = media.size.width >= 760
         ? 560.0
@@ -742,7 +764,9 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                       ? (widget.initial?.name ?? context.l10n.t('app_name'))
                       : _nameController.text.trim(),
                   cityName:
-                      _selectedCityName ?? widget.initial?.cityName ?? context.l10n.t('peru'),
+                      _selectedCityName ??
+                      widget.initial?.cityName ??
+                      context.l10n.t('peru'),
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -755,8 +779,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                           : null,
                       icon: const Icon(Icons.photo_camera_back_outlined),
                       label: Text(
-                        widget.initial?.imageUrl != null ||
-                                _selectedPhoto != null
+                        hasExistingUploadedPhoto || _selectedPhoto != null
                             ? context.l10n.t('cambiar_foto')
                             : context.l10n.t('subir_foto'),
                       ),
@@ -938,7 +961,8 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                   data: (zones) => citiesAsync.when(
                     data: (cities) {
                       final cityName =
-                          _findCity(cities, _selectedCityId)?.name ?? context.l10n.t('peru');
+                          _findCity(cities, _selectedCityId)?.name ??
+                          context.l10n.t('peru');
                       final zoneName = _findZone(zones, _selectedZoneId)?.name;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1010,8 +1034,10 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                           'admin_warehouses_opening_label',
                         ),
                       ),
-                      validator: (value) =>
-                          FormValidators.hour(value, label: context.l10n.t('opening_time_label')),
+                      validator: (value) => FormValidators.hour(
+                        value,
+                        label: context.l10n.t('opening_time_label'),
+                      ),
                     ),
                     TextFormField(
                       controller: _closeHourController,
@@ -1137,7 +1163,8 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
         ),
         if (isEditing && _selectedPhoto != null)
           FilledButton.tonalIcon(
-            onPressed: () => Navigator.of(context).pop(_buildPhotoOnlyFormData()),
+            onPressed: () =>
+                Navigator.of(context).pop(_buildPhotoOnlyFormData()),
             icon: const Icon(Icons.photo_camera_back_outlined),
             label: const Text('Guardar solo foto'),
           ),
@@ -1257,23 +1284,50 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
     return WarehouseFormData(
       cityId: _selectedCityId ?? initial.cityId,
       zoneId: _selectedZoneId ?? initial.zoneId,
-      name: _nameController.text.trim().isEmpty ? initial.name : _nameController.text.trim(),
-      address: _addressController.text.trim().isEmpty ? initial.address : _addressController.text.trim(),
+      name: _nameController.text.trim().isEmpty
+          ? initial.name
+          : _nameController.text.trim(),
+      address: _addressController.text.trim().isEmpty
+          ? initial.address
+          : _addressController.text.trim(),
       imageUrl: initial.imageUrl,
-      latitude: FormValidators.parseDouble(_latitudeController.text) ?? initial.latitude,
-      longitude: FormValidators.parseDouble(_longitudeController.text) ?? initial.longitude,
-      capacity: int.tryParse(_capacityController.text.trim()) ?? initial.capacity,
-      openHour: _openHourController.text.trim().isEmpty ? initial.openHour : _openHourController.text.trim(),
-      closeHour: _closeHourController.text.trim().isEmpty ? initial.closeHour : _closeHourController.text.trim(),
+      latitude:
+          FormValidators.parseDouble(_latitudeController.text) ??
+          initial.latitude,
+      longitude:
+          FormValidators.parseDouble(_longitudeController.text) ??
+          initial.longitude,
+      capacity:
+          int.tryParse(_capacityController.text.trim()) ?? initial.capacity,
+      openHour: _openHourController.text.trim().isEmpty
+          ? initial.openHour
+          : _openHourController.text.trim(),
+      closeHour: _closeHourController.text.trim().isEmpty
+          ? initial.closeHour
+          : _closeHourController.text.trim(),
       rules: _rulesController.text.trim(),
       active: _active,
-      pricePerHourSmall: _parseNonNegativeMoney(_pricePerHourSmallController.text) ?? initial.pricePerHourSmall,
-      pricePerHourMedium: _parseNonNegativeMoney(_pricePerHourMediumController.text) ?? initial.pricePerHourMedium,
-      pricePerHourLarge: _parseNonNegativeMoney(_pricePerHourLargeController.text) ?? initial.pricePerHourLarge,
-      pricePerHourExtraLarge: _parseNonNegativeMoney(_pricePerHourExtraLargeController.text) ?? initial.pricePerHourExtraLarge,
-      pickupFee: _parseNonNegativeMoney(_pickupFeeController.text) ?? initial.pickupFee,
-      dropoffFee: _parseNonNegativeMoney(_dropoffFeeController.text) ?? initial.dropoffFee,
-      insuranceFee: _parseNonNegativeMoney(_insuranceFeeController.text) ?? initial.insuranceFee,
+      pricePerHourSmall:
+          _parseNonNegativeMoney(_pricePerHourSmallController.text) ??
+          initial.pricePerHourSmall,
+      pricePerHourMedium:
+          _parseNonNegativeMoney(_pricePerHourMediumController.text) ??
+          initial.pricePerHourMedium,
+      pricePerHourLarge:
+          _parseNonNegativeMoney(_pricePerHourLargeController.text) ??
+          initial.pricePerHourLarge,
+      pricePerHourExtraLarge:
+          _parseNonNegativeMoney(_pricePerHourExtraLargeController.text) ??
+          initial.pricePerHourExtraLarge,
+      pickupFee:
+          _parseNonNegativeMoney(_pickupFeeController.text) ??
+          initial.pickupFee,
+      dropoffFee:
+          _parseNonNegativeMoney(_dropoffFeeController.text) ??
+          initial.dropoffFee,
+      insuranceFee:
+          _parseNonNegativeMoney(_insuranceFeeController.text) ??
+          initial.insuranceFee,
       selectedPhoto: _selectedPhoto,
       photoOnly: true,
     );
@@ -1449,14 +1503,15 @@ class _WarehousePhotoPreview extends StatelessWidget {
     );
 
     Widget child;
+    final hasUploadedPhotoUrl =
+        imageUrl != null &&
+        imageUrl!.isNotEmpty &&
+        !isGeneratedWarehouseImageUrl(imageUrl);
     if (selectedBytes != null) {
       child = Stack(
         fit: StackFit.expand,
         children: [
-          Image.memory(
-            selectedBytes!,
-            fit: BoxFit.cover,
-          ),
+          Image.memory(selectedBytes!, fit: BoxFit.cover),
           Positioned(
             bottom: 8,
             right: 8,
@@ -1466,22 +1521,22 @@ class _WarehousePhotoPreview extends StatelessWidget {
                 color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
               ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        context.l10n.t('cambiar_foto'),
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    context.l10n.t('cambiar_foto'),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
+                ],
+              ),
             ),
           ),
         ],
       );
-    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
+    } else if (hasUploadedPhotoUrl) {
       child = AppSmartImage(
         source: imageUrl,
         height: previewHeight,
@@ -1666,9 +1721,7 @@ class _WarehouseRegistryTableState extends State<_WarehouseRegistryTable> {
                             ],
                           ),
                         ),
-                        DataCell(
-                          Text(item.id),
-                        ),
+                        DataCell(Text(item.id)),
                         DataCell(Text(item.name)),
                         DataCell(
                           Text('${item.cityName}/${item.zoneName ?? '-'}'),
@@ -2052,7 +2105,14 @@ class WarehouseFormData {
 }
 
 String? _readWarehouseImageUrl(Map<String, dynamic> json) {
-  const keys = ['imageUrl', 'photoUrl', 'coverImageUrl', 'image', 'imagen', 'url'];
+  const keys = [
+    'imageUrl',
+    'photoUrl',
+    'coverImageUrl',
+    'image',
+    'imagen',
+    'url',
+  ];
   for (final key in keys) {
     final value = json[key]?.toString();
     if (value != null && value.trim().isNotEmpty) {
