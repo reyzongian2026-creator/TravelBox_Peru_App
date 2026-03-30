@@ -1,5 +1,6 @@
 class AppEnv {
-  static const _localApiBaseUrl = 'http://localhost:8080/api/v1';
+  static const _localApiHost = 'localhost';
+  static const _localApiPort = '8080';
   static const _productionApiBaseUrl = 'https://api.inkavoy.pe/api/v1';
 
   static const appEnvironment = String.fromEnvironment(
@@ -9,7 +10,7 @@ class AppEnv {
 
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: _localApiBaseUrl,
+    defaultValue: '',
   );
 
   static String get resolvedApiBaseUrl {
@@ -125,7 +126,7 @@ class AppEnv {
   static String _fallbackApiBaseUrlForCurrentHost() {
     final currentHost = Uri.base.host.trim().toLowerCase();
     if (_isLocalHost(currentHost) || currentHost.isEmpty) {
-      return _localApiBaseUrl;
+      return 'http://$_localApiHost:$_localApiPort/api/v1';
     }
     return _productionApiBaseUrl;
   }
