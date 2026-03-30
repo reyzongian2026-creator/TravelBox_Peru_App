@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +14,6 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/incident_i18n_codec.dart';
 import '../../../shared/utils/incident_translation_service.dart';
-import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/file_exporter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../reservation/presentation/reservation_providers.dart';
@@ -196,9 +193,6 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                 final resolvedCount = items
                     .where((item) => item.status == 'RESOLVED')
                     .length;
-                final resolvedItems = items
-                    .where((item) => item.status == 'RESOLVED')
-                    .toList();
                 if (items.isEmpty) {
                   return EmptyStateView(
                     message: context.l10n.t('incident_admin_empty_for_filter'),
@@ -255,63 +249,27 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                           runSpacing: itemGap,
                           children: [
                             FilledButton.icon(
-                              onPressed: _saving || resolvedItems.isEmpty
-                                  ? null
-                                  : () => _exportResolvedCsv(resolvedItems),
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(0, 40),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              icon: const Icon(Icons.table_view_outlined),
-                              label: Text(
-                                context.l10n.t('exportar_csv_resueltos'),
-                              ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: _saving || resolvedItems.isEmpty
-                                  ? null
-                                  : () => _exportResolvedPdf(resolvedItems),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size(0, 40),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              icon: Icon(Icons.picture_as_pdf_outlined),
-                              label: Text(
-                                context.l10n.t('exportar_pdf_resueltos'),
-                              ),
-                            ),
-                            FilledButton.icon(
-                              onPressed: _saving
-                                  ? null
-                                  : () => _exportProfessionalPdf(),
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(0, 40),
-                                visualDensity: VisualDensity.compact,
-                                backgroundColor: const Color(0xFF168F64),
-                              ),
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: Text(context.l10n.t('pdf_report')),
-                            ),
-                            FilledButton.icon(
                               onPressed: _saving
                                   ? null
                                   : () => _exportProfessionalExcel(),
                               style: FilledButton.styleFrom(
                                 minimumSize: const Size(0, 40),
                                 visualDensity: VisualDensity.compact,
-                                backgroundColor: const Color(0xFF168F64),
                               ),
-                              icon: const Icon(Icons.table_chart),
+                              icon: const Icon(Icons.table_view_outlined),
                               label: Text(context.l10n.t('excel_report')),
                             ),
-                            if (resolvedItems.isEmpty)
-                              Chip(
-                                label: Text(
-                                  context.l10n.t(
-                                    'incident_admin_no_resolved_in_view',
-                                  ),
-                                ),
+                            OutlinedButton.icon(
+                              onPressed: _saving
+                                  ? null
+                                  : () => _exportProfessionalPdf(),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(0, 40),
+                                visualDensity: VisualDensity.compact,
                               ),
+                              icon: Icon(Icons.picture_as_pdf_outlined),
+                              label: Text(context.l10n.t('pdf_report')),
+                            ),
                           ],
                         ),
                       ),
@@ -660,31 +618,6 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     ).showSnackBar(SnackBar(content: Text(failMessage)));
   }
 
-  Future<void> _exportResolvedCsv(List<AdminIncidentItem> items) async {
-    final success = await downloadTextFile(
-      filename: _buildExportFilename('csv'),
-      content: _buildResolvedCsv(items),
-      mimeType: 'text/csv;charset=utf-8',
-    );
-    if (!mounted) return;
-    _showExportFeedback(
-      success: success,
-      successMessage: context.l10n.t('admin_incidents_csv_generated'),
-    );
-  }
-
-  Future<void> _exportResolvedPdf(List<AdminIncidentItem> items) async {
-    final success = await openPrintPreview(
-      title: context.l10n.t('admin_incidents_pdf_title'),
-      htmlContent: _buildResolvedHtml(items),
-    );
-    if (!mounted) return;
-    _showExportFeedback(
-      success: success,
-      successMessage: context.l10n.t('admin_incidents_print_preview_opened'),
-    );
-  }
-
   Future<void> _exportProfessionalPdf() async {
     setState(() => _saving = true);
     try {
@@ -778,93 +711,6 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     );
   }
 
-  String _buildResolvedCsv(List<AdminIncidentItem> items) {
-    final rows = <List<String>>[
-      [
-        'ticket_id',
-        'reserva_id',
-        'codigo_reserva',
-        'estado_reserva',
-        'almacen',
-        'direccion_almacen',
-        'cliente',
-        'correo_cliente',
-        'detalle',
-        'resolucion',
-      ],
-      ...items.map(
-        (item) => [
-          item.id,
-          item.reservationId,
-          item.reservationCode,
-          item.reservationStatus,
-          item.warehouseName,
-          item.warehouseAddress,
-          item.openedByName,
-          item.openedByEmail,
-          item.cleanDescription,
-          item.cleanResolution,
-        ],
-      ),
-    ];
-
-    return rows.map((row) => row.map(_escapeCsv).join(',')).join('\n');
-  }
-
-  String _escapeCsv(String value) {
-    final normalized = value.replaceAll('\n', ' ').replaceAll('\r', ' ').trim();
-    final escaped = normalized.replaceAll('"', '""');
-    return '"$escaped"';
-  }
-
-  String _buildResolvedHtml(List<AdminIncidentItem> items) {
-    final l10n = context.l10n;
-    final escape = HtmlEscape();
-    final rows = items.map((item) {
-      return '''
-<tr>
-  <td>${escape.convert(item.id)}</td>
-  <td>${escape.convert(item.reservationCode)}</td>
-  <td>${escape.convert(item.warehouseName)}</td>
-  <td>${escape.convert(item.openedByName)}</td>
-  <td>${escape.convert(item.cleanDescription)}</td>
-  <td>${escape.convert(item.cleanResolution.isEmpty ? '-' : item.cleanResolution)}</td>
-</tr>
-''';
-    }).join();
-
-    return '''
-<h1>${escape.convert(l10n.t('admin_incidents_resolved_title'))}</h1>
-<p class="meta">${escape.convert(l10n.t('admin_incidents_generated_on_label'))} ${escape.convert(_exportGeneratedAt())}</p>
-<p class="meta">${escape.convert(l10n.t('admin_incidents_exported_count_label'))}: ${items.length}</p>
-<table>
-  <thead>
-    <tr>
-      <th>${escape.convert(l10n.t('admin_incidents_col_ticket'))}</th>
-      <th>${escape.convert(l10n.t('admin_incidents_col_reservation'))}</th>
-      <th>${escape.convert(l10n.t('admin_incidents_col_warehouse'))}</th>
-      <th>${escape.convert(l10n.t('admin_incidents_col_client'))}</th>
-      <th>${escape.convert(l10n.t('admin_incidents_col_detail'))}</th>
-      <th>${escape.convert(l10n.t('admin_incidents_col_resolution'))}</th>
-    </tr>
-  </thead>
-  <tbody>
-    $rows
-  </tbody>
-</table>
-''';
-  }
-
-  String _buildExportFilename(String extension) {
-    final now = PeruTime.toPeruClock(DateTime.now());
-    final stamp =
-        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-    return 'travelbox_incidencias_resueltas_$stamp.$extension';
-  }
-
-  String _exportGeneratedAt() {
-    return PeruTime.formatDateTime(DateTime.now());
-  }
 }
 
 class _IncidentKpi extends StatelessWidget {

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 
 import '../../../core/layout/responsive_layout.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
@@ -525,33 +526,32 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
     );
     
     try {
-      final dio = Dio();
-      var url = '/api/v1/admin/reservations/export';
-      var params = <String>[];
-      if (search.isNotEmpty) params.add('query=$search');
-      if (status != null) params.add('status=$status');
-      if (params.isNotEmpty) url += '?${params.join('&')}';
-      
+      final dio = ref.read(dioProvider);
       final response = await dio.get<List<int>>(
-        url,
+        '/admin/reservations/export',
+        queryParameters: {
+          if (search.isNotEmpty) 'query': search,
+          if (status != null) 'status': status.name,
+        },
         options: Options(
           responseType: ResponseType.bytes,
           headers: {
-            'Accept': 'text/csv',
+            'Accept':
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           },
         ),
       );
       
       if (response.data != null) {
         final bytes = response.data!;
-        final csvContent = String.fromCharCodes(bytes);
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final filename = 'reservas_export_$timestamp.csv';
+        final filename = 'reservas_export_$timestamp.xlsx';
         
-        final success = await downloadTextFile(
+        final success = await downloadBinaryFile(
           filename: filename,
-          content: csvContent,
-          mimeType: 'text/csv;charset=utf-8',
+          bytes: bytes,
+          mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         );
         
         if (!context.mounted) return;
@@ -559,8 +559,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(success 
-                ? 'Download completed' 
-                : 'Error downloading'),
+                ? 'Excel descargado correctamente'
+                : 'Error al descargar el Excel'),
           ),
         );
       }

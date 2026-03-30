@@ -4,6 +4,18 @@ import 'file_exporter_stub.dart'
 
 bool get fileExportSupported => impl.fileExportSupported;
 
+Future<bool> downloadBinaryFile({
+  required String filename,
+  required List<int> bytes,
+  required String mimeType,
+}) {
+  return impl.downloadBinaryFile(
+    filename: filename,
+    bytes: bytes,
+    mimeType: mimeType,
+  );
+}
+
 Future<bool> downloadTextFile({
   required String filename,
   required String content,

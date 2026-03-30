@@ -14,6 +14,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/utils/file_exporter.dart';
 import '../../../shared/utils/image_upload_validator.dart';
 import '../../../shared/utils/form_validators.dart';
 import '../../../shared/widgets/app_smart_image.dart';
@@ -702,22 +703,65 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     }
   }
 
-  void _exportUsers(BuildContext context, WidgetRef ref) {
-    final repo = ref.read(adminUsersRepositoryProvider);
-    final url = repo.getExportUrl();
+  Future<void> _exportUsers(BuildContext context, WidgetRef ref) async {
     final query = ref.read(adminUsersAppliedSearchProvider);
     final role = ref.read(adminUsersAppliedRoleProvider);
-
-    var fullUrl = url;
-    if (query.isNotEmpty || role != 'ALL') {
-      fullUrl += '?';
-      if (query.isNotEmpty) fullUrl += 'query=$query';
-      if (role != 'ALL') fullUrl += '&role=$role';
-    }
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${context.l10n.t('descargando')}... $fullUrl')),
+      SnackBar(content: Text('${context.l10n.t('descargando')}...')),
     );
+
+    try {
+      final response = await ref.read(dioProvider).get<List<int>>(
+        '/admin/users/export',
+        queryParameters: {
+          if (query.isNotEmpty) 'query': query,
+          if (role != 'ALL') 'role': role,
+        },
+        options: Options(
+          responseType: ResponseType.bytes,
+          headers: {
+            'Accept':
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          },
+        ),
+      );
+
+      final bytes = response.data;
+      if (bytes == null || bytes.isEmpty) {
+        throw StateError('La respuesta del reporte llegó vacía.');
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final success = await downloadBinaryFile(
+        filename: 'usuarios_export_$timestamp.xlsx',
+        bytes: bytes,
+        mimeType:
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Excel descargado correctamente'
+                : 'Error al descargar el Excel',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${context.l10n.t('download_error_prefix')}: ${AppErrorFormatter.readable(e, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key))}',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _toggleActive(AdminUserItem user, bool active) async {

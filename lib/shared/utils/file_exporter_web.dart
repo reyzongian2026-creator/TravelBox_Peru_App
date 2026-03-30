@@ -2,8 +2,27 @@
 
 import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:typed_data';
 
 const bool fileExportSupported = true;
+
+Future<bool> downloadBinaryFile({
+  required String filename,
+  required List<int> bytes,
+  required String mimeType,
+}) async {
+  final blob = html.Blob([Uint8List.fromList(bytes)], mimeType);
+  final url = html.Url.createObjectUrlFromBlob(blob);
+  final anchor = html.AnchorElement(href: url)
+    ..download = filename
+    ..style.display = 'none';
+
+  html.document.body?.children.add(anchor);
+  anchor.click();
+  anchor.remove();
+  html.Url.revokeObjectUrl(url);
+  return true;
+}
 
 Future<bool> downloadTextFile({
   required String filename,
@@ -27,7 +46,6 @@ Future<bool> downloadTextFile({
 Future<bool> downloadFromUrl(String downloadUrl, String filename) async {
   final anchor = html.AnchorElement(href: downloadUrl)
     ..download = filename
-    ..target = '_blank'
     ..style.display = 'none';
   html.document.body?.children.add(anchor);
   anchor.click();

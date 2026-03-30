@@ -41,8 +41,11 @@ class AdminRatingsPage extends ConsumerWidget {
           child: ratingsAsync.when(
             data: (ratings) {
               if (ratings.isEmpty) {
-                return Center(
-                  child: Text(l10n.t('no_ratings_yet')),
+                return Padding(
+                  padding: responsive.pageInsets(top: 0),
+                  child: EmptyStateView(
+                    message: l10n.t('no_ratings_yet'),
+                  ),
                 );
               }
               return ListView.builder(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travelbox_peru_app/core/l10n/app_localizations_fixed.dart';
+import 'package:travelbox_peru_app/core/widgets/state_views.dart';
 import 'package:travelbox_peru_app/features/Rating/data/rating_controller.dart';
 import 'package:travelbox_peru_app/features/Rating/presentation/rating_widgets.dart';
 
@@ -49,7 +50,7 @@ class _WarehouseRatingsPageState extends ConsumerState<WarehouseRatingsPage> {
 
   Widget _buildBody(RatingController controller, AppLocalizations l10n) {
     if (controller.isLoading && controller.ratings.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return LoadingStateView(message: l10n.t('loading'));
     }
 
     return RefreshIndicator(
@@ -120,10 +121,10 @@ class _WarehouseRatingsPageState extends ConsumerState<WarehouseRatingsPage> {
           ),
           const SizedBox(height: 8),
           if (controller.ratings.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Text(l10n.t('rating_no_reviews')),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: EmptyStateView(
+                message: l10n.t('rating_no_reviews'),
               ),
             )
           else
