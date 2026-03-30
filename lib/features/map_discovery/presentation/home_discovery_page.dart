@@ -419,8 +419,7 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
         error: (error, _) => ErrorStateView(
           message: AppErrorFormatter.readable(
             error,
-            (String key, {Map<String, dynamic>? params}) =>
-                l10n.t(key),
+            (String key, {Map<String, dynamic>? params}) => l10n.t(key),
           ),
           onRetry: () => ref.invalidate(discoveryWarehousesProvider),
         ),
@@ -760,7 +759,8 @@ class _MapView extends StatelessWidget {
   Widget build(BuildContext context) {
     final allPoints = [
       ...warehouses.map(
-        (warehouse) => latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
+        (warehouse) =>
+            latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
       ),
       if (userPosition != null)
         latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude),
@@ -776,44 +776,50 @@ class _MapView extends StatelessWidget {
   }
 
   Widget _buildFlutterMap(BuildContext context, latlong_pkg.LatLng center) {
-    final warehouseMarkers = warehouses.map((warehouse) => flutter_map.Marker(
-      point: latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
-      width: 40,
-      height: 40,
-      child: GestureDetector(
-        onTap: () => context.push('/warehouse/${warehouse.id}'),
-        child: const Icon(
-          Icons.location_on,
-          color: Color(0xFF0B8B8C),
-          size: 40,
-        ),
-      ),
-    )).toList();
+    final warehouseMarkers = warehouses
+        .map(
+          (warehouse) => flutter_map.Marker(
+            point: latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
+            width: 40,
+            height: 40,
+            child: GestureDetector(
+              onTap: () => context.push('/warehouse/${warehouse.id}'),
+              child: const Icon(
+                Icons.location_on,
+                color: Color(0xFF0B8B8C),
+                size: 40,
+              ),
+            ),
+          ),
+        )
+        .toList();
 
     if (userPosition != null) {
-      warehouseMarkers.add(flutter_map.Marker(
-        point: latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude),
-        width: 40,
-        height: 40,
-        child: const Icon(
-          Icons.my_location,
-          color: Color(0xFF3B82F6),
-          size: 40,
+      warehouseMarkers.add(
+        flutter_map.Marker(
+          point: latlong_pkg.LatLng(
+            userPosition!.latitude,
+            userPosition!.longitude,
+          ),
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.my_location,
+            color: Color(0xFF3B82F6),
+            size: 40,
+          ),
         ),
-      ));
+      );
     }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: flutter_map.FlutterMap(
-        options: flutter_map.MapOptions(
-          initialCenter: center,
-          initialZoom: 12,
-        ),
+        options: flutter_map.MapOptions(initialCenter: center, initialZoom: 12),
         children: [
           flutter_map.TileLayer(
             urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
-                ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
+                ? 'https://atlas.microsoft.com/map/tile?api-version=2.1&tilesetId=microsoft.base&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
                 : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
           ),
@@ -824,44 +830,50 @@ class _MapView extends StatelessWidget {
   }
 
   Widget _buildGoogleMap(BuildContext context, latlong_pkg.LatLng center) {
-    final warehouseMarkers = warehouses.map((warehouse) => flutter_map.Marker(
-      point: latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
-      width: 40,
-      height: 40,
-      child: GestureDetector(
-        onTap: () => context.push('/warehouse/${warehouse.id}'),
-        child: const Icon(
-          Icons.location_on,
-          color: Color(0xFF0B8B8C),
-          size: 40,
-        ),
-      ),
-    )).toList();
+    final warehouseMarkers = warehouses
+        .map(
+          (warehouse) => flutter_map.Marker(
+            point: latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
+            width: 40,
+            height: 40,
+            child: GestureDetector(
+              onTap: () => context.push('/warehouse/${warehouse.id}'),
+              child: const Icon(
+                Icons.location_on,
+                color: Color(0xFF0B8B8C),
+                size: 40,
+              ),
+            ),
+          ),
+        )
+        .toList();
 
     if (userPosition != null) {
-      warehouseMarkers.add(flutter_map.Marker(
-        point: latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude),
-        width: 40,
-        height: 40,
-        child: const Icon(
-          Icons.my_location,
-          color: Color(0xFF3B82F6),
-          size: 40,
+      warehouseMarkers.add(
+        flutter_map.Marker(
+          point: latlong_pkg.LatLng(
+            userPosition!.latitude,
+            userPosition!.longitude,
+          ),
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.my_location,
+            color: Color(0xFF3B82F6),
+            size: 40,
+          ),
         ),
-      ));
+      );
     }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: flutter_map.FlutterMap(
-        options: flutter_map.MapOptions(
-          initialCenter: center,
-          initialZoom: 12,
-        ),
+        options: flutter_map.MapOptions(initialCenter: center, initialZoom: 12),
         children: [
           flutter_map.TileLayer(
             urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
-                ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
+                ? 'https://atlas.microsoft.com/map/tile?api-version=2.1&tilesetId=microsoft.base&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
                 : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
           ),
@@ -890,10 +902,7 @@ class _NearestWarehouseCard extends StatelessWidget {
     return Card(
       color: isDark ? const Color(0xFF2B201D) : const Color(0xFFF4E7D9),
       child: ListTile(
-        leading: Icon(
-          Icons.near_me_outlined,
-          color: TravelBoxBrand.terracotta,
-        ),
+        leading: Icon(Icons.near_me_outlined, color: TravelBoxBrand.terracotta),
         title: Text(
           context.l10n.t('almacen_mas_cercano'),
           style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
@@ -1111,7 +1120,11 @@ class _WarehouseCard extends StatelessWidget {
                 Consumer(
                   builder: (context, ref, child) {
                     final userCurrency = ref.watch(currencyPreferenceProvider);
-                    final convertedPrice = CurrencyRates.convert(warehouse.priceFromPerHour, CurrencyCode.pen, userCurrency);
+                    final convertedPrice = CurrencyRates.convert(
+                      warehouse.priceFromPerHour,
+                      CurrencyCode.pen,
+                      userCurrency,
+                    );
                     return Text(
                       '${context.l10n.t('discovery_price_from')}: '
                       '${formatCurrency(convertedPrice, userCurrency)}'
