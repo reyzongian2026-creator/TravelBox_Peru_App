@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/theme/brand_tokens.dart';
+import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
@@ -42,6 +44,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   String _teddyAnimation = 'idle';
   double _teddyLookOffsetX = -1;
   Timer? _animationResetTimer;
+  bool _consumingSocialPayload = false;
 
   @override
   void initState() {
@@ -49,6 +52,9 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     _accessMode = _AccessMode.internal;
     _loginEmailFocusNode.addListener(_syncTeddyFromFocus);
     _loginPasswordFocusNode.addListener(_syncTeddyFromFocus);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _consumeSocialCallbackPayloadIfPresent();
+    });
   }
 
   @override
@@ -260,6 +266,82 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     await ref
         .read(authControllerProvider.notifier)
         .signInWithSocial(provider: provider, termsAccepted: true);
+  }
+
+  Future<void> _consumeSocialCallbackPayloadIfPresent() async {
+    if (!mounted || _consumingSocialPayload) {
+      return;
+    }
+    final uri = Uri.base;
+    final payload = uri.queryParameters['payload']?.trim();
+    final error = uri.queryParameters['error']?.trim();
+    if ((payload == null || payload.isEmpty) &&
+        (error == null || error.isEmpty)) {
+      return;
+    }
+
+    _consumingSocialPayload = true;
+    if (error != null && error.isNotEmpty) {
+      _setTeddyAnimation(
+        'fail',
+        resetAfter: const Duration(milliseconds: 1200),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    try {
+      final decoded = _decodeSocialPayload(payload!);
+      final accessToken = decoded['accessToken']?.toString().trim() ?? '';
+      final refreshToken = decoded['refreshToken']?.toString().trim() ?? '';
+      final rawUser = decoded['user'];
+      if (accessToken.isEmpty || refreshToken.isEmpty || rawUser is! Map) {
+        throw const FormatException('Missing session fields');
+      }
+
+      final user = AppUser.fromJson(Map<String, dynamic>.from(rawUser));
+      await ref
+          .read(sessionControllerProvider.notifier)
+          .signIn(
+            user: user,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            pendingVerificationCode: decoded['verificationCodePreview']
+                ?.toString(),
+          );
+      if (!mounted) return;
+      _setTeddyAnimation(
+        'success',
+        resetAfter: const Duration(milliseconds: 900),
+      );
+      context.go(_postAuthRoute(ref.read(sessionControllerProvider)));
+    } catch (_) {
+      if (!mounted) return;
+      _setTeddyAnimation(
+        'fail',
+        resetAfter: const Duration(milliseconds: 1200),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo completar el inicio de sesion social.'),
+        ),
+      );
+    } finally {
+      _consumingSocialPayload = false;
+    }
+  }
+
+  Map<String, dynamic> _decodeSocialPayload(String payload) {
+    final normalized = switch (payload.length % 4) {
+      2 => '$payload==',
+      3 => '$payload=',
+      _ => payload,
+    };
+    final bytes = base64Url.decode(normalized);
+    return jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
   }
 
   String _postAuthRoute(SessionState session) {
