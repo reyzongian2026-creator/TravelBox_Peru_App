@@ -42,7 +42,8 @@ jobs:
           $vault = "kvtravelboxpe"
           $map = @(
             @{ secret = "tbx-azure-client-id"; env = "AZURE_CLIENT_ID"; required = $false },
-            @{ secret = "tbx-azure-tenant-id"; env = "AZURE_TENANT_ID"; required = $false }
+            @{ secret = "tbx-azure-tenant-id"; env = "AZURE_TENANT_ID"; required = $false },
+            @{ secret = "tbx-azure-maps-api-key"; env = "AZURE_MAPS_API_KEY"; required = $false }
           )
 
           foreach ($item in $map) {
@@ -62,8 +63,10 @@ jobs:
       - name: Build Flutter web
         run: |
           flutter build web --release \
+            --dart-define=APP_ENV=prod \
             --dart-define=USE_MOCK_FALLBACK=false \
             --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1 \
+            --dart-define=AZURE_MAPS_API_KEY=${{ env.AZURE_MAPS_API_KEY }} \
             --dart-define=AZURE_CLIENT_ID=${{ env.AZURE_CLIENT_ID }} \
             --dart-define=AZURE_TENANT_ID=${{ env.AZURE_TENANT_ID }}
 
