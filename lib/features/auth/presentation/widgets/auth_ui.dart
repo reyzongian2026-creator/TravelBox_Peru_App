@@ -315,6 +315,9 @@ class AuthHeroPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final badgeText = compact
+        ? 'Operaciones para viajeros'
+        : 'Almacenaje y operaciones para viajeros';
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(compact ? 18 : 30),
@@ -333,44 +336,6 @@ class AuthHeroPanel extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(child: CustomPaint(painter: _AuthHeroPainter())),
-          Positioned(
-            right: compact ? -20 : -28,
-            bottom: compact ? -24 : -30,
-            child: Container(
-              width: compact ? 150 : 210,
-              height: compact ? 150 : 210,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            left: compact ? 10 : 16,
-            top: compact ? 56 : 72,
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: compact ? 10 : 12,
-                vertical: compact ? 5 : 6,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.14),
-                ),
-              ),
-              child: Text(
-                compact ? 'Plataforma operativa' : 'Almacenaje y operaciones para viajeros',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.92),
-                  fontSize: compact ? 10 : 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
-          ),
           if (showGuardianBear)
             Positioned(
               right: compact ? 8 : 14,
@@ -383,19 +348,39 @@ class AuthHeroPanel extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: TravelBoxLogo(
-                      compact: compact,
-                      darkBackground: true,
-                      showSubtitle: false,
-                    ),
-                  ),
-                ],
+              TravelBoxLogo(
+                compact: compact,
+                darkBackground: true,
+                showSubtitle: false,
               ),
-              const Spacer(),
+              SizedBox(height: compact ? 10 : 14),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 10 : 12,
+                  vertical: compact ? 5 : 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontSize: compact ? 10 : 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+              SizedBox(height: compact ? 12 : 18),
+              Expanded(
+                child: _AuthHeroIllustration(compact: compact),
+              ),
+              SizedBox(height: compact ? 14 : 20),
               Text(
                 context.l10n.t('auth_hero_welcome_back'),
                 style: TextStyle(
@@ -443,6 +428,122 @@ class AuthHeroPanel extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AuthHeroIllustration extends StatelessWidget {
+  const _AuthHeroIllustration({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = ClipRRect(
+      borderRadius: BorderRadius.circular(compact ? 18 : 24),
+      child: Image.asset(
+        'assets/branding/travelbox_peru_flat_reference.png',
+        fit: BoxFit.contain,
+        alignment: Alignment.centerLeft,
+      ),
+    );
+
+    return Stack(
+      children: [
+        Positioned(
+          left: compact ? 6 : 14,
+          top: compact ? 16 : 20,
+          child: _AuthFloatingBadge(
+            icon: Icons.inventory_2_outlined,
+            label: 'Equipaje seguro',
+            compact: compact,
+          ),
+        ),
+        Positioned(
+          right: compact ? 4 : 10,
+          top: compact ? 0 : 8,
+          child: _AuthFloatingBadge(
+            icon: Icons.map_outlined,
+            label: 'Rutas y sedes',
+            compact: compact,
+          ),
+        ),
+        Positioned(
+          right: compact ? 6 : 14,
+          bottom: compact ? 30 : 34,
+          child: _AuthFloatingBadge(
+            icon: Icons.badge_outlined,
+            label: 'Check-in rápido',
+            compact: compact,
+          ),
+        ),
+        Positioned.fill(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 0 : 4,
+              compact ? 16 : 24,
+              compact ? 0 : 10,
+              compact ? 10 : 6,
+            ),
+            child: image,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AuthFloatingBadge extends StatelessWidget {
+  const _AuthFloatingBadge({
+    required this.icon,
+    required this.label,
+    required this.compact,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 8 : 10,
+          vertical: compact ? 5 : 6,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: compact ? 14 : 16,
+              color: Colors.white.withValues(alpha: 0.96),
+            ),
+            SizedBox(width: compact ? 5 : 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.94),
+                fontSize: compact ? 10 : 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -584,97 +685,65 @@ class AuthStripeButton extends StatelessWidget {
 class _AuthHeroPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
-      ..strokeWidth = 1;
-    const step = 36.0;
-    for (double x = 0; x <= size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = 0; y <= size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
+    final blobPaintA = Paint()..color = Colors.white.withValues(alpha: 0.07);
+    final blobPaintB = Paint()..color = Colors.white.withValues(alpha: 0.05);
+    final glowPaint = Paint()..color = const Color(0x33A6C8FF);
 
-    final topWave = Path()
-      ..moveTo(0, size.height * 0.18)
-      ..quadraticBezierTo(
-        size.width * 0.22,
-        size.height * 0.34,
-        size.width * 0.46,
-        size.height * 0.16,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.74,
-        size.height * -0.02,
-        size.width,
-        size.height * 0.12,
-      )
-      ..lineTo(size.width, 0)
-      ..lineTo(0, 0)
-      ..close();
-    canvas.drawPath(
-      topWave,
-      Paint()..color = const Color(0x20F4C98A),
-    );
-
-    final bottomWave = Path()
-      ..moveTo(0, size.height * 0.92)
-      ..quadraticBezierTo(
-        size.width * 0.15,
-        size.height * 0.73,
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.5,
+        size.height * 0.1,
         size.width * 0.34,
-        size.height * 0.84,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.52,
-        size.height * 0.96,
-        size.width * 0.67,
-        size.height * 0.82,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.82,
-        size.height * 0.71,
-        size.width,
-        size.height * 0.85,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      bottomWave,
-      Paint()..color = Colors.black.withValues(alpha: 0.12),
+        size.height * 0.24,
+      ),
+      blobPaintA,
+    );
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.06,
+        size.height * 0.34,
+        size.width * 0.36,
+        size.height * 0.28,
+      ),
+      blobPaintB,
+    );
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.36,
+        size.height * 0.56,
+        size.width * 0.28,
+        size.height * 0.18,
+      ),
+      blobPaintA,
     );
 
-    final dotPaint = Paint()..color = Colors.white.withValues(alpha: 0.2);
     canvas.drawCircle(
-      Offset(size.width * 0.08, size.height * 0.28),
-      16,
-      dotPaint,
+      Offset(size.width * 0.22, size.height * 0.45),
+      size.width * 0.045,
+      glowPaint,
     );
     canvas.drawCircle(
-      Offset(size.width * 0.78, size.height * 0.08),
-      18,
-      dotPaint,
+      Offset(size.width * 0.73, size.height * 0.22),
+      size.width * 0.038,
+      glowPaint,
     );
     canvas.drawCircle(
-      Offset(size.width * 0.72, size.height * 0.82),
-      20,
-      dotPaint,
+      Offset(size.width * 0.62, size.height * 0.74),
+      size.width * 0.032,
+      glowPaint,
     );
 
-    final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.16)
-      ..strokeWidth = 1.4;
-    canvas.drawLine(
-      Offset(size.width * 0.44, size.height * 0.16),
-      Offset(size.width * 0.82, size.height * 0.55),
-      linePaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.1, size.height * 0.7),
-      Offset(size.width * 0.28, size.height * 0.58),
-      linePaint,
-    );
+    final mountainPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final mountain = Path()
+      ..moveTo(size.width * 0.58, size.height * 0.9)
+      ..lineTo(size.width * 0.68, size.height * 0.8)
+      ..lineTo(size.width * 0.76, size.height * 0.88)
+      ..lineTo(size.width * 0.84, size.height * 0.76)
+      ..lineTo(size.width * 0.94, size.height * 0.9);
+    canvas.drawPath(mountain, mountainPaint);
   }
 
   @override
