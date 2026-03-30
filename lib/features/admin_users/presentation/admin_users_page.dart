@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -210,6 +211,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
   bool _saving = false;
   String _draftRole = 'ALL';
   bool _draftLatestOnly = true;
+  bool _mobileTopPanelCollapsed = false;
 
   @override
   void initState() {
@@ -244,168 +246,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
       currentRoute: '/admin/users',
       child: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              responsive.horizontalPadding,
-              responsive.verticalPadding,
-              responsive.horizontalPadding,
-              0,
-            ),
-            child: ResponsiveFilterPanel(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (_) => _scheduleFilterApplyFromTyping(),
-                    onSubmitted: (_) => _applyUserFilters(),
-                    decoration: InputDecoration(
-                      labelText: l10n.t('admin_users_search_label'),
-                      prefixIcon: const Icon(Icons.search),
-                    ),
-                  ),
-                  SizedBox(height: itemGap),
-                  if (responsive.isMobile)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        DropdownButtonFormField<String>(
-                          initialValue: _draftRole,
-                          isExpanded: true,
-                          decoration: const InputDecoration(labelText: 'Rol'),
-                          items: _roleItems(context),
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() => _draftRole = value);
-                              _maybeApplyFiltersAfterFirstLoad();
-                            }
-                          },
-                        ),
-                        SizedBox(height: itemGap),
-                        SizedBox(
-                          height: 40,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: [
-                              ChoiceChip(
-                                label: Text(context.l10n.t('solo_ultimo_registro')),
-                                selected: _draftLatestOnly,
-                                visualDensity: VisualDensity.compact,
-                                onSelected: (_) {
-                                  setState(() => _draftLatestOnly = true);
-                                  _maybeApplyFiltersAfterFirstLoad();
-                                },
-                              ),
-                              SizedBox(width: itemGap),
-                              ChoiceChip(
-                                label: Text(context.l10n.t('todos_los_registros')),
-                                selected: !_draftLatestOnly,
-                                visualDensity: VisualDensity.compact,
-                                onSelected: (_) {
-                                  setState(() => _draftLatestOnly = false);
-                                  _maybeApplyFiltersAfterFirstLoad();
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    Wrap(
-                      spacing: itemGap,
-                      runSpacing: itemGap,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: responsive.isTablet ? 260 : 220,
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _draftRole,
-                            isExpanded: true,
-                            decoration: const InputDecoration(labelText: 'Rol'),
-                            items: _roleItems(context),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _draftRole = value);
-                                _maybeApplyFiltersAfterFirstLoad();
-                              }
-                            },
-                          ),
-                        ),
-                        ChoiceChip(
-                          label: Text(context.l10n.t('solo_ultimo_registro')),
-                          selected: _draftLatestOnly,
-                          visualDensity: VisualDensity.compact,
-                          onSelected: (_) {
-                            setState(() => _draftLatestOnly = true);
-                            _maybeApplyFiltersAfterFirstLoad();
-                          },
-                        ),
-                        ChoiceChip(
-                          label: Text(context.l10n.t('todos_los_registros')),
-                          selected: !_draftLatestOnly,
-                          visualDensity: VisualDensity.compact,
-                          onSelected: (_) {
-                            setState(() => _draftLatestOnly = false);
-                            _maybeApplyFiltersAfterFirstLoad();
-                          },
-                        ),
-                      ],
-                    ),
-                  SizedBox(height: itemGap),
-                  ResponsivePageHeaderActions(
-                    actions: [
-                      ResponsiveHeaderAction(
-                        label: context.l10n.t('ver_usuarios'),
-                        icon: Icons.filter_alt_outlined,
-                        onPressed: _saving ? null : _applyUserFilters,
-                        primary: true,
-                      ),
-                      ResponsiveHeaderAction(
-                        label: context.l10n.t('nuevo_usuario'),
-                        icon: Icons.person_add_alt_1_outlined,
-                        onPressed: _saving ? null : () => _openCreateDialog(),
-                        prominentOnTablet: true,
-                      ),
-                      ResponsiveHeaderAction(
-                        label: context.l10n.t('nuevo_operador'),
-                        icon: Icons.badge_outlined,
-                        onPressed: _saving
-                            ? null
-                            : () => _openCreateDialog(presetRoles: const {'OPERATOR'}),
-                      ),
-                      ResponsiveHeaderAction(
-                        label: context.l10n.t('nuevo_courier'),
-                        icon: Icons.delivery_dining_outlined,
-                        onPressed: _saving
-                            ? null
-                            : () => _openCreateDialog(presetRoles: const {'COURIER'}),
-                      ),
-                      ResponsiveHeaderAction(
-                        label: context.l10n.t('recargar'),
-                        icon: Icons.refresh,
-                        onPressed: _saving
-                            ? null
-                            : loadRequested
-                                ? _reloadUsers
-                                : _applyUserFilters,
-                      ),
-                      ResponsiveHeaderAction(
-                        label: l10n.t('exportar'),
-                        icon: Icons.download,
-                        onPressed: () => _exportUsers(context, ref),
-                      ),
-                    ],
-                    mobileVisibleCount: 2,
-                    tabletVisibleCount: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: itemGap),
-          _buildBulkActionBar(context, ref, l10n),
-          _buildPaginationControls(context, ref, l10n),
+          _buildTopControls(context, ref, l10n),
           Expanded(
             child: usersAsync.when(
               data: (items) {
@@ -421,28 +262,32 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                     message: l10n.t('admin_users_empty_filter'),
                   );
                 }
-                return ListView(
-                  padding: responsive.pageInsets(top: 0, bottom: sectionGap),
-                  children: [
-                    _AdminUsersSummary(
-                      items: items,
-                      summary: summaryAsync.asData?.value,
-                    ),
-                    SizedBox(height: sectionGap),
-                    ...items.map(
-                      (user) => Padding(
-                        padding: EdgeInsets.only(bottom: itemGap),
-                        child: _AdminUserCard(
-                          user: user,
-                          saving: _saving,
-                          onToggleActive: (value) => _toggleActive(user, value),
-                          onEdit: () => _openEditDialog(user),
-                          onPassword: () => _openPasswordDialog(user),
-                          onDelete: () => _deleteUser(user),
+                return NotificationListener<ScrollNotification>(
+                  onNotification: (notification) =>
+                      _handleUserListScroll(notification, responsive.isMobile),
+                  child: ListView(
+                    padding: responsive.pageInsets(top: 0, bottom: sectionGap),
+                    children: [
+                      _AdminUsersSummary(
+                        items: items,
+                        summary: summaryAsync.asData?.value,
+                      ),
+                      SizedBox(height: sectionGap),
+                      ...items.map(
+                        (user) => Padding(
+                          padding: EdgeInsets.only(bottom: itemGap),
+                          child: _AdminUserCard(
+                            user: user,
+                            saving: _saving,
+                            onToggleActive: (value) => _toggleActive(user, value),
+                            onEdit: () => _openEditDialog(user),
+                            onPassword: () => _openPasswordDialog(user),
+                            onDelete: () => _deleteUser(user),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               },
               loading: () => const LoadingStateView(),
@@ -456,6 +301,248 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildTopControls(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
+    final responsive = context.responsive;
+    final itemGap = responsive.itemGap;
+    final loadRequested = ref.watch(adminUsersLoadRequestedProvider);
+
+    final panel = Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            responsive.horizontalPadding,
+            responsive.verticalPadding,
+            responsive.horizontalPadding,
+            0,
+          ),
+          child: ResponsiveFilterPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (_) => _scheduleFilterApplyFromTyping(),
+                  onSubmitted: (_) => _applyUserFilters(),
+                  decoration: InputDecoration(
+                    labelText: l10n.t('admin_users_search_label'),
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                ),
+                SizedBox(height: itemGap),
+                if (responsive.isMobile)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        initialValue: _draftRole,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Rol'),
+                        items: _roleItems(context),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _draftRole = value);
+                            _maybeApplyFiltersAfterFirstLoad();
+                          }
+                        },
+                      ),
+                      SizedBox(height: itemGap),
+                      SizedBox(
+                        height: 40,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            ChoiceChip(
+                              label: Text(context.l10n.t('solo_ultimo_registro')),
+                              selected: _draftLatestOnly,
+                              visualDensity: VisualDensity.compact,
+                              onSelected: (_) {
+                                setState(() => _draftLatestOnly = true);
+                                _maybeApplyFiltersAfterFirstLoad();
+                              },
+                            ),
+                            SizedBox(width: itemGap),
+                            ChoiceChip(
+                              label: Text(context.l10n.t('todos_los_registros')),
+                              selected: !_draftLatestOnly,
+                              visualDensity: VisualDensity.compact,
+                              onSelected: (_) {
+                                setState(() => _draftLatestOnly = false);
+                                _maybeApplyFiltersAfterFirstLoad();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  Wrap(
+                    spacing: itemGap,
+                    runSpacing: itemGap,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: responsive.isTablet ? 260 : 220,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _draftRole,
+                          isExpanded: true,
+                          decoration: const InputDecoration(labelText: 'Rol'),
+                          items: _roleItems(context),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _draftRole = value);
+                              _maybeApplyFiltersAfterFirstLoad();
+                            }
+                          },
+                        ),
+                      ),
+                      ChoiceChip(
+                        label: Text(context.l10n.t('solo_ultimo_registro')),
+                        selected: _draftLatestOnly,
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (_) {
+                          setState(() => _draftLatestOnly = true);
+                          _maybeApplyFiltersAfterFirstLoad();
+                        },
+                      ),
+                      ChoiceChip(
+                        label: Text(context.l10n.t('todos_los_registros')),
+                        selected: !_draftLatestOnly,
+                        visualDensity: VisualDensity.compact,
+                        onSelected: (_) {
+                          setState(() => _draftLatestOnly = false);
+                          _maybeApplyFiltersAfterFirstLoad();
+                        },
+                      ),
+                    ],
+                  ),
+                SizedBox(height: itemGap),
+                ResponsivePageHeaderActions(
+                  actions: [
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('ver_usuarios'),
+                      icon: Icons.filter_alt_outlined,
+                      onPressed: _saving ? null : _applyUserFilters,
+                      primary: true,
+                    ),
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('nuevo_usuario'),
+                      icon: Icons.person_add_alt_1_outlined,
+                      onPressed: _saving ? null : () => _openCreateDialog(),
+                      prominentOnTablet: true,
+                    ),
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('nuevo_operador'),
+                      icon: Icons.badge_outlined,
+                      onPressed: _saving
+                          ? null
+                          : () => _openCreateDialog(presetRoles: const {'OPERATOR'}),
+                    ),
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('nuevo_courier'),
+                      icon: Icons.delivery_dining_outlined,
+                      onPressed: _saving
+                          ? null
+                          : () => _openCreateDialog(presetRoles: const {'COURIER'}),
+                    ),
+                    ResponsiveHeaderAction(
+                      label: context.l10n.t('recargar'),
+                      icon: Icons.refresh,
+                      onPressed: _saving
+                          ? null
+                          : loadRequested
+                              ? _reloadUsers
+                              : _applyUserFilters,
+                    ),
+                    ResponsiveHeaderAction(
+                      label: l10n.t('exportar'),
+                      icon: Icons.download,
+                      onPressed: () => _exportUsers(context, ref),
+                    ),
+                  ],
+                  mobileVisibleCount: 2,
+                  tabletVisibleCount: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: itemGap),
+        _buildBulkActionBar(context, ref, l10n),
+        _buildPaginationControls(context, ref, l10n),
+      ],
+    );
+
+    if (!responsive.isMobile) {
+      return panel;
+    }
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 1, end: _mobileTopPanelCollapsed ? 0 : 1),
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return ClipRect(
+          child: Align(
+            heightFactor: value.clamp(0, 1),
+            alignment: Alignment.topCenter,
+            child: Opacity(
+              opacity: value.clamp(0, 1),
+              child: Transform.translate(
+                offset: Offset(0, (1 - value) * -18),
+                child: IgnorePointer(
+                  ignoring: value < 0.2,
+                  child: child,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      child: panel,
+    );
+  }
+
+  bool _handleUserListScroll(ScrollNotification notification, bool mobile) {
+    if (!mobile || notification.depth != 0) {
+      return false;
+    }
+
+    if (notification.metrics.pixels <= 8) {
+      if (_mobileTopPanelCollapsed && mounted) {
+        setState(() => _mobileTopPanelCollapsed = false);
+      }
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0;
+      if (delta > 10 && !_mobileTopPanelCollapsed) {
+        setState(() => _mobileTopPanelCollapsed = true);
+      } else if (delta < -8 && _mobileTopPanelCollapsed) {
+        setState(() => _mobileTopPanelCollapsed = false);
+      }
+      return false;
+    }
+
+    if (notification is UserScrollNotification) {
+      if (notification.direction == ScrollDirection.forward &&
+          _mobileTopPanelCollapsed) {
+        setState(() => _mobileTopPanelCollapsed = false);
+      } else if (notification.direction == ScrollDirection.reverse &&
+          !_mobileTopPanelCollapsed &&
+          notification.metrics.pixels > 40) {
+        setState(() => _mobileTopPanelCollapsed = true);
+      }
+    }
+
+    return false;
   }
 
   void _applyUserFilters() {
