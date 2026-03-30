@@ -158,16 +158,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => OnboardingPage(),
       ),
       GoRoute(
+        path: '/auth/callback',
+        builder: (context, state) => const SocialAuthCallbackPage(),
+      ),
+      GoRoute(
         path: '/auth',
         builder: (context, state) => AuthPortalPage(
           initialMode: state.uri.queryParameters['mode'] == 'register'
               ? AuthPortalMode.register
               : AuthPortalMode.login,
         ),
-      ),
-      GoRoute(
-        path: '/auth/callback',
-        builder: (context, state) => const SocialAuthCallbackPage(),
       ),
       GoRoute(path: '/login', builder: (context, state) => LoginPage()),
       GoRoute(path: '/register', builder: (context, state) => RegisterPage()),
