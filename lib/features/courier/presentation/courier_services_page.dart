@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/env/app_env.dart';
@@ -35,6 +37,7 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
   List<CourierDeliveryItem> _availableItems = const [];
   List<CourierDeliveryItem> _myItems = const [];
   int _lastRealtimeCursor = -1;
+  Timer? _gpsPushTimer;
 
   @override
   void initState() {
@@ -44,8 +47,71 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
 
   @override
   void dispose() {
+    _gpsPushTimer?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Starts a periodic GPS push that sends the courier's current position
+  /// to the backend for every active (IN_TRANSIT) order every 15 seconds.
+  void _startGpsPushIfNeeded() {
+    final activeOrders = _myItems.where(
+      (item) =>
+          item.deliveryStatus == 'IN_TRANSIT' ||
+          item.deliveryStatus == 'ASSIGNED',
+    );
+    if (activeOrders.isEmpty) {
+      _gpsPushTimer?.cancel();
+      _gpsPushTimer = null;
+      return;
+    }
+    if (_gpsPushTimer != null && _gpsPushTimer!.isActive) return;
+    _gpsPushTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _pushGpsForActiveOrders();
+    });
+  }
+
+  Future<void> _pushGpsForActiveOrders() async {
+    final activeOrders = _myItems.where(
+      (item) => item.deliveryStatus == 'IN_TRANSIT',
+    );
+    if (activeOrders.isEmpty) {
+      _gpsPushTimer?.cancel();
+      _gpsPushTimer = null;
+      return;
+    }
+
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+
+      final dio = ref.read(dioProvider);
+      for (final order in activeOrders) {
+        try {
+          await dio.patch<Map<String, dynamic>>(
+            '/delivery-orders/${order.deliveryOrderId}/progress',
+            data: {
+              'status': order.deliveryStatus,
+              'latitude': position.latitude,
+              'longitude': position.longitude,
+            },
+          );
+        } catch (_) {
+          // Silently ignore individual push failures.
+        }
+      }
+    } catch (_) {
+      // GPS not available — skip this cycle.
+    }
   }
 
   @override
@@ -390,6 +456,7 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
         _loading = false;
         _error = null;
       });
+      _startGpsPushIfNeeded();
     } catch (error) {
       if (!mounted) return;
       setState(() {

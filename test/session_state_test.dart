@@ -13,6 +13,7 @@ void main() {
 
   test('isAuthenticated is false with empty token', () {
     const state = SessionState(
+      isReady: true,
       locale: Locale('es'),
       sessionLanguage: 'es',
       user: user,
@@ -27,6 +28,7 @@ void main() {
 
   test('isAuthenticated is false with malformed token', () {
     const state = SessionState(
+      isReady: true,
       locale: Locale('es'),
       sessionLanguage: 'es',
       user: user,
@@ -41,6 +43,7 @@ void main() {
 
   test('isAuthenticated is true with jwt-like token', () {
     const state = SessionState(
+      isReady: true,
       locale: Locale('es'),
       sessionLanguage: 'es',
       user: user,

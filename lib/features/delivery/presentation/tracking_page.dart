@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -43,16 +45,38 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
   String? _error;
   bool _deliveryMissing = false;
   int _lastRealtimeCursor = -1;
+  Timer? _pollTimer;
+
+  /// Whether the delivery is still active and should be polled.
+  bool get _shouldPoll {
+    final status = _tracking?.status;
+    return status != null &&
+        status != 'DELIVERED' &&
+        status != 'CANCELLED';
+  }
 
   @override
   void initState() {
     super.initState();
     _loadTracking();
+    _startPolling();
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     super.dispose();
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (_shouldPoll && mounted) {
+        _loadTracking();
+      } else {
+        _pollTimer?.cancel();
+      }
+    });
   }
 
   @override
@@ -390,6 +414,9 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
         _deliveryMissing = false;
         _loading = false;
       });
+      if (!_shouldPoll) {
+        _pollTimer?.cancel();
+      }
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode ?? 0;
       if (statusCode == 404) {

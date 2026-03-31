@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,8 @@ import '../../../core/widgets/app_back_button.dart';
 import '../../../shared/state/currency_preference.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../payments/data/culqi_token_service.dart';
+import '../../payments/data/payment_repository.dart';
 import '../data/reservation_repository_impl.dart';
 import '../domain/reservation_repository.dart';
 import 'reservation_providers.dart';
@@ -31,10 +34,23 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   final _sourceTokenController = TextEditingController();
   final _customerEmailController = TextEditingController();
 
+  // Card fields for real Culqi tokenization.
+  final _cardNumberController = TextEditingController();
+  final _cardExpiryController = TextEditingController();
+  final _cardCvvController = TextEditingController();
+
+  bool get _useCulqiTokenization =>
+      AppEnv.hasCulqiConfig &&
+      !AppEnv.forceCashPaymentsOnly &&
+      paymentMethod == PaymentConstants.methodCard;
+
   @override
   void dispose() {
     _sourceTokenController.dispose();
     _customerEmailController.dispose();
+    _cardNumberController.dispose();
+    _cardExpiryController.dispose();
+    _cardCvvController.dispose();
     super.dispose();
   }
 
@@ -180,7 +196,62 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       ),
                     ),
                   if (!forceCashOnly &&
-                      (selectedPaymentMethod == PaymentConstants.methodCard ||
+                      selectedPaymentMethod == PaymentConstants.methodCard &&
+                      _useCulqiTokenization) ...[
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _cardNumberController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 19,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.locale.languageCode == 'en'
+                            ? 'Card number'
+                            : 'Número de tarjeta',
+                        hintText: '4111 1111 1111 1111',
+                        prefixIcon: const Icon(Icons.credit_card),
+                        border: const OutlineInputBorder(),
+                        counterText: '',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _cardExpiryController,
+                            keyboardType: TextInputType.datetime,
+                            maxLength: 5,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.locale.languageCode == 'en'
+                                  ? 'MM/YY'
+                                  : 'MM/AA',
+                              hintText: '12/28',
+                              border: const OutlineInputBorder(),
+                              counterText: '',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _cardCvvController,
+                            keyboardType: TextInputType.number,
+                            maxLength: 4,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'CVV',
+                              hintText: '123',
+                              border: const OutlineInputBorder(),
+                              counterText: '',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (!forceCashOnly &&
+                      ((selectedPaymentMethod == PaymentConstants.methodCard &&
+                              !_useCulqiTokenization) ||
                           selectedPaymentMethod ==
                               PaymentConstants.methodYape)) ...[
                     const SizedBox(height: 10),
@@ -279,6 +350,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             ),
           ),
           if (!forceCashOnly &&
+              !_useCulqiTokenization &&
               (selectedPaymentMethod == PaymentConstants.methodCard ||
                   selectedPaymentMethod == PaymentConstants.methodYape))
             Padding(
@@ -312,7 +384,24 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 ? null
                 : () async {
                     if (user == null) return;
-                    if (!forceCashOnly &&
+
+                    // Validate card fields when using real Culqi tokenization.
+                    if (_useCulqiTokenization) {
+                      if (_cardNumberController.text.trim().isEmpty ||
+                          _cardExpiryController.text.trim().isEmpty ||
+                          _cardCvvController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              context.l10n.locale.languageCode == 'en'
+                                  ? 'Please fill in all card fields.'
+                                  : 'Completa todos los campos de tarjeta.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                    } else if (!forceCashOnly &&
                         (selectedPaymentMethod == PaymentConstants.methodCard ||
                             selectedPaymentMethod ==
                                 PaymentConstants.methodYape) &&
@@ -328,8 +417,51 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       );
                       return;
                     }
+
                     setState(() => processing = true);
                     try {
+                      String? sourceTokenId;
+
+                      // Tokenize card via Culqi if using real tokenization.
+                      if (_useCulqiTokenization) {
+                        final expiry = _cardExpiryController.text.trim();
+                        final parts = expiry.split('/');
+                        final month = int.tryParse(parts.firstOrNull ?? '') ?? 0;
+                        final yearRaw = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
+                        final year = yearRaw < 100 ? 2000 + yearRaw : yearRaw;
+
+                        final email = _customerEmailController.text.trim().isNotEmpty
+                            ? _customerEmailController.text.trim()
+                            : user.email;
+
+                        final tokenResult =
+                            await CulqiTokenService.instance.createToken(
+                          CulqiCardData(
+                            cardNumber: _cardNumberController.text.trim(),
+                            expirationMonth: month,
+                            expirationYear: year,
+                            cvv: _cardCvvController.text.trim(),
+                            email: email,
+                          ),
+                        );
+
+                        if (!tokenResult.success) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(tokenResult.error ??
+                                  'Error al tokenizar tarjeta.'),
+                            ),
+                          );
+                          return;
+                        }
+                        sourceTokenId = tokenResult.tokenId;
+                      } else {
+                        sourceTokenId = forceCashOnly
+                            ? null
+                            : _sourceTokenController.text.trim();
+                      }
+
                       final reservation = await ref
                           .read(reservationRepositoryProvider)
                           .createReservation(
@@ -338,13 +470,34 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                             paymentMethod: forceCashOnly
                                 ? PaymentConstants.methodCash
                                 : selectedPaymentMethod,
-                            sourceTokenId: forceCashOnly
-                                ? null
-                                : _sourceTokenController.text.trim(),
+                            sourceTokenId: sourceTokenId,
                             customerEmail: forceCashOnly
                                 ? null
                                 : _customerEmailController.text.trim(),
                           );
+
+                      // Check if the payment requires 3DS authentication.
+                      if (!forceCashOnly &&
+                          selectedPaymentMethod == PaymentConstants.methodCard) {
+                        final parsedResId = int.tryParse(reservation.id);
+                        if (parsedResId != null) {
+                          try {
+                            final paymentRepo =
+                                ref.read(paymentRepositoryProvider);
+                            final status = await paymentRepo.getPaymentStatus(
+                              reservationId: parsedResId,
+                            );
+                            if (status.isPending) {
+                              // Could be 3DS — check via the full intent
+                              // The reservation flow already triggered payment,
+                              // so we just check status here.
+                            }
+                          } catch (_) {
+                            // Non-critical; proceed to reservation page.
+                          }
+                        }
+                      }
+
                       ref.invalidate(myReservationsProvider);
                       ref.invalidate(adminReservationsProvider);
                       ref.invalidate(adminReservationListProvider);
@@ -354,6 +507,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       context.go('/reservation/${reservation.id}?back=home');
                     } catch (error) {
                       if (!context.mounted) return;
+
+                      // Handle 3DS redirect from payment flow errors that
+                      // contain nextAction data.
+                      if (_tryHandle3dsRedirect(error)) return;
+
                       final message = _errorMessage(error);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -388,6 +546,42 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       error,
       (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
     );
+  }
+
+  /// Attempts to detect a 3DS redirect from a DioException whose response
+  /// body contains nextAction with AUTHENTICATE_3DS. Returns true if handled.
+  bool _tryHandle3dsRedirect(Object error) {
+    Map<String, dynamic>? responseData;
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        responseData = data;
+      }
+    }
+    if (responseData == null) return false;
+
+    final nextAction = responseData['nextAction'] as Map<String, dynamic>?;
+    if (nextAction == null || nextAction['type'] != 'AUTHENTICATE_3DS') {
+      return false;
+    }
+
+    final providerPayload =
+        nextAction['providerPayload'] as Map<String, dynamic>? ?? {};
+    final authUrl = providerPayload['authenticationUrl']?.toString();
+    final paymentIntentId = nextAction['paymentIntentId']?.toString();
+    final reservationId = nextAction['reservationId']?.toString();
+
+    if (authUrl == null || authUrl.isEmpty) return false;
+    if (paymentIntentId == null || reservationId == null) return false;
+
+    if (!context.mounted) return false;
+    context.push(
+      '/payment/3ds-auth'
+      '?paymentIntentId=$paymentIntentId'
+      '&reservationId=$reservationId'
+      '&authUrl=${Uri.encodeComponent(authUrl)}',
+    );
+    return true;
   }
 
   bool _isOfflinePaymentMethod(String method) {

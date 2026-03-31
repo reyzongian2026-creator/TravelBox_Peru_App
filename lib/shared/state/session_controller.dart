@@ -32,6 +32,7 @@ final sessionControllerProvider =
 
 class SessionState {
   const SessionState({
+    required this.isReady,
     required this.locale,
     required this.sessionLanguage,
     required this.user,
@@ -43,6 +44,7 @@ class SessionState {
 
   factory SessionState.initial() {
     return const SessionState(
+      isReady: false,
       locale: Locale('es'),
       sessionLanguage: 'es',
       user: null,
@@ -53,6 +55,7 @@ class SessionState {
     );
   }
 
+  final bool isReady;
   final Locale locale;
   final String sessionLanguage;
   final AppUser? user;
@@ -89,10 +92,12 @@ class SessionState {
     String? refreshToken,
     String? pendingVerificationCode,
     bool? onboardingCompleted,
+    bool? isReady,
     bool clearSession = false,
   }) {
     if (clearSession) {
       return SessionState(
+        isReady: isReady ?? this.isReady,
         locale: locale ?? this.locale,
         sessionLanguage: sessionLanguage ?? this.sessionLanguage,
         user: null,
@@ -103,6 +108,7 @@ class SessionState {
       );
     }
     return SessionState(
+      isReady: isReady ?? this.isReady,
       locale: locale ?? this.locale,
       sessionLanguage: sessionLanguage ?? this.sessionLanguage,
       user: user ?? this.user,
@@ -152,6 +158,7 @@ class SessionState {
     }
 
     return SessionState(
+      isReady: json['isReady'] as bool? ?? false,
       locale: finalLocale,
       sessionLanguage: finalSessionLang,
       user: json['user'] == null
@@ -180,6 +187,7 @@ class SessionController extends StateNotifier<SessionState> {
     final raw = _prefs.getString(_sessionKey);
     if (raw == null) {
       await _tokenStorage.clearTokens();
+      state = state.copyWith(isReady: true);
       return;
     }
     try {
@@ -219,10 +227,12 @@ class SessionController extends StateNotifier<SessionState> {
       if (!_hasUsableAccessToken(restoredState.accessToken)) {
         await _prefs.remove(_sessionKey);
         await _tokenStorage.clearTokens();
+        state = state.copyWith(isReady: true);
         return;
       }
       var normalizedState = _normalizeRoleFromAccessToken(restoredState)
           .copyWith(
+            isReady: true,
             onboardingCompleted: _isOnboardingCompleted(restoredState.user),
           );
       final backendOnboardingCompleted =
@@ -244,6 +254,7 @@ class SessionController extends StateNotifier<SessionState> {
     } catch (_) {
       await _prefs.remove(_sessionKey);
       await _tokenStorage.clearTokens();
+      state = state.copyWith(isReady: true);
     }
   }
 
@@ -314,6 +325,7 @@ class SessionController extends StateNotifier<SessionState> {
           : 'es', // Sync sessionLanguage
       pendingVerificationCode: pendingVerificationCode,
       onboardingCompleted: _isOnboardingCompleted(user),
+      isReady: true,
     );
     nextState = _normalizeRoleFromAccessToken(nextState);
     final backendOnboardingCompleted =
@@ -343,6 +355,7 @@ class SessionController extends StateNotifier<SessionState> {
           : (pendingVerificationCode ?? state.pendingVerificationCode),
       onboardingCompleted:
           state.onboardingCompleted || _isOnboardingCompleted(user),
+      isReady: true,
     );
     await _persist();
   }
@@ -358,12 +371,17 @@ class SessionController extends StateNotifier<SessionState> {
         pendingRealEmail: null,
       ),
       pendingVerificationCode: null,
+      isReady: true,
     );
     await _persist();
   }
 
   Future<void> signOut() async {
-    state = state.copyWith(clearSession: true, sessionLanguage: 'es');
+    state = state.copyWith(
+      clearSession: true,
+      sessionLanguage: 'es',
+      isReady: true,
+    );
     await _persist();
   }
 
@@ -476,6 +494,10 @@ class SessionController extends StateNotifier<SessionState> {
   }) async {
     final userId = user?.id.trim();
     final token = accessToken?.trim();
+    if (user?.requiresRealEmailCompletion == true ||
+        !(user?.emailVerified ?? false)) {
+      return null;
+    }
     if (userId == null || userId.isEmpty || token == null || token.isEmpty) {
       return null;
     }

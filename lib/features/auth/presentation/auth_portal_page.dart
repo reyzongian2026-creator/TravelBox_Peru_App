@@ -10,6 +10,7 @@ import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/theme/brand_tokens.dart';
+import '../data/social_callback_url_cleaner.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
@@ -281,6 +282,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     }
 
     _consumingSocialPayload = true;
+    await clearSocialCallbackUrl(route: '/login');
     if (error != null && error.isNotEmpty) {
       _setTeddyAnimation(
         'fail',
@@ -290,6 +292,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error)));
+      _consumingSocialPayload = false;
       return;
     }
 

@@ -115,6 +115,7 @@ class AuthSplitScaffold extends StatelessWidget {
     required this.heroSubtitle,
     this.heroLabel = 'InkaVoy',
     this.showGuardianBear = true,
+    this.showHeroIllustration = true,
     this.showCompactHero = true,
     this.heroAnimation = 'idle',
     this.maxWidth = 1260,
@@ -126,6 +127,7 @@ class AuthSplitScaffold extends StatelessWidget {
   final String heroSubtitle;
   final String heroLabel;
   final bool showGuardianBear;
+  final bool showHeroIllustration;
   final bool showCompactHero;
   final String heroAnimation;
   final double maxWidth;
@@ -196,13 +198,14 @@ class AuthSplitScaffold extends StatelessWidget {
                                 height: heroHeight,
                                 child: AuthHeroPanel(
                                   label: heroLabel,
-                                  title: heroTitle,
-                                  subtitle: heroSubtitle,
-                                  compact: true,
-                                  showGuardianBear: showGuardianBear,
-                                  heroAnimation: heroAnimation,
-                                ),
+                                title: heroTitle,
+                                subtitle: heroSubtitle,
+                                compact: true,
+                                showGuardianBear: showGuardianBear,
+                                showHeroIllustration: showHeroIllustration,
+                                heroAnimation: heroAnimation,
                               ),
+                            ),
                               const SizedBox(height: 12),
                               AuthCard(
                                 scrollable: false,
@@ -255,6 +258,7 @@ class AuthSplitScaffold extends StatelessWidget {
                                 subtitle: heroSubtitle,
                                 compact: false,
                                 showGuardianBear: showGuardianBear,
+                                showHeroIllustration: showHeroIllustration,
                                 heroAnimation: heroAnimation,
                               ),
                             ),
@@ -304,6 +308,7 @@ class AuthHeroPanel extends StatelessWidget {
     required this.subtitle,
     required this.compact,
     required this.showGuardianBear,
+    required this.showHeroIllustration,
     required this.heroAnimation,
     super.key,
   });
@@ -313,6 +318,7 @@ class AuthHeroPanel extends StatelessWidget {
   final String subtitle;
   final bool compact;
   final bool showGuardianBear;
+  final bool showHeroIllustration;
   final String heroAnimation;
 
   @override
@@ -379,7 +385,11 @@ class AuthHeroPanel extends StatelessWidget {
                 ),
               ),
               SizedBox(height: compact ? 12 : 18),
-              Expanded(child: _AuthHeroIllustration(compact: compact)),
+              Expanded(
+                child: showHeroIllustration
+                    ? _AuthHeroIllustration(compact: compact)
+                    : const SizedBox.expand(),
+              ),
               SizedBox(height: compact ? 14 : 20),
               Text(
                 context.l10n.t('auth_hero_welcome_back'),

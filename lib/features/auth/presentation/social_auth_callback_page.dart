@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/social_callback_url_cleaner.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
 
@@ -30,6 +31,10 @@ class _SocialAuthCallbackPageState
     final uri = Uri.base;
     final payload = uri.queryParameters['payload']?.trim();
     final error = uri.queryParameters['error']?.trim();
+    if ((payload != null && payload.isNotEmpty) ||
+        (error != null && error.isNotEmpty)) {
+      await clearSocialCallbackUrl(route: '/auth/callback');
+    }
     if (!mounted) return;
 
     if (error != null && error.isNotEmpty) {

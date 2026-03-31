@@ -23,6 +23,7 @@ import '../../features/notifications/presentation/notifications_page.dart';
 import '../../features/operator_dashboard/presentation/operator_dashboard_page.dart';
 import '../../features/ops_qr/presentation/ops_qr_handoff_page.dart';
 import '../../features/payments/presentation/cash_payments_page.dart';
+import '../../features/payments/presentation/three_ds_auth_page.dart';
 import '../../features/profile/presentation/edit_profile_page.dart';
 import '../../features/profile/presentation/profile_page.dart';
 import '../../features/qr_scan/presentation/qr_scan_page.dart';
@@ -49,6 +50,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(sessionControllerProvider);
       final path = state.matchedLocation;
+      if (!session.isReady) {
+        return null;
+      }
       const publicPaths = {
         '/auth',
         '/auth/callback',
@@ -234,6 +238,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => CheckoutPage(
           warehouseId: state.pathParameters['warehouseId'] ?? '',
         ),
+      ),
+      GoRoute(
+        path: '/payment/3ds-auth',
+        builder: (_, state) {
+          final params = state.uri.queryParameters;
+          return ThreeDsAuthPage(
+            paymentIntentId: params['paymentIntentId'] ?? '',
+            reservationId: params['reservationId'] ?? '',
+            authUrl: Uri.decodeComponent(params['authUrl'] ?? ''),
+          );
+        },
       ),
       GoRoute(
         path: '/reservation/success/:reservationId',

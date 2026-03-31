@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../data/auth_repository_impl.dart';
+import '../data/social_callback_url_cleaner.dart';
 import 'widgets/auth_ui.dart';
 
 class CompleteSocialEmailPage extends ConsumerStatefulWidget {
@@ -55,6 +56,7 @@ class _CompleteSocialEmailPageState
       heroSubtitle:
           'Necesitamos un correo real para verificar tu cuenta de Facebook y continuar con tu experiencia.',
       showGuardianBear: false,
+      showHeroIllustration: false,
       heroAnimation: 'idle',
       formChild: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -255,6 +257,7 @@ class _CompleteSocialEmailPageState
   }
 
   Future<void> _signOut() async {
+    await clearSocialCallbackUrl(route: '/login');
     await ref.read(sessionControllerProvider.notifier).signOut();
     if (!mounted) return;
     context.go('/login');

@@ -34,6 +34,13 @@ class AppEnv {
     'FORCE_CASH_PAYMENTS_ONLY',
     defaultValue: false,
   );
+
+  static const culqiPublicKey = String.fromEnvironment(
+    'CULQI_PUBLIC_KEY',
+    defaultValue: '',
+  );
+
+  static bool get hasCulqiConfig => culqiPublicKey.trim().isNotEmpty;
   static const azureStorageUploadsEnabled = bool.fromEnvironment(
     'AZURE_STORAGE_UPLOADS_ENABLED',
     defaultValue: true,

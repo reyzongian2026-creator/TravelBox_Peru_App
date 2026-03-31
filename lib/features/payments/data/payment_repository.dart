@@ -4,6 +4,28 @@ import '../../../core/network/api_client.dart';
 import '../../../shared/utils/app_exception.dart';
 
 abstract class PaymentRepository {
+  Future<PaymentIntentResult> createIntent({
+    required int reservationId,
+  });
+
+  Future<PaymentIntentResult> confirmPayment({
+    int? paymentIntentId,
+    int? reservationId,
+    required String paymentMethod,
+    String? sourceTokenId,
+    String? customerEmail,
+    String? customerFirstName,
+    String? customerLastName,
+    String? customerPhone,
+    String? customerDocument,
+    bool approved = true,
+  });
+
+  Future<PaymentStatusResult> getPaymentStatus({
+    int? paymentIntentId,
+    int? reservationId,
+  });
+
   Future<PaymentHistoryResult> getPaymentHistory({
     int page = 0,
     int size = 20,
@@ -24,6 +46,101 @@ abstract class PaymentRepository {
     required String paymentIntentId,
     required String reason,
   });
+}
+
+class PaymentIntentResult {
+  final String id;
+  final String? reservationId;
+  final double amount;
+  final String status;
+  final String? paymentMethod;
+  final String? paymentFlow;
+  final String? message;
+  final Map<String, dynamic>? nextAction;
+
+  const PaymentIntentResult({
+    required this.id,
+    this.reservationId,
+    required this.amount,
+    required this.status,
+    this.paymentMethod,
+    this.paymentFlow,
+    this.message,
+    this.nextAction,
+  });
+
+  bool get requires3ds =>
+      paymentFlow == 'REQUIRES_3DS_AUTH' &&
+      nextAction?['type'] == 'AUTHENTICATE_3DS';
+
+  String? get threeDsUrl {
+    final payload =
+        nextAction?['providerPayload'] as Map<String, dynamic>? ?? {};
+    return payload['authenticationUrl']?.toString();
+  }
+
+  bool get requiresCulqiCheckout =>
+      paymentFlow == 'ORDER_CHECKOUT' &&
+      nextAction?['type'] == 'OPEN_CULQI_CHECKOUT';
+
+  bool get isConfirmed =>
+      status == 'CONFIRMED' || paymentFlow == 'DIRECT_CHARGE' || paymentFlow == 'DIRECT_CONFIRMATION';
+
+  bool get isFailed =>
+      status == 'FAILED' || (paymentFlow?.contains('REJECTED') ?? false);
+
+  bool get isWaitingOffline =>
+      paymentFlow == 'WAITING_OFFLINE_VALIDATION';
+
+  factory PaymentIntentResult.fromJson(Map<String, dynamic> json) {
+    return PaymentIntentResult(
+      id: (json['id'] ?? json['paymentIntentId'] ?? json['intentId'] ?? json['paymentId'] ?? '')
+          .toString(),
+      reservationId: json['reservationId']?.toString(),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      status: json['status']?.toString() ?? '',
+      paymentMethod: json['paymentMethod']?.toString(),
+      paymentFlow: json['paymentFlow']?.toString(),
+      message: json['message']?.toString(),
+      nextAction: json['nextAction'] as Map<String, dynamic>?,
+    );
+  }
+}
+
+class PaymentStatusResult {
+  final String paymentIntentId;
+  final String? reservationId;
+  final String paymentStatus;
+  final String? reservationStatus;
+  final double amount;
+  final String? paymentMethod;
+
+  const PaymentStatusResult({
+    required this.paymentIntentId,
+    this.reservationId,
+    required this.paymentStatus,
+    this.reservationStatus,
+    required this.amount,
+    this.paymentMethod,
+  });
+
+  bool get isConfirmed => paymentStatus.toUpperCase() == 'CONFIRMED';
+  bool get isFailed =>
+      paymentStatus.toUpperCase() == 'FAILED' ||
+      paymentStatus.toUpperCase() == 'REJECTED';
+  bool get isPending => paymentStatus.toUpperCase() == 'PENDING';
+
+  factory PaymentStatusResult.fromJson(Map<String, dynamic> json) {
+    return PaymentStatusResult(
+      paymentIntentId:
+          (json['paymentIntentId'] ?? json['id'] ?? '').toString(),
+      reservationId: json['reservationId']?.toString(),
+      paymentStatus: json['paymentStatus']?.toString() ?? json['status']?.toString() ?? '',
+      reservationStatus: json['reservationStatus']?.toString(),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      paymentMethod: json['paymentMethod']?.toString(),
+    );
+  }
 }
 
 class PaymentHistoryResult {
@@ -126,6 +243,111 @@ class PaymentRepositoryImpl implements PaymentRepository {
   final Dio _dio;
 
   PaymentRepositoryImpl({required Dio dio}) : _dio = dio;
+
+  @override
+  Future<PaymentIntentResult> createIntent({
+    required int reservationId,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/payments/intents',
+        data: {'reservationId': reservationId},
+      );
+      return PaymentIntentResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<PaymentIntentResult> confirmPayment({
+    int? paymentIntentId,
+    int? reservationId,
+    required String paymentMethod,
+    String? sourceTokenId,
+    String? customerEmail,
+    String? customerFirstName,
+    String? customerLastName,
+    String? customerPhone,
+    String? customerDocument,
+    bool approved = true,
+  }) async {
+    final normalizedSourceTokenId = sourceTokenId?.trim();
+    final normalizedCustomerEmail = customerEmail?.trim();
+    final normalizedCustomerFirstName = customerFirstName?.trim();
+    final normalizedCustomerLastName = customerLastName?.trim();
+    final normalizedCustomerPhone = customerPhone?.trim();
+    final normalizedCustomerDocument = customerDocument?.trim();
+    final payload = <String, dynamic>{
+      'paymentMethod': paymentMethod,
+      'approved': approved,
+    };
+    if (paymentIntentId != null) {
+      payload['paymentIntentId'] = paymentIntentId;
+    }
+    if (reservationId != null) {
+      payload['reservationId'] = reservationId;
+    }
+    if (normalizedSourceTokenId != null && normalizedSourceTokenId.isNotEmpty) {
+      payload['sourceTokenId'] = normalizedSourceTokenId;
+    }
+    if (normalizedCustomerEmail != null && normalizedCustomerEmail.isNotEmpty) {
+      payload['customerEmail'] = normalizedCustomerEmail;
+    }
+    if (normalizedCustomerFirstName != null &&
+        normalizedCustomerFirstName.isNotEmpty) {
+      payload['customerFirstName'] = normalizedCustomerFirstName;
+    }
+    if (normalizedCustomerLastName != null &&
+        normalizedCustomerLastName.isNotEmpty) {
+      payload['customerLastName'] = normalizedCustomerLastName;
+    }
+    if (normalizedCustomerPhone != null && normalizedCustomerPhone.isNotEmpty) {
+      payload['customerPhone'] = normalizedCustomerPhone;
+    }
+    if (normalizedCustomerDocument != null &&
+        normalizedCustomerDocument.isNotEmpty) {
+      payload['customerDocument'] = normalizedCustomerDocument;
+    }
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/payments/confirm',
+        data: payload,
+      );
+      return PaymentIntentResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<PaymentStatusResult> getPaymentStatus({
+    int? paymentIntentId,
+    int? reservationId,
+  }) async {
+    final queryParameters = <String, dynamic>{};
+    if (paymentIntentId != null) {
+      queryParameters['paymentIntentId'] = paymentIntentId;
+    }
+    if (reservationId != null) {
+      queryParameters['reservationId'] = reservationId;
+    }
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/payments/status',
+        queryParameters: queryParameters,
+      );
+      return PaymentStatusResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
 
   @override
   Future<PaymentHistoryResult> getPaymentHistory({
