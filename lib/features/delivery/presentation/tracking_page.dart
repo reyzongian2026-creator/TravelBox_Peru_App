@@ -17,6 +17,7 @@ import '../../../shared/models/delivery_tracking.dart';
 import '../../../shared/models/geo_route.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/state/geo_route_provider.dart';
+import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/status_localizer.dart';
 import '../../reservation/presentation/reservation_providers.dart';
@@ -94,9 +95,12 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
         });
       }
     }
-    final reservationAsync = ref.watch(
-      reservationByIdProvider(widget.reservationId),
-    );
+    final session = ref.watch(sessionControllerProvider);
+    final reservationAsync = session.isCourier
+        ? AsyncValue<Reservation?>.data(
+            ref.watch(reservationInStoreByIdProvider(widget.reservationId)),
+          )
+        : ref.watch(reservationByIdProvider(widget.reservationId));
 
     return AppShellScaffold(
       title: context.l10n.t(widget.title),
