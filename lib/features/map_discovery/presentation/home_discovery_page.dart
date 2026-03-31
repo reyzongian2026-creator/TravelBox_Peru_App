@@ -818,9 +818,7 @@ class _MapView extends StatelessWidget {
         options: flutter_map.MapOptions(initialCenter: center, initialZoom: 12),
         children: [
           flutter_map.TileLayer(
-            urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
-                ? 'https://atlas.microsoft.com/map/tile?api-version=2.1&tilesetId=microsoft.base&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
-                : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            urlTemplate: _tileLayerUrlTemplate,
             userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
           ),
           flutter_map.MarkerLayer(markers: warehouseMarkers),
@@ -872,15 +870,29 @@ class _MapView extends StatelessWidget {
         options: flutter_map.MapOptions(initialCenter: center, initialZoom: 12),
         children: [
           flutter_map.TileLayer(
-            urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
-                ? 'https://atlas.microsoft.com/map/tile?api-version=2.1&tilesetId=microsoft.base&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
-                : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            urlTemplate: _tileLayerUrlTemplate,
             userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
           ),
           flutter_map.MarkerLayer(markers: warehouseMarkers),
         ],
       ),
     );
+  }
+
+  String get _tileLayerUrlTemplate {
+    // Azure Maps `map/tile` can return vector tiles for some tileset/api-version
+    // combinations. `flutter_map` expects raster image tiles, so on Flutter web we
+    // force a stable PNG raster source to avoid `ImageCodecException`.
+    if (kIsWeb) {
+      return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+
+    final azureKey = AppEnv.azureMapsApiKey.trim();
+    if (azureKey.isEmpty) {
+      return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+
+    return 'https://atlas.microsoft.com/map/tile/png?api-version=1.0&tilesetId=microsoft.base.road&zoom={z}&x={x}&y={y}&tileSize=256&language=es-ES&view=Auto&subscription-key=$azureKey';
   }
 }
 
