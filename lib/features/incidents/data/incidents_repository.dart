@@ -14,6 +14,12 @@ abstract class IncidentsRepository {
   });
   Future<Incident> createIncident(CreateIncidentRequest request);
   Future<Incident> resolveIncident(int incidentId, String resolution);
+  Future<List<IncidentMessage>> getIncidentMessages(int incidentId);
+  Future<IncidentMessage> addIncidentMessage({
+    required int incidentId,
+    required String message,
+    required String originalLanguage,
+  });
 }
 
 class CreateIncidentRequest {
@@ -115,6 +121,7 @@ class IncidentMessage {
   final int id;
   final int incidentId;
   final int? authorId;
+  final String? authorName;
   final String authorRole;
   final String originalLanguage;
   final String textOriginal;
@@ -125,6 +132,7 @@ class IncidentMessage {
     required this.id,
     required this.incidentId,
     this.authorId,
+    this.authorName,
     required this.authorRole,
     required this.originalLanguage,
     required this.textOriginal,
@@ -137,6 +145,7 @@ class IncidentMessage {
       id: (json['id'] as int?) ?? 0,
       incidentId: (json['incidentId'] as int?) ?? 0,
       authorId: json['authorId'] as int?,
+      authorName: json['authorName']?.toString(),
       authorRole: json['authorRole']?.toString() ?? 'unknown',
       originalLanguage: json['originalLanguage']?.toString() ?? 'es',
       textOriginal: json['textOriginal']?.toString() ?? '',
@@ -275,6 +284,51 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
         throw AppException.withCode(AppErrorCode.errUpdateFailed, backendMessage: 'Failed to resolve incident');
       }
       return Incident.fromJson(data);
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<IncidentMessage>> getIncidentMessages(int incidentId) async {
+    try {
+      final response = await _dio.get<List<dynamic>>('/incidents/$incidentId/messages');
+      final data = response.data;
+      if (data == null) return [];
+      return data
+          .map((item) => IncidentMessage.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<IncidentMessage> addIncidentMessage({
+    required int incidentId,
+    required String message,
+    required String originalLanguage,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/incidents/$incidentId/messages',
+        data: {
+          'message': message,
+          'originalLanguage': originalLanguage,
+        },
+      );
+      final data = response.data;
+      if (data == null) {
+        throw AppException.withCode(
+          AppErrorCode.errCreateIncident,
+          backendMessage: 'Failed to add incident message',
+        );
+      }
+      return IncidentMessage.fromJson(data);
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {

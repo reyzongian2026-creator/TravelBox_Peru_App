@@ -16,6 +16,7 @@ import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../reservation/presentation/reservation_providers.dart';
+import 'incident_conversation_dialog.dart';
 import '../data/evidence_picker.dart';
 import '../data/selected_evidence_image.dart';
 
@@ -723,6 +724,27 @@ class _TicketCard extends ConsumerWidget {
               const SizedBox(height: 10),
               Text('${context.l10n.t('incident_resolution')}: $resolution'),
             ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => IncidentConversationDialog(
+                      incidentId: int.tryParse(item.id) ?? 0,
+                      ticketLabel:
+                          '${context.l10n.t('incident_ticket')} #${item.id}',
+                      status: item.status,
+                      allowReply: true,
+                    ),
+                  ),
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: const Text('Conversacion'),
+                ),
+              ],
+            ),
           ],
         ),
       ),

@@ -19,6 +19,7 @@ import '../../../shared/utils/incident_translation_service.dart';
 import '../../../shared/utils/file_exporter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../reservation/presentation/reservation_providers.dart';
+import '../../incidents/presentation/incident_conversation_dialog.dart';
 
 final adminIncidentsSearchProvider = StateProvider<String>((ref) => '');
 final adminIncidentsStatusProvider = StateProvider<String>((ref) => 'OPEN');
@@ -492,6 +493,25 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                                         icon: Icon(Icons.call_outlined),
                                         label: Text(context.l10n.t('llamar')),
                                       ),
+                                    OutlinedButton.icon(
+                                      onPressed: () => showDialog<void>(
+                                        context: context,
+                                        builder: (_) => IncidentConversationDialog(
+                                          incidentId:
+                                              int.tryParse(item.id) ?? 0,
+                                          ticketLabel:
+                                              '${context.l10n.t('incident_ticket')}: #${item.id}',
+                                          status: item.status,
+                                          allowReply: true,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        minimumSize: const Size(0, 40),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      icon: const Icon(Icons.chat_outlined),
+                                      label: const Text('Responder'),
+                                    ),
                                     if (canResolve && item.status == 'OPEN')
                                       FilledButton.tonalIcon(
                                         onPressed: _saving
