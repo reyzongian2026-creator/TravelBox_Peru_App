@@ -101,12 +101,19 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             ref.watch(reservationInStoreByIdProvider(widget.reservationId)),
           )
         : ref.watch(reservationByIdProvider(widget.reservationId));
+    final reservation = reservationAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => ref.watch(reservationInStoreByIdProvider(widget.reservationId)),
+    );
+    final reservationLoadError = reservationAsync.hasError
+        ? reservationAsync.error
+        : null;
 
     return AppShellScaffold(
       title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
-      child: reservationAsync.when(
-        data: (reservation) {
+      child: Builder(
+        builder: (context) {
           if (_loading && _tracking == null && !_deliveryMissing) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -131,7 +138,18 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             children: [
               if (widget.backofficeMode && reservation != null) ...[
                 _reservationContextCard(context, reservation),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
+              ] else if (widget.backofficeMode && reservationLoadError != null) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(
+                      '${context.l10n.t('tracking_reservation_load_failed')}. '
+                      '${context.l10n.t('tracking')} OK.',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
               _mapCard(context),
               const SizedBox(height: 12),
@@ -141,12 +159,6 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text(
-            '${context.l10n.t('tracking_reservation_load_failed')}: $error',
-          ),
-        ),
       ),
     );
   }
