@@ -43,7 +43,9 @@ class AppErrorReportService {
       if (stored != null && stored.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(stored);
         _pendingErrors.addAll(
-          decoded.map((e) => AppErrorEntry.fromJson(e as Map<String, dynamic>)),
+          decoded
+              .map((e) => AppErrorEntry.fromJson(e as Map<String, dynamic>))
+              .where((entry) => !_isNoiseError(entry)),
         );
         if (kDebugMode) {
           debugPrint(
@@ -198,6 +200,9 @@ class AppErrorReportService {
   }
 
   void _addError(AppErrorEntry entry) {
+    if (_isNoiseError(entry)) {
+      return;
+    }
     _pendingErrors.add(entry);
     _saveToStorage();
 
@@ -330,7 +335,9 @@ class AppErrorReportService {
   int get pendingCount => _pendingErrors.length;
 
   String exportToJsonSync() {
-    final errors = getPendingErrors();
+    final errors = getPendingErrors()
+        .where((entry) => !_isNoiseError(entry))
+        .toList(growable: false);
     final byType = <String, int>{};
     for (final error in errors) {
       byType[error.type.name] = (byType[error.type.name] ?? 0) + 1;
@@ -349,6 +356,20 @@ class AppErrorReportService {
 
   void dispose() {
     _flushTimer?.cancel();
+  }
+
+  bool _isNoiseError(AppErrorEntry entry) {
+    if (entry.type != ErrorType.network) {
+      return false;
+    }
+    final additionalData = entry.additionalData;
+    final endpoint =
+        additionalData?['endpoint']?.toString().toLowerCase() ??
+        entry.context.toLowerCase();
+    final statusCode = additionalData?['statusCode'];
+    return statusCode == 401 &&
+        (endpoint.startsWith('/notifications/stream') ||
+            endpoint.startsWith('/notifications/events'));
   }
 }
 

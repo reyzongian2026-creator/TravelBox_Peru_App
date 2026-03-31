@@ -7,6 +7,7 @@ import '../../shared/state/currency_preference.dart';
 import '../../shared/state/notification_center_controller.dart';
 import '../../shared/state/session_controller.dart';
 import '../../shared/state/theme_mode_controller.dart';
+import '../../shared/widgets/app_smart_image.dart';
 import '../../shared/widgets/operation_guide.dart';
 import '../../shared/widgets/travelbox_logo.dart';
 import '../layout/responsive_layout.dart';
@@ -107,7 +108,8 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
         _HeaderCircleButton(
           tooltip: l10n.t('flow_guide'),
           icon: Icons.help_outline_rounded,
-          onPressed: () => showOperationGuideSheet(context, guide: operationGuide),
+          onPressed: () =>
+              showOperationGuideSheet(context, guide: operationGuide),
         ),
       if (session.isAuthenticated)
         _NotificationBellButton(
@@ -119,7 +121,11 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
         ),
       const _SettingsComboMenu(),
       ...widget.actions,
-      if (session.user != null) _HeaderProfileChip(userName: session.user!.name),
+      if (session.user != null)
+        _HeaderProfileChip(
+          userName: session.user!.name,
+          profilePhotoPath: session.user!.profilePhotoPath,
+        ),
     ];
 
     final mobileHeaderActions = <Widget>[
@@ -135,6 +141,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
       if (session.user != null)
         _HeaderProfileChip(
           userName: session.user!.name,
+          profilePhotoPath: session.user!.profilePhotoPath,
           compact: true,
         ),
     ];
@@ -164,11 +171,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
         ? const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0F172C),
-              Color(0xFF111A31),
-              Color(0xFF151D36),
-            ],
+            colors: [Color(0xFF0F172C), Color(0xFF111A31), Color(0xFF151D36)],
           )
         : TravelBoxBrand.shellGradient;
 
@@ -195,7 +198,9 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
                         sections: shellSections,
                         activeRoute: widget.currentRoute,
                         onToggleCollapse: () {
-                          setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+                          setState(
+                            () => _sidebarCollapsed = !_sidebarCollapsed,
+                          );
                         },
                         onNavigate: (route) => context.go(route),
                       ),
@@ -500,8 +505,9 @@ class _SidebarItemTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: textColor,
-                            fontWeight:
-                                selected ? FontWeight.w700 : FontWeight.w600,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                           ),
                         ),
                       ),
@@ -710,9 +716,9 @@ class _ShellCompactTitle extends StatelessWidget {
           child: Text(
             title,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
         ),
       ],
@@ -807,10 +813,12 @@ class _NotificationBellButton extends StatelessWidget {
 class _HeaderProfileChip extends StatelessWidget {
   const _HeaderProfileChip({
     required this.userName,
+    this.profilePhotoPath,
     this.compact = false,
   });
 
   final String userName;
+  final String? profilePhotoPath;
   final bool compact;
 
   @override
@@ -825,17 +833,10 @@ class _HeaderProfileChip extends StatelessWidget {
     if (compact) {
       return Container(
         margin: const EdgeInsets.only(left: 4, right: 4),
-        child: CircleAvatar(
+        child: _HeaderAvatar(
+          initials: initials,
+          profilePhotoPath: profilePhotoPath,
           radius: 18,
-          backgroundColor: TravelBoxBrand.primaryBlue,
-          child: Text(
-            initials.isEmpty ? 'I' : initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
         ),
       );
     }
@@ -853,17 +854,10 @@ class _HeaderProfileChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
+          _HeaderAvatar(
+            initials: initials,
+            profilePhotoPath: profilePhotoPath,
             radius: 16,
-            backgroundColor: TravelBoxBrand.primaryBlue,
-            child: Text(
-              initials.isEmpty ? 'I' : initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
@@ -871,12 +865,75 @@ class _HeaderProfileChip extends StatelessWidget {
             child: Text(
               userName,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeaderAvatar extends StatelessWidget {
+  const _HeaderAvatar({
+    required this.initials,
+    required this.profilePhotoPath,
+    required this.radius,
+  });
+
+  final String initials;
+  final String? profilePhotoPath;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = profilePhotoPath?.trim();
+    if (photo != null && photo.isNotEmpty) {
+      return Container(
+        width: radius * 2,
+        height: radius * 2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.72),
+            width: 1.2,
+          ),
+        ),
+        child: ClipOval(
+          child: AppSmartImage(
+            source: photo,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            fallback: _InitialsAvatar(initials: initials, radius: radius),
+          ),
+        ),
+      );
+    }
+    return _InitialsAvatar(initials: initials, radius: radius);
+  }
+}
+
+class _InitialsAvatar extends StatelessWidget {
+  const _InitialsAvatar({required this.initials, required this.radius});
+
+  final String initials;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: TravelBoxBrand.primaryBlue,
+      child: Text(
+        initials.isEmpty ? 'I' : initials,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: radius <= 16 ? 12 : 13,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

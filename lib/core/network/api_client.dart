@@ -150,6 +150,7 @@ final dioProvider = Provider<Dio>((ref) {
 void _reportNetworkError(DioException error) {
   final service = AppErrorReportNotifier.getGlobalService();
   if (service == null) return;
+  if (!_shouldReportNetworkError(error)) return;
 
   final endpoint = error.requestOptions.path;
   final statusCode = error.response?.statusCode;
@@ -166,11 +167,28 @@ void _reportNetworkError(DioException error) {
     }
   } catch (_) {}
 
-  service.reportNetworkError(endpoint, statusCode, message, stackTrace, requestBody);
+  service.reportNetworkError(
+    endpoint,
+    statusCode,
+    message,
+    stackTrace,
+    requestBody,
+  );
 
   if (kDebugMode) {
     debugPrint('[NETWORK ERROR] $statusCode $endpoint - $message');
   }
+}
+
+bool _shouldReportNetworkError(DioException error) {
+  final statusCode = error.response?.statusCode;
+  final path = error.requestOptions.path.toLowerCase();
+  if (statusCode == 401 &&
+      (path.startsWith('/notifications/stream') ||
+          path.startsWith('/notifications/events'))) {
+    return false;
+  }
+  return true;
 }
 
 bool _shouldSkipRetry(RequestOptions request) {

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="InkaVoy">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="55%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#DBEAFE" stop-opacity="0.92"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bg)"/>
+  <path d="M43 34h42c7 0 13 6 13 13v36c0 7-6 13-13 13H43c-7 0-13-6-13-13V47c0-7 6-13 13-13Z" fill="none" stroke="url(#accent)" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M51 30c0-7 6-12 13-12s13 5 13 12v8H51v-8Z" fill="none" stroke="url(#accent)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M43 56h42" stroke="url(#accent)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M57 66v18" stroke="#F8FAFC" stroke-opacity="0.9" stroke-width="6" stroke-linecap="round"/>
+  <path d="M71 66v18" stroke="#F8FAFC" stroke-opacity="0.9" stroke-width="6" stroke-linecap="round"/>
+  <path d="M86 24 96 34" stroke="#FBBF24" stroke-width="6" stroke-linecap="round"/>
+</svg>

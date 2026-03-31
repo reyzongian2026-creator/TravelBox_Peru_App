@@ -218,7 +218,9 @@ class AuthSplitScaffold extends StatelessWidget {
 
                     return Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF11182D) : TravelBoxBrand.mist,
+                        color: isDark
+                            ? const Color(0xFF11182D)
+                            : TravelBoxBrand.mist,
                         borderRadius: BorderRadius.circular(36),
                         border: Border.all(
                           color: isDark
@@ -377,9 +379,7 @@ class AuthHeroPanel extends StatelessWidget {
                 ),
               ),
               SizedBox(height: compact ? 12 : 18),
-              Expanded(
-                child: _AuthHeroIllustration(compact: compact),
-              ),
+              Expanded(child: _AuthHeroIllustration(compact: compact)),
               SizedBox(height: compact ? 14 : 20),
               Text(
                 context.l10n.t('auth_hero_welcome_back'),
@@ -440,14 +440,7 @@ class _AuthHeroIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = ClipRRect(
-      borderRadius: BorderRadius.circular(compact ? 18 : 24),
-      child: Image.asset(
-        'assets/branding/travelbox_peru_flat_reference.png',
-        fit: BoxFit.contain,
-        alignment: Alignment.centerLeft,
-      ),
-    );
+    const image = _PeruMapHeroArt();
 
     return Stack(
       children: [
@@ -481,15 +474,39 @@ class _AuthHeroIllustration extends StatelessWidget {
         Positioned.fill(
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-              compact ? 0 : 4,
-              compact ? 16 : 24,
-              compact ? 0 : 10,
-              compact ? 10 : 6,
+              compact ? 12 : 20,
+              compact ? 16 : 20,
+              compact ? 12 : 18,
+              compact ? 14 : 10,
             ),
             child: image,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _PeruMapHeroArt extends StatelessWidget {
+  const _PeruMapHeroArt();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: constraints.maxWidth * 0.82,
+              maxHeight: constraints.maxHeight * 0.94,
+            ),
+            child: AspectRatio(
+              aspectRatio: 0.8,
+              child: CustomPaint(painter: _PeruMapArtPainter()),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -535,7 +552,7 @@ class _AuthFloatingBadge extends StatelessWidget {
             ),
             SizedBox(width: compact ? 5 : 6),
             Text(
-              label,
+              label.replaceAll('rÃ¡pido', 'rápido'),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.94),
                 fontSize: compact ? 10 : 11,
@@ -744,6 +761,116 @@ class _AuthHeroPainter extends CustomPainter {
       ..lineTo(size.width * 0.84, size.height * 0.76)
       ..lineTo(size.width * 0.94, size.height * 0.9);
     canvas.drawPath(mountain, mountainPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _PeruMapArtPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * 0.58, size.height * 0.3);
+    final glowPaint = Paint()
+      ..shader =
+          RadialGradient(
+            colors: [
+              const Color(0x55A9C5FF),
+              const Color(0x11336BFF),
+              Colors.transparent,
+            ],
+          ).createShader(
+            Rect.fromCircle(center: center, radius: size.shortestSide * 0.38),
+          );
+
+    canvas.drawCircle(center, size.shortestSide * 0.34, glowPaint);
+    canvas.drawCircle(
+      Offset(size.width * 0.42, size.height * 0.78),
+      size.shortestSide * 0.18,
+      Paint()..color = const Color(0x1AF7FBFF),
+    );
+
+    final shadowPath = _buildPeruPath(size).shift(const Offset(8, 10));
+    canvas.drawPath(
+      shadowPath,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.18)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+    );
+
+    final path = _buildPeruPath(size);
+    final mapPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF4C91B5), Color(0xFF254F79), Color(0xFF1B2747)],
+      ).createShader(Offset.zero & size);
+
+    canvas.drawPath(path, mapPaint);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..color = Colors.white.withValues(alpha: 0.22),
+    );
+
+    final goldAccent = Path()
+      ..moveTo(size.width * 0.42, size.height * 0.64)
+      ..lineTo(size.width * 0.48, size.height * 0.61)
+      ..lineTo(size.width * 0.53, size.height * 0.72)
+      ..lineTo(size.width * 0.46, size.height * 0.76)
+      ..close();
+    canvas.drawPath(goldAccent, Paint()..color = const Color(0xD7D2A34E));
+
+    final texturePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    for (var i = 0; i < 5; i++) {
+      final bandPath = Path()
+        ..moveTo(
+          size.width * (0.28 + i * 0.05),
+          size.height * (0.18 + i * 0.08),
+        )
+        ..quadraticBezierTo(
+          size.width * 0.54,
+          size.height * (0.24 + i * 0.05),
+          size.width * 0.66,
+          size.height * (0.3 + i * 0.11),
+        )
+        ..quadraticBezierTo(
+          size.width * 0.63,
+          size.height * (0.44 + i * 0.08),
+          size.width * (0.48 + i * 0.02),
+          size.height * (0.62 + i * 0.06),
+        );
+      canvas.drawPath(bandPath, texturePaint);
+    }
+  }
+
+  Path _buildPeruPath(Size size) {
+    return Path()
+      ..moveTo(size.width * 0.38, size.height * 0.08)
+      ..lineTo(size.width * 0.3, size.height * 0.18)
+      ..lineTo(size.width * 0.22, size.height * 0.29)
+      ..lineTo(size.width * 0.27, size.height * 0.4)
+      ..lineTo(size.width * 0.18, size.height * 0.52)
+      ..lineTo(size.width * 0.24, size.height * 0.64)
+      ..lineTo(size.width * 0.2, size.height * 0.79)
+      ..lineTo(size.width * 0.31, size.height * 0.9)
+      ..lineTo(size.width * 0.38, size.height * 0.98)
+      ..lineTo(size.width * 0.52, size.height * 0.94)
+      ..lineTo(size.width * 0.58, size.height * 0.84)
+      ..lineTo(size.width * 0.66, size.height * 0.75)
+      ..lineTo(size.width * 0.61, size.height * 0.6)
+      ..lineTo(size.width * 0.68, size.height * 0.45)
+      ..lineTo(size.width * 0.63, size.height * 0.31)
+      ..lineTo(size.width * 0.67, size.height * 0.19)
+      ..lineTo(size.width * 0.58, size.height * 0.12)
+      ..lineTo(size.width * 0.52, size.height * 0.02)
+      ..lineTo(size.width * 0.45, size.height * 0.08)
+      ..close();
   }
 
   @override

@@ -54,6 +54,7 @@ class _CompleteSocialEmailPageState
       heroTitle: 'CONFIRMA TU CORREO',
       heroSubtitle:
           'Necesitamos un correo real para verificar tu cuenta de Facebook y continuar con tu experiencia.',
+      showGuardianBear: false,
       heroAnimation: 'idle',
       formChild: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,7 +91,7 @@ class _CompleteSocialEmailPageState
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Tu cuenta seguira vinculada a Facebook, pero el correo ${session.user?.email ?? ''} es solo temporal y no se usara como correo principal.',
+                    'Tu cuenta seguira vinculada a Facebook, pero el correo temporal no se usara como correo principal. Registra aqui el correo real con el que deseas continuar.',
                     style: const TextStyle(
                       color: Color(0xFF334E68),
                       height: 1.4,
