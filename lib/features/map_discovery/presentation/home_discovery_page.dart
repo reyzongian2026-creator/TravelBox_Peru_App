@@ -438,6 +438,15 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
   }
 
   Future<void> _locateUser(BuildContext context) async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('gps_disabled_manual'))),
+      );
+      return;
+    }
+
     final permission = await Geolocator.checkPermission();
     var finalPermission = permission;
     if (permission == LocationPermission.denied) {
@@ -452,9 +461,14 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
       return;
     }
 
-    final position = await Geolocator.getCurrentPosition();
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+      ),
+    );
     _searchDebounce?.cancel();
     ref.read(currentPositionProvider.notifier).state = position;
+    ref.read(discoveryViewModeProvider.notifier).state = DiscoveryViewMode.map;
     ref.read(discoveryFeaturedCityProvider.notifier).state = null;
     _searchController.clear();
     ref.read(discoveryQueryProvider.notifier).state = '';
@@ -757,25 +771,30 @@ class _MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allPoints = [
-      ...warehouses.map(
-        (warehouse) =>
-            latlong_pkg.LatLng(warehouse.latitude, warehouse.longitude),
-      ),
-      if (userPosition != null)
-        latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude),
-    ];
-    final center = allPoints.isNotEmpty
-        ? allPoints.first
-        : const latlong_pkg.LatLng(-12.0464, -77.0428);
+    final defaultCenter = const latlong_pkg.LatLng(-12.0464, -77.0428);
+    final userCenter = userPosition == null
+        ? null
+        : latlong_pkg.LatLng(userPosition!.latitude, userPosition!.longitude);
+    final center = userCenter ??
+        (warehouses.isNotEmpty
+            ? latlong_pkg.LatLng(
+                warehouses.first.latitude,
+                warehouses.first.longitude,
+              )
+            : defaultCenter);
+    final initialZoom = userCenter != null ? 14.5 : 12.0;
 
     if (kIsWeb) {
-      return _buildFlutterMap(context, center);
+      return _buildFlutterMap(context, center, initialZoom);
     }
-    return _buildGoogleMap(context, center);
+    return _buildGoogleMap(context, center, initialZoom);
   }
 
-  Widget _buildFlutterMap(BuildContext context, latlong_pkg.LatLng center) {
+  Widget _buildFlutterMap(
+    BuildContext context,
+    latlong_pkg.LatLng center,
+    double initialZoom,
+  ) {
     final warehouseMarkers = warehouses
         .map(
           (warehouse) => flutter_map.Marker(
@@ -801,12 +820,25 @@ class _MapView extends StatelessWidget {
             userPosition!.latitude,
             userPosition!.longitude,
           ),
-          width: 40,
-          height: 40,
-          child: const Icon(
-            Icons.my_location,
-            color: Color(0xFF3B82F6),
-            size: 40,
+          width: 56,
+          height: 56,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.92),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.28),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.my_location,
+              color: Color(0xFF2563EB),
+              size: 34,
+            ),
           ),
         ),
       );
@@ -815,7 +847,13 @@ class _MapView extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: flutter_map.FlutterMap(
-        options: flutter_map.MapOptions(initialCenter: center, initialZoom: 12),
+        key: ValueKey(
+          'discovery-map-${center.latitude.toStringAsFixed(5)}-${center.longitude.toStringAsFixed(5)}-$initialZoom',
+        ),
+        options: flutter_map.MapOptions(
+          initialCenter: center,
+          initialZoom: initialZoom,
+        ),
         children: [
           flutter_map.TileLayer(
             urlTemplate: _tileLayerUrlTemplate,
@@ -827,7 +865,11 @@ class _MapView extends StatelessWidget {
     );
   }
 
-  Widget _buildGoogleMap(BuildContext context, latlong_pkg.LatLng center) {
+  Widget _buildGoogleMap(
+    BuildContext context,
+    latlong_pkg.LatLng center,
+    double initialZoom,
+  ) {
     final warehouseMarkers = warehouses
         .map(
           (warehouse) => flutter_map.Marker(
@@ -853,12 +895,25 @@ class _MapView extends StatelessWidget {
             userPosition!.latitude,
             userPosition!.longitude,
           ),
-          width: 40,
-          height: 40,
-          child: const Icon(
-            Icons.my_location,
-            color: Color(0xFF3B82F6),
-            size: 40,
+          width: 56,
+          height: 56,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.92),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.28),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.my_location,
+              color: Color(0xFF2563EB),
+              size: 34,
+            ),
           ),
         ),
       );
@@ -867,7 +922,13 @@ class _MapView extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: flutter_map.FlutterMap(
-        options: flutter_map.MapOptions(initialCenter: center, initialZoom: 12),
+        key: ValueKey(
+          'discovery-map-${center.latitude.toStringAsFixed(5)}-${center.longitude.toStringAsFixed(5)}-$initialZoom',
+        ),
+        options: flutter_map.MapOptions(
+          initialCenter: center,
+          initialZoom: initialZoom,
+        ),
         children: [
           flutter_map.TileLayer(
             urlTemplate: _tileLayerUrlTemplate,
