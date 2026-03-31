@@ -85,6 +85,17 @@ List<ShellNavSection> buildShellSections(
             route: '/admin/incidents',
           ),
           ShellNavItem(
+            label: l10n.t('cobros_en_caja'),
+            icon: Icons.point_of_sale_outlined,
+            route: '/admin/cash-payments',
+          ),
+          ShellNavItem(
+            label: l10n.t('qr_y_pin_operativo'),
+            icon: Icons.qr_code_scanner_outlined,
+            route: '/admin/qr-handoff',
+            matchPrefixes: const ['/ops/qr-handoff'],
+          ),
+          ShellNavItem(
             label: l10n.t('payments'),
             icon: Icons.payments_outlined,
             route: '/admin/payments-history',
@@ -255,6 +266,17 @@ List<ShellNavSection> buildShellSections(
           label: l10n.t('notifications'),
           icon: Icons.notifications_none_rounded,
           route: '/notifications',
+        ),
+        ShellNavItem(
+          label: l10n.t('incidencias'),
+          icon: Icons.support_agent_outlined,
+          route: '/incidents-history',
+          matchPrefixes: const ['/incidents'],
+        ),
+        ShellNavItem(
+          label: l10n.t('payments'),
+          icon: Icons.receipt_long_outlined,
+          route: '/payments-history',
         ),
         ShellNavItem(
           label: l10n.t('profile'),

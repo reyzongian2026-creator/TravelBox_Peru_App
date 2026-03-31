@@ -18,10 +18,12 @@ import '../../features/delivery/presentation/tracking_page.dart';
 import '../../features/courier/presentation/courier_dashboard_page.dart';
 import '../../features/courier/presentation/courier_services_page.dart';
 import '../../features/incidents/presentation/incidents_page.dart';
+import '../../features/incidents/presentation/incidents_overview_page.dart';
 import '../../features/map_discovery/presentation/home_discovery_page.dart';
 import '../../features/notifications/presentation/notifications_page.dart';
 import '../../features/operator_dashboard/presentation/operator_dashboard_page.dart';
 import '../../features/ops_qr/presentation/ops_qr_handoff_page.dart';
+import '../../features/payments/presentation/payment_history_page.dart';
 import '../../features/payments/presentation/cash_payments_page.dart';
 import '../../features/payments/presentation/three_ds_auth_page.dart';
 import '../../features/profile/presentation/edit_profile_page.dart';
@@ -311,6 +313,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           reservationId: state.uri.queryParameters['reservationId'],
         ),
       ),
+      GoRoute(
+        path: '/incidents-history',
+        builder: (_, state) => const ClientIncidentsOverviewPage(),
+      ),
+      GoRoute(
+        path: '/payments-history',
+        builder: (_, state) => const PaymentHistoryPage(),
+      ),
       GoRoute(path: '/profile', builder: (context, state) => ProfilePage()),
       GoRoute(
         path: '/profile/edit',
@@ -356,6 +366,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/admin/incidents',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/cash-payments',
+            builder: (context, state) => const AdminShellPage(),
+          ),
+          GoRoute(
+            path: '/admin/qr-handoff',
             builder: (context, state) => const AdminShellPage(),
           ),
           GoRoute(

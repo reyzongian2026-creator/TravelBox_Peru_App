@@ -449,6 +449,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
   Future<void> _submit(Reservation? reservation) async {
     final session = ref.read(sessionControllerProvider);
     final selectedLocale = session.locale.languageCode;
+    final translator = ref.read(incidentTranslationServiceProvider);
     final customerLanguage = _normalizeLanguage(
       session.user?.preferredLanguage ?? selectedLocale,
     );
@@ -483,13 +484,15 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
         );
       }
 
-      final translation = ref
-          .read(incidentTranslationServiceProvider)
-          .translate(
-            message: comment,
-            sourceLanguage: customerLanguage,
-            customerLanguage: customerLanguage,
-          );
+      final sourceLanguage = translator.detectLikelySourceLanguage(
+        message: comment,
+        fallbackLanguage: customerLanguage,
+      );
+      final translation = translator.translate(
+        message: comment,
+        sourceLanguage: sourceLanguage,
+        customerLanguage: customerLanguage,
+      );
       final commentInSpanish = IncidentI18nCodec.withLanguageMarker(
         textInSpanish:
             '[${_categoryLabel(category)}] ${translation.messageInSpanish}',
@@ -506,7 +509,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
                 commentInSpanish: commentInSpanish,
                 evidenceUrl: evidenceUrl,
               ),
-              'originalLanguage': customerLanguage,
+              'originalLanguage': translation.sourceLanguage,
             },
           );
 

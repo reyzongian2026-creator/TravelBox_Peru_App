@@ -580,12 +580,16 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     setState(() => _saving = true);
     try {
       final customerLanguage = item.customerLanguage;
-      final sourceLanguage = ref
+      final fallbackLanguage = ref
           .read(sessionControllerProvider)
           .locale
           .languageCode;
-      final translatedResolution = ref
-          .read(incidentTranslationServiceProvider)
+      final translator = ref.read(incidentTranslationServiceProvider);
+      final sourceLanguage = translator.detectLikelySourceLanguage(
+        message: resolution.trim(),
+        fallbackLanguage: fallbackLanguage,
+      );
+      final translatedResolution = translator
           .translate(
             message: resolution.trim(),
             sourceLanguage: sourceLanguage,

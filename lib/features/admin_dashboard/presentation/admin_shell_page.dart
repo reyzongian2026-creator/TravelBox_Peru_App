@@ -11,6 +11,8 @@ import '../../admin_reservations/presentation/admin_reservations_page.dart';
 import '../../admin_users/presentation/admin_users_page.dart';
 import '../../admin_warehouses/presentation/admin_warehouses_page.dart';
 import '../../delivery/presentation/delivery_monitor_page.dart';
+import '../../ops_qr/presentation/ops_qr_handoff_page.dart';
+import '../../payments/presentation/cash_payments_page.dart';
 
 class AdminShellPage extends StatelessWidget {
   const AdminShellPage({super.key});
@@ -36,6 +38,15 @@ class AdminShellPage extends StatelessWidget {
     }
     if (currentPath.startsWith('/admin/incidents')) {
       return AdminIncidentsPage(currentRoute: '/admin/incidents');
+    }
+    if (currentPath.startsWith('/admin/cash-payments')) {
+      return const CashPaymentsPage(
+        title: 'cobros_en_caja',
+        currentRoute: '/admin/cash-payments',
+      );
+    }
+    if (currentPath.startsWith('/admin/qr-handoff')) {
+      return const OpsQrHandoffPage(currentRoute: '/admin/qr-handoff');
     }
     if (currentPath.startsWith('/admin/payments-history')) {
       return AdminPaymentsHistoryPage();
