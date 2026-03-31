@@ -162,68 +162,95 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
               final compactVerticalLayout = constraints.maxHeight < 720;
               return DefaultTabController(
                 length: 4,
-                child: Column(
-                  children: [
-                    _buildHeroHeader(
-                      context: context,
-                      selectedReservation: selectedReservation,
-                      selectedCase: selectedCase,
-                      compact: compactVerticalLayout,
-                    ),
-                    if (!compactVerticalLayout &&
-                        session.locale.languageCode.toLowerCase() == 'es')
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                        child: OperationGuideSummaryCard(
-                          guide: resolveOperationGuide('/ops/qr-handoff')!,
-                          compact: true,
+                child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) {
+                    return [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            _buildHeroHeader(
+                              context: context,
+                              selectedReservation: selectedReservation,
+                              selectedCase: selectedCase,
+                              compact: compactVerticalLayout,
+                            ),
+                            if (!compactVerticalLayout &&
+                                session.locale.languageCode.toLowerCase() ==
+                                    'es')
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  10,
+                                ),
+                                child: OperationGuideSummaryCard(
+                                  guide:
+                                      resolveOperationGuide(
+                                        '/ops/qr-handoff',
+                                      )!,
+                                  compact: true,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                    TabBar(
-                      tabs: [
-                        Tab(
-                          icon: Icon(Icons.qr_code_scanner),
-                          text: context.l10n.t('ops_qr_tab_scan'),
-                        ),
-                        Tab(
-                          icon: Icon(Icons.storefront_outlined),
-                          text: context.l10n.t('ops_qr_tab_presential'),
-                        ),
-                        Tab(
-                          icon: Icon(Icons.local_shipping_outlined),
-                          text: context.l10n.t('delivery'),
-                        ),
-                        Tab(
-                          icon: Icon(Icons.notifications_active_outlined),
-                          text: context.l10n.t('ops_qr_tab_approvals'),
-                        ),
-                      ],
-                    ),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, tabBarConstraints) {
-                          return TabBarView(
-                            children: [
-                              _buildScanTab(reservations, selectedReservation),
-                              _buildPresentialTab(
-                                selectedReservation,
-                                selectedCase,
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _OpsQrTabBarDelegate(
+                          child: Container(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            alignment: Alignment.bottomCenter,
+                            child: Material(
+                              color: Theme.of(context).colorScheme.surface,
+                              elevation: innerBoxIsScrolled ? 1 : 0,
+                              borderRadius: BorderRadius.circular(18),
+                              child: TabBar(
+                                isScrollable: constraints.maxWidth < 960,
+                                tabs: [
+                                  Tab(
+                                    icon: Icon(Icons.qr_code_scanner),
+                                    text: context.l10n.t('ops_qr_tab_scan'),
+                                  ),
+                                  Tab(
+                                    icon: Icon(Icons.storefront_outlined),
+                                    text: context.l10n.t(
+                                      'ops_qr_tab_presential',
+                                    ),
+                                  ),
+                                  Tab(
+                                    icon: Icon(Icons.local_shipping_outlined),
+                                    text: context.l10n.t('delivery'),
+                                  ),
+                                  Tab(
+                                    icon: Icon(
+                                      Icons.notifications_active_outlined,
+                                    ),
+                                    text: context.l10n.t(
+                                      'ops_qr_tab_approvals',
+                                    ),
+                                  ),
+                                ],
                               ),
-                              _buildDeliveryTab(
-                                selectedReservation,
-                                selectedCase,
-                              ),
-                              _buildApprovalsTab(
-                                selectedReservation: selectedReservation,
-                                selectedCase: selectedCase,
-                                canApproveOperator: canApproveOperator,
-                              ),
-                            ],
-                          );
-                        },
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ];
+                  },
+                  body: TabBarView(
+                    children: [
+                      _buildScanTab(reservations, selectedReservation),
+                      _buildPresentialTab(selectedReservation, selectedCase),
+                      _buildDeliveryTab(selectedReservation, selectedCase),
+                      _buildApprovalsTab(
+                        selectedReservation: selectedReservation,
+                        selectedCase: selectedCase,
+                        canApproveOperator: canApproveOperator,
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -1190,6 +1217,32 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
   void _showMessage(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+}
+
+class _OpsQrTabBarDelegate extends SliverPersistentHeaderDelegate {
+  const _OpsQrTabBarDelegate({required this.child});
+
+  final Widget child;
+
+  @override
+  double get minExtent => 72;
+
+  @override
+  double get maxExtent => 72;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _OpsQrTabBarDelegate oldDelegate) {
+    return oldDelegate.child != child;
   }
 }
 
