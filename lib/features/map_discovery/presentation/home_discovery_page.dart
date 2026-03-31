@@ -10,12 +10,12 @@ import 'package:flutter_map/flutter_map.dart' as flutter_map;
 
 import 'package:latlong2/latlong.dart' as latlong_pkg;
 
-import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/theme/brand_tokens.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../shared/maps/app_map_tiles.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';
 import '../../../shared/models/warehouse.dart';
 import '../../../shared/state/realtime_app_event_cursor_provider.dart';
@@ -880,19 +880,7 @@ class _MapView extends StatelessWidget {
   }
 
   String get _tileLayerUrlTemplate {
-    // Azure Maps `map/tile` can return vector tiles for some tileset/api-version
-    // combinations. `flutter_map` expects raster image tiles, so on Flutter web we
-    // force a stable PNG raster source to avoid `ImageCodecException`.
-    if (kIsWeb) {
-      return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-    }
-
-    final azureKey = AppEnv.azureMapsApiKey.trim();
-    if (azureKey.isEmpty) {
-      return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-    }
-
-    return 'https://atlas.microsoft.com/map/tile/png?api-version=1.0&tilesetId=microsoft.base.road&zoom={z}&x={x}&y={y}&tileSize=256&language=es-ES&view=Auto&subscription-key=$azureKey';
+    return AppMapTiles.rasterUrlTemplate;
   }
 }
 

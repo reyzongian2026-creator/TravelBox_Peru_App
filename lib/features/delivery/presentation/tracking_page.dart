@@ -9,10 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:latlong2/latlong.dart' as latlong_pkg;
 
-import '../../../core/env/app_env.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../shared/maps/app_map_tiles.dart';
 import '../../../shared/models/delivery_tracking.dart';
 import '../../../shared/models/geo_route.dart';
 import '../../../shared/models/reservation.dart';
@@ -218,9 +218,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
           ),
           children: [
             flutter_map.TileLayer(
-              urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
-                  ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
-                  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: AppMapTiles.rasterUrlTemplate,
               userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
             ),
             if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
@@ -274,9 +272,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
           ),
           children: [
             flutter_map.TileLayer(
-              urlTemplate: AppEnv.azureMapsApiKey.trim().isNotEmpty
-                  ? 'https://atlas.microsoft.com/map/tile?api-version=2022-12-01&tilesetId=microsoft.basemaps&zoom={z}&x={x}&y={y}&subscription-key=${AppEnv.azureMapsApiKey}'
-                  : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: AppMapTiles.rasterUrlTemplate,
               userAgentPackageName: 'com.travelbox.peru.travelbox_peru_app',
             ),
             if (polyline != null) flutter_map.PolylineLayer(polylines: [polyline]),
