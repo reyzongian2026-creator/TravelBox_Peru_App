@@ -438,34 +438,78 @@ class _HomeDiscoveryPageState extends ConsumerState<HomeDiscoveryPage> {
   }
 
   Future<void> _locateUser(BuildContext context) async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+    try {
+      if (kIsWeb) {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: WebSettings(
+            accuracy: LocationAccuracy.high,
+            maximumAge: const Duration(minutes: 2),
+            timeLimit: const Duration(seconds: 15),
+          ),
+        );
+        _applyLocatedPosition(position);
+        return;
+      }
+
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.t('gps_disabled_manual'))),
+        );
+        return;
+      }
+
+      final permission = await Geolocator.checkPermission();
+      var finalPermission = permission;
+      if (permission == LocationPermission.denied) {
+        finalPermission = await Geolocator.requestPermission();
+      }
+      if (finalPermission == LocationPermission.denied ||
+          finalPermission == LocationPermission.deniedForever) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.t('gps_disabled_manual'))),
+        );
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+      _applyLocatedPosition(position);
+    } on PermissionDeniedException {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.t('gps_disabled_manual'))),
       );
-      return;
-    }
-
-    final permission = await Geolocator.checkPermission();
-    var finalPermission = permission;
-    if (permission == LocationPermission.denied) {
-      finalPermission = await Geolocator.requestPermission();
-    }
-    if (finalPermission == LocationPermission.denied ||
-        finalPermission == LocationPermission.deniedForever) {
+    } on LocationServiceDisabledException {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.t('gps_disabled_manual'))),
       );
-      return;
+    } on TimeoutException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('delivery_location_failed'))),
+      );
+    } on PositionUpdateException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('delivery_location_failed'))),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('delivery_location_failed'))),
+      );
     }
+  }
 
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.best,
-      ),
-    );
+  void _applyLocatedPosition(Position position) {
     _searchDebounce?.cancel();
     ref.read(currentPositionProvider.notifier).state = position;
     ref.read(discoveryViewModeProvider.notifier).state = DiscoveryViewMode.map;
