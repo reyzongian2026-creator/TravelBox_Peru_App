@@ -273,6 +273,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _nationality,
               decoration: InputDecoration(labelText: l10n.t('nationality')),
               items: countryDialingCatalog
@@ -295,6 +296,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _preferredLanguage,
               decoration: InputDecoration(labelText: l10n.t('language')),
               items: languageOptions.entries
@@ -347,6 +349,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: _documentType,
               decoration: InputDecoration(
                 labelText: l10n.t('profile_document_type'),

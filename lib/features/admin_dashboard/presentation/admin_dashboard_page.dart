@@ -139,7 +139,8 @@ class _DashboardContent extends ConsumerWidget {
     final sectionGap = responsive.sectionGap;
     final rankingMinHeight = isMobile ? 188.0 : 220.0;
 
-    return Column(
+    return SingleChildScrollView(child: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: double.infinity,
@@ -187,8 +188,9 @@ class _DashboardContent extends ConsumerWidget {
             ],
           ),
         ),
-        Expanded(
-          child: ListView(
+        ListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             padding: responsive.pageInsets(
               top: responsive.verticalPadding,
               bottom: responsive.sectionGap,
@@ -466,9 +468,8 @@ class _DashboardContent extends ConsumerWidget {
               ),
             ],
           ),
-        ),
       ],
-    );
+    ));
   }
 }
 

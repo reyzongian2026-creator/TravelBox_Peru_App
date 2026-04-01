@@ -244,28 +244,36 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
     return AppShellScaffold(
       title: l10n.t('operations_users'),
       currentRoute: '/admin/users',
-      child: Column(
+      child: SingleChildScrollView(child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _buildTopControls(context, ref, l10n),
-          Expanded(
-            child: usersAsync.when(
+          usersAsync.when(
               data: (items) {
                 if (!loadRequested) {
-                  return EmptyStateView(
-                    message: l10n.t('admin_users_press_load_hint'),
-                    actionLabel: l10n.t('admin_users_load_now'),
-                    onAction: _applyUserFilters,
+                  return SizedBox(
+                    height: 300,
+                    child: EmptyStateView(
+                      message: l10n.t('admin_users_press_load_hint'),
+                      actionLabel: l10n.t('admin_users_load_now'),
+                      onAction: _applyUserFilters,
+                    ),
                   );
                 }
                 if (items.isEmpty) {
-                  return EmptyStateView(
-                    message: l10n.t('admin_users_empty_filter'),
+                  return SizedBox(
+                    height: 300,
+                    child: EmptyStateView(
+                      message: l10n.t('admin_users_empty_filter'),
+                    ),
                   );
                 }
                 return NotificationListener<ScrollNotification>(
                   onNotification: (notification) =>
                       _handleUserListScroll(notification, responsive.isMobile),
                   child: ListView(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                     children: [
                       _AdminUsersSummary(
@@ -290,16 +298,18 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                   ),
                 );
               },
-              loading: () => const LoadingStateView(),
-              error: (error, _) => ErrorStateView(
-                message:
-                    '${l10n.t('admin_users_load_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => l10n.t(key))}',
-                onRetry: () => ref.invalidate(adminUsersProvider),
+              loading: () => const SizedBox(height: 300, child: LoadingStateView()),
+              error: (error, _) => SizedBox(
+                height: 300,
+                child: ErrorStateView(
+                  message:
+                      '${l10n.t('admin_users_load_failed')}: ${AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => l10n.t(key))}',
+                  onRetry: () => ref.invalidate(adminUsersProvider),
+                ),
               ),
             ),
-          ),
         ],
-      ),
+      )),
     );
   }
 
@@ -353,7 +363,7 @@ class _AdminUsersPageState extends ConsumerState<AdminUsersPage> {
                       ),
                       SizedBox(height: itemGap),
                       SizedBox(
-                        height: 40,
+                        height: 46,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           children: [
@@ -2009,6 +2019,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _preferredLanguage,
                     decoration: InputDecoration(
                       labelText: context.l10n.t('language'),
@@ -2042,6 +2053,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _documentType,
                     decoration: InputDecoration(
                       labelText: context.l10n.t('admin_users_document_type'),

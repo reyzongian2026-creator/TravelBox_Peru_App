@@ -135,73 +135,31 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
       currentRoute: '/courier/services',
       child: DefaultTabController(
         length: 2,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      setState(() => _query = value.trim());
-                      _loadData();
-                    },
-                    decoration: InputDecoration(
-                      labelText: context.l10n.t(
-                        'courier_services_search_label',
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      onChanged: (value) {
+                        setState(() => _query = value.trim());
+                        _loadData();
+                      },
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t(
+                          'courier_services_search_label',
+                        ),
+                        prefixIcon: const Icon(Icons.search),
                       ),
-                      prefixIcon: const Icon(Icons.search),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (responsive.width < 920)
-                    Column(
-                      children: [
-                        TabBar(
-                          tabs: [
-                            Tab(
-                              text: context.l10n.t(
-                                'courier_services_tab_available',
-                              ),
-                            ),
-                            Tab(
-                              text: context.l10n.t('courier_services_tab_mine'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            FilterChip(
-                              selected: _activeOnly,
-                              label: Text(context.l10n.t('solo_activos')),
-                              onSelected: (value) {
-                                setState(() => _activeOnly = value);
-                                _loadData();
-                              },
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: _loadData,
-                              icon: const Icon(Icons.refresh),
-                              label: Text(context.l10n.t('recargar')),
-                            ),
-                            FilledButton.tonalIcon(
-                              onPressed: () => context.go('/ops/qr-handoff'),
-                              icon: const Icon(Icons.qr_code_scanner_outlined),
-                              label: Text(context.l10n.t('qrpin')),
-                            ),
-                          ],
-                        ),
-                      ],
-                    )
-                  else
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TabBar(
+                    const SizedBox(height: 10),
+                    if (responsive.width < 920)
+                      Column(
+                        children: [
+                          TabBar(
                             tabs: [
                               Tab(
                                 text: context.l10n.t(
@@ -215,60 +173,113 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        FilterChip(
-                          selected: _activeOnly,
-                          label: Text(context.l10n.t('solo_activos')),
-                          onSelected: (value) {
-                            setState(() => _activeOnly = value);
-                            _loadData();
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        OutlinedButton.icon(
-                          onPressed: _loadData,
-                          icon: const Icon(Icons.refresh),
-                          label: Text(context.l10n.t('recargar')),
-                        ),
-                        FilledButton.tonalIcon(
-                          onPressed: () => context.go('/ops/qr-handoff'),
-                          icon: const Icon(Icons.qr_code_scanner_outlined),
-                          label: Text(context.l10n.t('qrpin')),
-                        ),
-                      ],
-                    ),
-                ],
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              FilterChip(
+                                selected: _activeOnly,
+                                label: Text(context.l10n.t('solo_activos')),
+                                onSelected: (value) {
+                                  setState(() => _activeOnly = value);
+                                  _loadData();
+                                },
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: _loadData,
+                                icon: const Icon(Icons.refresh),
+                                label: Text(context.l10n.t('recargar')),
+                              ),
+                              FilledButton.tonalIcon(
+                                onPressed: () =>
+                                    context.go('/ops/qr-handoff'),
+                                icon: const Icon(
+                                  Icons.qr_code_scanner_outlined,
+                                ),
+                                label: Text(context.l10n.t('qrpin')),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TabBar(
+                              tabs: [
+                                Tab(
+                                  text: context.l10n.t(
+                                    'courier_services_tab_available',
+                                  ),
+                                ),
+                                Tab(
+                                  text: context.l10n.t(
+                                    'courier_services_tab_mine',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilterChip(
+                            selected: _activeOnly,
+                            label: Text(context.l10n.t('solo_activos')),
+                            onSelected: (value) {
+                              setState(() => _activeOnly = value);
+                              _loadData();
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            onPressed: _loadData,
+                            icon: const Icon(Icons.refresh),
+                            label: Text(context.l10n.t('recargar')),
+                          ),
+                          FilledButton.tonalIcon(
+                            onPressed: () => context.go('/ops/qr-handoff'),
+                            icon: const Icon(Icons.qr_code_scanner_outlined),
+                            label: Text(context.l10n.t('qrpin')),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
-            SizedBox(height: 8),
-            Expanded(
-              child: _loading
-                  ? const LoadingStateView()
-                  : _error != null
-                  ? ErrorStateView(message: _error!, onRetry: _loadData)
-                  : TabBarView(
-                      children: [
-                        _buildList(
-                          context,
-                          items: _availableItems,
-                          emptyMessage: context.l10n.t(
-                            'courier_services_empty_available',
-                          ),
-                          showClaimAction: true,
-                        ),
-                        _buildList(
-                          context,
-                          items: _myItems,
-                          emptyMessage: context.l10n.t(
-                            'courier_services_empty_mine',
-                          ),
-                          showClaimAction: false,
-                        ),
-                      ],
-                    ),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
           ],
+          body: _loading
+              ? ListView(
+                  children: const [LoadingStateView()],
+                )
+              : _error != null
+              ? ListView(
+                  children: [
+                    ErrorStateView(message: _error!, onRetry: _loadData),
+                  ],
+                )
+              : TabBarView(
+                  children: [
+                    _buildList(
+                      context,
+                      items: _availableItems,
+                      emptyMessage: context.l10n.t(
+                        'courier_services_empty_available',
+                      ),
+                      showClaimAction: true,
+                    ),
+                    _buildList(
+                      context,
+                      items: _myItems,
+                      emptyMessage: context.l10n.t(
+                        'courier_services_empty_mine',
+                      ),
+                      showClaimAction: false,
+                    ),
+                  ],
+                ),
         ),
       ),
     );
@@ -281,7 +292,11 @@ class _CourierServicesPageState extends ConsumerState<CourierServicesPage> {
     required bool showClaimAction,
   }) {
     if (items.isEmpty) {
-      return EmptyStateView(message: emptyMessage);
+      return CustomScrollView(
+        slivers: [
+          SliverFillRemaining(child: EmptyStateView(message: emptyMessage)),
+        ],
+      );
     }
     return RefreshIndicator(
       onRefresh: _loadData,
@@ -899,6 +914,7 @@ class _CourierProgressDialogState
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: statuses.contains(_status)
                       ? _status
                       : statuses.first,

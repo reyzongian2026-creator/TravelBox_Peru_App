@@ -7,6 +7,7 @@ import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
+import '../../../core/layout/responsive_layout.dart';
 import '../../../shared/utils/status_localizer.dart';
 import 'reservation_providers.dart';
 
@@ -47,6 +48,7 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
     required List<String> reservationIds,
   }) {
     final l10n = context.l10n;
+    final responsive = context.responsive;
     if (syncState.isLoading && reservationIds.isEmpty) {
       return const LoadingStateView();
     }
@@ -79,77 +81,86 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
               .take(_historyPageSize)
               .toList();
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        setState(() => _historyPage = 0);
-        ref.invalidate(myReservationsProvider);
-        await ref.read(myReservationsProvider.future);
-      },
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        children: [
-          _LatestReservationHeroById(reservationId: latestReservationId),
-          const SizedBox(height: 18),
-          if (historyReservationIds.isNotEmpty) ...[
-            Row(
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              setState(() => _historyPage = 0);
+              ref.invalidate(myReservationsProvider);
+              await ref.read(myReservationsProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 16),
               children: [
-                Expanded(
-                  child: Text(
-                    l10n.t('my_reservations_history_title'),
-                    style: Theme.of(context).textTheme.titleLarge,
+                _LatestReservationHeroById(reservationId: latestReservationId),
+                const SizedBox(height: 18),
+                if (historyReservationIds.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.t('my_reservations_history_title'),
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      if (totalHistoryPages > 1)
+                        Text(
+                          '${l10n.t('my_reservations_page')} ${effectiveHistoryPage + 1} ${l10n.t('my_reservations_of')} $totalHistoryPages',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                    ],
                   ),
-                ),
-                if (totalHistoryPages > 1)
-                  Text(
-                    '${l10n.t('my_reservations_page')} ${effectiveHistoryPage + 1} ${l10n.t('my_reservations_of')} $totalHistoryPages',
-                    style: Theme.of(context).textTheme.bodySmall,
+                  const SizedBox(height: 10),
+                  ...visibleHistoryIds.map(
+                    (reservationId) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _ReservationCardById(reservationId: reservationId),
+                    ),
+                  ),
+                ] else
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        l10n.t('my_reservations_latest_only'),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
                   ),
               ],
             ),
-            const SizedBox(height: 10),
-            ...visibleHistoryIds.map(
-              (reservationId) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _ReservationCardById(reservationId: reservationId),
-              ),
+          ),
+        ),
+        if (totalHistoryPages > 1)
+          Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: responsive.horizontalPadding,
+              vertical: 8,
             ),
-            if (totalHistoryPages > 1)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: effectiveHistoryPage == 0
-                          ? null
-                          : () => setState(() => _historyPage -= 1),
-                      icon: const Icon(Icons.chevron_left),
-                      label: Text(l10n.t('previous')),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: effectiveHistoryPage >= totalHistoryPages - 1
-                          ? null
-                          : () => setState(() => _historyPage += 1),
-                      icon: const Icon(Icons.chevron_right),
-                      label: Text(l10n.t('next')),
-                    ),
-                  ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: effectiveHistoryPage == 0
+                      ? null
+                      : () => setState(() => _historyPage -= 1),
+                  icon: const Icon(Icons.chevron_left),
+                  label: Text(l10n.t('previous')),
                 ),
-              ),
-          ] else
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  l10n.t('my_reservations_latest_only'),
-                  style: Theme.of(context).textTheme.bodyMedium,
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: effectiveHistoryPage >= totalHistoryPages - 1
+                      ? null
+                      : () => setState(() => _historyPage += 1),
+                  icon: const Icon(Icons.chevron_right),
+                  label: Text(l10n.t('next')),
                 ),
-              ),
+              ],
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

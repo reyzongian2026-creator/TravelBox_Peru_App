@@ -63,7 +63,8 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
     return AppShellScaffold(
       title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
-      child: Column(
+      child: SingleChildScrollView(child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -132,18 +133,22 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
             ),
           ),
           SizedBox(height: itemGap),
-          Expanded(
-            child: reservations.when(
+          reservations.when(
               data: (pageResult) {
                 final items = pageResult.items;
                 if (items.isEmpty) {
-                  return EmptyStateView(
-                    message: _searchController.text.trim().isEmpty
-                        ? context.l10n.t('admin_reservation_empty_default')
-                        : '${context.l10n.t('admin_reservation_empty_query')}: "${_searchController.text.trim()}".',
+                  return SizedBox(
+                    height: 300,
+                    child: EmptyStateView(
+                      message: _searchController.text.trim().isEmpty
+                          ? context.l10n.t('admin_reservation_empty_default')
+                          : '${context.l10n.t('admin_reservation_empty_query')}: "${_searchController.text.trim()}".',
+                    ),
                   );
                 }
                 return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   itemCount: items.length + 1,
                   separatorBuilder: (context, index) =>
@@ -385,16 +390,18 @@ class _AdminReservationsPageState extends ConsumerState<AdminReservationsPage> {
                   },
                 );
               },
-              loading: () => const LoadingStateView(),
-              error: (error, _) => ErrorStateView(
-                message:
-                    '${context.l10n.t('admin_reservation_load_failed')}: $error',
-                onRetry: _refreshReservations,
+              loading: () => const SizedBox(height: 300, child: LoadingStateView()),
+              error: (error, _) => SizedBox(
+                height: 300,
+                child: ErrorStateView(
+                  message:
+                      '${context.l10n.t('admin_reservation_load_failed')}: $error',
+                  onRetry: _refreshReservations,
+                ),
               ),
             ),
-          ),
         ],
-      ),
+      )),
     );
   }
 
@@ -629,7 +636,7 @@ class _StatusFilterBar extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 38,
+      height: 46,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: chips.length,

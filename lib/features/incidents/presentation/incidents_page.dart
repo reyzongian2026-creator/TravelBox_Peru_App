@@ -208,6 +208,7 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
             ),
           SizedBox(height: 12),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: category,
             items: [
               DropdownMenuItem(

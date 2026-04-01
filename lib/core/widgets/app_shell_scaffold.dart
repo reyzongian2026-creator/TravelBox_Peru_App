@@ -861,7 +861,7 @@ class _HeaderProfileChip extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 120),
+            constraints: const BoxConstraints(maxWidth: 160),
             child: Text(
               userName,
               overflow: TextOverflow.ellipsis,

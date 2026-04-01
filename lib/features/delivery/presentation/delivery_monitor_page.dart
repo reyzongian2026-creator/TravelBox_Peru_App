@@ -130,25 +130,135 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
     final list = _buildList(context, items, selected);
     final detail = _buildDetail(context, selected, items.length, activeOnly);
 
-    final content = LayoutBuilder(
+    final heroHeader = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF173B56), Color(0xFF0B8B8C)],
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              context.l10n.t('delivery_monitor_live_title'),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              context.l10n.t('delivery_monitor_live_subtitle'),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 760;
+                final searchWidth = compact
+                    ? constraints.maxWidth
+                    : (constraints.maxWidth * 0.42)
+                          .clamp(260.0, 420.0)
+                          .toDouble();
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: searchWidth,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (value) {
+                          ref
+                                  .read(
+                                    deliveryMonitorSearchProvider.notifier,
+                                  )
+                                  .state =
+                              value;
+                        },
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: const Icon(Icons.search),
+                          hintText: context.l10n.t(
+                            'delivery_monitor_search_hint',
+                          ),
+                        ),
+                      ),
+                    ),
+                    FilterChip(
+                      selected: activeOnly,
+                      label: Text(context.l10n.t('solo_activas')),
+                      onSelected: (_) {
+                        ref
+                                .read(
+                                  deliveryMonitorActiveOnlyProvider
+                                      .notifier,
+                                )
+                                .state =
+                            true;
+                      },
+                    ),
+                    FilterChip(
+                      selected: !activeOnly,
+                      label: Text(context.l10n.t('recientes')),
+                      onSelected: (_) {
+                        ref
+                                .read(
+                                  deliveryMonitorActiveOnlyProvider
+                                      .notifier,
+                                )
+                                .state =
+                            false;
+                      },
+                    ),
+                    Chip(
+                      label: Text(
+                        '${items.length} '
+                        '${context.l10n.t('delivery_monitor_orders_suffix')}',
+                      ),
+                      backgroundColor: Colors.white.withValues(alpha: 0.92),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= 1180) {
           final listPaneWidth = (constraints.maxWidth * 0.34)
               .clamp(320.0, 520.0)
               .toDouble();
-          return Padding(
-            padding: EdgeInsets.all(responsive.horizontalPadding),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: listPaneWidth,
-                  child: SingleChildScrollView(child: list),
+          return Column(
+            children: [
+              heroHeader,
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(responsive.horizontalPadding),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: listPaneWidth,
+                        child: SingleChildScrollView(child: list),
+                      ),
+                      SizedBox(width: responsive.sectionGap),
+                      Expanded(child: SingleChildScrollView(child: detail)),
+                    ],
+                  ),
                 ),
-                SizedBox(width: responsive.sectionGap),
-                Expanded(child: SingleChildScrollView(child: detail)),
-              ],
-            ),
+              ),
+            ],
           );
         }
 
@@ -158,120 +268,14 @@ class _DeliveryMonitorPageState extends ConsumerState<DeliveryMonitorPage> {
             bottom: 24,
           ),
           children: [
+            heroHeader,
+            SizedBox(height: responsive.sectionGap),
             list,
             SizedBox(height: responsive.sectionGap),
             detail,
           ],
         );
       },
-    );
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF173B56), Color(0xFF0B8B8C)],
-              ),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.t('delivery_monitor_live_title'),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  context.l10n.t('delivery_monitor_live_subtitle'),
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.92)),
-                ),
-                const SizedBox(height: 14),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 760;
-                    final searchWidth = compact
-                        ? constraints.maxWidth
-                        : (constraints.maxWidth * 0.42)
-                              .clamp(260.0, 420.0)
-                              .toDouble();
-                    return Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: searchWidth,
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (value) {
-                              ref
-                                      .read(
-                                        deliveryMonitorSearchProvider.notifier,
-                                      )
-                                      .state =
-                                  value;
-                            },
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              prefixIcon: const Icon(Icons.search),
-                              hintText: context.l10n.t(
-                                'delivery_monitor_search_hint',
-                              ),
-                            ),
-                          ),
-                        ),
-                        FilterChip(
-                          selected: activeOnly,
-                          label: Text(context.l10n.t('solo_activas')),
-                          onSelected: (_) {
-                            ref
-                                    .read(
-                                      deliveryMonitorActiveOnlyProvider
-                                          .notifier,
-                                    )
-                                    .state =
-                                true;
-                          },
-                        ),
-                        FilterChip(
-                          selected: !activeOnly,
-                          label: Text(context.l10n.t('recientes')),
-                          onSelected: (_) {
-                            ref
-                                    .read(
-                                      deliveryMonitorActiveOnlyProvider
-                                          .notifier,
-                                    )
-                                    .state =
-                                false;
-                          },
-                        ),
-                        Chip(
-                          label: Text(
-                            '${items.length} '
-                            '${context.l10n.t('delivery_monitor_orders_suffix')}',
-                          ),
-                          backgroundColor: Colors.white.withValues(alpha: 0.92),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        Expanded(child: content),
-      ],
     );
   }
 

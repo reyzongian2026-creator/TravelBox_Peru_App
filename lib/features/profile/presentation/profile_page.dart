@@ -235,8 +235,11 @@ class ProfilePage extends ConsumerWidget {
                   title: Text(context.l10n.t('idioma_de_app')),
                   subtitle: Text(user?.preferredLanguage.toUpperCase() ?? 'ES'),
                   trailing: SizedBox(
-                    width: responsive.isMobile ? 116 : 150,
+                    width: responsive.tier == ResponsiveTier.mobileSmall
+                        ? 104
+                        : (responsive.isMobile ? 116 : 150),
                     child: DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: session.locale.languageCode,
                       items: const ['es', 'en']
                           .map(

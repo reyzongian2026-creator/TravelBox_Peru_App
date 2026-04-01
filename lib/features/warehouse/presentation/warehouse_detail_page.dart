@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/app_localizations_fixed.dart';
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/data/peru_tourism_catalog.dart';
@@ -52,9 +52,10 @@ class WarehouseDetailPage extends ConsumerWidget {
             );
           }
 
-          final isWideWeb = kIsWeb && MediaQuery.of(context).size.width >= 1000;
+          final isWide = MediaQuery.of(context).size.width >= 1000;
+          final responsive = context.responsive;
           final content = ListView(
-            padding: const EdgeInsets.all(16),
+            padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 24),
             children: [
               Text(
                 '${context.l10n.t('warehouse_detail_city_prefix')} '
@@ -64,7 +65,7 @@ class WarehouseDetailPage extends ConsumerWidget {
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 10),
-              if (isWideWeb)
+              if (isWide)
                 SizedBox(
                   height: 320,
                   child: AppSmartImage(
@@ -194,7 +195,7 @@ class WarehouseDetailPage extends ConsumerWidget {
             ],
           );
 
-          if (!isWideWeb) {
+          if (!isWide) {
             return content;
           }
 

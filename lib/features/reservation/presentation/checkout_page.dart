@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/constants/payment_constants.dart';
 import '../../../core/env/app_env.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
@@ -70,6 +71,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       );
     }
 
+    final responsive = context.responsive;
     return Scaffold(
       appBar: AppBar(
         leading: AppBackButton(
@@ -77,8 +79,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         ),
         title: Text(context.l10n.t('checkout_payment')),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: ListView(
+        padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 24),
         children: [
           Card(
             child: Padding(
@@ -153,6 +159,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     )
                   else
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: selectedPaymentMethod,
                       items: [
                         DropdownMenuItem(
@@ -204,6 +211,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                           );
                         }
                         return DropdownButtonFormField<int>(
+                          isExpanded: true,
                           initialValue: _selectedSavedCardId,
                           items: cards.map((card) {
                             return DropdownMenuItem<int>(
@@ -412,6 +420,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

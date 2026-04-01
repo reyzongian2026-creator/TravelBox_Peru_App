@@ -82,7 +82,8 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
             ref.read(paymentHistoryPageProvider.notifier).state = 0;
           }
 
-          return Column(
+          return SingleChildScrollView(child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -129,9 +130,10 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Expanded(
-                child: items.isEmpty
-                    ? EmptyStateView(
+              items.isEmpty
+                    ? SizedBox(
+                        height: 300,
+                        child: EmptyStateView(
                         message: context.l10n.t(
                           'payments_history_empty_filtered',
                         ),
@@ -148,8 +150,11 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
                                 }
                               }
                             : () => ref.invalidate(adminPaymentHistoryProvider),
-                      )
+                      ),
+                    )
                     : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16),
                         itemCount: items.length + 1,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -226,9 +231,8 @@ class AdminPaymentsHistoryPage extends ConsumerWidget {
                           );
                         },
                       ),
-              ),
             ],
-          );
+          ));
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(

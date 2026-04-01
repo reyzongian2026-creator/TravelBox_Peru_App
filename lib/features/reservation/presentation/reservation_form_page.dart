@@ -3,6 +3,7 @@ import '../../../core/l10n/app_localizations_fixed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/utils/app_error_formatter.dart';
@@ -43,6 +44,7 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
     final warehouseAsync = ref.watch(
       warehouseDetailProvider(widget.warehouseId),
     );
+    final responsive = context.responsive;
     return Scaffold(
       appBar: AppBar(
         leading: AppBackButton(
@@ -69,8 +71,8 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
             dropoffRequested: dropoffRequested,
           );
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
+          final listView = ListView(
+            padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 24),
             children: [
               Card(
                 child: ListTile(
@@ -292,6 +294,13 @@ class _ReservationFormPageState extends ConsumerState<ReservationFormPage> {
                 child: Text(context.l10n.t('continue_checkout')),
               ),
             ],
+          );
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: listView,
+            ),
           );
         },
         loading: () => const LoadingStateView(),

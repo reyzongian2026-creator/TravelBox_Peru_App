@@ -119,7 +119,8 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
     return AppShellScaffold(
       title: context.l10n.t(widget.title),
       currentRoute: widget.currentRoute,
-      child: Column(
+      child: SingleChildScrollView(child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(
@@ -224,8 +225,7 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
             ),
           ),
           SizedBox(height: itemGap),
-          Expanded(
-            child: incidentsAsync.when(
+          incidentsAsync.when(
               data: (pageData) {
                 final items = pageData.items;
                 final openCount = items
@@ -235,7 +235,9 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                     .where((item) => item.status == 'RESOLVED')
                     .length;
                 if (items.isEmpty) {
-                  return EmptyStateView(
+                  return SizedBox(
+                    height: 300,
+                    child: EmptyStateView(
                     message: context.l10n.t('incident_admin_empty_for_filter'),
                     actionLabel: pageData.hasPrevious
                         ? context.l10n.t('previous')
@@ -250,9 +252,12 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                             }
                           }
                         : () => ref.invalidate(adminIncidentsProvider),
+                    ),
                   );
                 }
                 return ListView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   children: [
                     AdaptiveWrapGrid(
@@ -575,16 +580,18 @@ class _AdminIncidentsPageState extends ConsumerState<AdminIncidentsPage> {
                   ],
                 );
               },
-              loading: () => LoadingStateView(),
-              error: (error, _) => ErrorStateView(
-                message:
-                    '${context.l10n.t('incident_admin_load_failed')}: $error',
-                onRetry: () => ref.invalidate(adminIncidentsProvider),
+              loading: () => const SizedBox(height: 300, child: LoadingStateView()),
+              error: (error, _) => SizedBox(
+                height: 300,
+                child: ErrorStateView(
+                  message:
+                      '${context.l10n.t('incident_admin_load_failed')}: $error',
+                  onRetry: () => ref.invalidate(adminIncidentsProvider),
+                ),
               ),
             ),
-          ),
         ],
-      ),
+      )),
     );
   }
 

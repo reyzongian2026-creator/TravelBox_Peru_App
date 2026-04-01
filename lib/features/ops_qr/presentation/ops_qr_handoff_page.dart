@@ -358,6 +358,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         ),
         SizedBox(height: 14),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: _customerLanguage,
           decoration: InputDecoration(
             labelText: context.l10n.t('ops_qr_customer_language_for_messages'),
@@ -647,6 +648,7 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: _messageSourceLanguage,
           decoration: InputDecoration(
             labelText: context.l10n.t('ops_qr_message_source_language_label'),

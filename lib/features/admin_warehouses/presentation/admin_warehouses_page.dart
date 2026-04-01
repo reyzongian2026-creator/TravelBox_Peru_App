@@ -107,19 +107,22 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
     return AppShellScaffold(
       title: context.l10n.t('admin_warehouses_title'),
       currentRoute: '/admin/warehouses',
-      child: Column(
+      child: SingleChildScrollView(child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: responsive.pageInsets(top: responsive.verticalPadding),
             child: _buildToolbar(context, activeFilter: activeFilter),
           ),
           SizedBox(height: itemGap),
-          Expanded(
-            child: warehouses.when(
+          warehouses.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return EmptyStateView(
-                    message: context.l10n.t('admin_warehouses_empty_filter'),
+                  return SizedBox(
+                    height: 300,
+                    child: EmptyStateView(
+                      message: context.l10n.t('admin_warehouses_empty_filter'),
+                    ),
                   );
                 }
 
@@ -137,6 +140,8 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                 );
 
                 return ListView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   padding: responsive.pageInsets(top: 0, bottom: sectionGap),
                   children: [
                     AdaptiveWrapGrid(
@@ -195,19 +200,21 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                   ],
                 );
               },
-              loading: () => const LoadingStateView(),
-              error: (error, _) => ErrorStateView(
-                message: AppErrorFormatter.readable(
-                  error,
-                  (String key, {Map<String, dynamic>? params}) =>
-                      context.l10n.t(key),
+              loading: () => const SizedBox(height: 300, child: LoadingStateView()),
+              error: (error, _) => SizedBox(
+                height: 300,
+                child: ErrorStateView(
+                  message: AppErrorFormatter.readable(
+                    error,
+                    (String key, {Map<String, dynamic>? params}) =>
+                        context.l10n.t(key),
+                  ),
+                  onRetry: () => ref.invalidate(adminWarehousesProvider),
                 ),
-                onRetry: () => ref.invalidate(adminWarehousesProvider),
               ),
             ),
-          ),
         ],
-      ),
+      )),
     );
   }
 
@@ -894,6 +901,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 const SizedBox(height: 10),
                 citiesAsync.when(
                   data: (cities) => DropdownButtonFormField<int>(
+                    isExpanded: true,
                     initialValue: _selectedCityId,
                     decoration: InputDecoration(
                       labelText: context.l10n.t('admin_warehouses_city_label'),
@@ -928,6 +936,7 @@ class _WarehouseFormDialogState extends ConsumerState<_WarehouseFormDialog> {
                 SizedBox(height: 10),
                 zonesAsync.when(
                   data: (zones) => DropdownButtonFormField<int>(
+                    isExpanded: true,
                     initialValue: _selectedZoneId,
                     decoration: InputDecoration(
                       labelText: context.l10n.t(
