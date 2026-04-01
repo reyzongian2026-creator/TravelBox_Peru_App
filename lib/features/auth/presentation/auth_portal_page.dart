@@ -103,6 +103,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
       heroSubtitle: context.l10n.t('auth_portal_hero_subtitle'),
       showGuardianLlama: false,
       showCompactHero: false,
+      showHeroIllustration: false,
       heroAnimation: _llamaAnimation,
       formChild: _AuthPanel(
         accessMode: _accessMode,

@@ -33,6 +33,7 @@ dependencies:
   mobile_scanner: ^7.2.0
   permission_handler: ^12.0.1
   qr_flutter: ^4.1.0
+  rive: ^0.14.4
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
   web_socket_channel: ^3.0.2
@@ -51,6 +52,7 @@ flutter:
   assets:
     - assets/onboarding/
     - assets/branding/
+    - assets/rive/
 
 flutter_native_splash:
   color: "#EFF4FB"
