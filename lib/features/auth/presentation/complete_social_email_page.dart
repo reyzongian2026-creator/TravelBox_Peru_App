@@ -55,7 +55,7 @@ class _CompleteSocialEmailPageState
       heroTitle: 'CONFIRMA TU CORREO',
       heroSubtitle:
           'Necesitamos un correo real para verificar tu cuenta de Facebook y continuar con tu experiencia.',
-      showGuardianBear: false,
+      showGuardianLlama: false,
       showHeroIllustration: false,
       heroAnimation: 'idle',
       formChild: Column(

@@ -103,7 +103,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       heroLabel: 'InkaVoy',
       heroTitle: context.l10n.t('register_hero_title'),
       heroSubtitle: context.l10n.t('register_hero_subtitle'),
-      showGuardianBear: false,
+      showGuardianLlama: false,
       formChild: Form(
         key: _formKey,
         autovalidateMode: _showValidation

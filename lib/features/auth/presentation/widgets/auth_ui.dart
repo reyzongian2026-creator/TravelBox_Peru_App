@@ -4,7 +4,7 @@ import '../../../../core/layout/responsive_layout.dart';
 import '../../../../core/l10n/app_localizations_fixed.dart';
 import '../../../../core/theme/brand_tokens.dart';
 import '../../../../shared/widgets/travelbox_logo.dart';
-import 'auth_teddy_animation.dart';
+import 'auth_llama_animation.dart';
 
 class AuthUi {
   const AuthUi._();
@@ -14,13 +14,33 @@ class AuthUi {
   static const cardRadius = 24.0;
   static const actionColor = TravelBoxBrand.primaryBlue;
 
-  static InputDecoration lineFieldDecoration(String hintText) {
+  static InputDecoration lineFieldDecoration(
+    String hintText, {
+    IconData? prefixIcon,
+  }) {
     return InputDecoration(
       hintText: hintText,
+      hintStyle: const TextStyle(
+        color: TravelBoxBrand.textMuted,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      prefixIcon: prefixIcon != null
+          ? Padding(
+              padding: const EdgeInsets.only(left: 2, right: 8),
+              child: Icon(prefixIcon, size: 19, color: TravelBoxBrand.textMuted),
+            )
+          : null,
+      prefixIconConstraints: const BoxConstraints(
+        minWidth: 38,
+        minHeight: 38,
+      ),
       border: InputBorder.none,
       enabledBorder: InputBorder.none,
       focusedBorder: InputBorder.none,
-      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      contentPadding: const EdgeInsets.symmetric(vertical: 15),
       isDense: true,
       filled: false,
     );
@@ -74,7 +94,7 @@ class AuthPageScaffold extends StatelessWidget {
 class AuthCard extends StatelessWidget {
   const AuthCard({
     required this.child,
-    this.padding = const EdgeInsets.fromLTRB(20, 18, 20, 20),
+    this.padding = const EdgeInsets.fromLTRB(22, 20, 22, 22),
     this.scrollable = true,
     super.key,
   });
@@ -91,14 +111,20 @@ class AuthCard extends StatelessWidget {
         color: isDark ? const Color(0xFF151A30) : Colors.white,
         borderRadius: BorderRadius.circular(AuthUi.cardRadius),
         border: Border.all(
-          color: isDark ? const Color(0xFF2B3550) : TravelBoxBrand.border,
+          color: isDark ? const Color(0xFF2B3550) : const Color(0xFFE0E7F1),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.06),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
           ),
+          if (!isDark)
+            BoxShadow(
+              color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.04),
+              blurRadius: 40,
+              offset: const Offset(0, 20),
+            ),
         ],
       ),
       child: scrollable
@@ -114,7 +140,7 @@ class AuthSplitScaffold extends StatelessWidget {
     required this.heroTitle,
     required this.heroSubtitle,
     this.heroLabel = 'InkaVoy',
-    this.showGuardianBear = true,
+    this.showGuardianLlama = true,
     this.showHeroIllustration = true,
     this.showCompactHero = true,
     this.heroAnimation = 'idle',
@@ -126,7 +152,7 @@ class AuthSplitScaffold extends StatelessWidget {
   final String heroTitle;
   final String heroSubtitle;
   final String heroLabel;
-  final bool showGuardianBear;
+  final bool showGuardianLlama;
   final bool showHeroIllustration;
   final bool showCompactHero;
   final String heroAnimation;
@@ -201,7 +227,7 @@ class AuthSplitScaffold extends StatelessWidget {
                                 title: heroTitle,
                                 subtitle: heroSubtitle,
                                 compact: true,
-                                showGuardianBear: showGuardianBear,
+                                showGuardianLlama: showGuardianLlama,
                                 showHeroIllustration: showHeroIllustration,
                                 heroAnimation: heroAnimation,
                               ),
@@ -223,21 +249,27 @@ class AuthSplitScaffold extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isDark
                             ? const Color(0xFF11182D)
-                            : TravelBoxBrand.mist,
-                        borderRadius: BorderRadius.circular(36),
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(32),
                         border: Border.all(
                           color: isDark
                               ? const Color(0xFF2B3550)
-                              : TravelBoxBrand.border,
+                              : const Color(0xFFE0E7F1),
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
-                              alpha: isDark ? 0.28 : 0.09,
+                              alpha: isDark ? 0.28 : 0.08,
                             ),
-                            blurRadius: 36,
-                            offset: const Offset(0, 16),
+                            blurRadius: 40,
+                            offset: const Offset(0, 18),
                           ),
+                          if (!isDark)
+                            BoxShadow(
+                              color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.05),
+                              blurRadius: 60,
+                              offset: const Offset(0, 30),
+                            ),
                         ],
                       ),
                       child: Row(
@@ -246,42 +278,39 @@ class AuthSplitScaffold extends StatelessWidget {
                           Expanded(
                             flex: 6,
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(
-                                18,
-                                18,
-                                18,
-                                18,
-                              ),
+                              padding: const EdgeInsets.all(20),
                               child: AuthHeroPanel(
                                 label: heroLabel,
                                 title: heroTitle,
                                 subtitle: heroSubtitle,
                                 compact: false,
-                                showGuardianBear: showGuardianBear,
+                                showGuardianLlama: showGuardianLlama,
                                 showHeroIllustration: showHeroIllustration,
                                 heroAnimation: heroAnimation,
                               ),
                             ),
                           ),
-                          const VerticalDivider(
+                          VerticalDivider(
                             width: 1,
-                            color: TravelBoxBrand.border,
+                            color: isDark
+                                ? const Color(0xFF2B3550)
+                                : const Color(0xFFE8EDF5),
                           ),
                           Expanded(
                             flex: 6,
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(
+                                24,
                                 22,
-                                20,
+                                24,
                                 22,
-                                20,
                               ),
                               child: AuthCard(
                                 padding: const EdgeInsets.fromLTRB(
-                                  30,
                                   28,
-                                  30,
+                                  26,
                                   28,
+                                  26,
                                 ),
                                 child: formChild,
                               ),
@@ -307,7 +336,7 @@ class AuthHeroPanel extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.compact,
-    required this.showGuardianBear,
+    required this.showGuardianLlama,
     required this.showHeroIllustration,
     required this.heroAnimation,
     super.key,
@@ -317,7 +346,7 @@ class AuthHeroPanel extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool compact;
-  final bool showGuardianBear;
+  final bool showGuardianLlama;
   final bool showHeroIllustration;
   final String heroAnimation;
 
@@ -344,11 +373,11 @@ class AuthHeroPanel extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(child: CustomPaint(painter: _AuthHeroPainter())),
-          if (showGuardianBear)
+          if (showGuardianLlama)
             Positioned(
               right: compact ? 8 : 14,
               top: compact ? 10 : 14,
-              child: AuthTeddyAnimation(
+              child: AuthLlamaAnimation(
                 animation: heroAnimation,
                 compact: compact,
               ),
@@ -385,10 +414,11 @@ class AuthHeroPanel extends StatelessWidget {
                 ),
               ),
               SizedBox(height: compact ? 12 : 18),
-              Expanded(
+              SizedBox(
+                height: compact ? 80 : 160,
                 child: showHeroIllustration
                     ? _AuthHeroIllustration(compact: compact)
-                    : const SizedBox.expand(),
+                    : const SizedBox.shrink(),
               ),
               SizedBox(height: compact ? 14 : 20),
               Text(
@@ -562,7 +592,7 @@ class _AuthFloatingBadge extends StatelessWidget {
             ),
             SizedBox(width: compact ? 5 : 6),
             Text(
-              label.replaceAll('rÃ¡pido', 'rápido'),
+              label,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.94),
                 fontSize: compact ? 10 : 11,
@@ -576,53 +606,88 @@ class _AuthFloatingBadge extends StatelessWidget {
   }
 }
 
-class AuthLineField extends StatelessWidget {
+class AuthLineField extends StatefulWidget {
   const AuthLineField({required this.child, super.key});
 
   final Widget child;
 
   @override
+  State<AuthLineField> createState() => _AuthLineFieldState();
+}
+
+class _AuthLineFieldState extends State<AuthLineField> {
+  bool _hasFocus = false;
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1D1718) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF4A3934) : TravelBoxBrand.border,
-        ),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: const Color(0x144C2512),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: double.infinity,
-            margin: const EdgeInsets.only(right: 10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [TravelBoxBrand.terracotta, TravelBoxBrand.copper],
+    final focusBorderColor = TravelBoxBrand.primaryBlue;
+    final idleBorderColor =
+        isDark ? const Color(0xFF2E3A52) : const Color(0xFFDDE3EE);
+    final idleBg = isDark ? const Color(0xFF1A1F34) : const Color(0xFFFCFCFD);
+    final focusBg = isDark ? const Color(0xFF1A1E2E) : Colors.white;
+
+    return Focus(
+      onFocusChange: (focused) => setState(() => _hasFocus = focused),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        height: 54,
+        decoration: BoxDecoration(
+          color: _hasFocus ? focusBg : idleBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _hasFocus ? focusBorderColor : idleBorderColor,
+            width: _hasFocus ? 1.6 : 1.0,
+          ),
+          boxShadow: [
+            if (_hasFocus)
+              BoxShadow(
+                color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.12),
+                blurRadius: 0,
+                spreadRadius: 3,
+              )
+            else if (!isDark)
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
-              borderRadius: BorderRadius.circular(16),
+          ],
+        ),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              width: _hasFocus ? 4.0 : 3.5,
+              height: double.infinity,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: _hasFocus
+                      ? [
+                          TravelBoxBrand.primaryBlue,
+                          TravelBoxBrand.seafoam,
+                        ]
+                      : [
+                          TravelBoxBrand.primaryBlue.withValues(alpha: 0.35),
+                          TravelBoxBrand.seafoam.withValues(alpha: 0.25),
+                        ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: child,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: widget.child,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -646,60 +711,82 @@ class AuthStripeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = onPressed == null;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = filled ? TravelBoxBrand.primaryBlue : Colors.white;
     final foreground = filled
         ? Colors.white
         : (isDark ? const Color(0xFFF2E9DE) : TravelBoxBrand.ink);
     final borderColor = filled
-        ? TravelBoxBrand.primaryBlue
-        : (isDark ? const Color(0xFF4A3934) : TravelBoxBrand.border);
+        ? Colors.transparent
+        : (isDark ? const Color(0xFF2E3A52) : const Color(0xFFDDE3EE));
     final iconBg = filled
-        ? Colors.white.withValues(alpha: 0.16)
-        : (isDark ? const Color(0xFF2A2021) : const Color(0xFFF7EFE5));
-    final iconColor = filled ? Colors.white : TravelBoxBrand.terracotta;
+        ? Colors.white.withValues(alpha: 0.18)
+        : (isDark ? const Color(0xFF252A3E) : const Color(0xFFF0F4FA));
+    final iconColor = filled ? Colors.white : TravelBoxBrand.primaryBlue;
 
-    return Opacity(
-      opacity: disabled ? 0.55 : 1,
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 200),
+      opacity: disabled ? 0.50 : 1,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
+          splashColor: filled
+              ? Colors.white.withValues(alpha: 0.12)
+              : TravelBoxBrand.primaryBlue.withValues(alpha: 0.08),
           child: Ink(
-            height: 52,
+            height: 54,
             decoration: BoxDecoration(
               gradient: filled ? TravelBoxBrand.discoveryGradient : null,
               color: filled
                   ? null
-                  : (isDark ? const Color(0xFF1C1617) : background),
+                  : (isDark ? const Color(0xFF1A1F34) : Colors.white),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: borderColor),
+              boxShadow: filled
+                  ? [
+                      BoxShadow(
+                        color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.30),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 54,
+                  height: 54,
                   decoration: BoxDecoration(
                     color: iconBg,
                     borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(14),
+                      left: Radius.circular(17),
                     ),
                   ),
                   alignment: Alignment.center,
                   child: Icon(icon, color: iconColor, size: 22),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     label,
                     style: TextStyle(
                       color: foreground,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.15,
+                      fontSize: 14.5,
+                      letterSpacing: 0.1,
                     ),
                   ),
                 ),
+                if (filled)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white.withValues(alpha: 0.70),
+                      size: 20,
+                    ),
+                  ),
               ],
             ),
           ),

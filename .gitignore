@@ -51,7 +51,8 @@ app.*.map.json
 
 # Local automation artifacts
 /node_modules/
-/artifacts/mobile-layout-audit-*/
+/artifacts/
+**/.gradle/
 /tmp-*.png
 /tmp_spa_server.pid
 /frontend-web-active.err

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
+import '../../../core/theme/brand_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -159,25 +160,51 @@ class _UnreadSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFF5FAFF),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.notifications_active_outlined),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                unreadCount <= 0
-                    ? context.l10n.t('notifications_unread_none')
-                    : '${context.l10n.t('notifications_unread_prefix')} '
-                          '$unreadCount '
-                          '${context.l10n.t('notifications_unread_suffix')}',
+    final hasUnread = unreadCount > 0;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: hasUnread
+            ? TravelBoxBrand.brandGradient
+            : null,
+        color: hasUnread ? null : const Color(0xFFF5FAFF),
+        borderRadius: BorderRadius.circular(20),
+        border: hasUnread
+            ? null
+            : Border.all(color: TravelBoxBrand.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: hasUnread
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : TravelBoxBrand.primaryBlue.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              hasUnread
+                  ? Icons.notifications_active_outlined
+                  : Icons.notifications_none_outlined,
+              color: hasUnread ? Colors.white : TravelBoxBrand.primaryBlue,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              unreadCount <= 0
+                  ? context.l10n.t('notifications_unread_none')
+                  : '${context.l10n.t('notifications_unread_prefix')} '
+                        '$unreadCount '
+                        '${context.l10n.t('notifications_unread_suffix')}',
+              style: TextStyle(
+                color: hasUnread ? Colors.white : TravelBoxBrand.textBody,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -199,39 +226,75 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: isUnread ? const Color(0xFFEFF8FF) : null,
-      child: ListTile(
+      color: isUnread ? const Color(0xFFF0F6FF) : null,
+      child: InkWell(
         onTap: onTap,
-        leading: Icon(
-          isUnread
-              ? Icons.notifications_active_outlined
-              : Icons.notifications_none_outlined,
-        ),
-        title: Text(
-          notification.title,
-          style: TextStyle(
-            fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              if (isUnread)
+                Container(
+                  width: 4,
+                  height: 48,
+                  margin: const EdgeInsets.only(left: 4),
+                  decoration: BoxDecoration(
+                    color: TravelBoxBrand.primaryBlue,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              Expanded(
+                child: ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isUnread
+                          ? TravelBoxBrand.primaryBlue.withValues(alpha: 0.1)
+                          : TravelBoxBrand.border,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      isUnread
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_none_outlined,
+                      size: 22,
+                      color: isUnread
+                          ? TravelBoxBrand.primaryBlue
+                          : TravelBoxBrand.textMuted,
+                    ),
+                  ),
+                  title: Text(
+                    notification.title,
+                    style: TextStyle(
+                      fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${notification.message}\n'
+                    '${notification.whenLabel} - '
+                    '${notificationStatusLabel(context, notification.status)}',
+                  ),
+                  isThreeLine: true,
+                  trailing: PopupMenuButton<String>(
+                    tooltip: context.l10n.t('settings_options'),
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        onDelete();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text(context.l10n.t('eliminar')),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        subtitle: Text(
-          '${notification.message}\n'
-          '${notification.whenLabel} - '
-          '${notificationStatusLabel(context, notification.status)}',
-        ),
-        isThreeLine: true,
-        trailing: PopupMenuButton<String>(
-          tooltip: context.l10n.t('settings_options'),
-          onSelected: (value) {
-            if (value == 'delete') {
-              onDelete();
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem<String>(
-              value: 'delete',
-              child: Text(context.l10n.t('eliminar')),
-            ),
-          ],
         ),
       ),
     );

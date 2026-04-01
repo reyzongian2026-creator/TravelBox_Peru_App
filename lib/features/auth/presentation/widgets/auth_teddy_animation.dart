@@ -1,1 +1,1 @@
-export 'auth_teddy_animation_flare.dart';
+export 'auth_llama_animation.dart';

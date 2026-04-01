@@ -46,6 +46,46 @@ abstract class PaymentRepository {
     required String paymentIntentId,
     required String reason,
   });
+
+  Future<List<SavedCard>> getSavedCards();
+
+  Future<PaymentIntentResult> payWithSavedCard({
+    required int reservationId,
+    required int savedCardId,
+  });
+
+  Future<PaymentIntentResult> syncPaymentStatus({
+    required int paymentIntentId,
+  });
+}
+
+class SavedCard {
+  final String id;
+  final String alias;
+  final String brand;
+  final String lastFourDigits;
+  final String expirationMonth;
+  final String expirationYear;
+
+  const SavedCard({
+    required this.id,
+    required this.alias,
+    required this.brand,
+    required this.lastFourDigits,
+    required this.expirationMonth,
+    required this.expirationYear,
+  });
+
+  factory SavedCard.fromJson(Map<String, dynamic> json) {
+    return SavedCard(
+      id: (json['id'] ?? '').toString(),
+      alias: json['alias']?.toString() ?? 'Tarjeta',
+      brand: json['brand']?.toString() ?? 'Visa',
+      lastFourDigits: json['lastFourDigits']?.toString() ?? '****',
+      expirationMonth: json['expirationMonth']?.toString() ?? '',
+      expirationYear: json['expirationYear']?.toString() ?? '',
+    );
+  }
 }
 
 class PaymentIntentResult {
@@ -79,9 +119,9 @@ class PaymentIntentResult {
     return payload['authenticationUrl']?.toString();
   }
 
-  bool get requiresCulqiCheckout =>
-      paymentFlow == 'ORDER_CHECKOUT' &&
-      nextAction?['type'] == 'OPEN_CULQI_CHECKOUT';
+  bool get requiresIzipayCheckout =>
+      paymentFlow == 'OPEN_IZIPAY_CHECKOUT' &&
+      nextAction?['type'] == 'OPEN_IZIPAY_CHECKOUT';
 
   bool get isConfirmed =>
       status == 'CONFIRMED' || paymentFlow == 'DIRECT_CHARGE' || paymentFlow == 'DIRECT_CONFIRMATION';
@@ -460,6 +500,54 @@ class PaymentRepositoryImpl implements PaymentRepository {
           'reason': reason,
         },
       );
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<List<SavedCard>> getSavedCards() async {
+    try {
+      final response = await _dio.get<List<dynamic>>('/payments/cards');
+      final items = response.data ?? [];
+      return items.map((item) => SavedCard.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<PaymentIntentResult> payWithSavedCard({
+    required int reservationId,
+    required int savedCardId,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/payments/one-click',
+        queryParameters: {
+          'reservationId': reservationId,
+          'savedCardId': savedCardId,
+        },
+      );
+      return PaymentIntentResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<PaymentIntentResult> syncPaymentStatus({
+    required int paymentIntentId,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>('/payments/$paymentIntentId/sync');
+      return PaymentIntentResult.fromJson(response.data ?? {});
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {

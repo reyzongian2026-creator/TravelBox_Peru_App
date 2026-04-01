@@ -52,15 +52,20 @@ class ReservationRepositoryImpl implements ReservationRepository {
         warehouseId: warehouseId,
         draft: draft,
       );
-
-      Reservation? reservation = await _createReservationViaCheckout(
-        userId: userId,
-        draft: draft,
-        requestData: requestData,
-        paymentMethod: paymentMethod,
-        sourceTokenId: sourceTokenId,
-        customerEmail: customerEmail,
+      final shouldHandlePaymentServerSide = _isOfflinePaymentMethod(
+        paymentMethod,
       );
+
+      Reservation? reservation = shouldHandlePaymentServerSide
+          ? await _createReservationViaCheckout(
+              userId: userId,
+              draft: draft,
+              requestData: requestData,
+              paymentMethod: paymentMethod,
+              sourceTokenId: sourceTokenId,
+              customerEmail: customerEmail,
+            )
+          : null;
 
       if (reservation == null) {
         final response = await _dio.post<Map<String, dynamic>>(
@@ -74,12 +79,14 @@ class ReservationRepositoryImpl implements ReservationRepository {
           fallbackDraft: draft,
         );
 
-        await _triggerPaymentFlow(
-          reservationId: reservation.id,
-          paymentMethod: paymentMethod,
-          sourceTokenId: sourceTokenId,
-          customerEmail: customerEmail,
-        );
+        if (shouldHandlePaymentServerSide) {
+          await _triggerPaymentFlow(
+            reservationId: reservation.id,
+            paymentMethod: paymentMethod,
+            sourceTokenId: sourceTokenId,
+            customerEmail: customerEmail,
+          );
+        }
       }
 
       final refreshed = await getReservationById(reservation.id);

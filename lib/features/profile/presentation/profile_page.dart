@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/layout/responsive_layout.dart';
+import '../../../core/theme/brand_tokens.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/services/app_error_report_service.dart';
@@ -42,35 +43,94 @@ class ProfilePage extends ConsumerWidget {
         ),
         children: [
           Card(
-            child: ListTile(
-              leading: SizedBox(
-                width: 52,
-                height: 52,
-                child: ClipOval(
-                  child: AppSmartImage(
-                    source: user?.profilePhotoPath,
-                    width: 52,
-                    height: 52,
-                    fallback: Container(
-                      color: const Color(0xFFE6F0F4),
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.person_outline),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.2),
+                        width: 3,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: AppSmartImage(
+                        source: user?.profilePhotoPath,
+                        width: 80,
+                        height: 80,
+                        fallback: Container(
+                          color: const Color(0xFFE8F0FE),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.person_outline,
+                            size: 36,
+                            color: TravelBoxBrand.primaryBlue,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              title: Text(user?.name ?? context.l10n.t('profile_no_user')),
-              subtitle: Text(
-                '${user?.email ?? context.l10n.t('profile_not_available')}\n'
-                '${context.l10n.t('profile_role_prefix')}: '
-                '${user == null ? '-' : context.l10n.t(user.role.localizationKey)}',
-              ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(user?.nationality ?? '-'),
-                  Text(user?.preferredLanguage.toUpperCase() ?? 'ES'),
+                  const SizedBox(height: 14),
+                  Text(
+                    user?.name ?? context.l10n.t('profile_no_user'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user?.email ?? context.l10n.t('profile_not_available'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          user == null
+                              ? '-'
+                              : context.l10n.t(user.role.localizationKey),
+                          style: TextStyle(
+                            color: TravelBoxBrand.primaryBlue,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: TravelBoxBrand.border,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${user?.nationality ?? '-'} / ${user?.preferredLanguage.toUpperCase() ?? 'ES'}',
+                          style: TextStyle(
+                            color: TravelBoxBrand.textBody,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -93,32 +153,54 @@ class ProfilePage extends ConsumerWidget {
           ],
           Card(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ProfileRow(
-                  context.l10n.t('profile_phone_number'),
-                  user?.phone ?? '-',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                  child: Text(
+                    context.l10n.t('profile'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
                 _ProfileRow(
-                  context.l10n.t('address'),
-                  user?.address.isNotEmpty == true ? user!.address : '-',
+                  icon: Icons.phone_outlined,
+                  label: context.l10n.t('profile_phone_number'),
+                  value: user?.phone ?? '-',
                 ),
+                const Divider(height: 1, indent: 56),
                 _ProfileRow(
-                  context.l10n.t('city'),
-                  user?.city.isNotEmpty == true ? user!.city : '-',
+                  icon: Icons.location_on_outlined,
+                  label: context.l10n.t('address'),
+                  value: user?.address.isNotEmpty == true ? user!.address : '-',
                 ),
+                const Divider(height: 1, indent: 56),
                 _ProfileRow(
-                  context.l10n.t('country'),
-                  user?.country.isNotEmpty == true ? user!.country : '-',
+                  icon: Icons.location_city_outlined,
+                  label: context.l10n.t('city'),
+                  value: user?.city.isNotEmpty == true ? user!.city : '-',
                 ),
+                const Divider(height: 1, indent: 56),
                 _ProfileRow(
-                  context.l10n.t('profile_document_type'),
-                  user?.documentType != null && user?.documentNumber != null
+                  icon: Icons.public_outlined,
+                  label: context.l10n.t('country'),
+                  value: user?.country.isNotEmpty == true ? user!.country : '-',
+                ),
+                const Divider(height: 1, indent: 56),
+                _ProfileRow(
+                  icon: Icons.badge_outlined,
+                  label: context.l10n.t('profile_document_type'),
+                  value: user?.documentType != null &&
+                          user?.documentNumber != null
                       ? '${user!.documentType} ${user.documentNumber}'
                       : '-',
                 ),
+                const Divider(height: 1, indent: 56),
                 _ProfileRow(
-                  context.l10n.t('profile_emergency_contact'),
-                  user?.emergencyContactName != null
+                  icon: Icons.contact_phone_outlined,
+                  label: context.l10n.t('profile_emergency_contact'),
+                  value: user?.emergencyContactName != null
                       ? '${user!.emergencyContactName} (${user.emergencyContactPhone ?? '-'})'
                       : '-',
                 ),
@@ -177,8 +259,10 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton.tonal(
-            onPressed: () async {
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
               final refreshToken = session.refreshToken?.trim();
               final authRepository = ref.read(authRepositoryProvider);
 
@@ -216,7 +300,13 @@ class ProfilePage extends ConsumerWidget {
                 );
               }
             },
-            child: Text(context.l10n.t('logout')),
+            icon: const Icon(Icons.logout_outlined),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFB42318),
+              side: const BorderSide(color: Color(0xFFB42318)),
+            ),
+            label: Text(context.l10n.t('logout')),
+            ),
           ),
         ],
       ),
@@ -225,14 +315,23 @@ class ProfilePage extends ConsumerWidget {
 }
 
 class _ProfileRow extends StatelessWidget {
-  const _ProfileRow(this.label, this.value);
+  const _ProfileRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
+  final IconData icon;
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(title: Text(label), subtitle: Text(value));
+    return ListTile(
+      leading: Icon(icon, size: 22),
+      title: Text(label),
+      subtitle: Text(value),
+    );
   }
 }
 

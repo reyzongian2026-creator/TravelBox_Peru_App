@@ -574,8 +574,8 @@ class AppLocalizations {
       'checkout_summary_insurance': 'Seguro',
       'checkout_digital_payments_disabled':
           'Pagos digitales temporalmente deshabilitados. El operador validara el cobro manualmente.',
-      'checkout_source_token_label': 'sourceTokenId (Culqi, obligatorio)',
-      'checkout_source_token_hint': 'tkn_test_xxx',
+      'checkout_source_token_label': 'Token de pago (Izipay)',
+      'checkout_source_token_hint': 'token_izipay_xxx',
       'checkout_customer_email_optional_label': 'Email cliente (opcional)',
       'checkout_customer_email_optional_hint': 'cliente@correo.com',
       'checkout_breakdown_storage': 'Almacenaje',
@@ -586,11 +586,11 @@ class AppLocalizations {
       'checkout_pending_offline_approval_notice':
           'Tu pago quedara PENDING hasta que cajero u operador lo apruebe en el panel de cobros.',
       'checkout_source_token_required_notice':
-          'Para tarjeta o Yape debes enviar un sourceTokenId valido antes de confirmar.',
+          'Para tarjeta o Yape debes completar el pago en el checkout seguro de Izipay.',
       'checkout_payment_help_card':
-          'Tarjeta confirma el pago en linea y habilita el QR de check-in. Requiere sourceTokenId de Culqi.',
+          'Tarjeta confirma el pago en linea de forma segura a traves de Izipay.',
       'checkout_payment_help_yape':
-          'Yape confirma el pago en linea y habilita el QR de check-in. Requiere sourceTokenId de Culqi.',
+          'Yape se abre a traves de Izipay para confirmar tu reserva inmediatamente.',
       'checkout_payment_help_wallet':
           'Wallet/Plin deja la reserva confirmada sin pasar por caja.',
       'checkout_payment_help_counter':
@@ -1719,8 +1719,8 @@ class AppLocalizations {
       'checkout_summary_insurance': 'Insurance',
       'checkout_digital_payments_disabled':
           'Digital payments are temporarily disabled. The operator will validate manual collection.',
-      'checkout_source_token_label': 'sourceTokenId (Culqi, required)',
-      'checkout_source_token_hint': 'tkn_test_xxx',
+      'checkout_source_token_label': 'Payment token (Izipay)',
+      'checkout_source_token_hint': 'token_izipay_xxx',
       'checkout_customer_email_optional_label': 'Customer email (optional)',
       'checkout_customer_email_optional_hint': 'client@email.com',
       'checkout_breakdown_storage': 'Storage',
@@ -1731,11 +1731,11 @@ class AppLocalizations {
       'checkout_pending_offline_approval_notice':
           'Your payment will remain PENDING until cashier or operator approves it from the collections panel.',
       'checkout_source_token_required_notice':
-          'Card or Yape requires a valid sourceTokenId before confirmation.',
+          'For card or Yape you must complete the payment through Izipay secure checkout.',
       'checkout_payment_help_card':
-          'Card confirms payment online and enables check-in QR. Requires Culqi sourceTokenId.',
+          'Card payments are completed securely through Izipay to confirm your reservation.',
       'checkout_payment_help_yape':
-          'Yape confirms payment online and enables check-in QR. Requires Culqi sourceTokenId.',
+          'Yape opens through Izipay to confirm your reservation immediately.',
       'checkout_payment_help_wallet':
           'Wallet/Plin confirms reservation without counter approval.',
       'checkout_payment_help_counter':

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/theme/brand_tokens.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/models/reservation.dart';
@@ -84,18 +85,44 @@ class OperatorDashboardPage extends ConsumerWidget {
           ),
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF14532D), Color(0xFF0B8B8C)],
-                ),
-                borderRadius: BorderRadius.circular(18),
+                gradient: TravelBoxBrand.heroGradient,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x283366FF),
+                    blurRadius: 16,
+                    offset: Offset(0, 6),
+                  ),
+                ],
               ),
-              child: Text(
-                l10n.t('operator_dashboard_intro'),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: Colors.white),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.dashboard_outlined,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      l10n.t('operator_dashboard_intro'),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -113,6 +140,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                         child: _KpiCard(
                           title: l10n.t('operator_kpi_pending_cash'),
                           value: '$pendingCashCount',
+                          icon: Icons.point_of_sale_outlined,
                           colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
                         ),
                       ),
@@ -122,6 +150,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                         child: _KpiCard(
                           title: l10n.t('operator_kpi_active_reservations'),
                           value: '$activeReservations',
+                          icon: Icons.luggage_outlined,
                           colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
                         ),
                       ),
@@ -131,6 +160,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                         child: _KpiCard(
                           title: l10n.t('operator_kpi_incidents'),
                           value: '$incidentReservations',
+                          icon: Icons.warning_amber_outlined,
                           colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
                         ),
                       ),
@@ -146,6 +176,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                             child: _KpiCard(
                               title: l10n.t('operator_kpi_pending_cash'),
                               value: '$pendingCashCount',
+                              icon: Icons.point_of_sale_outlined,
                               colors: const [
                                 Color(0xFF1F6E8C),
                                 Color(0xFF3F9AC1),
@@ -157,6 +188,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                             child: _KpiCard(
                               title: l10n.t('operator_kpi_active_reservations'),
                               value: '$activeReservations',
+                              icon: Icons.luggage_outlined,
                               colors: const [
                                 Color(0xFF0B8B8C),
                                 Color(0xFF2AAAC2),
@@ -171,6 +203,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                         child: _KpiCard(
                           title: l10n.t('operator_kpi_incidents'),
                           value: '$incidentReservations',
+                          icon: Icons.warning_amber_outlined,
                           colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
                         ),
                       ),
@@ -183,6 +216,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       child: _KpiCard(
                         title: l10n.t('operator_kpi_pending_cash'),
                         value: '$pendingCashCount',
+                        icon: Icons.point_of_sale_outlined,
                         colors: const [Color(0xFF1F6E8C), Color(0xFF3F9AC1)],
                       ),
                     ),
@@ -191,6 +225,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       child: _KpiCard(
                         title: l10n.t('operator_kpi_active_reservations'),
                         value: '$activeReservations',
+                        icon: Icons.luggage_outlined,
                         colors: const [Color(0xFF0B8B8C), Color(0xFF2AAAC2)],
                       ),
                     ),
@@ -199,6 +234,7 @@ class OperatorDashboardPage extends ConsumerWidget {
                       child: _KpiCard(
                         title: l10n.t('operator_kpi_incidents'),
                         value: '$incidentReservations',
+                        icon: Icons.warning_amber_outlined,
                         colors: const [Color(0xFFC43D3D), Color(0xFFDE7060)],
                       ),
                     ),
@@ -209,42 +245,54 @@ class OperatorDashboardPage extends ConsumerWidget {
             const SizedBox(height: 12),
             Card(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.point_of_sale_outlined),
-                    title: Text(l10n.t('cobros_en_caja')),
-                    subtitle: Text(
-                      l10n.t('aprobar_o_rechazar_pagos_pendientes'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                    child: Text(
+                      l10n.t('operator_dashboard_title'),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                  ),
+                  _NavTile(
+                    icon: Icons.point_of_sale_outlined,
+                    iconColor: const Color(0xFF1F6E8C),
+                    title: l10n.t('cobros_en_caja'),
+                    subtitle: l10n.t('aprobar_o_rechazar_pagos_pendientes'),
                     onTap: () => context.go('/operator/cash-payments'),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.assignment_outlined),
-                    title: Text(l10n.t('reservas_operativas')),
-                    subtitle: Text(l10n.t('operator_reservations_subtitle')),
-                    trailing: const Icon(Icons.chevron_right),
+                  const Divider(height: 1, indent: 68),
+                  _NavTile(
+                    icon: Icons.assignment_outlined,
+                    iconColor: const Color(0xFF0B8B8C),
+                    title: l10n.t('reservas_operativas'),
+                    subtitle: l10n.t('operator_reservations_subtitle'),
                     onTap: () => context.go('/operator/reservations'),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.warning_amber_outlined),
-                    title: Text(l10n.t('incidencias')),
-                    subtitle: Text(l10n.t('monitoreo_y_atencion_de_casos')),
-                    trailing: const Icon(Icons.chevron_right),
+                  const Divider(height: 1, indent: 68),
+                  _NavTile(
+                    icon: Icons.warning_amber_outlined,
+                    iconColor: const Color(0xFFC43D3D),
+                    title: l10n.t('incidencias'),
+                    subtitle: l10n.t('monitoreo_y_atencion_de_casos'),
                     onTap: () => context.go('/operator/incidents'),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.route_outlined),
-                    title: Text(l10n.t('tracking_logistico')),
-                    subtitle: Text(l10n.t('seguimiento_de_deliveries_en_vivo')),
-                    trailing: const Icon(Icons.chevron_right),
+                  const Divider(height: 1, indent: 68),
+                  _NavTile(
+                    icon: Icons.route_outlined,
+                    iconColor: TravelBoxBrand.primaryBlue,
+                    title: l10n.t('tracking_logistico'),
+                    subtitle: l10n.t('seguimiento_de_deliveries_en_vivo'),
                     onTap: () => context.go('/operator/tracking'),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.qr_code_scanner_outlined),
-                    title: Text(l10n.t('qr_y_pin_operativo')),
-                    subtitle: Text(l10n.t('operator_qr_subtitle')),
-                    trailing: const Icon(Icons.chevron_right),
+                  const Divider(height: 1, indent: 68),
+                  _NavTile(
+                    icon: Icons.qr_code_scanner_outlined,
+                    iconColor: TravelBoxBrand.copper,
+                    title: l10n.t('qr_y_pin_operativo'),
+                    subtitle: l10n.t('operator_qr_subtitle'),
                     onTap: () => context.go('/ops/qr-handoff'),
                   ),
                 ],
@@ -254,15 +302,47 @@ class OperatorDashboardPage extends ConsumerWidget {
             if (pendingApprovals > 0)
               Card(
                 color: const Color(0xFFFFF7E8),
-                child: ListTile(
-                  leading: const Icon(Icons.notifications_active_outlined),
-                  title: Text(
-                    '$pendingApprovals ${l10n.t('operator_pending_approvals_suffix')}',
-                  ),
-                  subtitle: Text(l10n.t('operator_pending_approvals_subtitle')),
-                  trailing: FilledButton.tonal(
-                    onPressed: () => context.go('/ops/qr-handoff'),
-                    child: Text(l10n.t('revisar')),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE0B2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active_outlined,
+                          color: Color(0xFFE65100),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$pendingApprovals ${l10n.t('operator_pending_approvals_suffix')}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              l10n.t('operator_pending_approvals_subtitle'),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.tonal(
+                        onPressed: () => context.go('/ops/qr-handoff'),
+                        child: Text(l10n.t('revisar')),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -324,42 +404,102 @@ class _KpiCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.colors,
+    required this.icon,
   });
 
   final String title;
   final String value;
   final List<Color> colors;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      constraints: const BoxConstraints(minHeight: 100),
+      padding: const EdgeInsets.all(18),
+      constraints: const BoxConstraints(minHeight: 110),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: colors),
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: colors.first.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 20),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  const _NavTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: iconColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: iconColor, size: 22),
+      ),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: TravelBoxBrand.textMuted,
+      ),
+      onTap: onTap,
     );
   }
 }

@@ -236,10 +236,12 @@ class AppTheme {
         titleTextStyle: textTheme.titleLarge?.copyWith(
           color: scheme.onSurface,
           fontFamily: headlineFont.fontFamily,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w700,
+          fontSize: 20,
         ),
         contentTextStyle: textTheme.bodyMedium?.copyWith(
           color: scheme.onSurfaceVariant,
+          height: 1.5,
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(

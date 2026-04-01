@@ -1,4 +1,5 @@
-import 'package:dio/dio.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +12,7 @@ import '../../../core/widgets/app_back_button.dart';
 import '../../../shared/state/currency_preference.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
-import '../../payments/data/culqi_token_service.dart';
+import '../../payments/data/izipay_checkout_service.dart';
 import '../../payments/data/payment_repository.dart';
 import '../data/reservation_repository_impl.dart';
 import '../domain/reservation_repository.dart';
@@ -27,30 +28,18 @@ class CheckoutPage extends ConsumerStatefulWidget {
 }
 
 class _CheckoutPageState extends ConsumerState<CheckoutPage> {
+  final _izipayCheckoutService = createIzipayCheckoutService();
+  final _customerEmailController = TextEditingController();
+
   bool processing = false;
+  int? _selectedSavedCardId;
   String paymentMethod = AppEnv.forceCashPaymentsOnly
       ? PaymentConstants.methodCash
       : PaymentConstants.methodCard;
-  final _sourceTokenController = TextEditingController();
-  final _customerEmailController = TextEditingController();
-
-  // Card fields for real Culqi tokenization.
-  final _cardNumberController = TextEditingController();
-  final _cardExpiryController = TextEditingController();
-  final _cardCvvController = TextEditingController();
-
-  bool get _useCulqiTokenization =>
-      AppEnv.hasCulqiConfig &&
-      !AppEnv.forceCashPaymentsOnly &&
-      paymentMethod == PaymentConstants.methodCard;
 
   @override
   void dispose() {
-    _sourceTokenController.dispose();
     _customerEmailController.dispose();
-    _cardNumberController.dispose();
-    _cardExpiryController.dispose();
-    _cardCvvController.dispose();
     super.dispose();
   }
 
@@ -171,6 +160,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                           child: Text(context.l10n.t('card')),
                         ),
                         DropdownMenuItem(
+                          value: PaymentConstants.methodSavedCard,
+                          child: Text(context.l10n.t('saved_card')),
+                        ),
+                        DropdownMenuItem(
                           value: PaymentConstants.methodYape,
                           child: Text(context.l10n.t('yape')),
                         ),
@@ -195,83 +188,42 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                  if (!forceCashOnly &&
-                      selectedPaymentMethod == PaymentConstants.methodCard &&
-                      _useCulqiTokenization) ...[
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _cardNumberController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 19,
-                      decoration: InputDecoration(
-                        labelText: context.l10n.locale.languageCode == 'en'
-                            ? 'Card number'
-                            : 'Número de tarjeta',
-                        hintText: '4111 1111 1111 1111',
-                        prefixIcon: const Icon(Icons.credit_card),
-                        border: const OutlineInputBorder(),
-                        counterText: '',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _cardExpiryController,
-                            keyboardType: TextInputType.datetime,
-                            maxLength: 5,
-                            decoration: InputDecoration(
-                              labelText: context.l10n.locale.languageCode == 'en'
-                                  ? 'MM/YY'
-                                  : 'MM/AA',
-                              hintText: '12/28',
-                              border: const OutlineInputBorder(),
-                              counterText: '',
-                            ),
+                  if (paymentMethod == PaymentConstants.methodSavedCard) ...[
+                    const SizedBox(height: 12),
+                    FutureBuilder<List<SavedCard>>(
+                      future: ref.read(paymentRepositoryProvider).getSavedCards(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const LinearProgressIndicator();
+                        }
+                        final cards = snapshot.data ?? [];
+                        if (cards.isEmpty) {
+                          return Text(
+                            context.l10n.t('no_saved_cards'),
+                            style: const TextStyle(color: Colors.red),
+                          );
+                        }
+                        return DropdownButtonFormField<int>(
+                          initialValue: _selectedSavedCardId,
+                          items: cards.map((card) {
+                            return DropdownMenuItem<int>(
+                              value: int.tryParse(card.id),
+                              child: Text('${card.brand} **** ${card.lastFourDigits}'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedSavedCardId = value);
+                          },
+                          decoration: InputDecoration(
+                            labelText: context.l10n.t('select_card'),
+                            border: const OutlineInputBorder(),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            controller: _cardCvvController,
-                            keyboardType: TextInputType.number,
-                            maxLength: 4,
-                            obscureText: true,
-                            decoration: InputDecoration(
-                              labelText: 'CVV',
-                              hintText: '123',
-                              border: const OutlineInputBorder(),
-                              counterText: '',
-                            ),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ],
                   if (!forceCashOnly &&
-                      ((selectedPaymentMethod == PaymentConstants.methodCard &&
-                              !_useCulqiTokenization) ||
-                          selectedPaymentMethod ==
-                              PaymentConstants.methodYape)) ...[
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _sourceTokenController,
-                      autocorrect: false,
-                      decoration: InputDecoration(
-                        labelText: _sourceTokenLabel(context),
-                        hintText: _sourceTokenHint(context),
-                        helperText: _sourceTokenHelper(context),
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                  if (!forceCashOnly &&
-                      (selectedPaymentMethod == PaymentConstants.methodCard ||
-                          selectedPaymentMethod ==
-                              PaymentConstants.methodYape ||
-                          selectedPaymentMethod ==
-                              PaymentConstants.methodWallet)) ...[
+                      !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
                     const SizedBox(height: 10),
                     TextField(
                       controller: _customerEmailController,
@@ -279,6 +231,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       decoration: InputDecoration(
                         labelText: _customerEmailLabel(context),
                         hintText: _customerEmailHint(context),
+                        helperText: _checkoutEmailHelper(context),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -349,21 +302,6 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
               subtitle: Text(_paymentHelp(context, selectedPaymentMethod)),
             ),
           ),
-          if (!forceCashOnly &&
-              !_useCulqiTokenization &&
-              (selectedPaymentMethod == PaymentConstants.methodCard ||
-                  selectedPaymentMethod == PaymentConstants.methodYape))
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Card(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                child: ListTile(
-                  leading: const Icon(Icons.science_outlined),
-                  title: Text(_testingNoticeTitle(context)),
-                  subtitle: Text(_testingNoticeBody(context)),
-                ),
-              ),
-            ),
           if (selectedPaymentMethod == PaymentConstants.methodCounter ||
               selectedPaymentMethod == PaymentConstants.methodCash)
             Padding(
@@ -385,84 +323,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 : () async {
                     if (user == null) return;
 
-                    // Validate card fields when using real Culqi tokenization.
-                    if (_useCulqiTokenization) {
-                      if (_cardNumberController.text.trim().isEmpty ||
-                          _cardExpiryController.text.trim().isEmpty ||
-                          _cardCvvController.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              context.l10n.locale.languageCode == 'en'
-                                  ? 'Please fill in all card fields.'
-                                  : 'Completa todos los campos de tarjeta.',
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-                    } else if (!forceCashOnly &&
-                        (selectedPaymentMethod == PaymentConstants.methodCard ||
-                            selectedPaymentMethod ==
-                                PaymentConstants.methodYape) &&
-                        _sourceTokenController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            context.l10n.t(
-                              'checkout_source_token_required_notice',
-                            ),
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-
                     setState(() => processing = true);
+                    dynamic reservation;
                     try {
-                      String? sourceTokenId;
-
-                      // Tokenize card via Culqi if using real tokenization.
-                      if (_useCulqiTokenization) {
-                        final expiry = _cardExpiryController.text.trim();
-                        final parts = expiry.split('/');
-                        final month = int.tryParse(parts.firstOrNull ?? '') ?? 0;
-                        final yearRaw = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
-                        final year = yearRaw < 100 ? 2000 + yearRaw : yearRaw;
-
-                        final email = _customerEmailController.text.trim().isNotEmpty
-                            ? _customerEmailController.text.trim()
-                            : user.email;
-
-                        final tokenResult =
-                            await CulqiTokenService.instance.createToken(
-                          CulqiCardData(
-                            cardNumber: _cardNumberController.text.trim(),
-                            expirationMonth: month,
-                            expirationYear: year,
-                            cvv: _cardCvvController.text.trim(),
-                            email: email,
-                          ),
-                        );
-
-                        if (!tokenResult.success) {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(tokenResult.error ??
-                                  'Error al tokenizar tarjeta.'),
-                            ),
-                          );
-                          return;
-                        }
-                        sourceTokenId = tokenResult.tokenId;
-                      } else {
-                        sourceTokenId = forceCashOnly
-                            ? null
-                            : _sourceTokenController.text.trim();
-                      }
-
-                      final reservation = await ref
+                      reservation = await ref
                           .read(reservationRepositoryProvider)
                           .createReservation(
                             userId: user.id,
@@ -470,49 +334,60 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                             paymentMethod: forceCashOnly
                                 ? PaymentConstants.methodCash
                                 : selectedPaymentMethod,
-                            sourceTokenId: sourceTokenId,
                             customerEmail: forceCashOnly
                                 ? null
-                                : _customerEmailController.text.trim(),
+                                : _normalizedCustomerEmail(user.email),
                           );
 
-                      // Check if the payment requires 3DS authentication.
-                      if (!forceCashOnly &&
-                          selectedPaymentMethod == PaymentConstants.methodCard) {
-                        final parsedResId = int.tryParse(reservation.id);
-                        if (parsedResId != null) {
-                          try {
-                            final paymentRepo =
-                                ref.read(paymentRepositoryProvider);
-                            final status = await paymentRepo.getPaymentStatus(
-                              reservationId: parsedResId,
-                            );
-                            if (status.isPending) {
-                              // Could be 3DS — check via the full intent
-                              // The reservation flow already triggered payment,
-                              // so we just check status here.
-                            }
-                          } catch (_) {
-                            // Non-critical; proceed to reservation page.
-                          }
-                        }
-                      }
+                      final checkoutMessage = await _processOnlinePayment(
+                        reservationId: reservation.id.toString(),
+                        paymentMethod: selectedPaymentMethod,
+                        forceCashOnly: forceCashOnly,
+                      );
 
                       ref.invalidate(myReservationsProvider);
                       ref.invalidate(adminReservationsProvider);
                       ref.invalidate(adminReservationListProvider);
-                      ref.invalidate(reservationByIdProvider(reservation.id));
+                      ref.invalidate(
+                        reservationByIdProvider(reservation.id.toString()),
+                      );
                       ref.read(reservationDraftProvider.notifier).state = null;
+
                       if (!context.mounted) return;
-                      context.go('/reservation/${reservation.id}?back=home');
+                      if (checkoutMessage != null && checkoutMessage.isNotEmpty) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(checkoutMessage)));
+                      }
+                      context.go(
+                        '/reservation/${reservation.id.toString()}?back=home',
+                      );
                     } catch (error) {
                       if (!context.mounted) return;
 
-                      // Handle 3DS redirect from payment flow errors that
-                      // contain nextAction data.
-                      if (_tryHandle3dsRedirect(error)) return;
-
                       final message = _errorMessage(error);
+                      if (reservation != null) {
+                        ref.invalidate(myReservationsProvider);
+                        ref.invalidate(adminReservationsProvider);
+                        ref.invalidate(adminReservationListProvider);
+                        ref.invalidate(
+                          reservationByIdProvider(reservation.id.toString()),
+                        );
+                        ref.read(reservationDraftProvider.notifier).state = null;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
+                              '$message',
+                            ),
+                          ),
+                        );
+                        context.go(
+                          '/reservation/${reservation.id.toString()}?back=home',
+                        );
+                        return;
+                      }
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -541,6 +416,198 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     );
   }
 
+  Future<String?> _processOnlinePayment({
+    required String reservationId,
+    required String paymentMethod,
+    required bool forceCashOnly,
+  }) async {
+    if (forceCashOnly || _isOfflinePaymentMethod(paymentMethod)) {
+      return null;
+    }
+
+    final parsedReservationId = int.tryParse(reservationId);
+    if (parsedReservationId == null) {
+      throw StateError('No se pudo identificar la reserva creada.');
+    }
+
+    final paymentRepo = ref.read(paymentRepositoryProvider);
+
+    // Caso de pago One-Click con tarjeta guardada
+    if (paymentMethod == PaymentConstants.methodSavedCard) {
+      if (_selectedSavedCardId == null) {
+        throw StateError(context.l10n.t('error_no_card_selected'));
+      }
+      final paymentFailedMsg = context.l10n.t('payment_failed');
+      final confirmation = await paymentRepo.payWithSavedCard(
+        reservationId: parsedReservationId,
+        savedCardId: _selectedSavedCardId!,
+      );
+      if (confirmation.isConfirmed) {
+        return confirmation.message;
+      }
+      if (confirmation.isFailed) {
+        throw StateError(confirmation.message ?? paymentFailedMsg);
+      }
+      return confirmation.message;
+    }
+
+    final intent = await paymentRepo.createIntent(reservationId: parsedReservationId);
+    final paymentIntentId = int.tryParse(intent.id);
+
+    final confirmation = await paymentRepo.confirmPayment(
+      paymentIntentId: paymentIntentId,
+      reservationId: parsedReservationId,
+      paymentMethod: paymentMethod,
+      customerEmail: _normalizedCustomerEmail(
+        ref.read(sessionControllerProvider).user?.email,
+      ),
+    );
+
+    if (confirmation.isConfirmed) {
+      return confirmation.message;
+    }
+
+    if (confirmation.requiresIzipayCheckout) {
+      final checkoutOutcome = await _openIzipayCheckout(confirmation);
+      final status = await _waitForPaymentFinalStatus(
+        paymentIntentId: int.tryParse(confirmation.id) ?? paymentIntentId,
+        reservationId: parsedReservationId,
+        attempts: checkoutOutcome.isCanceled ? 4 : 18,
+      );
+
+      if (status.isConfirmed) {
+        return _checkoutResultMessage(checkoutOutcome);
+      }
+      if (status.isFailed) {
+        throw StateError(
+          _checkoutFailureMessage(
+            checkoutOutcome.message,
+            status.paymentStatus,
+          ),
+        );
+      }
+      return _pendingPaymentMessage(checkoutOutcome);
+    }
+
+    final status = await _waitForPaymentFinalStatus(
+      paymentIntentId: paymentIntentId,
+      reservationId: parsedReservationId,
+      attempts: 8,
+    );
+    if (status.isConfirmed) {
+      return confirmation.message;
+    }
+    if (status.isFailed) {
+      throw StateError(
+        _checkoutFailureMessage(
+          confirmation.message,
+          status.paymentStatus,
+        ),
+      );
+    }
+    return _defaultPendingPaymentMessage();
+  }
+
+  Future<IzipayCheckoutOutcome> _openIzipayCheckout(
+    PaymentIntentResult confirmation,
+  ) {
+    final nextAction = confirmation.nextAction ?? <String, dynamic>{};
+    final rawConfig = nextAction['checkoutConfig'];
+    final checkoutConfig = rawConfig is Map
+        ? Map<String, dynamic>.from(rawConfig)
+        : <String, dynamic>{};
+
+    final request = IzipayCheckoutRequest(
+      scriptUrl: nextAction['scriptUrl']?.toString() ?? '',
+      authorization: nextAction['authorization']?.toString() ?? '',
+      keyRsa: nextAction['keyRSA']?.toString() ?? 'RSA',
+      checkoutConfig: checkoutConfig,
+    );
+
+    if (request.scriptUrl.isEmpty ||
+        request.authorization.isEmpty ||
+        request.checkoutConfig.isEmpty) {
+      throw StateError('Izipay no devolvio una accion de checkout valida.');
+    }
+    return _izipayCheckoutService.openCheckout(request);
+  }
+
+  Future<PaymentStatusResult> _waitForPaymentFinalStatus({
+    required int? paymentIntentId,
+    required int reservationId,
+    int attempts = 12,
+  }) async {
+    final paymentRepo = ref.read(paymentRepositoryProvider);
+    PaymentStatusResult? latest;
+
+    for (var index = 0; index < attempts; index++) {
+      latest = await paymentRepo.getPaymentStatus(
+        paymentIntentId: paymentIntentId,
+        reservationId: reservationId,
+      );
+      if (latest.isConfirmed || latest.isFailed) {
+        return latest;
+      }
+      if (index < attempts - 1) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+    }
+
+    return latest ??
+        await paymentRepo.getPaymentStatus(
+          paymentIntentId: paymentIntentId,
+          reservationId: reservationId,
+        );
+  }
+
+  String? _checkoutResultMessage(IzipayCheckoutOutcome outcome) {
+    final response = outcome.response ?? <String, dynamic>{};
+    final messageUser = response['messageUser']?.toString();
+    final message = response['message']?.toString();
+    final resolved = messageUser?.trim() ?? message?.trim();
+    if (resolved != null && resolved.isNotEmpty) {
+      return resolved;
+    }
+    return null;
+  }
+
+  String _pendingPaymentMessage(IzipayCheckoutOutcome outcome) {
+    if (outcome.isCanceled) {
+      return context.l10n.locale.languageCode == 'en'
+          ? 'Your reservation was created, but the payment stayed pending after the checkout was closed.'
+          : 'Tu reserva fue creada, pero el pago quedo pendiente despues de cerrar el checkout.';
+    }
+    return _defaultPendingPaymentMessage();
+  }
+
+  String _defaultPendingPaymentMessage() {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Your reservation was created and the payment is still pending validation.'
+        : 'Tu reserva fue creada y el pago sigue pendiente de validacion.';
+  }
+
+  String _checkoutFailureMessage(String? message, String status) {
+    final normalized = message?.trim();
+    if (normalized != null && normalized.isNotEmpty) {
+      return normalized;
+    }
+    return context.l10n.locale.languageCode == 'en'
+        ? 'The payment was rejected by the gateway ($status).'
+        : 'La pasarela rechazo el pago ($status).';
+  }
+
+  String? _normalizedCustomerEmail(String? fallbackEmail) {
+    final typedEmail = _customerEmailController.text.trim();
+    if (typedEmail.isNotEmpty) {
+      return typedEmail;
+    }
+    final fallback = fallbackEmail?.trim();
+    if (fallback != null && fallback.isNotEmpty) {
+      return fallback;
+    }
+    return null;
+  }
+
   String _errorMessage(Object error) {
     return AppErrorFormatter.readable(
       error,
@@ -548,47 +615,16 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     );
   }
 
-  /// Attempts to detect a 3DS redirect from a DioException whose response
-  /// body contains nextAction with AUTHENTICATE_3DS. Returns true if handled.
-  bool _tryHandle3dsRedirect(Object error) {
-    Map<String, dynamic>? responseData;
-    if (error is DioException) {
-      final data = error.response?.data;
-      if (data is Map<String, dynamic>) {
-        responseData = data;
-      }
-    }
-    if (responseData == null) return false;
-
-    final nextAction = responseData['nextAction'] as Map<String, dynamic>?;
-    if (nextAction == null || nextAction['type'] != 'AUTHENTICATE_3DS') {
-      return false;
-    }
-
-    final providerPayload =
-        nextAction['providerPayload'] as Map<String, dynamic>? ?? {};
-    final authUrl = providerPayload['authenticationUrl']?.toString();
-    final paymentIntentId = nextAction['paymentIntentId']?.toString();
-    final reservationId = nextAction['reservationId']?.toString();
-
-    if (authUrl == null || authUrl.isEmpty) return false;
-    if (paymentIntentId == null || reservationId == null) return false;
-
-    if (!context.mounted) return false;
-    context.push(
-      '/payment/3ds-auth'
-      '?paymentIntentId=$paymentIntentId'
-      '&reservationId=$reservationId'
-      '&authUrl=${Uri.encodeComponent(authUrl)}',
-    );
-    return true;
-  }
-
   bool _isOfflinePaymentMethod(String method) {
     return PaymentConstants.isOffline(method);
   }
 
   String _paymentHeadline(String method) {
+    if (method == PaymentConstants.methodSavedCard) {
+      return context.l10n.locale.languageCode == 'en'
+          ? 'One-Click Payment'
+          : 'Pago en un click';
+    }
     if (_isOfflinePaymentMethod(method)) {
       return context.l10n.t('checkout_payment_headline_offline');
     }
@@ -597,12 +633,22 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   String _paymentHelp(BuildContext context, String method) {
     switch (method) {
+      case PaymentConstants.methodSavedCard:
+        return context.l10n.locale.languageCode == 'en'
+            ? 'We will use your saved card to process the payment immediately without opening the checkout.'
+            : 'Usaremos tu tarjeta guardada para procesar el pago inmediatamente sin abrir el checkout.';
       case PaymentConstants.methodCard:
-        return context.l10n.t('checkout_payment_help_card');
+        return context.l10n.locale.languageCode == 'en'
+            ? 'Card payments are completed in the secure Izipay checkout before the reservation is confirmed.'
+            : 'Los pagos con tarjeta se completan en el checkout seguro de Izipay antes de confirmar la reserva.';
       case PaymentConstants.methodYape:
-        return context.l10n.t('checkout_payment_help_yape');
+        return context.l10n.locale.languageCode == 'en'
+            ? 'Yape opens through Izipay so the final status can be validated from the backend.'
+            : 'Yape se abre a traves de Izipay para validar el estado final desde el backend.';
       case PaymentConstants.methodWallet:
-        return context.l10n.t('checkout_payment_help_wallet');
+        return context.l10n.locale.languageCode == 'en'
+            ? 'Plin and wallet flows are handled in Izipay and stay pending until the gateway confirms them.'
+            : 'Los flujos de Plin y billetera se manejan en Izipay y quedan pendientes hasta que la pasarela los confirme.';
       case PaymentConstants.methodCounter:
         return context.l10n.t('checkout_payment_help_counter');
       case PaymentConstants.methodCash:
@@ -679,28 +725,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         : 'Detalle de la reserva';
   }
 
-  String _sourceTokenLabel(BuildContext context) {
-    return context.l10n.locale.languageCode == 'en'
-        ? 'Culqi test token'
-        : 'Token de prueba Culqi';
-  }
-
-  String _sourceTokenHint(BuildContext context) {
-    return context.l10n.locale.languageCode == 'en'
-        ? 'Example: tkn_test_xxx'
-        : 'Ejemplo: tkn_test_xxx';
-  }
-
-  String _sourceTokenHelper(BuildContext context) {
-    return context.l10n.locale.languageCode == 'en'
-        ? 'Visible only for internal payment tests. The backend still sends this value as sourceTokenId.'
-        : 'Visible solo para pruebas internas de pago. Internamente se seguirá enviando como sourceTokenId.';
-  }
-
   String _customerEmailLabel(BuildContext context) {
     return context.l10n.locale.languageCode == 'en'
-        ? 'Email to receive confirmation (optional)'
-        : 'Correo para recibir la confirmación (opcional)';
+        ? 'Email for payment receipt (optional)'
+        : 'Correo para el comprobante de pago (opcional)';
   }
 
   String _customerEmailHint(BuildContext context) {
@@ -709,22 +737,16 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         : 'viajero@correo.com';
   }
 
+  String _checkoutEmailHelper(BuildContext context) {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'If you leave it blank, we will use the email from your account for Izipay.'
+        : 'Si lo dejas vacio, usaremos el correo de tu cuenta para Izipay.';
+  }
+
   String _totalBreakdownCaption(BuildContext context) {
     return context.l10n.locale.languageCode == 'en'
         ? 'Review the reservation amount before confirming your payment.'
         : 'Revisa el desglose de tu reserva antes de confirmar el pago.';
-  }
-
-  String _testingNoticeTitle(BuildContext context) {
-    return context.l10n.locale.languageCode == 'en'
-        ? 'Internal test mode'
-        : 'Modo de prueba interna';
-  }
-
-  String _testingNoticeBody(BuildContext context) {
-    return context.l10n.locale.languageCode == 'en'
-        ? 'This field remains visible only while validating Culqi internally. For users, the final flow will hide this step.'
-        : 'Este campo se mantiene visible solo mientras validamos Culqi internamente. Para usuarios finales, este paso se ocultará.';
   }
 }
 

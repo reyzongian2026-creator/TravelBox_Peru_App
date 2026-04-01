@@ -17,7 +17,7 @@ import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
 import 'auth_controller.dart';
 import 'widgets/auth_ui.dart';
-import 'widgets/auth_teddy_animation.dart';
+import 'widgets/auth_llama_animation.dart';
 
 enum AuthPortalMode { login, register }
 
@@ -42,8 +42,8 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   bool _showValidation = false;
   bool _keepSignedIn = true;
   bool _loginPasswordVisible = false;
-  String _teddyAnimation = 'idle';
-  double _teddyLookOffsetX = -1;
+  String _llamaAnimation = 'idle';
+  double _llamaLookOffsetX = -1;
   Timer? _animationResetTimer;
   bool _consumingSocialPayload = false;
 
@@ -51,8 +51,8 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   void initState() {
     super.initState();
     _accessMode = _AccessMode.internal;
-    _loginEmailFocusNode.addListener(_syncTeddyFromFocus);
-    _loginPasswordFocusNode.addListener(_syncTeddyFromFocus);
+    _loginEmailFocusNode.addListener(_syncLlamaFromFocus);
+    _loginPasswordFocusNode.addListener(_syncLlamaFromFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _consumeSocialCallbackPayloadIfPresent();
     });
@@ -75,14 +75,14 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
       final success = previous?.isLoading == true && next.hasValue;
       final failure = previous?.isLoading == true && next.hasError;
       if (success) {
-        _setTeddyAnimation(
+        _setLlamaAnimation(
           'success',
           resetAfter: const Duration(milliseconds: 900),
         );
         context.go(_postAuthRoute(ref.read(sessionControllerProvider)));
       }
       if (failure) {
-        _setTeddyAnimation(
+        _setLlamaAnimation(
           'fail',
           resetAfter: const Duration(milliseconds: 1200),
         );
@@ -101,9 +101,9 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
       heroLabel: context.l10n.t('app_name'),
       heroTitle: context.l10n.t('app_name').toUpperCase(),
       heroSubtitle: context.l10n.t('auth_portal_hero_subtitle'),
-      showGuardianBear: false,
+      showGuardianLlama: false,
       showCompactHero: false,
-      heroAnimation: _teddyAnimation,
+      heroAnimation: _llamaAnimation,
       formChild: _AuthPanel(
         accessMode: _accessMode,
         authState: authState,
@@ -113,8 +113,8 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
         loginPasswordController: _loginPasswordController,
         loginEmailFocusNode: _loginEmailFocusNode,
         loginPasswordFocusNode: _loginPasswordFocusNode,
-        teddyAnimation: _teddyAnimation,
-        teddyLookOffsetX: _teddyLookOffsetX,
+        llamaAnimation: _llamaAnimation,
+        llamaLookOffsetX: _llamaLookOffsetX,
         loginPasswordVisible: _loginPasswordVisible,
         showValidation: _showValidation,
         onModeChanged: (mode) => setState(() => _accessMode = mode),
@@ -139,13 +139,13 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
 
   Future<void> _handleLogin() async {
     FocusScope.of(context).unfocus();
-    _setTeddyAnimation(
+    _setLlamaAnimation(
       'hands_down',
       resetAfter: const Duration(milliseconds: 450),
     );
     final isValid = _loginFormKey.currentState?.validate() ?? false;
     if (!isValid) {
-      _setTeddyAnimation(
+      _setLlamaAnimation(
         'fail',
         resetAfter: const Duration(milliseconds: 1100),
       );
@@ -160,60 +160,60 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
         );
   }
 
-  void _syncTeddyFromFocus() {
+  void _syncLlamaFromFocus() {
     if (!mounted) return;
     if (_loginPasswordFocusNode.hasFocus) {
-      if (_teddyLookOffsetX != 0) {
-        setState(() => _teddyLookOffsetX = 0);
+      if (_llamaLookOffsetX != 0) {
+        setState(() => _llamaLookOffsetX = 0);
       }
-      _setTeddyAnimation('hands_up');
+      _setLlamaAnimation('hands_up');
       return;
     }
     if (_loginEmailFocusNode.hasFocus) {
       _setLookOffsetFromEmail(_loginEmailController.text);
-      _animateEmailTracking(forceReplay: _teddyAnimation == 'test');
+      _animateEmailTracking(forceReplay: _llamaAnimation == 'test');
       return;
     }
-    if (_teddyLookOffsetX != -1) {
-      setState(() => _teddyLookOffsetX = -1);
+    if (_llamaLookOffsetX != -1) {
+      setState(() => _llamaLookOffsetX = -1);
     }
     _animateIdleFromCurrent();
   }
 
   void _animateEmailTracking({bool forceReplay = false}) {
-    if (_teddyAnimation == 'hands_up') {
-      _setTeddyAnimation('hands_down', forceReplay: true);
+    if (_llamaAnimation == 'hands_up') {
+      _setLlamaAnimation('hands_down', forceReplay: true);
       _animationResetTimer?.cancel();
       _animationResetTimer = Timer(const Duration(milliseconds: 150), () {
         if (!mounted) return;
         if (_loginPasswordFocusNode.hasFocus) {
-          _setTeddyAnimation('hands_up');
+          _setLlamaAnimation('hands_up');
           return;
         }
         if (_loginEmailFocusNode.hasFocus) {
-          _setTeddyAnimation('test', forceReplay: true);
+          _setLlamaAnimation('test', forceReplay: true);
           return;
         }
-        _setTeddyAnimation('idle');
+        _setLlamaAnimation('idle');
       });
       return;
     }
-    _setTeddyAnimation('test', forceReplay: forceReplay);
+    _setLlamaAnimation('test', forceReplay: forceReplay);
   }
 
   void _animateIdleFromCurrent() {
-    if (_teddyAnimation == 'hands_up') {
-      _setTeddyAnimation(
+    if (_llamaAnimation == 'hands_up') {
+      _setLlamaAnimation(
         'hands_down',
         forceReplay: true,
         resetAfter: const Duration(milliseconds: 140),
       );
       return;
     }
-    _setTeddyAnimation('idle');
+    _setLlamaAnimation('idle');
   }
 
-  void _setTeddyAnimation(
+  void _setLlamaAnimation(
     String value, {
     Duration? resetAfter,
     bool forceReplay = false,
@@ -222,17 +222,17 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     if (!mounted) {
       return;
     }
-    if (_teddyAnimation != value) {
-      setState(() => _teddyAnimation = value);
+    if (_llamaAnimation != value) {
+      setState(() => _llamaAnimation = value);
     } else if (forceReplay) {
-      setState(() => _teddyAnimation = 'idle');
+      setState(() => _llamaAnimation = 'idle');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        setState(() => _teddyAnimation = value);
+        setState(() => _llamaAnimation = value);
       });
     }
     if (resetAfter != null) {
-      _animationResetTimer = Timer(resetAfter, _syncTeddyFromFocus);
+      _animationResetTimer = Timer(resetAfter, _syncLlamaFromFocus);
     }
   }
 
@@ -246,10 +246,10 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
 
   void _handlePasswordTyping(String value) {
     if (_loginPasswordFocusNode.hasFocus) {
-      if (_teddyLookOffsetX != 0) {
-        setState(() => _teddyLookOffsetX = 0);
+      if (_llamaLookOffsetX != 0) {
+        setState(() => _llamaLookOffsetX = 0);
       }
-      _setTeddyAnimation('hands_up');
+      _setLlamaAnimation('hands_up');
     }
   }
 
@@ -257,10 +257,10 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     final normalizedLength = value.trim().length;
     final ratio = (normalizedLength / 26).clamp(0.0, 1.0);
     final target = -1 + (2 * ratio);
-    if ((_teddyLookOffsetX - target).abs() < 0.04) {
+    if ((_llamaLookOffsetX - target).abs() < 0.04) {
       return;
     }
-    setState(() => _teddyLookOffsetX = target);
+    setState(() => _llamaLookOffsetX = target);
   }
 
   Future<void> _handleSocialLogin(String provider) async {
@@ -284,7 +284,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
     _consumingSocialPayload = true;
     await clearSocialCallbackUrl(route: '/login');
     if (error != null && error.isNotEmpty) {
-      _setTeddyAnimation(
+      _setLlamaAnimation(
         'fail',
         resetAfter: const Duration(milliseconds: 1200),
       );
@@ -316,14 +316,14 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
                 ?.toString(),
           );
       if (!mounted) return;
-      _setTeddyAnimation(
+      _setLlamaAnimation(
         'success',
         resetAfter: const Duration(milliseconds: 900),
       );
       context.go(_postAuthRoute(ref.read(sessionControllerProvider)));
     } catch (_) {
       if (!mounted) return;
-      _setTeddyAnimation(
+      _setLlamaAnimation(
         'fail',
         resetAfter: const Duration(milliseconds: 1200),
       );
@@ -370,8 +370,8 @@ class _AuthPanel extends StatelessWidget {
     required this.loginPasswordController,
     required this.loginEmailFocusNode,
     required this.loginPasswordFocusNode,
-    required this.teddyAnimation,
-    required this.teddyLookOffsetX,
+    required this.llamaAnimation,
+    required this.llamaLookOffsetX,
     required this.loginPasswordVisible,
     required this.showValidation,
     required this.onModeChanged,
@@ -399,8 +399,8 @@ class _AuthPanel extends StatelessWidget {
   final TextEditingController loginPasswordController;
   final FocusNode loginEmailFocusNode;
   final FocusNode loginPasswordFocusNode;
-  final String teddyAnimation;
-  final double teddyLookOffsetX;
+  final String llamaAnimation;
+  final double llamaLookOffsetX;
   final bool loginPasswordVisible;
   final bool showValidation;
   final ValueChanged<_AccessMode> onModeChanged;
@@ -428,20 +428,20 @@ class _AuthPanel extends StatelessWidget {
     final responsive = context.responsive;
     final width = media.size.width;
     final isMobile = media.size.shortestSide < 600;
-    final topGap = width >= 980 ? 34.0 : (responsive.isMobile ? 4.0 : 10.0);
+    final topGap = width >= 980 ? 28.0 : (responsive.isMobile ? 2.0 : 8.0);
     final titleSize = responsive.adaptiveFont(
-      mobileSmall: 30,
-      mobile: 34,
-      tablet: 37,
-      desktopSmall: 40,
-      desktop: 42,
+      mobileSmall: 26,
+      mobile: 30,
+      tablet: 33,
+      desktopSmall: 36,
+      desktop: 38,
     );
     final accessTitleSize = responsive.adaptiveFont(
-      mobileSmall: 17,
-      mobile: 18,
-      tablet: 19,
-      desktopSmall: 20,
-      desktop: 20,
+      mobileSmall: 15,
+      mobile: 16,
+      tablet: 17,
+      desktopSmall: 18,
+      desktop: 18,
     );
     final headlineColor = isDark ? const Color(0xFFF6ECDE) : TravelBoxBrand.ink;
     final descriptionColor = isDark
@@ -457,60 +457,66 @@ class _AuthPanel extends StatelessWidget {
         children: [
           SizedBox(height: topGap),
           if (isMobile)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                gradient: TravelBoxBrand.brandGradient,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  gradient: TravelBoxBrand.brandGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.25),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  context.l10n.t('app_name').toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.6,
                   ),
-                ],
-              ),
-              child: Text(
-                context.l10n.t('app_name').toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
                 ),
               ),
             ),
-          if (isMobile) const SizedBox(height: 8),
+          if (isMobile) const SizedBox(height: 6),
           Center(
-            child: AuthTeddyAnimation(
-              animation: teddyAnimation,
+            child: AuthLlamaAnimation(
+              animation: llamaAnimation,
               compact: width < 520,
-              lookOffsetX: teddyLookOffsetX,
+              lookOffsetX: llamaLookOffsetX,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             l10n.t('login_title'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: titleSize,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: headlineColor,
-              letterSpacing: -0.3,
+              letterSpacing: -0.5,
+              height: 1.1,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.t('login_description'),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: descriptionColor,
-              height: 1.35,
-              fontSize: responsive.isMobile ? 12.8 : 13,
+          const SizedBox(height: 6),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: width > 600 ? 20 : 8),
+            child: Text(
+              l10n.t('login_description'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: descriptionColor,
+                height: 1.45,
+                fontSize: responsive.isMobile ? 13 : 13.5,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           SegmentedButton<_AccessMode>(
             segments: [
               ButtonSegment(
@@ -525,16 +531,32 @@ class _AuthPanel extends StatelessWidget {
             selected: {accessMode},
             onSelectionChanged: (s) => onModeChanged(s.first),
           ),
-          const SizedBox(height: 16),
-          Text(
-            isClient ? l10n.t('access_client') : l10n.t('access_internal'),
-            style: TextStyle(
-              fontSize: accessTitleSize,
-              fontWeight: FontWeight.w700,
-              color: headlineColor,
-            ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Container(
+                width: 3.5,
+                height: 18,
+                decoration: BoxDecoration(
+                  gradient: TravelBoxBrand.brandGradient,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                isClient
+                    ? l10n.t('access_client')
+                    : l10n.t('access_internal'),
+                style: TextStyle(
+                  fontSize: accessTitleSize,
+                  fontWeight: FontWeight.w700,
+                  color: headlineColor,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           AuthLineField(
             child: TextFormField(
               controller: loginEmailController,
@@ -543,10 +565,13 @@ class _AuthPanel extends StatelessWidget {
               onChanged: onEmailTyping,
               validator: FormValidators.email,
               keyboardType: TextInputType.emailAddress,
-              decoration: AuthUi.lineFieldDecoration(l10n.t('email_hint')),
+              decoration: AuthUi.lineFieldDecoration(
+                l10n.t('email_hint'),
+                prefixIcon: Icons.alternate_email_rounded,
+              ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           AuthLineField(
             child: TextFormField(
               controller: loginPasswordController,
@@ -555,7 +580,8 @@ class _AuthPanel extends StatelessWidget {
               onChanged: onPasswordTyping,
               obscureText: !loginPasswordVisible,
               validator: FormValidators.password,
-              decoration: AuthUi.lineFieldDecoration(l10n.t('password_hint'))
+              decoration: AuthUi.lineFieldDecoration(l10n.t('password_hint'),
+                  prefixIcon: Icons.lock_outline_rounded)
                   .copyWith(
                     suffixIcon: IconButton(
                       tooltip: loginPasswordVisible
