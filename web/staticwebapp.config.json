@@ -13,8 +13,13 @@
       "/*.png",
       "/*.svg",
       "/*.txt",
-      "/canvaskit/*"
+      "/*.wasm",
+      "/canvaskit/*",
+      "/flutter_service_worker.js"
     ]
+  },
+  "mimeTypes": {
+    ".wasm": "application/wasm"
   },
   "routes": [
     {
@@ -22,6 +27,11 @@
       "rewrite": "/index.html"
     }
   ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  },
   "responseOverrides": {
     "404": {
       "rewrite": "/index.html"
