@@ -62,13 +62,22 @@ jobs:
 
       - name: Build Flutter web
         run: |
-          flutter build web --release \
+          flutter build web --release --base-href=/ \
             --dart-define=APP_ENV=prod \
             --dart-define=USE_MOCK_FALLBACK=false \
             --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1 \
             --dart-define=AZURE_MAPS_API_KEY=${{ env.AZURE_MAPS_API_KEY }} \
             --dart-define=AZURE_CLIENT_ID=${{ env.AZURE_CLIENT_ID }} \
             --dart-define=AZURE_TENANT_ID=${{ env.AZURE_TENANT_ID }}
+
+      - name: Ensure staticwebapp.config.json is in build output
+        run: |
+          if [ ! -f build/web/staticwebapp.config.json ] && [ -f web/staticwebapp.config.json ]; then
+            cp web/staticwebapp.config.json build/web/staticwebapp.config.json
+            echo "Copied staticwebapp.config.json to build output"
+          else
+            echo "staticwebapp.config.json already present in build output"
+          fi
 
       - name: Deploy to Azure Static Web Apps
         id: deploy
@@ -77,5 +86,5 @@ jobs:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/build/web"
-          output_location: "/"
+          skip_app_build: true
+          app_location: "build/web"
