@@ -530,6 +530,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     final request = IzipayCheckoutRequest(
       scriptUrl: nextAction['scriptUrl']?.toString() ?? '',
       authorization: nextAction['authorization']?.toString() ?? '',
+      publicKey: nextAction['publicKey']?.toString() ?? '',
       keyRsa: nextAction['keyRSA']?.toString() ?? 'RSA',
       checkoutConfig: checkoutConfig,
     );

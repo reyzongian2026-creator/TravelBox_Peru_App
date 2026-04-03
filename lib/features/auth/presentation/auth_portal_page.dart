@@ -17,7 +17,6 @@ import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/form_validators.dart';
 import 'auth_controller.dart';
 import 'widgets/auth_ui.dart';
-import 'widgets/auth_llama_animation.dart';
 
 enum AuthPortalMode { login, register }
 
@@ -114,8 +113,6 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
         loginPasswordController: _loginPasswordController,
         loginEmailFocusNode: _loginEmailFocusNode,
         loginPasswordFocusNode: _loginPasswordFocusNode,
-        llamaAnimation: _llamaAnimation,
-        llamaLookOffsetX: _llamaLookOffsetX,
         loginPasswordVisible: _loginPasswordVisible,
         showValidation: _showValidation,
         onModeChanged: (mode) => setState(() => _accessMode = mode),
@@ -371,8 +368,6 @@ class _AuthPanel extends StatelessWidget {
     required this.loginPasswordController,
     required this.loginEmailFocusNode,
     required this.loginPasswordFocusNode,
-    required this.llamaAnimation,
-    required this.llamaLookOffsetX,
     required this.loginPasswordVisible,
     required this.showValidation,
     required this.onModeChanged,
@@ -400,8 +395,6 @@ class _AuthPanel extends StatelessWidget {
   final TextEditingController loginPasswordController;
   final FocusNode loginEmailFocusNode;
   final FocusNode loginPasswordFocusNode;
-  final String llamaAnimation;
-  final double llamaLookOffsetX;
   final bool loginPasswordVisible;
   final bool showValidation;
   final ValueChanged<_AccessMode> onModeChanged;
@@ -429,13 +422,13 @@ class _AuthPanel extends StatelessWidget {
     final responsive = context.responsive;
     final width = media.size.width;
     final isMobile = media.size.shortestSide < 600;
-    final topGap = width >= 980 ? 28.0 : (responsive.isMobile ? 2.0 : 8.0);
+    final topGap = width >= 980 ? 20.0 : 0.0;
     final titleSize = responsive.adaptiveFont(
-      mobileSmall: 26,
-      mobile: 30,
-      tablet: 33,
-      desktopSmall: 36,
-      desktop: 38,
+      mobileSmall: 20,
+      mobile: 22,
+      tablet: 28,
+      desktopSmall: 32,
+      desktop: 34,
     );
     final accessTitleSize = responsive.adaptiveFont(
       mobileSmall: 15,
@@ -457,42 +450,49 @@ class _AuthPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(height: topGap),
-          if (isMobile)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  gradient: TravelBoxBrand.brandGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  context.l10n.t('app_name').toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.6,
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: isMobile ? 36 : 64,
+                width: isMobile ? 36 : 64,
+                child: CustomPaint(
+                  painter: _LoginPeruMapPainter(isDark: isDark),
                 ),
               ),
-            ),
-          if (isMobile) const SizedBox(height: 6),
-          Center(
-            child: AuthLlamaAnimation(
-              animation: llamaAnimation,
-              compact: width < 520,
-              lookOffsetX: llamaLookOffsetX,
-            ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'InkaVoy',
+                    style: TextStyle(
+                      fontSize: isMobile ? 18 : 24,
+                      fontWeight: FontWeight.w800,
+                      foreground: Paint()
+                        ..shader = TravelBoxBrand.brandGradient
+                            .createShader(const Rect.fromLTWH(0, 0, 200, 40)),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  Text(
+                    'PERÚ',
+                    style: TextStyle(
+                      fontSize: isMobile ? 8 : 9,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : TravelBoxBrand.textMuted,
+                      letterSpacing: 3.0,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isMobile ? 6 : 14),
           Text(
             l10n.t('login_title'),
             textAlign: TextAlign.center,
@@ -504,20 +504,22 @@ class _AuthPanel extends StatelessWidget {
               height: 1.1,
             ),
           ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: width > 600 ? 20 : 8),
-            child: Text(
-              l10n.t('login_description'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: descriptionColor,
-                height: 1.45,
-                fontSize: responsive.isMobile ? 13 : 13.5,
+          if (!isMobile) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: width > 600 ? 20 : 8),
+              child: Text(
+                l10n.t('login_description'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: descriptionColor,
+                  height: 1.35,
+                  fontSize: 13,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+          ],
+          SizedBox(height: isMobile ? 8 : 18),
           SegmentedButton<_AccessMode>(
             segments: [
               ButtonSegment(
@@ -532,32 +534,7 @@ class _AuthPanel extends StatelessWidget {
             selected: {accessMode},
             onSelectionChanged: (s) => onModeChanged(s.first),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Container(
-                width: 3.5,
-                height: 18,
-                decoration: BoxDecoration(
-                  gradient: TravelBoxBrand.brandGradient,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                isClient
-                    ? l10n.t('access_client')
-                    : l10n.t('access_internal'),
-                style: TextStyle(
-                  fontSize: accessTitleSize,
-                  fontWeight: FontWeight.w700,
-                  color: headlineColor,
-                  letterSpacing: -0.1,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+          SizedBox(height: isMobile ? 6 : 16),
           AuthLineField(
             child: TextFormField(
               controller: loginEmailController,
@@ -572,7 +549,7 @@ class _AuthPanel extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isMobile ? 6 : 12),
           AuthLineField(
             child: TextFormField(
               controller: loginPasswordController,
@@ -600,32 +577,31 @@ class _AuthPanel extends StatelessWidget {
                   ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           if (width < 430)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: keepSignedIn,
-                      onChanged: authState.isLoading
-                          ? null
-                          : (value) =>
-                                onKeepSignedInChanged(value ?? keepSignedIn),
-                    ),
-                    const Expanded(child: _KeepSignedInLabel()),
-                  ],
+                Checkbox(
+                  value: keepSignedIn,
+                  visualDensity: VisualDensity.compact,
+                  onChanged: authState.isLoading
+                      ? null
+                      : (value) =>
+                            onKeepSignedInChanged(value ?? keepSignedIn),
                 ),
+                const Expanded(child: _KeepSignedInLabel()),
                 if (isClient)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: TextButton(
-                      onPressed: authState.isLoading
-                          ? null
-                          : onEmailRegisterPressed,
-                      child: Text(l10n.t('create_account')),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
+                    onPressed: authState.isLoading
+                        ? null
+                        : onEmailRegisterPressed,
+                    child: Text(l10n.t('create_account'),
+                        style: const TextStyle(fontSize: 12)),
                   ),
               ],
             )
@@ -655,7 +631,7 @@ class _AuthPanel extends StatelessWidget {
                   ),
               ],
             ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           AuthStripeButton(
             onPressed: authState.isLoading
                 ? null
@@ -669,13 +645,14 @@ class _AuthPanel extends StatelessWidget {
             filled: true,
           ),
           if (isClient) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 6),
             if ((showGoogleLogin || showFacebookLogin || showMicrosoftLogin) &&
                 width < 380)
               Column(
                 children: [
                   if (showGoogleLogin)
                     SizedBox(
+                      height: 36,
                       width: double.infinity,
                       child: _SocialGhostButton(
                         icon: Icons.language_outlined,
@@ -685,9 +662,10 @@ class _AuthPanel extends StatelessWidget {
                     ),
                   if (showGoogleLogin &&
                       (showFacebookLogin || showMicrosoftLogin))
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                   if (showFacebookLogin)
                     SizedBox(
+                      height: 36,
                       width: double.infinity,
                       child: _SocialGhostButton(
                         icon: Icons.facebook_outlined,
@@ -696,9 +674,10 @@ class _AuthPanel extends StatelessWidget {
                       ),
                     ),
                   if (showFacebookLogin && showMicrosoftLogin)
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                   if (showMicrosoftLogin)
                     SizedBox(
+                      height: 36,
                       width: double.infinity,
                       child: _SocialGhostButton(
                         icon: Icons.business_center_outlined,
@@ -709,57 +688,149 @@ class _AuthPanel extends StatelessWidget {
                 ],
               )
             else if (showGoogleLogin || showFacebookLogin || showMicrosoftLogin)
-              Row(
-                children: [
-                  if (showGoogleLogin)
-                    Expanded(
-                      child: _SocialGhostButton(
-                        icon: Icons.language_outlined,
-                        label: 'Google',
-                        onTap: authState.isLoading ? null : onGoogleLogin,
+              SizedBox(
+                height: 36,
+                child: Row(
+                  children: [
+                    if (showGoogleLogin)
+                      Expanded(
+                        child: _SocialGhostButton(
+                          icon: Icons.language_outlined,
+                          label: 'Google',
+                          onTap: authState.isLoading ? null : onGoogleLogin,
+                        ),
                       ),
-                    ),
-                  if (showGoogleLogin &&
-                      (showFacebookLogin || showMicrosoftLogin))
-                    const SizedBox(width: 8),
-                  if (showFacebookLogin)
-                    Expanded(
-                      child: _SocialGhostButton(
-                        icon: Icons.facebook_outlined,
-                        label: 'Facebook',
-                        onTap: authState.isLoading ? null : onFacebookLogin,
+                    if (showGoogleLogin &&
+                        (showFacebookLogin || showMicrosoftLogin))
+                      const SizedBox(width: 8),
+                    if (showFacebookLogin)
+                      Expanded(
+                        child: _SocialGhostButton(
+                          icon: Icons.facebook_outlined,
+                          label: 'Facebook',
+                          onTap: authState.isLoading ? null : onFacebookLogin,
+                        ),
                       ),
-                    ),
-                  if (showFacebookLogin && showMicrosoftLogin)
-                    const SizedBox(width: 8),
-                  if (showMicrosoftLogin)
-                    Expanded(
-                      child: _SocialGhostButton(
-                        icon: Icons.business_center_outlined,
-                        label: 'Microsoft',
-                        onTap: authState.isLoading ? null : onMicrosoftLogin,
+                    if (showFacebookLogin && showMicrosoftLogin)
+                      const SizedBox(width: 8),
+                    if (showMicrosoftLogin)
+                      Expanded(
+                        child: _SocialGhostButton(
+                          icon: Icons.business_center_outlined,
+                          label: 'Microsoft',
+                          onTap: authState.isLoading ? null : onMicrosoftLogin,
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            if (showGoogleLogin || showFacebookLogin || showMicrosoftLogin)
-              const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: authState.isLoading ? null : onEmailRegisterPressed,
-              icon: const Icon(Icons.person_add_alt_1_outlined),
-              label: Text(l10n.t('create_client_account')),
-            ),
           ],
           const SizedBox(height: 4),
-          TextButton.icon(
-            onPressed: authState.isLoading ? null : onPasswordResetPressed,
-            icon: const Icon(Icons.lock_reset_outlined),
-            label: Text(
-              isClient ? l10n.t('recover_password') : l10n.t('forgot_password'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isClient) ...[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: authState.isLoading ? null : onEmailRegisterPressed,
+                  child: Text(l10n.t('create_client_account'),
+                      style: const TextStyle(fontSize: 11)),
+                ),
+                Text(' · ',
+                    style: TextStyle(
+                      color: descriptionColor.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    )),
+              ],
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: authState.isLoading ? null : onPasswordResetPressed,
+                child: Text(
+                  isClient ? l10n.t('recover_password') : l10n.t('forgot_password'),
+                  style: const TextStyle(fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 3 : 12),
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  isDark
+                      ? const Color(0xFF2E3A52)
+                      : const Color(0xFFDDE3EE),
+                  Colors.transparent,
+                ],
+              ),
             ),
+          ),
+          SizedBox(height: isMobile ? 3 : 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _PolicyLink(
+                label: l10n.t('privacy_policy'),
+                onTap: () => _openPolicy(context, 'privacy'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '·',
+                  style: TextStyle(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : TravelBoxBrand.textMuted.withValues(alpha: 0.5),
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              _PolicyLink(
+                label: l10n.t('terms_of_service'),
+                onTap: () => _openPolicy(context, 'terms'),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '·',
+                  style: TextStyle(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : TravelBoxBrand.textMuted.withValues(alpha: 0.5),
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              Text(
+                '© ${DateTime.now().year} InkaVoy',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.28)
+                      : TravelBoxBrand.textMuted.withValues(alpha: 0.45),
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  static void _openPolicy(BuildContext context, String type) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _PolicyDialog(type: type),
     );
   }
 }
@@ -771,7 +842,7 @@ class _KeepSignedInLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       context.l10n.t('keep_signed_in'),
-      style: const TextStyle(fontSize: 13),
+      style: const TextStyle(fontSize: 12),
       overflow: TextOverflow.ellipsis,
     );
   }
@@ -795,9 +866,400 @@ class _SocialGhostButton extends StatelessWidget {
       opacity: disabled ? 0.5 : 1,
       child: OutlinedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          textStyle: const TextStyle(fontSize: 12),
+          minimumSize: const Size(0, 34),
+        ),
+        icon: Icon(icon, size: 16),
         label: Text(label),
       ),
     );
   }
+}
+
+class _PolicyLink extends StatelessWidget {
+  const _PolicyLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.55)
+                : TravelBoxBrand.textMuted,
+            decoration: TextDecoration.underline,
+            decorationColor: isDark
+                ? Colors.white.withValues(alpha: 0.25)
+                : TravelBoxBrand.textMuted.withValues(alpha: 0.4),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PolicyDialog extends StatelessWidget {
+  const _PolicyDialog({required this.type});
+
+  final String type;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPrivacy = type == 'privacy';
+    final title =
+        isPrivacy ? l10n.t('privacy_policy') : l10n.t('terms_of_service');
+
+    return Dialog(
+      backgroundColor: isDark ? const Color(0xFF151A30) : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 560),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: TravelBoxBrand.brandGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      isPrivacy ? Icons.shield_outlined : Icons.description_outlined,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : TravelBoxBrand.ink,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Text(
+                  isPrivacy
+                      ? _privacyPolicyText
+                      : _termsOfServiceText,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.75)
+                        : TravelBoxBrand.textBody,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: TravelBoxBrand.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(l10n.t('understood')),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const _privacyPolicyText = '''
+InkaVoy Perú - Política de Privacidad
+
+Última actualización: Enero 2026
+
+1. Información que Recopilamos
+Recopilamos información personal que usted nos proporciona directamente, incluyendo nombre, correo electrónico, número de teléfono e información de viaje.
+
+2. Uso de la Información
+Utilizamos su información para:
+• Gestionar su cuenta y proporcionar nuestros servicios de almacenaje y logística para viajeros.
+• Procesar reservas, check-ins y operaciones de equipaje.
+• Enviar notificaciones relacionadas con sus servicios activos.
+• Mejorar la experiencia del usuario y nuestros servicios.
+
+3. Protección de Datos
+Implementamos medidas de seguridad técnicas y organizativas para proteger su información personal contra acceso no autorizado, alteración o destrucción.
+
+4. Compartir Información
+No vendemos ni compartimos su información personal con terceros, excepto cuando sea necesario para prestar nuestros servicios o cuando lo exija la ley peruana.
+
+5. Sus Derechos
+Usted tiene derecho a acceder, rectificar, cancelar u oponerse al tratamiento de sus datos personales conforme a la Ley N° 29733 - Ley de Protección de Datos Personales del Perú.
+
+6. Contacto
+Para consultas sobre privacidad: privacidad@inkavoy.pe
+''';
+
+  static const _termsOfServiceText = '''
+InkaVoy Perú - Términos de Servicio
+
+Última actualización: Enero 2026
+
+1. Aceptación de Términos
+Al acceder y utilizar la plataforma InkaVoy Perú, usted acepta estos términos de servicio en su totalidad.
+
+2. Descripción del Servicio
+InkaVoy Perú ofrece servicios de almacenaje de equipaje, logística de viaje y operaciones de check-in para viajeros nacionales e internacionales en territorio peruano.
+
+3. Registro y Cuenta
+• Debe proporcionar información veraz y actualizada.
+• Es responsable de mantener la confidencialidad de sus credenciales.
+• Debe notificarnos inmediatamente cualquier uso no autorizado.
+
+4. Uso Aceptable
+Se compromete a utilizar la plataforma únicamente para fines legítimos relacionados con viajes y los servicios ofrecidos.
+
+5. Responsabilidad
+InkaVoy Perú se compromete a custodiar sus pertenencias con el máximo cuidado. La responsabilidad está limitada según los términos de cada servicio contratado.
+
+6. Modificaciones
+Nos reservamos el derecho de modificar estos términos. Los cambios serán comunicados a través de la plataforma.
+
+7. Ley Aplicable
+Estos términos se rigen por las leyes de la República del Perú. Cualquier controversia será resuelta en los tribunales de Lima.
+
+8. Contacto
+Soporte: soporte@inkavoy.pe
+''';
+}
+
+class _LoginPeruMapPainter extends CustomPainter {
+  _LoginPeruMapPainter({required this.isDark});
+
+  final bool isDark;
+
+  // 76 real border points from Natural Earth / GeoJSON (johan/world.geo.json).
+  // Converted from lon/lat to normalised canvas [0..1] with Y inverted.
+  // Bounding box: lon [-81.41, -68.67], lat [-18.35, -0.06], 2% padding.
+  static const _border = <List<double>>[
+    [0.911, 0.9404],
+    [0.8907, 0.9673],
+    [0.852, 0.9808],
+    [0.7763, 0.9506],
+    [0.7698, 0.929],
+    [0.6202, 0.8762],
+    [0.4849, 0.8187],
+    [0.4267, 0.7863],
+    [0.3955, 0.7429],
+    [0.4079, 0.7278],
+    [0.344, 0.6588],
+    [0.2696, 0.5618],
+    [0.1983, 0.4571],
+    [0.1675, 0.4331],
+    [0.1437, 0.3944],
+    [0.0851, 0.3601],
+    [0.0314, 0.3388],
+    [0.0558, 0.3154],
+    [0.0192, 0.2652],
+    [0.0427, 0.2284],
+    [0.1028, 0.1952],
+    [0.1118, 0.2171],
+    [0.0903, 0.2296],
+    [0.0923, 0.2489],
+    [0.1235, 0.2447],
+    [0.154, 0.2504],
+    [0.1856, 0.2769],
+    [0.2283, 0.2553],
+    [0.2426, 0.2198],
+    [0.2888, 0.1741],
+    [0.3795, 0.1534],
+    [0.4618, 0.0983],
+    [0.4852, 0.0641],
+    [0.4747, 0.0242],
+    [0.4948, 0.0192],
+    [0.545, 0.0441],
+    [0.5691, 0.0689],
+    [0.604, 0.0825],
+    [0.6484, 0.1376],
+    [0.7046, 0.1442],
+    [0.7462, 0.1303],
+    [0.7734, 0.1394],
+    [0.8187, 0.1349],
+    [0.8765, 0.1595],
+    [0.8278, 0.213],
+    [0.8503, 0.2142],
+    [0.8881, 0.2422],
+    [0.8201, 0.2397],
+    [0.81, 0.2476],
+    [0.7482, 0.2577],
+    [0.6619, 0.2935],
+    [0.6564, 0.318],
+    [0.6372, 0.3363],
+    [0.6447, 0.3648],
+    [0.5991, 0.3799],
+    [0.5992, 0.4021],
+    [0.5793, 0.4117],
+    [0.6107, 0.4591],
+    [0.6526, 0.4911],
+    [0.6366, 0.5136],
+    [0.6867, 0.5167],
+    [0.7152, 0.5447],
+    [0.7818, 0.5461],
+    [0.8437, 0.5151],
+    [0.8387, 0.595],
+    [0.873, 0.601],
+    [0.9155, 0.592],
+    [0.9808, 0.6766],
+    [0.9645, 0.6944],
+    [0.9608, 0.7313],
+    [0.9594, 0.776],
+    [0.9299, 0.8023],
+    [0.9434, 0.8218],
+    [0.9261, 0.8395],
+    [0.9585, 0.8837],
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final peruPath = _buildPeruOutline(size);
+
+    // Soft glow
+    final glowPaint = Paint()
+      ..color = const Color(0xFF3366FF).withValues(alpha: 0.07)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.drawPath(peruPath, glowPaint);
+
+    // Very subtle fill
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = isDark
+          ? const Color(0xFF3366FF).withValues(alpha: 0.06)
+          : const Color(0xFF3366FF).withValues(alpha: 0.04);
+    canvas.drawPath(peruPath, fillPaint);
+
+    // Main outline stroke
+    final outlinePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.55)
+          : TravelBoxBrand.primaryBlue.withValues(alpha: 0.38);
+    canvas.drawPath(peruPath, outlinePaint);
+
+    // Geographic grid lines clipped to Peru shape
+    final detailPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.10)
+          : TravelBoxBrand.primaryBlue.withValues(alpha: 0.06);
+
+    canvas.save();
+    canvas.clipPath(peruPath);
+    for (var i = 0; i < 5; i++) {
+      final y = size.height * (0.15 + i * 0.16);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), detailPaint);
+    }
+    for (var i = 0; i < 4; i++) {
+      final x = size.width * (0.15 + i * 0.22);
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), detailPaint);
+    }
+    canvas.restore();
+
+    // City dots — real normalised positions
+    final dotPaint = Paint()
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.55)
+          : TravelBoxBrand.primaryBlue.withValues(alpha: 0.40);
+
+    // Lima -77.03/-12.05, Cusco -71.97/-13.52, Arequipa -71.54/-16.41, Iquitos -73.25/-3.75
+    final cities = [
+      Offset(size.width * 0.34, size.height * 0.645),  // Lima
+      Offset(size.width * 0.73, size.height * 0.724),  // Cusco
+      Offset(size.width * 0.76, size.height * 0.877),  // Arequipa
+      Offset(size.width * 0.63, size.height * 0.201),  // Iquitos
+    ];
+    for (final pos in cities) {
+      canvas.drawCircle(pos, 2.0, dotPaint);
+      canvas.drawCircle(
+        pos,
+        4.5,
+        Paint()
+          ..color = dotPaint.color.withValues(alpha: 0.12)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
+    }
+  }
+
+  /// Build a smooth closed path through real border points using Catmull-Rom.
+  Path _buildPeruOutline(Size size) {
+    final pts = _border
+        .map((p) => Offset(p[0] * size.width, p[1] * size.height))
+        .toList();
+
+    final n = pts.length;
+    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
+
+    // Catmull-Rom spline → cubic Bézier segments (smoother than quadratic B-spline)
+    for (var i = 0; i < n; i++) {
+      final p0 = pts[(i - 1 + n) % n];
+      final p1 = pts[i];
+      final p2 = pts[(i + 1) % n];
+      final p3 = pts[(i + 2) % n];
+
+      final cp1x = p1.dx + (p2.dx - p0.dx) / 6;
+      final cp1y = p1.dy + (p2.dy - p0.dy) / 6;
+      final cp2x = p2.dx - (p3.dx - p1.dx) / 6;
+      final cp2y = p2.dy - (p3.dy - p1.dy) / 6;
+
+      path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2.dx, p2.dy);
+    }
+
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(covariant _LoginPeruMapPainter oldDelegate) =>
+      isDark != oldDelegate.isDark;
 }

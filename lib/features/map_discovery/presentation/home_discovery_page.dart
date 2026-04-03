@@ -1004,37 +1004,84 @@ class _NearestWarehouseCard extends StatelessWidget {
         ? const Color(0xFFD1D9E6)
         : const Color(0xFF334155);
     final tourism = PeruTourismCatalog.forCity(info.warehouse.city);
+    final isFar = info.distanceKm > 50;
     return Card(
       color: isDark ? const Color(0xFF2B201D) : const Color(0xFFF4E7D9),
-      child: ListTile(
-        leading: Icon(Icons.near_me_outlined, color: TravelBoxBrand.terracotta),
-        title: Text(
-          context.l10n.t('almacen_mas_cercano'),
-          style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
-        ),
-        subtitle: Text(
-          '${info.warehouse.name}\n'
-          '${context.l10n.t('discovery_distance_to_you_prefix')} '
-          '${info.distanceKm.toStringAsFixed(2)} '
-          '${context.l10n.t('km_de_tu_ubicacion')}\n'
-          '${context.l10n.t('discovery_tourism_nearby')}: '
-          '${tourism.heroLandmark}',
-          style: TextStyle(color: subtitleColor),
-        ),
-        isThreeLine: true,
-        trailing: ConstrainedBox(
-          constraints: const BoxConstraints(minWidth: 92, maxWidth: 124),
-          child: FilledButton.tonal(
-            onPressed: () => context.push('/warehouse/${info.warehouse.id}'),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              backgroundColor: TravelBoxBrand.primaryBlue,
-              foregroundColor: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: Icon(Icons.near_me_outlined, color: TravelBoxBrand.terracotta),
+            title: Text(
+              context.l10n.t('almacen_mas_cercano'),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
             ),
-            child: Text(context.l10n.t('ver')),
+            subtitle: Text(
+              '${info.warehouse.name}\n'
+              '${context.l10n.t('discovery_distance_to_you_prefix')} '
+              '${info.distanceKm.toStringAsFixed(1)} '
+              '${context.l10n.t('km_de_tu_ubicacion')}\n'
+              '${context.l10n.t('discovery_tourism_nearby')}: '
+              '${tourism.heroLandmark}',
+              style: TextStyle(color: subtitleColor),
+            ),
+            isThreeLine: true,
+            trailing: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 92, maxWidth: 124),
+              child: FilledButton.tonal(
+                onPressed: () => context.push('/warehouse/${info.warehouse.id}'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  backgroundColor: TravelBoxBrand.primaryBlue,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(context.l10n.t('ver')),
+              ),
+            ),
           ),
-        ),
+          if (isFar)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF3B2000)
+                      : const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF5C3D00)
+                        : const Color(0xFFFFCC80),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: isDark
+                          ? const Color(0xFFFFB74D)
+                          : const Color(0xFFE65100),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        context.l10n.t('discovery_no_nearby_warehouse'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? const Color(0xFFFFCC80)
+                              : const Color(0xFFBF360C),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

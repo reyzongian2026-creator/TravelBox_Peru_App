@@ -3613,6 +3613,7 @@ class AppLocalizations {
       'discovery_tourism_nearby': 'Turismo cercano',
       'discovery_price_from': 'Desde',
       'discovery_per_hour': '/hora',
+      'discovery_no_nearby_warehouse': 'No hay almacén cercano. El más próximo está a más de 50 km. Pronto llegaremos a más ciudades.',
     },
     'en': {
       'settings_options': 'Options',
@@ -3785,6 +3786,7 @@ class AppLocalizations {
       'discovery_tourism_nearby': 'Nearby tourism',
       'discovery_price_from': 'From',
       'discovery_per_hour': '/hour',
+      'discovery_no_nearby_warehouse': 'No nearby warehouse. The closest is over 50 km away. We will reach more cities soon.',
     },
   };
 

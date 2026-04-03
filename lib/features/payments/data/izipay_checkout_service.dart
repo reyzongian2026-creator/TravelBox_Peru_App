@@ -5,12 +5,14 @@ class IzipayCheckoutRequest {
   const IzipayCheckoutRequest({
     required this.scriptUrl,
     required this.authorization,
-    required this.keyRsa,
-    required this.checkoutConfig,
+    required this.publicKey,
+    this.keyRsa = 'RSA',
+    this.checkoutConfig = const {},
   });
 
   final String scriptUrl;
-  final String authorization;
+  final String authorization; // formToken from Lyra V4
+  final String publicKey;     // kr-public-key for Krypton SDK
   final String keyRsa;
   final Map<String, dynamic> checkoutConfig;
 }

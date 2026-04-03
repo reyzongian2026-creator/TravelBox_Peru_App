@@ -137,6 +137,7 @@ class _AppShellScaffoldState extends ConsumerState<AppShellScaffold> {
             context.push('/notifications');
           },
         ),
+      ...widget.actions,
       _SettingsComboMenu(compact: true),
       if (session.user != null)
         _HeaderProfileChip(
