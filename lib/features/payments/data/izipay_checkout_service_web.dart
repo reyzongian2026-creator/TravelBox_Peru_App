@@ -31,54 +31,56 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
       }
     }
 
-final onCancel = js.JsFunction.withThis((dynamic _, [dynamic response]) {
+// Izipay PopUp SDK: solo usar LoadForm con authorization, keyRSA, callbackResponse
+// El callbackResponse recibe todas las respuestas (éxito, cancel, error)
+// discriminadas por el campo "code": "00" = éxito, "-1" = cancelado, otro = error
+
+final callbackResponse = js.JsFunction.withThis((dynamic _, [dynamic response]) {
   final mapped = _asMap(response);
-  completeOnce(
-    IzipayCheckoutOutcome(
-      status: IzipayCheckoutOutcomeStatus.canceled,
-      response: mapped,
-      message: mapped['messageUser']?.toString() ?? mapped['message']?.toString() ?? 'Cancelado',
-    ),
-  );
+  final code = mapped['code']?.toString() ?? '';
+
+  if (code == '00') {
+    completeOnce(
+      IzipayCheckoutOutcome(
+        status: IzipayCheckoutOutcomeStatus.completed,
+        response: mapped,
+        message: mapped['messageUser']?.toString() ?? mapped['message']?.toString(),
+      ),
+    );
+  } else if (code == '-1') {
+    completeOnce(
+      IzipayCheckoutOutcome(
+        status: IzipayCheckoutOutcomeStatus.canceled,
+        response: mapped,
+        message: mapped['messageUser']?.toString() ?? mapped['message']?.toString() ?? 'Cancelado',
+      ),
+    );
+  } else {
+    completeOnce(
+      IzipayCheckoutOutcome(
+        status: IzipayCheckoutOutcomeStatus.error,
+        response: mapped,
+        message: mapped['messageUser']?.toString() ?? mapped['message']?.toString() ?? 'Error en el pago',
+      ),
+    );
+  }
 });
 
-final onCompleted = js.JsFunction.withThis((dynamic _, [dynamic response]) {
-  final mapped = _asMap(response);
-  completeOnce(
-    IzipayCheckoutOutcome(
-      status: IzipayCheckoutOutcomeStatus.completed,
-      response: mapped,
-      message: mapped['messageUser']?.toString() ?? mapped['message']?.toString(),
-    ),
-  );
-});
-
-final onError = js.JsFunction.withThis((dynamic _, [dynamic error]) {
-  final mapped = _asMap(error);
-  completeOnce(
-    IzipayCheckoutOutcome(
-      status: IzipayCheckoutOutcomeStatus.error,
-      response: mapped,
-      message: mapped['messageUser']?.toString() ?? mapped['message']?.toString() ?? 'Error',
-    ),
-  );
-});
-
-// Intentar usar el flujo moderno 'open' con la configuración completa del backend
-if (checkout.hasProperty('open')) {
-  checkout.callMethod('onCanceled', [onCancel]);
-  checkout.callMethod('onCompleted', [onCompleted]);
-  checkout.callMethod('onError', [onError]);
-  checkout.callMethod('open', [js.JsObject.jsify(request.checkoutConfig)]);
-} else {
-  // Fallback a LoadForm si 'open' no está disponible
+try {
   checkout.callMethod('LoadForm', <dynamic>[
     js.JsObject.jsify({
       'authorization': request.authorization,
       'keyRSA': request.keyRsa,
-      'callbackResponse': onCompleted,
+      'callbackResponse': callbackResponse,
     }),
   ]);
+} catch (e) {
+  completeOnce(
+    IzipayCheckoutOutcome(
+      status: IzipayCheckoutOutcomeStatus.error,
+      message: 'Error al abrir el formulario de pago: $e',
+    ),
+  );
 }
 
 return completer.future.timeout(
