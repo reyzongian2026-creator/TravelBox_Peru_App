@@ -130,7 +130,10 @@ class AppException implements Exception {
     }
     if (statusCode != null && statusCode >= 500) {
       return AppException(
-        const AppError(AppErrorCode.errorServerError),
+        AppError(
+          AppErrorCode.errorServerError,
+          backendMessage: joinedMessage,
+        ),
         statusCode: statusCode,
       );
     }
@@ -167,7 +170,22 @@ class AppException implements Exception {
   }
 
   @override
-  String toString() => error.toString();
+  String toString() {
+    if (error.hasBackendMessage) {
+      return error.backendMessage!;
+    }
+    return switch (error.code) {
+      AppErrorCode.errorConnection => 'Error de conexión. Verifica tu internet.',
+      AppErrorCode.errorRateLimit => 'Demasiadas solicitudes. Intenta en un momento.',
+      AppErrorCode.errorNoPermissions => 'No tienes permisos para esta acción.',
+      AppErrorCode.errorNotFound => 'Recurso no encontrado.',
+      AppErrorCode.errorServerError => 'Error interno del servidor. Intenta de nuevo.',
+      AppErrorCode.errorUnauthorized => 'Sesión expirada. Inicia sesión de nuevo.',
+      AppErrorCode.errorInvalidRequest => 'Solicitud inválida.',
+      AppErrorCode.errorBadRequest => 'Solicitud inválida.',
+      _ => 'Ocurrió un error inesperado.',
+    };
+  }
 
   static Map<String, dynamic>? _asMap(dynamic data) {
     if (data is Map<String, dynamic>) {

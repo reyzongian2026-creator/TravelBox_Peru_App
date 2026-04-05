@@ -97,7 +97,10 @@ class AppErrorFormatter {
       );
     }
     if (statusCode != null && statusCode >= 500) {
-      return const AppError(AppErrorCode.errorServerError);
+      return AppError(
+        AppErrorCode.errorServerError,
+        backendMessage: joinedMessage,
+      );
     }
 
     return AppError(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/status_localizer.dart';
 import '../data/payment_repository.dart';
@@ -129,7 +130,10 @@ class PaymentHistoryPage extends ConsumerWidget {
         },
         loading: () => const LoadingStateView(),
         error: (error, _) => ErrorStateView(
-          message: '${context.l10n.t('payments_history_load_failed')}: $error',
+          message: AppErrorFormatter.readable(
+            error,
+            (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+          ),
           onRetry: () => ref.invalidate(clientPaymentHistoryProvider),
         ),
       ),
