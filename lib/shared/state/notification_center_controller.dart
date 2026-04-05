@@ -219,15 +219,51 @@ class NotificationCenterController
       return;
     }
     _liveEventsConnected = true;
-    _liveEventsClient.connect(
-      apiBaseUrl: AppEnv.resolvedApiBaseUrl,
+    unawaited(_connectWithSseToken(
       accessToken: accessToken,
       lastEventId: lastEventId ?? state.cursor,
-      onNotification: (event) {
-        _handleLiveEvent(event);
-      },
-      onError: (_) => _scheduleRefreshDebounced(),
-    );
+    ));
+  }
+
+  Future<void> _connectWithSseToken({
+    required String accessToken,
+    int? lastEventId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/api/v1/notifications/sse-token',
+        options: Options(
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
+      );
+      final sseToken = response.data?['token'] as String?;
+      if (sseToken == null || sseToken.isEmpty) {
+        _liveEventsClient.connect(
+          apiBaseUrl: AppEnv.resolvedApiBaseUrl,
+          accessToken: accessToken,
+          lastEventId: lastEventId,
+          onNotification: (event) => _handleLiveEvent(event),
+          onError: (_) => _scheduleRefreshDebounced(),
+        );
+        return;
+      }
+      _liveEventsClient.connect(
+        apiBaseUrl: AppEnv.resolvedApiBaseUrl,
+        accessToken: sseToken,
+        lastEventId: lastEventId,
+        onNotification: (event) => _handleLiveEvent(event),
+        onError: (_) => _scheduleRefreshDebounced(),
+      );
+    } catch (_) {
+      // Fallback: connect with original JWT if token endpoint fails
+      _liveEventsClient.connect(
+        apiBaseUrl: AppEnv.resolvedApiBaseUrl,
+        accessToken: accessToken,
+        lastEventId: lastEventId,
+        onNotification: (event) => _handleLiveEvent(event),
+        onError: (_) => _scheduleRefreshDebounced(),
+      );
+    }
   }
 
   void _handleLiveEvent(NotificationLiveEvent event) {
