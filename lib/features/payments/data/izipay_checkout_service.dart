@@ -29,11 +29,15 @@ class IzipayCheckoutOutcome {
     required this.status,
     this.response,
     this.message,
+    this.rawClientAnswer,
+    this.hash,
   });
 
   final IzipayCheckoutOutcomeStatus status;
   final Map<String, dynamic>? response;
   final String? message;
+  final String? rawClientAnswer;
+  final String? hash;
 
   bool get isCompleted => status == IzipayCheckoutOutcomeStatus.completed;
   bool get isCanceled => status == IzipayCheckoutOutcomeStatus.canceled;

@@ -1057,6 +1057,7 @@ class AppLocalizations {
           'Usa tu billetera o Plin para registrar el pago de forma mÃ¡s Ã¡gil.',
       'checkout_payment_help_yape':
           'Completa el pago con Yape para confirmar tu reserva. El token de Culqi sigue visible solo para pruebas internas.',
+      'digital_payment': 'Pago digital (Tarjeta / Yape / QR)',
       'checkout_source_token_hint': 'Ejemplo: tkn_test_xxx',
       'checkout_source_token_label': 'Token de prueba Culqi',
       'checkout_summary_dropoff': 'Entrega',

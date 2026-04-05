@@ -40,12 +40,14 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
 
     // Expose callbacks to JavaScript
     js.context['__tbxOnPaymentComplete'] = js.JsFunction.withThis(
-      (dynamic _, [dynamic paymentDataJson]) {
+      (dynamic _, [dynamic paymentDataJson, dynamic rawAnswerStr, dynamic hashStr]) {
         final data = _parseJson(paymentDataJson?.toString());
         completeOnce(IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.completed,
           response: data,
           message: data['orderStatus']?.toString() ?? 'Pago completado',
+          rawClientAnswer: rawAnswerStr?.toString(),
+          hash: hashStr?.toString(),
         ));
       },
     );
@@ -94,8 +96,14 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
   }
 
   /// JavaScript code that uses the KR API to show the payment pop-in.
-  /// The formToken is read from window.__tbxFormToken (set by Dart).
-  /// Results are passed back via window.__tbxOnPaymentComplete / __tbxOnPaymentError.
+  ///
+  /// Uses KR.renderElements() + KR.openPopin() with the modern SmartForm structure:
+  ///   <div id="wrapper"><div class="kr-smart-form" kr-popin></div></div>
+  ///
+  /// IMPORTANT: renderElements() BEFORE setFormConfig({formToken}) to avoid
+  /// KryptonPopinButton watcher error (component must exist before token is set).
+  ///
+  /// Reference: https://github.com/lyra/embedded-form-glue/blob/master/docs/kr_methods.md
   static const _krPopinCode = r'''
 (function() {
   var formToken = window.__tbxFormToken;
@@ -105,27 +113,52 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     return;
   }
 
-  KR.setFormConfig({
-    formToken: formToken,
-    'kr-language': 'es-ES'
+  // 1. Remove previous forms cleanly
+  var step1;
+  try { step1 = KR.removeForms(); } catch(e) { step1 = Promise.resolve(); }
+
+  step1.then(function() {
+    // 2. Ensure the wrapper with kr-smart-form + kr-popin inner div
+    var wrapper = document.getElementById('kr-payment-wrapper');
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.id = 'kr-payment-wrapper';
+      document.body.appendChild(wrapper);
+    }
+    wrapper.innerHTML = '<div class="kr-smart-form" kr-popin></div>';
+
+    // 3. Set language config only (NO formToken yet)
+    return KR.setFormConfig({
+      'kr-language': 'es-ES'
+    });
   }).then(function(res) {
-    return res.KR.addForm('#kr-payment-container');
+    // 4. Render elements FIRST (creates KryptonPopinButton component)
+    return res.KR.renderElements('#kr-payment-wrapper');
   }).then(function(res) {
-    return res.KR.showForm(res.result.formId);
+    // 5. NOW set the formToken (component already exists)
+    return res.KR.setFormConfig({
+      formToken: formToken
+    });
+  }).then(function(res) {
+    // 6. Register event handlers
+    return res.KR.onSubmit(function(paymentData) {
+      var clientAnswer = paymentData.clientAnswer || paymentData;
+      var rawAnswer = paymentData.rawClientAnswer || JSON.stringify(clientAnswer);
+      var hash = paymentData.hash || '';
+      window.__tbxOnPaymentComplete(JSON.stringify(clientAnswer), rawAnswer, hash);
+      return false;
+    });
+  }).then(function(res) {
+    return res.KR.onError(function(event) {
+      var errors = event.errorCode ? event : (event.metadata || event);
+      window.__tbxOnPaymentError(JSON.stringify(errors));
+    });
+  }).then(function(res) {
+    // 7. Open the pop-in overlay
+    return res.KR.openPopin();
   }).catch(function(err) {
     var msg = (err && err.errorMessage) ? err.errorMessage : JSON.stringify(err);
     window.__tbxOnPaymentError(JSON.stringify({errorMessage: msg}));
-  });
-
-  KR.onSubmit(function(paymentData) {
-    try { KR.closePopin(); } catch(e) {}
-    window.__tbxOnPaymentComplete(JSON.stringify(paymentData.clientAnswer || paymentData));
-    return false;
-  });
-
-  KR.onError(function(event) {
-    var errors = event.errorCode ? event : (event.metadata || event);
-    window.__tbxOnPaymentError(JSON.stringify(errors));
   });
 })();
 ''';
@@ -136,26 +169,29 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     // Derive the base endpoint from the script URL
     final baseEndpoint = _extractEndpoint(scriptUrl);
 
-    // Load CSS theme (neon)
+    // Load CSS theme (classic — compatible with SmartForm/pop-in)
     _ensureCssLoaded(
       _cssElementId,
-      '$baseEndpoint/static/js/krypton-client/V4.0/ext/neon-reset.css',
+      '$baseEndpoint/static/js/krypton-client/V4.0/ext/classic-reset.css',
     );
 
-    // Load theme JS (neon)
+    // Load theme JS (classic)
     await _ensureScriptLoaded(
       _themeElementId,
-      '$baseEndpoint/static/js/krypton-client/V4.0/ext/neon.js',
+      '$baseEndpoint/static/js/krypton-client/V4.0/ext/classic.js',
       attributes: <String, String>{},
     );
 
-    // Load the main KR script with kr-public-key
+    // Load the main KR script with kr-public-key + kr-spa-mode
+    // kr-spa-mode is CRITICAL for SPAs — without it, KryptonPopinButton
+    // Vue component lifecycle breaks on dynamic form creation.
+    // See: https://github.com/lyra/embedded-form-glue/blob/master/app/KryptonGlue.js
     await _ensureScriptLoaded(
       _scriptElementId,
       scriptUrl,
       attributes: <String, String>{
         'kr-public-key': publicKey,
-        'kr-post-url-success': 'javascript:void(0)',
+        'kr-spa-mode': 'true',
       },
     );
   }
@@ -182,6 +218,8 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
   }
 
   /// Ensure a <script> element is loaded. Returns a Future that completes on load.
+  /// If existing script has matching src AND same attributes, skip reload.
+  /// Otherwise, remove & re-add to pick up new attributes (e.g. kr-spa-mode).
   Future<void> _ensureScriptLoaded(
     String elementId,
     String src, {
@@ -189,7 +227,16 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
   }) async {
     final existing = html.document.getElementById(elementId);
     if (existing is html.ScriptElement) {
-      if (existing.src.trim() == src.trim()) return;
+      // Check if src matches and all attributes match
+      final srcMatch = existing.src.trim() == src.trim();
+      var attrsMatch = true;
+      for (final entry in attributes.entries) {
+        if (existing.getAttribute(entry.key) != entry.value) {
+          attrsMatch = false;
+          break;
+        }
+      }
+      if (srcMatch && attrsMatch) return;
       existing.remove();
     }
 
@@ -225,20 +272,17 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     throw StateError('El SDK de Krypton (KR) no se cargo correctamente.');
   }
 
-  /// Create/reset the container div for the KR embedded popin form.
+  /// Ensure the wrapper div exists for the Krypton pop-in.
+  /// Structure: <div id="kr-payment-wrapper"><div class="kr-embedded" kr-popin="true"></div></div>
+  /// The inner div with kr-embedded + kr-popin="true" is created by the JS code.
   void _ensureContainerDiv() {
-    var container = html.document.getElementById(_containerId);
-    if (container != null) {
-      container.innerHtml = '';
-    } else {
-      container = html.DivElement()..id = _containerId;
-      html.document.body?.append(container);
+    var wrapper = html.document.getElementById('kr-payment-wrapper');
+    if (wrapper != null) {
+      wrapper.innerHtml = '';
+      return;
     }
-    // Inner div required by KR: class="kr-embedded" with kr-popin attribute
-    final innerDiv = html.DivElement()
-      ..className = 'kr-embedded'
-      ..setAttribute('kr-popin', '');
-    container!.append(innerDiv);
+    wrapper = html.DivElement()..id = 'kr-payment-wrapper';
+    html.document.body?.append(wrapper);
   }
 
   Map<String, dynamic> _parseJson(String? jsonStr) {

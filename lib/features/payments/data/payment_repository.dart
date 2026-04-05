@@ -57,6 +57,22 @@ abstract class PaymentRepository {
   Future<PaymentIntentResult> syncPaymentStatus({
     required int paymentIntentId,
   });
+
+  Future<PaymentIntentResult> validateCheckoutResult({
+    required String krAnswer,
+    required String krHash,
+    int? paymentIntentId,
+    int? reservationId,
+  });
+
+  Future<Map<String, dynamic>> getCancellationPreview({
+    required int reservationId,
+  });
+
+  Future<PaymentIntentResult?> confirmCancellation({
+    required int reservationId,
+    String? reason,
+  });
 }
 
 class SavedCard {
@@ -548,6 +564,75 @@ class PaymentRepositoryImpl implements PaymentRepository {
     try {
       final response = await _dio.post<Map<String, dynamic>>('/payments/$paymentIntentId/sync');
       return PaymentIntentResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<PaymentIntentResult> validateCheckoutResult({
+    required String krAnswer,
+    required String krHash,
+    int? paymentIntentId,
+    int? reservationId,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'krAnswer': krAnswer,
+        'krHash': krHash,
+      };
+      if (paymentIntentId != null) {
+        payload['paymentIntentId'] = paymentIntentId;
+      }
+      if (reservationId != null) {
+        payload['reservationId'] = reservationId;
+      }
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/payments/validate-checkout',
+        data: payload,
+      );
+      return PaymentIntentResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getCancellationPreview({
+    required int reservationId,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/payments/cancellation-preview/$reservationId',
+      );
+      return response.data ?? {};
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<PaymentIntentResult?> confirmCancellation({
+    required int reservationId,
+    String? reason,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/payments/cancellation-confirm/$reservationId',
+        data: {
+          if (reason != null) 'reason': reason,
+        },
+      );
+      if (response.statusCode == 204 || response.data == null) {
+        return null;
+      }
+      return PaymentIntentResult.fromJson(response.data!);
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {

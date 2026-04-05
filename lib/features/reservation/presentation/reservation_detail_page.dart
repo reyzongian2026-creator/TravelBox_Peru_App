@@ -16,7 +16,10 @@ import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/status_localizer.dart';
 import '../../../shared/widgets/app_smart_image.dart';
+import '../../../shared/widgets/cancellation_preview_dialog.dart';
+import '../../../shared/widgets/critical_operation_overlay.dart';
 import '../../incidents/data/evidence_picker.dart';
+import '../../payments/data/payment_repository.dart';
 import '../data/reservation_repository_impl.dart';
 import 'reservation_providers.dart';
 
@@ -453,27 +456,82 @@ class ReservationDetailPage extends ConsumerWidget {
     required Reservation reservation,
     required bool requiresRefund,
   }) async {
-    final reason = requiresRefund
-        ? context.l10n.t('reservation_timeline_cancel_requested_refund_app')
-        : context.l10n.t('reservation_timeline_cancel_requested_app');
-    try {
-      await ref
-          .read(reservationRepositoryProvider)
-          .refundAndCancelReservation(
-            reservationId: reservationId,
-            reason: reason,
-          );
-    } catch (error) {
+    if (requiresRefund) {
+      // Step 1: Get cancellation preview from backend
+      final paymentRepo = ref.read(paymentRepositoryProvider);
+      Map<String, dynamic> preview;
+      try {
+        preview = await paymentRepo.getCancellationPreview(
+          reservationId: int.parse(reservationId),
+        );
+      } catch (error) {
+        if (!context.mounted) return;
+        final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al obtener vista previa: $readable')),
+        );
+        return;
+      }
+
       if (!context.mounted) return;
-      final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${context.l10n.t('reservation_cancel_failed')}: $readable',
-          ),
-        ),
+
+      // Step 2: Show cancellation preview dialog
+      final confirmed = await CancellationPreviewDialog.show(
+        context: context,
+        preview: preview,
       );
-      return;
+
+      if (confirmed != true || !context.mounted) return;
+
+      // Step 3: Execute cancellation with blocking overlay
+      OverlayEntry? overlay;
+      try {
+        overlay = CriticalOperationOverlay.show(
+          context,
+          message: 'Procesando cancelación y reembolso...',
+          submessage: 'Esto puede tardar unos segundos',
+        );
+
+        await paymentRepo.confirmCancellation(
+          reservationId: int.parse(reservationId),
+          reason: context.l10n.t('reservation_timeline_cancel_requested_refund_app'),
+        );
+      } catch (error) {
+        if (overlay != null) CriticalOperationOverlay.dismiss(overlay);
+        if (!context.mounted) return;
+        final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${context.l10n.t('reservation_cancel_failed')}: $readable',
+            ),
+          ),
+        );
+        return;
+      }
+      if (overlay != null) CriticalOperationOverlay.dismiss(overlay);
+    } else {
+      // No refund needed — simple cancel via existing repository
+      final reason = context.l10n.t('reservation_timeline_cancel_requested_app');
+      try {
+        await ref
+            .read(reservationRepositoryProvider)
+            .refundAndCancelReservation(
+              reservationId: reservationId,
+              reason: reason,
+            );
+      } catch (error) {
+        if (!context.mounted) return;
+        final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${context.l10n.t('reservation_cancel_failed')}: $readable',
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     ref.invalidate(reservationByIdProvider(reservationId));

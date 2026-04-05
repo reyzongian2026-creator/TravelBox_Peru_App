@@ -110,6 +110,24 @@ class AppException implements Exception {
         statusCode: statusCode,
       );
     }
+    if (statusCode == 409) {
+      return AppException(
+        AppError(
+          AppErrorCode.errorGeneric,
+          backendMessage: joinedMessage,
+        ),
+        statusCode: statusCode,
+      );
+    }
+    if (statusCode == 428) {
+      return AppException(
+        AppError(
+          AppErrorCode.errorGeneric,
+          backendMessage: joinedMessage,
+        ),
+        statusCode: statusCode,
+      );
+    }
     if (statusCode != null && statusCode >= 500) {
       return AppException(
         const AppError(AppErrorCode.errorServerError),

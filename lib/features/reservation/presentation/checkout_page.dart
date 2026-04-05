@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,7 +13,9 @@ import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/app_back_button.dart';
 import '../../../shared/state/currency_preference.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/app_error.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/widgets/critical_operation_overlay.dart';
 import '../../payments/data/izipay_checkout_service.dart';
 import '../../payments/data/payment_repository.dart';
 import '../data/reservation_repository_impl.dart';
@@ -164,19 +167,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       items: [
                         DropdownMenuItem(
                           value: PaymentConstants.methodCard,
-                          child: Text(context.l10n.t('card')),
-                        ),
-                        DropdownMenuItem(
-                          value: PaymentConstants.methodSavedCard,
-                          child: Text(context.l10n.t('saved_card')),
-                        ),
-                        DropdownMenuItem(
-                          value: PaymentConstants.methodYape,
-                          child: Text(context.l10n.t('yape')),
-                        ),
-                        DropdownMenuItem(
-                          value: PaymentConstants.methodWallet,
-                          child: Text(context.l10n.t('walletplin')),
+                          child: Text(context.l10n.t('digital_payment')),
                         ),
                         DropdownMenuItem(
                           value: PaymentConstants.methodCounter,
@@ -195,41 +186,6 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                  if (paymentMethod == PaymentConstants.methodSavedCard) ...[
-                    const SizedBox(height: 12),
-                    FutureBuilder<List<SavedCard>>(
-                      future: ref.read(paymentRepositoryProvider).getSavedCards(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const LinearProgressIndicator();
-                        }
-                        final cards = snapshot.data ?? [];
-                        if (cards.isEmpty) {
-                          return Text(
-                            context.l10n.t('no_saved_cards'),
-                            style: const TextStyle(color: Colors.red),
-                          );
-                        }
-                        return DropdownButtonFormField<int>(
-                          isExpanded: true,
-                          initialValue: _selectedSavedCardId,
-                          items: cards.map((card) {
-                            return DropdownMenuItem<int>(
-                              value: int.tryParse(card.id),
-                              child: Text('${card.brand} **** ${card.lastFourDigits}'),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() => _selectedSavedCardId = value);
-                          },
-                          decoration: InputDecoration(
-                            labelText: context.l10n.t('select_card'),
-                            border: const OutlineInputBorder(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
                   if (!forceCashOnly &&
                       !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
                     const SizedBox(height: 10),
@@ -324,92 +280,33 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 ),
               ),
             ),
-          const SizedBox(height: 24),
-          FilledButton(
+          const SizedBox(height: 80), // space for bottom button
+        ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: FilledButton(
             onPressed: processing
                 ? null
-                : () async {
-                    if (user == null) return;
-
-                    setState(() => processing = true);
-                    dynamic reservation;
-                    try {
-                      reservation = await ref
-                          .read(reservationRepositoryProvider)
-                          .createReservation(
-                            userId: user.id,
-                            draft: draft,
-                            paymentMethod: forceCashOnly
-                                ? PaymentConstants.methodCash
-                                : selectedPaymentMethod,
-                            customerEmail: forceCashOnly
-                                ? null
-                                : _normalizedCustomerEmail(user.email),
-                          );
-
-                      final checkoutMessage = await _processOnlinePayment(
-                        reservationId: reservation.id.toString(),
-                        paymentMethod: selectedPaymentMethod,
-                        forceCashOnly: forceCashOnly,
-                      );
-
-                      ref.invalidate(myReservationsProvider);
-                      ref.invalidate(adminReservationsProvider);
-                      ref.invalidate(adminReservationListProvider);
-                      ref.invalidate(
-                        reservationByIdProvider(reservation.id.toString()),
-                      );
-                      ref.read(reservationDraftProvider.notifier).state = null;
-
-                      if (!context.mounted) return;
-                      if (checkoutMessage != null && checkoutMessage.isNotEmpty) {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(checkoutMessage)));
-                      }
-                      context.go(
-                        '/reservation/${reservation.id.toString()}?back=home',
-                      );
-                    } catch (error) {
-                      if (!context.mounted) return;
-
-                      final message = _errorMessage(error);
-                      if (reservation != null) {
-                        ref.invalidate(myReservationsProvider);
-                        ref.invalidate(adminReservationsProvider);
-                        ref.invalidate(adminReservationListProvider);
-                        ref.invalidate(
-                          reservationByIdProvider(reservation.id.toString()),
-                        );
-                        ref.read(reservationDraftProvider.notifier).state = null;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
-                              '$message',
-                            ),
-                          ),
-                        );
-                        context.go(
-                          '/reservation/${reservation.id.toString()}?back=home',
-                        );
-                        return;
-                      }
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
-                            '$message',
-                          ),
-                        ),
-                      );
-                    } finally {
-                      if (mounted) {
-                        setState(() => processing = false);
-                      }
-                    }
-                  },
+                : () => _handleConfirmPayment(
+                      user: user!,
+                      draft: draft,
+                      selectedPaymentMethod: selectedPaymentMethod,
+                      forceCashOnly: forceCashOnly,
+                    ),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 52),
             ),
@@ -419,11 +316,134 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                   : context.l10n.t('checkout_confirm_payment'),
             ),
           ),
-        ],
-          ),
         ),
       ),
     );
+  }
+
+  Future<void> _handleConfirmPayment({
+    required dynamic user,
+    required dynamic draft,
+    required String selectedPaymentMethod,
+    required bool forceCashOnly,
+  }) async {
+    setState(() => processing = true);
+    OverlayEntry? overlay;
+    dynamic reservation;
+    try {
+      if (context.mounted) {
+        overlay = CriticalOperationOverlay.show(
+          context,
+          message: 'Procesando tu pago...',
+          submessage: 'Esto puede tardar unos segundos',
+        );
+      }
+
+      reservation = await ref
+          .read(reservationRepositoryProvider)
+          .createReservation(
+            userId: user.id,
+            draft: draft,
+            paymentMethod: forceCashOnly
+                ? PaymentConstants.methodCash
+                : selectedPaymentMethod,
+            customerEmail: forceCashOnly
+                ? null
+                : _normalizedCustomerEmail(user.email),
+          );
+
+      final checkoutMessage = await _processOnlinePayment(
+        reservationId: reservation.id.toString(),
+        paymentMethod: selectedPaymentMethod,
+        forceCashOnly: forceCashOnly,
+      );
+
+      ref.invalidate(myReservationsProvider);
+      ref.invalidate(adminReservationsProvider);
+      ref.invalidate(adminReservationListProvider);
+      ref.invalidate(
+        reservationByIdProvider(reservation.id.toString()),
+      );
+      ref.read(reservationDraftProvider.notifier).state = null;
+
+      if (!context.mounted) return;
+      if (checkoutMessage != null && checkoutMessage.isNotEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(checkoutMessage)));
+      }
+      context.go(
+        '/reservation/${reservation.id.toString()}?back=home',
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+
+      if (_isPreconditionError(error)) {
+        final redirectRoute = _preconditionRedirectRoute(error);
+        if (redirectRoute != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_errorMessage(error))),
+          );
+          context.go(redirectRoute);
+          return;
+        }
+      }
+
+      if (_isPaymentAlreadyConfirmedError(error)) {
+        if (reservation != null) {
+          ref.invalidate(myReservationsProvider);
+          ref.invalidate(adminReservationsProvider);
+          ref.invalidate(adminReservationListProvider);
+          ref.invalidate(
+            reservationByIdProvider(reservation.id.toString()),
+          );
+          ref.read(reservationDraftProvider.notifier).state = null;
+          context.go(
+            '/reservation/${reservation.id.toString()}?back=home',
+          );
+          return;
+        }
+      }
+
+      final message = _errorMessage(error);
+      if (reservation != null) {
+        ref.invalidate(myReservationsProvider);
+        ref.invalidate(adminReservationsProvider);
+        ref.invalidate(adminReservationListProvider);
+        ref.invalidate(
+          reservationByIdProvider(reservation.id.toString()),
+        );
+        ref.read(reservationDraftProvider.notifier).state = null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
+              '$message',
+            ),
+          ),
+        );
+        context.go(
+          '/reservation/${reservation.id.toString()}?back=home',
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
+            '$message',
+          ),
+        ),
+      );
+    } finally {
+      if (overlay != null) {
+        CriticalOperationOverlay.dismiss(overlay);
+      }
+      if (mounted) {
+        setState(() => processing = false);
+      }
+    }
   }
 
   Future<String?> _processOnlinePayment({
@@ -479,6 +499,39 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
     if (confirmation.requiresIzipayCheckout) {
       final checkoutOutcome = await _openIzipayCheckout(confirmation);
+
+      // If the user completed payment in the popup, validate with backend
+      if (checkoutOutcome.isCompleted &&
+          checkoutOutcome.rawClientAnswer != null &&
+          checkoutOutcome.hash != null &&
+          checkoutOutcome.rawClientAnswer!.isNotEmpty &&
+          checkoutOutcome.hash!.isNotEmpty) {
+        try {
+          final validationResult = await paymentRepo.validateCheckoutResult(
+            krAnswer: checkoutOutcome.rawClientAnswer!,
+            krHash: checkoutOutcome.hash!,
+            paymentIntentId: int.tryParse(confirmation.id) ?? paymentIntentId,
+            reservationId: parsedReservationId,
+          );
+          if (validationResult.isConfirmed) {
+            return _checkoutResultMessage(checkoutOutcome) ??
+                validationResult.message;
+          }
+          if (validationResult.isFailed) {
+            throw StateError(
+              _checkoutFailureMessage(
+                checkoutOutcome.message,
+                validationResult.status,
+              ),
+            );
+          }
+        } catch (e) {
+          // Validation failed — fall through to polling as backup
+          if (e is StateError) rethrow;
+        }
+      }
+
+      // Fallback: poll for status (webhook may confirm it)
       final status = await _waitForPaymentFinalStatus(
         paymentIntentId: int.tryParse(confirmation.id) ?? paymentIntentId,
         reservationId: parsedReservationId,
@@ -630,36 +683,66 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     return PaymentConstants.isOffline(method);
   }
 
-  String _paymentHeadline(String method) {
-    if (method == PaymentConstants.methodSavedCard) {
-      return context.l10n.locale.languageCode == 'en'
-          ? 'One-Click Payment'
-          : 'Pago en un click';
+  bool _isPreconditionError(Object error) {
+    if (error is AppException) {
+      return error.statusCode == 428;
     }
+    if (error is DioException) {
+      return error.response?.statusCode == 428;
+    }
+    return false;
+  }
+
+  String? _preconditionRedirectRoute(Object error) {
+    String? backendCode;
+    if (error is AppException && error.error.backendMessage != null) {
+      backendCode = error.error.backendMessage;
+    }
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        backendCode = data['code']?.toString();
+      }
+    }
+    if (backendCode != null) {
+      if (backendCode.contains('EMAIL_NOT_VERIFIED')) {
+        return '/verify-email';
+      }
+      if (backendCode.contains('PROFILE_COMPLETION_REQUIRED') ||
+          backendCode.contains('PROFILE_INCOMPLETE')) {
+        return '/profile/complete';
+      }
+    }
+    return null;
+  }
+
+  bool _isPaymentAlreadyConfirmedError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final code = data['code']?.toString() ?? '';
+        return code == 'PAYMENT_ALREADY_CONFIRMED' ||
+            code == 'PAYMENT_ALREADY_PROCESSED';
+      }
+    }
+    return false;
+  }
+
+  String _paymentHeadline(String method) {
     if (_isOfflinePaymentMethod(method)) {
       return context.l10n.t('checkout_payment_headline_offline');
     }
-    return context.l10n.t('checkout_payment_headline_online');
+    return context.l10n.locale.languageCode == 'en'
+        ? 'Instant payment to confirm'
+        : 'Pago inmediato para confirmar';
   }
 
   String _paymentHelp(BuildContext context, String method) {
     switch (method) {
-      case PaymentConstants.methodSavedCard:
-        return context.l10n.locale.languageCode == 'en'
-            ? 'We will use your saved card to process the payment immediately without opening the checkout.'
-            : 'Usaremos tu tarjeta guardada para procesar el pago inmediatamente sin abrir el checkout.';
       case PaymentConstants.methodCard:
         return context.l10n.locale.languageCode == 'en'
-            ? 'Card payments are completed in the secure Izipay checkout before the reservation is confirmed.'
-            : 'Los pagos con tarjeta se completan en el checkout seguro de Izipay antes de confirmar la reserva.';
-      case PaymentConstants.methodYape:
-        return context.l10n.locale.languageCode == 'en'
-            ? 'Yape opens through Izipay so the final status can be validated from the backend.'
-            : 'Yape se abre a traves de Izipay para validar el estado final desde el backend.';
-      case PaymentConstants.methodWallet:
-        return context.l10n.locale.languageCode == 'en'
-            ? 'Plin and wallet flows are handled in Izipay and stay pending until the gateway confirms them.'
-            : 'Los flujos de Plin y billetera se manejan en Izipay y quedan pendientes hasta que la pasarela los confirme.';
+            ? 'Payments are processed in the secure Izipay checkout. Pay with card, Yape, or QR before confirming your reservation.'
+            : 'Los pagos se completan en el checkout seguro de Izipay. Paga con tarjeta, Yape o QR antes de confirmar tu reserva.';
       case PaymentConstants.methodCounter:
         return context.l10n.t('checkout_payment_help_counter');
       case PaymentConstants.methodCash:

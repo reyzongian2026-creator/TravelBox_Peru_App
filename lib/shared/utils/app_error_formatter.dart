@@ -84,6 +84,18 @@ class AppErrorFormatter {
         backendMessage: joinedMessage,
       );
     }
+    if (statusCode == 409) {
+      return AppError(
+        AppErrorCode.errorGeneric,
+        backendMessage: joinedMessage,
+      );
+    }
+    if (statusCode == 428) {
+      return AppError(
+        AppErrorCode.errorGeneric,
+        backendMessage: joinedMessage,
+      );
+    }
     if (statusCode != null && statusCode >= 500) {
       return const AppError(AppErrorCode.errorServerError);
     }
