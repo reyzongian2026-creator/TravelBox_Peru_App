@@ -137,10 +137,7 @@ class CancellationPreviewDialog extends StatelessWidget {
         ),
         if (refundAllowed || !requiresRefund)
           FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop(true);
-              onConfirm();
-            },
+            onPressed: onConfirm,
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.error,
             ),

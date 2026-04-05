@@ -1044,14 +1044,14 @@ class _PaymentGridCard extends StatelessWidget {
               Icon(
                 icon,
                 size: 26,
-                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+                color: selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: selected ? scheme.primary : scheme.onSurface,
+                  color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -1060,7 +1060,7 @@ class _PaymentGridCard extends StatelessWidget {
               Text(
                 sublabel,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: selected ? scheme.primary.withOpacity(0.7) : scheme.onSurfaceVariant,
+                  color: selected ? scheme.onPrimaryContainer.withOpacity(0.7) : scheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
