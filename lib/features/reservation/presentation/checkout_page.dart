@@ -41,6 +41,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       ? PaymentConstants.methodCash
       : PaymentConstants.methodCard;
 
+  String? _selectedDigitalSubmethod; // card, yape, plin, qr — for display only
+
   @override
   void dispose() {
     _customerEmailController.dispose();
@@ -145,12 +147,19 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    context.l10n.t('payment_method'),
+                    'Elige tu metodo de pago',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Selecciona como deseas pagar tu reserva',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   if (forceCashOnly)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -160,35 +169,92 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         context.l10n.t('checkout_digital_payments_disabled'),
                       ),
                     )
-                  else
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: selectedPaymentMethod,
-                      items: [
-                        DropdownMenuItem(
-                          value: PaymentConstants.methodCard,
-                          child: Text(context.l10n.t('digital_payment')),
-                        ),
-                        DropdownMenuItem(
-                          value: PaymentConstants.methodCounter,
-                          child: Text(context.l10n.t('at_counter')),
-                        ),
-                        DropdownMenuItem(
-                          value: PaymentConstants.methodCash,
-                          child: Text(context.l10n.t('cash')),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => paymentMethod = value);
-                      },
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                  else ...[
+                    Text(
+                      'PAGO DIGITAL',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).hintColor,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 2.2,
+                      children: [
+                        _PaymentGridCard(
+                          icon: Icons.credit_card,
+                          label: 'Tarjeta',
+                          sublabel: 'Visa / MC',
+                          selected: selectedPaymentMethod == PaymentConstants.methodCard && _selectedDigitalSubmethod != 'yape' && _selectedDigitalSubmethod != 'plin' && _selectedDigitalSubmethod != 'qr',
+                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCard; _selectedDigitalSubmethod = 'card'; }),
+                        ),
+                        _PaymentGridCard(
+                          icon: Icons.qr_code_2,
+                          label: 'Yape',
+                          sublabel: 'QR Yape',
+                          selected: _selectedDigitalSubmethod == 'yape',
+                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCard; _selectedDigitalSubmethod = 'yape'; }),
+                        ),
+                        _PaymentGridCard(
+                          icon: Icons.phone_android,
+                          label: 'Plin',
+                          sublabel: 'Billetera',
+                          selected: _selectedDigitalSubmethod == 'plin',
+                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCard; _selectedDigitalSubmethod = 'plin'; }),
+                        ),
+                        _PaymentGridCard(
+                          icon: Icons.qr_code,
+                          label: 'QR',
+                          sublabel: 'Universal',
+                          selected: _selectedDigitalSubmethod == 'qr',
+                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCard; _selectedDigitalSubmethod = 'qr'; }),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'PAGO PRESENCIAL',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).hintColor,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 2.2,
+                      children: [
+                        _PaymentGridCard(
+                          icon: Icons.storefront_outlined,
+                          label: 'Mostrador',
+                          sublabel: 'En el local',
+                          selected: selectedPaymentMethod == PaymentConstants.methodCounter,
+                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCounter; _selectedDigitalSubmethod = null; }),
+                        ),
+                        _PaymentGridCard(
+                          icon: Icons.payments_outlined,
+                          label: 'Efectivo',
+                          sublabel: 'Al llegar',
+                          selected: selectedPaymentMethod == PaymentConstants.methodCash,
+                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCash; _selectedDigitalSubmethod = null; }),
+                        ),
+                      ],
+                    ),
+                  ],
                   if (!forceCashOnly &&
                       !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
                     TextField(
                       controller: _customerEmailController,
                       keyboardType: TextInputType.emailAddress,
@@ -255,28 +321,24 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             ),
           ),
           const SizedBox(height: 12),
-          Card(
-            child: ListTile(
-              leading: Icon(
-                _isOfflinePaymentMethod(selectedPaymentMethod)
-                    ? Icons.storefront_outlined
-                    : Icons.payments_outlined,
+          if (!forceCashOnly && !_isOfflinePaymentMethod(selectedPaymentMethod))
+            Card(
+              child: ListTile(
+                leading: Icon(
+                  Icons.info_outline,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: Text(_paymentHelp(context, selectedPaymentMethod)),
               ),
-              title: Text(_paymentHeadline(selectedPaymentMethod)),
-              subtitle: Text(_paymentHelp(context, selectedPaymentMethod)),
             ),
-          ),
           if (selectedPaymentMethod == PaymentConstants.methodCounter ||
               selectedPaymentMethod == PaymentConstants.methodCash)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Card(
-                child: ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: Text(context.l10n.t('counter_validation')),
-                  subtitle: Text(
-                    context.l10n.t('checkout_pending_offline_approval_notice'),
-                  ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: Text(context.l10n.t('counter_validation')),
+                subtitle: Text(
+                  context.l10n.t('checkout_pending_offline_approval_notice'),
                 ),
               ),
             ),
@@ -313,7 +375,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             child: Text(
               processing
                   ? context.l10n.t('checkout_processing')
-                  : context.l10n.t('checkout_confirm_payment'),
+                  : _isOfflinePaymentMethod(selectedPaymentMethod)
+                      ? context.l10n.t('checkout_confirm_payment')
+                      : 'Continuar compra',
             ),
           ),
         ),
@@ -728,21 +792,20 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     return false;
   }
 
-  String _paymentHeadline(String method) {
-    if (_isOfflinePaymentMethod(method)) {
-      return context.l10n.t('checkout_payment_headline_offline');
-    }
-    return context.l10n.locale.languageCode == 'en'
-        ? 'Instant payment to confirm'
-        : 'Pago inmediato para confirmar';
-  }
-
   String _paymentHelp(BuildContext context, String method) {
+    if (method == PaymentConstants.methodCard) {
+      switch (_selectedDigitalSubmethod) {
+        case 'yape':
+          return 'Se abrira el checkout de Izipay donde podras escanear el codigo QR con tu app de Yape.';
+        case 'plin':
+          return 'Se abrira el checkout de Izipay donde podras completar tu pago con Plin.';
+        case 'qr':
+          return 'Se abrira el checkout de Izipay donde podras escanear un QR con cualquier app bancaria.';
+        default:
+          return 'Se abrira el checkout seguro de Izipay donde podras ingresar los datos de tu tarjeta.';
+      }
+    }
     switch (method) {
-      case PaymentConstants.methodCard:
-        return context.l10n.locale.languageCode == 'en'
-            ? 'Payments are processed in the secure Izipay checkout. Pay with card, Yape, or QR before confirming your reservation.'
-            : 'Los pagos se completan en el checkout seguro de Izipay. Paga con tarjeta, Yape o QR antes de confirmar tu reserva.';
       case PaymentConstants.methodCounter:
         return context.l10n.t('checkout_payment_help_counter');
       case PaymentConstants.methodCash:
@@ -938,6 +1001,74 @@ class _CheckoutAmountRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(value, textAlign: TextAlign.end, style: style),
         ],
+      ),
+    );
+  }
+}
+
+class _PaymentGridCard extends StatelessWidget {
+  const _PaymentGridCard({
+    required this.icon,
+    required this.label,
+    required this.sublabel,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String sublabel;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: selected ? scheme.primaryContainer : scheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selected ? scheme.primary : scheme.outlineVariant,
+          width: selected ? 2 : 1,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 26,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: selected ? scheme.primary : scheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                sublabel,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: selected ? scheme.primary.withOpacity(0.7) : scheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
