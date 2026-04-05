@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n/app_localizations_fixed.dart';
+
 /// Shows a dialog with the cancellation policy breakdown,
 /// fee calculation, and refund amount before the user confirms.
 class CancellationPreviewDialog extends StatelessWidget {
@@ -49,7 +51,7 @@ class CancellationPreviewDialog extends StatelessWidget {
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 8),
-          const Text('Cancelar reserva'),
+          Text(context.l10n.t('cancel_reservation')),
         ],
       ),
       content: SingleChildScrollView(
@@ -61,8 +63,8 @@ class CancellationPreviewDialog extends StatelessWidget {
             _buildBadge(
               context,
               bookingType == 'IMMEDIATE'
-                  ? 'Reserva inmediata'
-                  : 'Reserva anticipada',
+                  ? context.l10n.t('booking_immediate')
+                  : context.l10n.t('booking_advance'),
               bookingType == 'IMMEDIATE'
                   ? Colors.orange
                   : Colors.blue,
@@ -79,18 +81,18 @@ class CancellationPreviewDialog extends StatelessWidget {
             // Financial breakdown
             if (requiresRefund) ...[
               const Divider(),
-              _buildRow(context, 'Monto pagado', 'S/ ${grossPaid.toStringAsFixed(2)}'),
+              _buildRow(context, context.l10n.t('amount_paid'), 'S/ ${grossPaid.toStringAsFixed(2)}'),
               if (cancellationFee > 0)
                 _buildRow(
                   context,
-                  'Comisión de cancelación',
+                  context.l10n.t('cancellation_fee'),
                   '- S/ ${cancellationFee.toStringAsFixed(2)}',
                   valueColor: theme.colorScheme.error,
                 ),
               const Divider(),
               _buildRow(
                 context,
-                'Reembolso a recibir',
+                context.l10n.t('refund_to_receive'),
                 'S/ ${refundToCustomer.toStringAsFixed(2)}',
                 isBold: true,
                 valueColor: refundToCustomer > 0
@@ -133,7 +135,7 @@ class CancellationPreviewDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Volver'),
+          child: Text(context.l10n.t('go_back')),
         ),
         if (refundAllowed || !requiresRefund)
           FilledButton(
@@ -142,7 +144,7 @@ class CancellationPreviewDialog extends StatelessWidget {
               backgroundColor: theme.colorScheme.error,
             ),
             child: Text(
-              requiresRefund ? 'Confirmar reembolso y cancelar' : 'Confirmar cancelación',
+              requiresRefund ? context.l10n.t('confirm_refund_cancel') : context.l10n.t('confirm_cancellation'),
             ),
           ),
       ],
@@ -195,19 +197,19 @@ class CancellationPreviewDialog extends StatelessWidget {
 
   Widget _buildPolicyChip(BuildContext context, String policyType) {
     final (label, color) = switch (policyType) {
-      'FULL_REFUND' => ('Reembolso completo', Colors.green),
-      'PARTIAL_REFUND' => ('Reembolso parcial', Colors.orange),
-      'NO_REFUND' => ('Sin reembolso', Colors.red),
-      'MANUAL_REVIEW' => ('Revisión manual', Colors.grey),
-      _ => ('Desconocido', Colors.grey),
+      'FULL_REFUND' => (context.l10n.t('policy_full_refund'), Colors.green),
+      'PARTIAL_REFUND' => (context.l10n.t('policy_partial_refund'), Colors.orange),
+      'NO_REFUND' => (context.l10n.t('policy_no_refund'), Colors.red),
+      'MANUAL_REVIEW' => (context.l10n.t('policy_manual_review'), Colors.grey),
+      _ => (context.l10n.t('policy_unknown'), Colors.grey),
     };
     return _buildBadge(context, label, color);
   }
 
   String _friendlyBlockReason(String reason) {
     return switch (reason) {
-      'REFUND_ALREADY_PROCESSED' => 'Ya existe un reembolso procesado para este pago.',
-      _ => 'No se puede procesar el reembolso en este momento.',
+      'REFUND_ALREADY_PROCESSED' => 'Refund already processed.',
+      _ => 'Cannot process refund at this time.',
     };
   }
 

@@ -182,6 +182,13 @@ class SessionController extends StateNotifier<SessionState> {
   final SharedPreferences _prefs;
   final SessionTokenStorage _tokenStorage;
   final Set<String> _onboardingCompletedUsers;
+  Timer? _proactiveRefreshTimer;
+
+  @override
+  void dispose() {
+    _proactiveRefreshTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _restore() async {
     final raw = _prefs.getString(_sessionKey);
@@ -251,6 +258,7 @@ class SessionController extends StateNotifier<SessionState> {
           backendOnboardingCompleted != null) {
         await _persist();
       }
+      _scheduleProactiveRefresh();
     } catch (_) {
       await _prefs.remove(_sessionKey);
       await _tokenStorage.clearTokens();
@@ -340,6 +348,7 @@ class SessionController extends StateNotifier<SessionState> {
     }
     state = nextState;
     await _persist();
+    _scheduleProactiveRefresh();
   }
 
   Future<void> updateUser(
@@ -377,6 +386,8 @@ class SessionController extends StateNotifier<SessionState> {
   }
 
   Future<void> signOut() async {
+    _proactiveRefreshTimer?.cancel();
+    _proactiveRefreshTimer = null;
     state = state.copyWith(
       clearSession: true,
       sessionLanguage: 'es',
@@ -399,6 +410,81 @@ class SessionController extends StateNotifier<SessionState> {
         accessToken: state.accessToken,
       ),
     );
+  }
+
+  void _scheduleProactiveRefresh() {
+    _proactiveRefreshTimer?.cancel();
+    _proactiveRefreshTimer = null;
+
+    final token = state.accessToken;
+    if (token == null || token.isEmpty) return;
+
+    final exp = _extractExpFromJwt(token);
+    if (exp == null) return;
+
+    final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    // Refresh 2 minutes before expiry, minimum 30 seconds from now
+    final delaySeconds = (exp - nowSec - 120).clamp(30, 86400);
+
+    _proactiveRefreshTimer = Timer(
+      Duration(seconds: delaySeconds),
+      () => unawaited(_performProactiveRefresh()),
+    );
+  }
+
+  Future<void> _performProactiveRefresh() async {
+    final currentRefreshToken = state.refreshToken?.trim();
+    if (currentRefreshToken == null || currentRefreshToken.isEmpty) return;
+
+    final client = Dio(
+      BaseOptions(
+        baseUrl: AppEnv.resolvedApiBaseUrl,
+        connectTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 8),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
+    try {
+      final response = await client.post<Map<String, dynamic>>(
+        '/api/v1/auth/refresh',
+        data: {'refreshToken': currentRefreshToken},
+      );
+      final data = response.data;
+      if (data == null) return;
+
+      final newAccess = data['accessToken']?.toString().trim() ?? '';
+      final newRefresh = data['refreshToken']?.toString().trim() ?? '';
+      if (!_hasUsableAccessToken(newAccess) || newRefresh.isEmpty) return;
+
+      state = state.copyWith(
+        accessToken: newAccess,
+        refreshToken: newRefresh,
+      );
+      await _persist();
+      _scheduleProactiveRefresh();
+    } catch (_) {
+      // Silently fail — the reactive 401 interceptor will handle it
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  int? _extractExpFromJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length < 2) return null;
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final map = jsonDecode(payload);
+      if (map is! Map<String, dynamic>) return null;
+      final exp = map['exp'];
+      if (exp is int) return exp;
+      if (exp is num) return exp.toInt();
+      return int.tryParse(exp.toString());
+    } catch (_) {
+      return null;
+    }
   }
 
   SessionState _normalizeRoleFromAccessToken(SessionState currentState) {

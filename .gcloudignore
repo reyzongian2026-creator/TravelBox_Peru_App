@@ -1,7 +1,0 @@
-# Cloud Run static frontend deployment: upload only what the Dockerfile needs.
-*
-!Dockerfile
-!nginx.conf
-!build/
-!build/web/
-!build/web/**

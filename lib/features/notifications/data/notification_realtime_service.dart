@@ -138,11 +138,7 @@ class NotificationRealtimeServiceNotifier extends StateNotifier<NotificationReal
                     _addRecentNotification(notification);
                   }
                 } catch (e) {
-                  // Log SSE parse errors for debugging instead of silently swallowing
-                  assert(() {
-                    debugPrint('SSE parse error: $e for data: $jsonStr');
-                    return true;
-                  }());
+                  debugPrint('SSE parse error: $e for data: $jsonStr');
                 }
               }
             }

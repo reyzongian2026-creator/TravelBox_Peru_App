@@ -254,8 +254,8 @@ List<ShellNavSection> buildShellSections(
         ShellNavItem(
           label: l10n.t('tracking_logistico'),
           icon: Icons.local_shipping_outlined,
-          route: '/reservations',
-          matchPrefixes: const ['/delivery/'],
+          route: '/tracking-list',
+          matchPrefixes: const ['/delivery/', '/tracking/'],
         ),
       ],
     ),
@@ -277,6 +277,16 @@ List<ShellNavSection> buildShellSections(
           label: l10n.t('payments'),
           icon: Icons.receipt_long_outlined,
           route: '/payments-history',
+        ),
+        ShellNavItem(
+          label: l10n.t('favorites'),
+          icon: Icons.favorite_outline_rounded,
+          route: '/favorites',
+        ),
+        ShellNavItem(
+          label: l10n.t('referrals'),
+          icon: Icons.card_giftcard_outlined,
+          route: '/referral',
         ),
         ShellNavItem(
           label: l10n.t('profile'),

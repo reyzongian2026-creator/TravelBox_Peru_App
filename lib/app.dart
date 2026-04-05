@@ -9,6 +9,9 @@ import 'core/theme/app_theme.dart';
 import 'shared/state/session_controller.dart';
 import 'shared/state/theme_mode_controller.dart';
 
+/// Global key to show SnackBars from non-widget code (e.g. DIO interceptors).
+final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class TravelBoxApp extends ConsumerWidget {
   const TravelBoxApp({super.key});
 
@@ -22,6 +25,7 @@ class TravelBoxApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'InkaVoy',
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

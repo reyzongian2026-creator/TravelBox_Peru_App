@@ -13,6 +13,7 @@ import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/currency_widgets.dart';
 import '../../../shared/widgets/peru_flat_scene.dart';
+import '../../favorites/data/favorites_repository.dart';
 import '../../map_discovery/data/discovery_repository_impl.dart';
 
 final warehouseDetailProvider = FutureProvider.family((
@@ -36,6 +37,7 @@ class WarehouseDetailPage extends ConsumerWidget {
       title: context.l10n.t('warehouse_detail_title'),
       currentRoute: '/discovery',
       actions: [
+        _FavoriteToggle(warehouseId: warehouseId),
         IconButton(
           tooltip: context.l10n.t('back'),
           onPressed: () => context.go('/discovery'),
@@ -248,6 +250,61 @@ class _TourismInfoBlock extends StatelessWidget {
               .toList(),
         ),
       ],
+    );
+  }
+}
+
+class _FavoriteToggle extends ConsumerStatefulWidget {
+  final String warehouseId;
+  const _FavoriteToggle({required this.warehouseId});
+
+  @override
+  ConsumerState<_FavoriteToggle> createState() => _FavoriteToggleState();
+}
+
+class _FavoriteToggleState extends ConsumerState<_FavoriteToggle> {
+  bool? _isFav;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    try {
+      final id = int.tryParse(widget.warehouseId);
+      if (id == null) return;
+      final repo = ref.read(favoritesRepositoryProvider);
+      final result = await repo.isFavorite(id);
+      if (mounted) setState(() => _isFav = result);
+    } catch (_) {}
+  }
+
+  Future<void> _toggle() async {
+    final id = int.tryParse(widget.warehouseId);
+    if (id == null) return;
+    final repo = ref.read(favoritesRepositoryProvider);
+    try {
+      if (_isFav == true) {
+        await repo.remove(id);
+        if (mounted) setState(() => _isFav = false);
+      } else {
+        await repo.add(id);
+        if (mounted) setState(() => _isFav = true);
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isFav == null) return const SizedBox.shrink();
+    return IconButton(
+      icon: Icon(
+        _isFav! ? Icons.favorite : Icons.favorite_border,
+        color: _isFav! ? Colors.red : null,
+      ),
+      onPressed: _toggle,
     );
   }
 }

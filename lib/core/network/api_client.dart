@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app.dart';
 import '../../shared/models/app_user.dart';
 import '../../shared/services/app_error_report_service.dart';
 import '../../shared/state/local_realtime_mutation_tick_provider.dart';
@@ -124,19 +126,21 @@ final dioProvider = Provider<Dio>((ref) {
                   return;
                 }
               }
-            } catch (_) {
-              // no-op: if refresh fails, logout is handled below.
+            } catch (e) {
+              debugPrint('Token refresh failed: $e');
             } finally {
               _isRefreshing = false;
             }
           }
 
+          _showSessionExpiredSnackBar();
           await ref.read(sessionControllerProvider.notifier).signOut();
           handler.next(error);
           return;
         }
 
         if (statusCode == 401) {
+          _showSessionExpiredSnackBar();
           await ref.read(sessionControllerProvider.notifier).signOut();
         }
         handler.next(error);
@@ -146,6 +150,17 @@ final dioProvider = Provider<Dio>((ref) {
 
   return dio;
 });
+
+void _showSessionExpiredSnackBar() {
+  final messenger = rootScaffoldMessengerKey.currentState;
+  if (messenger == null) return;
+  messenger.showSnackBar(
+    const SnackBar(
+      content: Text('Tu sesión ha expirado. Inicia sesión nuevamente.'),
+      duration: Duration(seconds: 4),
+    ),
+  );
+}
 
 void _reportNetworkError(DioException error) {
   final service = AppErrorReportNotifier.getGlobalService();

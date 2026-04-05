@@ -83,6 +83,7 @@ class DeliveryRequestPage extends ConsumerStatefulWidget {
 }
 
 class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
+  final _formKey = GlobalKey<FormState>();
   final _addressController = TextEditingController();
   final _windowController = TextEditingController(text: '18:00 - 20:00');
   final _zoneController = TextEditingController();
@@ -176,7 +177,9 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
           _seedReservationContext(reservation);
           final servicePoint =
               _selectedPoint ?? _defaultServicePoint(reservation);
-          return ListView(
+          return Form(
+            key: _formKey,
+            child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Card(
@@ -311,28 +314,34 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
+              TextFormField(
                 controller: _addressController,
                 decoration: InputDecoration(
                   labelText: l10n.t(_type.addressLabelKey),
                   hintText: l10n.t(_type.addressHintKey),
                 ),
                 maxLines: 2,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? '${l10n.t('delivery_enter_field')} ${l10n.t(_type.addressLabelKey).toLowerCase()}'
+                    : null,
               ),
               const SizedBox(height: 12),
-              TextField(
+              TextFormField(
                 controller: _windowController,
                 decoration: InputDecoration(
                   labelText: l10n.t(_type.windowLabelKey),
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
+              TextFormField(
                 controller: _zoneController,
                 decoration: InputDecoration(
                   labelText: l10n.t('delivery_zone_city_label'),
                   hintText: l10n.t('delivery_zone_city_hint'),
                 ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? l10n.t('ingresa_la_zona_o_ciudad_del_servicio')
+                    : null,
               ),
               const SizedBox(height: 12),
               Card(
@@ -371,6 +380,7 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
                 ),
               ),
             ],
+          ),
           );
         },
         loading: () => const LoadingStateView(),
@@ -571,27 +581,8 @@ class _DeliveryRequestPageState extends ConsumerState<DeliveryRequestPage> {
     final window = _windowController.text.trim();
     final point = _selectedPoint ?? _defaultServicePoint(reservation);
 
-    if (address.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${context.l10n.t('delivery_enter_field')} '
-            '${context.l10n.t(_type.addressLabelKey).toLowerCase()}.',
-          ),
-        ),
-      );
-      return;
-    }
-    if (zone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.l10n.t('ingresa_la_zona_o_ciudad_del_servicio'),
-          ),
-        ),
-      );
-      return;
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     if (_locationMode == DeliveryLocationMode.currentLocation &&
         !_currentLocationCaptured) {
       ScaffoldMessenger.of(context).showSnackBar(

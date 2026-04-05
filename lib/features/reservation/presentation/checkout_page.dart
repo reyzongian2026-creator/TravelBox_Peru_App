@@ -34,8 +34,11 @@ class CheckoutPage extends ConsumerStatefulWidget {
 class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   final _izipayCheckoutService = createIzipayCheckoutService();
   final _customerEmailController = TextEditingController();
+  final _promoCodeController = TextEditingController();
 
   bool processing = false;
+  bool _submitting = false; // synchronous guard against double-tap
+  String? _emailError;
   int? _selectedSavedCardId;
   String paymentMethod = AppEnv.forceCashPaymentsOnly
       ? PaymentConstants.methodCash
@@ -43,9 +46,33 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   String? _selectedDigitalSubmethod; // card, yape, plin, qr — for display only
 
+  // Promo code state
+  PromoCodeResult? _promoResult;
+  bool _promoLoading = false;
+  String? _appliedPromoCode;
+
+  // Wallet state
+  double _walletBalance = 0;
+  bool _useWallet = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWalletBalance();
+  }
+
+  Future<void> _loadWalletBalance() async {
+    try {
+      final paymentRepo = ref.read(paymentRepositoryProvider);
+      final balance = await paymentRepo.getWalletBalance();
+      if (mounted) setState(() => _walletBalance = balance);
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _customerEmailController.dispose();
+    _promoCodeController.dispose();
     super.dispose();
   }
 
@@ -147,14 +174,14 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Elige tu metodo de pago',
+                    context.l10n.t('checkout_choose_method'),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Selecciona como deseas pagar tu reserva',
+                    context.l10n.t('checkout_choose_method_subtitle'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).hintColor,
                     ),
@@ -171,7 +198,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     )
                   else ...[
                     Text(
-                      'PAGO DIGITAL',
+                      context.l10n.t('checkout_digital_section'),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(context).hintColor,
                         fontWeight: FontWeight.w600,
@@ -219,7 +246,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'PAGO PRESENCIAL',
+                      context.l10n.t('checkout_onsite_section'),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(context).hintColor,
                         fontWeight: FontWeight.w600,
@@ -258,10 +285,23 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                     TextField(
                       controller: _customerEmailController,
                       keyboardType: TextInputType.emailAddress,
+                      onChanged: (value) {
+                        final trimmed = value.trim();
+                        setState(() {
+                          if (trimmed.isEmpty) {
+                            _emailError = null;
+                          } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$').hasMatch(trimmed)) {
+                            _emailError = context.l10n.t('invalid_email');
+                          } else {
+                            _emailError = null;
+                          }
+                        });
+                      },
                       decoration: InputDecoration(
                         labelText: _customerEmailLabel(context),
                         hintText: _customerEmailHint(context),
-                        helperText: _checkoutEmailHelper(context),
+                        helperText: _emailError == null ? _checkoutEmailHelper(context) : null,
+                        errorText: _emailError,
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -311,15 +351,132 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       value: _formatMoney(draft.insuranceCost(), draft),
                     ),
                   const Divider(height: 24),
+                  if (_promoResult != null && _promoResult!.valid && _promoResult!.calculatedDiscount != null)
+                    _CheckoutAmountRow(
+                      label: context.l10n.t('promo_discount'),
+                      value: '- ${_formatMoney(_promoResult!.calculatedDiscount!, draft)}',
+                      emphasize: false,
+                    ),
+                  if (_useWallet && _walletBalance > 0)
+                    _CheckoutAmountRow(
+                      label: context.l10n.t('wallet_credit'),
+                      value: '- ${_formatMoney(_walletBalance.clamp(0, _effectiveTotal(draft)), draft)}',
+                      emphasize: false,
+                    ),
                   _CheckoutAmountRow(
                     label: context.l10n.t('final_total'),
-                    value: _formatMoney(draft.estimatePrice(), draft),
+                    value: _formatMoney(
+                      _computeFinalTotal(draft),
+                      draft,
+                    ),
                     emphasize: true,
                   ),
                 ],
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          // ── Promo code input ──────────────────────────────
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.l10n.t('promo_code_title'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _promoCodeController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            hintText: context.l10n.t('promo_code_hint'),
+                            border: const OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          enabled: _appliedPromoCode == null,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (_appliedPromoCode == null)
+                        FilledButton(
+                          onPressed: _promoLoading ? null : () => _validatePromoCode(draft.estimatePrice()),
+                          child: _promoLoading
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                              : Text(context.l10n.t('promo_apply')),
+                        )
+                      else
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _promoResult = null;
+                              _appliedPromoCode = null;
+                              _promoCodeController.clear();
+                            });
+                          },
+                          child: Text(context.l10n.t('promo_remove')),
+                        ),
+                    ],
+                  ),
+                  if (_promoResult != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _promoResult!.message ?? '',
+                      style: TextStyle(
+                        color: _promoResult!.valid ? Colors.green.shade700 : Theme.of(context).colorScheme.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Wallet credit toggle ──────────────────────────
+          if (_walletBalance > 0)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.l10n.t('wallet_credit'),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'S/ ${_walletBalance.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.green.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _useWallet,
+                      onChanged: (v) => setState(() => _useWallet = v),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           if (!forceCashOnly && !_isOfflinePaymentMethod(selectedPaymentMethod))
             Card(
@@ -377,12 +534,50 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                   ? context.l10n.t('checkout_processing')
                   : _isOfflinePaymentMethod(selectedPaymentMethod)
                       ? context.l10n.t('checkout_confirm_payment')
-                      : 'Continuar compra',
+                      : context.l10n.t('checkout_continue_purchase'),
             ),
           ),
         ),
       ),
     );
+  }
+
+  double _effectiveTotal(dynamic draft) {
+    double total = draft.estimatePrice();
+    if (_promoResult != null && _promoResult!.valid && _promoResult!.calculatedDiscount != null) {
+      total -= _promoResult!.calculatedDiscount!;
+    }
+    return total.clamp(0, double.infinity);
+  }
+
+  double _computeFinalTotal(dynamic draft) {
+    double total = _effectiveTotal(draft);
+    if (_useWallet && _walletBalance > 0) {
+      total -= _walletBalance.clamp(0, total);
+    }
+    return total.clamp(0, double.infinity);
+  }
+
+  Future<void> _validatePromoCode(double orderAmount) async {
+    final code = _promoCodeController.text.trim();
+    if (code.isEmpty) return;
+    setState(() => _promoLoading = true);
+    try {
+      final paymentRepo = ref.read(paymentRepositoryProvider);
+      final result = await paymentRepo.validatePromoCode(code: code, amount: orderAmount);
+      setState(() {
+        _promoResult = result;
+        if (result.valid) {
+          _appliedPromoCode = code;
+        }
+      });
+    } catch (_) {
+      setState(() {
+        _promoResult = const PromoCodeResult(valid: false, message: 'Error al validar el codigo.');
+      });
+    } finally {
+      setState(() => _promoLoading = false);
+    }
   }
 
   Future<void> _handleConfirmPayment({
@@ -391,6 +586,19 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     required String selectedPaymentMethod,
     required bool forceCashOnly,
   }) async {
+    if (_submitting) return;
+    _submitting = true;
+
+    // Block submission if email field has validation error
+    final email = _customerEmailController.text.trim();
+    if (email.isNotEmpty && !RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+      _submitting = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('invalid_email'))),
+      );
+      return;
+    }
+
     setState(() => processing = true);
     OverlayEntry? overlay;
     dynamic reservation;
@@ -504,6 +712,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       if (overlay != null) {
         CriticalOperationOverlay.dismiss(overlay);
       }
+      _submitting = false;
       if (mounted) {
         setState(() => processing = false);
       }
@@ -545,7 +754,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       return confirmation.message;
     }
 
-    final intent = await paymentRepo.createIntent(reservationId: parsedReservationId);
+    final intent = await paymentRepo.createIntent(
+      reservationId: parsedReservationId,
+      promoCode: _appliedPromoCode,
+      walletAmount: _useWallet ? _walletBalance : null,
+    );
     final paymentIntentId = int.tryParse(intent.id);
 
     final confirmation = await paymentRepo.confirmPayment(
@@ -796,13 +1009,13 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     if (method == PaymentConstants.methodCard) {
       switch (_selectedDigitalSubmethod) {
         case 'yape':
-          return 'Se abrira el checkout de Izipay donde podras escanear el codigo QR con tu app de Yape.';
+          return context.l10n.t('checkout_help_yape');
         case 'plin':
-          return 'Se abrira el checkout de Izipay donde podras completar tu pago con Plin.';
+          return context.l10n.t('checkout_help_plin');
         case 'qr':
-          return 'Se abrira el checkout de Izipay donde podras escanear un QR con cualquier app bancaria.';
+          return context.l10n.t('checkout_help_qr');
         default:
-          return 'Se abrira el checkout seguro de Izipay donde podras ingresar los datos de tu tarjeta.';
+          return context.l10n.t('checkout_help_card');
       }
     }
     switch (method) {

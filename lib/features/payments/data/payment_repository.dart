@@ -6,6 +6,8 @@ import '../../../shared/utils/app_exception.dart';
 abstract class PaymentRepository {
   Future<PaymentIntentResult> createIntent({
     required int reservationId,
+    String? promoCode,
+    double? walletAmount,
   });
 
   Future<PaymentIntentResult> confirmPayment({
@@ -73,6 +75,13 @@ abstract class PaymentRepository {
     required int reservationId,
     String? reason,
   });
+
+  Future<PromoCodeResult> validatePromoCode({
+    required String code,
+    required double amount,
+  });
+
+  Future<double> getWalletBalance();
 }
 
 class SavedCard {
@@ -303,11 +312,20 @@ class PaymentRepositoryImpl implements PaymentRepository {
   @override
   Future<PaymentIntentResult> createIntent({
     required int reservationId,
+    String? promoCode,
+    double? walletAmount,
   }) async {
     try {
+      final data = <String, dynamic>{'reservationId': reservationId};
+      if (promoCode != null && promoCode.isNotEmpty) {
+        data['promoCode'] = promoCode;
+      }
+      if (walletAmount != null && walletAmount > 0) {
+        data['walletAmount'] = walletAmount;
+      }
       final response = await _dio.post<Map<String, dynamic>>(
         '/payments/intents',
-        data: {'reservationId': reservationId},
+        data: data,
       );
       return PaymentIntentResult.fromJson(response.data ?? {});
     } on DioException catch (e) {
@@ -417,7 +435,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
         queryParameters: {
           'page': page,
           'size': size,
-          'reservationId': ?reservationId,
+          if (reservationId != null) 'reservationId': reservationId,
         },
       );
 
@@ -494,7 +512,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
       await _dio.post<void>(
         '/payments/cash/$paymentIntentId/approve',
         data: {
-          'notes': ?notes,
+          if (notes != null) 'notes': notes,
         },
       );
     } on DioException catch (e) {
@@ -638,5 +656,72 @@ class PaymentRepositoryImpl implements PaymentRepository {
     } catch (e) {
       throw AppException.fromError(e);
     }
+  }
+
+  @override
+  Future<PromoCodeResult> validatePromoCode({
+    required String code,
+    required double amount,
+  }) async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/payments/validate-promo',
+        queryParameters: {'code': code, 'amount': amount},
+      );
+      return PromoCodeResult.fromJson(response.data ?? {});
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+
+  @override
+  Future<double> getWalletBalance() async {
+    try {
+      final response = await _dio.get<Map<String, dynamic>>(
+        '/payments/wallet-balance',
+      );
+      final data = response.data ?? {};
+      final val = data['walletBalance'];
+      if (val is num) return val.toDouble();
+      return double.tryParse(val?.toString() ?? '0') ?? 0.0;
+    } on DioException catch (e) {
+      throw AppException.fromDioError(e);
+    } catch (e) {
+      throw AppException.fromError(e);
+    }
+  }
+}
+
+class PromoCodeResult {
+  final bool valid;
+  final String? code;
+  final String? description;
+  final String? discountType;
+  final double? discountValue;
+  final double? calculatedDiscount;
+  final String? message;
+
+  const PromoCodeResult({
+    required this.valid,
+    this.code,
+    this.description,
+    this.discountType,
+    this.discountValue,
+    this.calculatedDiscount,
+    this.message,
+  });
+
+  factory PromoCodeResult.fromJson(Map<String, dynamic> json) {
+    return PromoCodeResult(
+      valid: json['valid'] == true,
+      code: json['code']?.toString(),
+      description: json['description']?.toString(),
+      discountType: json['discountType']?.toString(),
+      discountValue: (json['discountValue'] as num?)?.toDouble(),
+      calculatedDiscount: (json['calculatedDiscount'] as num?)?.toDouble(),
+      message: json['message']?.toString(),
+    );
   }
 }

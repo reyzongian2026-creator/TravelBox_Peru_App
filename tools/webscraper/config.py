@@ -2,8 +2,8 @@
 # ================================================
 
 # URL Base - Producción
-BASE_URL = "https://travelbox-frontend-prod-82181537443.us-central1.run.app"
-BACKEND_URL = "https://travelbox-backend-prod-82181537443.us-central1.run.app"
+BASE_URL = "https://www.inkavoy.pe"
+BACKEND_URL = "https://api.inkavoy.pe"
 
 # Credenciales de Login
 CREDENTIALS = {

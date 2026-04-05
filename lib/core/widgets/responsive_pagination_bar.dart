@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations_fixed.dart';
 import '../layout/responsive_layout.dart';
 
 class ResponsivePaginationBar extends StatelessWidget {
@@ -33,6 +34,7 @@ class ResponsivePaginationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
+    final l10n = context.l10n;
     final controls = Wrap(
       spacing: 4,
       runSpacing: 4,
@@ -42,12 +44,12 @@ class ResponsivePaginationBar extends StatelessWidget {
         IconButton(
           onPressed: canGoFirst ? onFirst : null,
           icon: const Icon(Icons.first_page),
-          tooltip: 'Primera página',
+          tooltip: l10n.t('pagination_first'),
         ),
         IconButton(
           onPressed: canGoPrevious ? onPrevious : null,
           icon: const Icon(Icons.chevron_left),
-          tooltip: 'Página anterior',
+          tooltip: l10n.t('pagination_previous'),
         ),
         Text(
           pageLabel,
@@ -57,12 +59,12 @@ class ResponsivePaginationBar extends StatelessWidget {
         IconButton(
           onPressed: canGoNext ? onNext : null,
           icon: const Icon(Icons.chevron_right),
-          tooltip: 'Página siguiente',
+          tooltip: l10n.t('pagination_next'),
         ),
         IconButton(
           onPressed: canGoLast ? onLast : null,
           icon: const Icon(Icons.last_page),
-          tooltip: 'Última página',
+          tooltip: l10n.t('pagination_last'),
         ),
       ],
     );

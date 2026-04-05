@@ -336,8 +336,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
         return local
             .where((reservation) => reservation.userId == userId)
             .map(_applyMemoryLuggagePhotos)
-            .toList()
-          ..sort((a, b) => b.startAt.compareTo(a.startAt));
+            .toList();
       }
     }
   }
@@ -371,8 +370,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       page += 1;
     }
 
-    final reservations = merged.values.toList()
-      ..sort((a, b) => b.startAt.compareTo(a.startAt));
+    final reservations = merged.values.toList();
     return reservations;
   }
 
@@ -481,8 +479,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
                     (status == null || item.status == status) &&
                     _matchesReservationQuery(item, normalizedQuery),
               )
-              .toList()
-            ..sort((a, b) => b.startAt.compareTo(a.startAt));
+              .toList();
       final start = normalizedPage * normalizedSize;
       if (start >= localItems.length) {
         return ReservationPagedResult(

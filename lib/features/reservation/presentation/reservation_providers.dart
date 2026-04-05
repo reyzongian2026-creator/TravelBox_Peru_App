@@ -27,8 +27,7 @@ final myReservationIdsSignatureProvider = Provider<String>((ref) {
   }
   return ref.watch(
     reservationStoreProvider.select((items) {
-      final sorted = items.where((item) => item.userId == userId).toList()
-        ..sort((a, b) => b.startAt.compareTo(a.startAt));
+      final sorted = items.where((item) => item.userId == userId).toList();
       return sorted.map((item) => item.id).join('|');
     }),
   );

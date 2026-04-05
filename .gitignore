@@ -32,8 +32,6 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
-tmp.cloudrun-backend-env.prod.*.yaml
-tmp.cloudrun-backend-env.prod.envonly.*.yaml
 
 # Symbolication related
 app.*.symbols
@@ -57,3 +55,5 @@ app.*.map.json
 /tmp_spa_server.pid
 /frontend-web-active.err
 /android-run.err
+
+.env

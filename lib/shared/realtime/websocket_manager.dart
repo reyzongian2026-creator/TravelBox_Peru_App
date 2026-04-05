@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:travelbox_peru_app/core/env/app_env.dart';
+import 'package:travelbox_peru_app/core/network/api_client.dart';
 import '../state/session_controller.dart';
 
 enum WebSocketEventType {
@@ -122,7 +124,14 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
     state = const AsyncValue.loading();
 
     try {
-      final wsUrl = _buildWebSocketUrl();
+      // Fetch a short-lived opaque token so the JWT is never in the URL
+      final wsToken = await _fetchWsToken();
+      if (wsToken == null) {
+        state = const AsyncValue.data(WebSocketConnectionStatus.disconnected);
+        return;
+      }
+
+      final wsUrl = _buildWebSocketUrl(wsToken);
       _channel = WebSocketChannel.connect(wsUrl);
 
       _subscription = _channel!.stream.listen(
@@ -140,11 +149,22 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
     }
   }
 
-  Uri _buildWebSocketUrl() {
+  Uri _buildWebSocketUrl(String opaqueToken) {
     final baseUrl = AppEnv.resolvedApiBaseUrl;
     final wsScheme = baseUrl.startsWith('https') ? 'wss' : 'ws';
     final host = baseUrl.replaceFirst(RegExp(r'^https?://'), '');
-    return Uri.parse('$wsScheme://$host/ws?token=${Uri.encodeComponent(_accessToken ?? '')}');
+    return Uri.parse('$wsScheme://$host/ws?token=${Uri.encodeComponent(opaqueToken)}');
+  }
+
+  Future<String?> _fetchWsToken() async {
+    try {
+      final dio = _ref.read(dioProvider);
+      final response = await dio.post<Map<String, dynamic>>('/realtime/ws-token');
+      return response.data?['token'] as String?;
+    } catch (e) {
+      debugPrint('Failed to fetch WS token: $e');
+      return null;
+    }
   }
 
   void _onMessage(dynamic message) {

@@ -66,6 +66,23 @@ class _ThreeDsAuthPageState extends ConsumerState<ThreeDsAuthPage>
       return;
     }
 
+    // Only allow trusted payment provider domains
+    final host = uri.host.toLowerCase();
+    final allowedDomains = [
+      'izipay.pe',
+      'api.micuentaweb.pe',
+      'secure.micuentaweb.pe',
+      'static.micuentaweb.pe',
+      'api.inkavoy.pe',
+    ];
+    final isTrusted = allowedDomains.any(
+      (domain) => host == domain || host.endsWith('.$domain'),
+    );
+    if (!isTrusted) {
+      setState(() => _error = 'Dominio de autenticación no permitido.');
+      return;
+    }
+
     try {
       final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!launched) {

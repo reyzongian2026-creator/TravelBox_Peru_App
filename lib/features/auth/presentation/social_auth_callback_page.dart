@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/l10n/app_localizations_fixed.dart';
 import '../data/social_callback_url_cleaner.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
@@ -48,7 +49,7 @@ class _SocialAuthCallbackPageState
     if (payload == null || payload.isEmpty) {
       setState(() {
         _processing = false;
-        _error = 'No se recibio una sesion valida desde el proveedor social.';
+        _error = 'social_no_valid_session';
       });
       return;
     }
@@ -79,7 +80,7 @@ class _SocialAuthCallbackPageState
       if (!mounted) return;
       setState(() {
         _processing = false;
-        _error = 'No se pudo completar el inicio de sesion social.';
+        _error = 'social_login_failed';
       });
     }
   }
@@ -120,21 +121,21 @@ class _SocialAuthCallbackPageState
                 if (_processing) ...[
                   const CircularProgressIndicator(),
                   const SizedBox(height: 20),
-                  const Text(
-                    'Completando inicio de sesion social...',
+                  Text(
+                    context.l10n.t('social_login_processing'),
                     textAlign: TextAlign.center,
                   ),
                 ] else ...[
                   const Icon(Icons.error_outline, size: 56, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
-                    _error ?? 'No se pudo iniciar sesion.',
+                    context.l10n.t(_error ?? 'social_login_error'),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: () => context.go('/login'),
-                    child: const Text('Volver al inicio de sesion'),
+                    child: Text(context.l10n.t('social_back_to_login')),
                   ),
                 ],
               ],

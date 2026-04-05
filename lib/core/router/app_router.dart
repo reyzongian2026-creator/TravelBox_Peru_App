@@ -37,6 +37,8 @@ import '../../features/reservation/presentation/reservation_success_page.dart';
 import '../../features/auth/presentation/verify_email_page.dart';
 import '../../features/warehouse/presentation/warehouse_detail_page.dart';
 import '../../features/Rating/presentation/warehouse_ratings_page.dart';
+import '../../features/referral/presentation/referral_page.dart';
+import '../../features/favorites/presentation/favorites_page.dart';
 import '../debug/debug_text_page.dart';
 import '../l10n/app_localizations_fixed.dart';
 import '../../shared/state/session_controller.dart';
@@ -263,6 +265,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => MyReservationsPage(),
       ),
       GoRoute(
+        path: '/tracking-list',
+        builder: (context, state) => MyReservationsPage(),
+      ),
+      GoRoute(
         path: '/reservation/:reservationId',
         builder: (_, state) {
           final postCheckoutBack = state.uri.queryParameters['back'] == 'home';
@@ -321,6 +327,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/payments-history',
         builder: (_, state) => const PaymentHistoryPage(),
       ),
+      GoRoute(path: '/favorites', builder: (context, state) => const FavoritesPage()),
+      GoRoute(path: '/referral', builder: (context, state) => const ReferralPage()),
       GoRoute(path: '/profile', builder: (context, state) => ProfilePage()),
       GoRoute(
         path: '/profile/edit',

@@ -264,6 +264,25 @@ class ReservationDetailPage extends ConsumerWidget {
                   error: (error, _) => const SizedBox.shrink(),
                 ),
                 if (paymentStatus.hasValue) SizedBox(height: 12),
+                if (reservation.extraInsurance) ...[
+                  Card(
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.shield_outlined,
+                        color: Colors.green.shade700,
+                      ),
+                      title: Text(context.l10n.t('insurance_active')),
+                      subtitle: Text(
+                        context.l10n.t('insurance_coverage_desc'),
+                      ),
+                      trailing: Icon(
+                        Icons.verified_outlined,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (!canCancelReservation)
                   Card(
                     child: ListTile(
@@ -362,6 +381,15 @@ class ReservationDetailPage extends ConsumerWidget {
                             : context.l10n.t('reservation_contact_support'),
                       ),
                     ),
+                    if (reservation.status == ReservationStatus.completed ||
+                        reservation.status == ReservationStatus.cancelled)
+                      FilledButton.tonalIcon(
+                        onPressed: () => context.push(
+                          '/reservation/new/${reservation.warehouse.id}',
+                        ),
+                        icon: const Icon(Icons.replay_rounded),
+                        label: Text(context.l10n.t('rebook')),
+                      ),
                   ],
                 ),
               ],
