@@ -183,9 +183,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 2.2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 3.0,
                       children: [
                         _PaymentGridCard(
                           icon: Icons.credit_card,
@@ -231,9 +231,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 2.2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 3.0,
                       children: [
                         _PaymentGridCard(
                           icon: Icons.storefront_outlined,
@@ -1037,34 +1037,39 @@ class _PaymentGridCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
             children: [
               Icon(
                 icon,
-                size: 26,
+                size: 22,
                 color: selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      sublabel,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: selected ? scheme.onPrimaryContainer.withOpacity(0.7) : scheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                sublabel,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: selected ? scheme.onPrimaryContainer.withOpacity(0.7) : scheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

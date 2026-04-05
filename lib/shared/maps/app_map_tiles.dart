@@ -4,7 +4,8 @@ class AppMapTiles {
   static String get rasterUrlTemplate {
     final azureKey = AppEnv.azureMapsApiKey.trim();
     if (azureKey.isEmpty) {
-      return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      // Carto Voyager: free raster tiles that work on web (no User-Agent header needed)
+      return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
     }
 
     // `microsoft.base` returns vector tiles. Flutter map widgets need raster

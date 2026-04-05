@@ -678,7 +678,11 @@ class _TourismHighlightsStripState extends State<_TourismHighlightsStrip> {
           return _CityCarouselCard(
             item: item,
             selected: selected,
-            onTap: () => widget.onCitySelected(item.city),
+            onTap: () {
+                              _autoScrollTimer?.cancel();
+                              _autoScrollTimer = null;
+                              widget.onCitySelected(item.city);
+                            },
           );
         },
       ),
