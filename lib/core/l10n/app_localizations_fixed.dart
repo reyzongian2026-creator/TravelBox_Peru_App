@@ -292,7 +292,7 @@ class AppLocalizations {
       'operations_panel': 'Panel operativo',
       'dashboard': 'Panel',
       'discover': 'Explorar',
-      'discover_title_nearby': 'Descubrir almacénes',
+      'discover_title_nearby': 'Explorar',
       'flow_guide': 'Guía de flujo',
       'dark_mode': 'Modo oscuro',
       'light_mode': 'Modo claro',

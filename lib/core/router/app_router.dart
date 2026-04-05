@@ -266,7 +266,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/tracking-list',
-        builder: (context, state) => MyReservationsPage(),
+        builder: (context, state) => MyReservationsPage(currentRoute: '/tracking-list'),
       ),
       GoRoute(
         path: '/reservation/:reservationId',

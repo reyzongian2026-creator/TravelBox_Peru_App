@@ -12,7 +12,9 @@ import '../../../shared/utils/status_localizer.dart';
 import 'reservation_providers.dart';
 
 class MyReservationsPage extends ConsumerStatefulWidget {
-  const MyReservationsPage({super.key});
+  const MyReservationsPage({super.key, this.currentRoute = '/reservations'});
+
+  final String currentRoute;
 
   @override
   ConsumerState<MyReservationsPage> createState() => _MyReservationsPageState();
@@ -37,7 +39,7 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
 
     return AppShellScaffold(
       title: l10n.t('my_reservations_title'),
-      currentRoute: '/reservations',
+      currentRoute: widget.currentRoute,
       child: content,
     );
   }

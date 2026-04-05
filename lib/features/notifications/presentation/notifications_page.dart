@@ -35,21 +35,38 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
       title: context.l10n.t('notifications'),
       currentRoute: '/notifications',
       actions: [
-        TextButton.icon(
-          onPressed: notifications.items.isEmpty
-              ? null
-              : _clearAllNotifications,
-          icon: const Icon(Icons.delete_sweep_outlined),
-          label: Text(context.l10n.t('eliminar_todo')),
-        ),
-        TextButton.icon(
-          onPressed: notifications.items.isEmpty
-              ? null
-              : () => ref
-                    .read(notificationCenterControllerProvider.notifier)
-                    .markAllSeen(),
-          icon: Icon(Icons.done_all_outlined),
-          label: Text(context.l10n.t('marcar_leidas')),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded),
+          enabled: notifications.items.isNotEmpty,
+          onSelected: (value) {
+            if (value == 'clear') {
+              _clearAllNotifications();
+            } else if (value == 'read') {
+              ref
+                  .read(notificationCenterControllerProvider.notifier)
+                  .markAllSeen();
+            }
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'read',
+              child: ListTile(
+                leading: const Icon(Icons.done_all_outlined),
+                title: Text(context.l10n.t('marcar_leidas')),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            PopupMenuItem(
+              value: 'clear',
+              child: ListTile(
+                leading: const Icon(Icons.delete_sweep_outlined),
+                title: Text(context.l10n.t('eliminar_todo')),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
         ),
       ],
       child: _buildBody(context, notifications),
