@@ -41,6 +41,7 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     // Expose callbacks to JavaScript
     js.context['__tbxOnPaymentComplete'] = js.JsFunction.withThis(
       (dynamic _, [dynamic paymentDataJson, dynamic rawAnswerStr, dynamic hashStr]) {
+        _cleanupKryptonForm();
         final data = _parseJson(paymentDataJson?.toString());
         completeOnce(IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.completed,
@@ -54,6 +55,7 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
 
     js.context['__tbxOnPaymentError'] = js.JsFunction.withThis(
       (dynamic _, [dynamic errorJson]) {
+        _cleanupKryptonForm();
         final data = _parseJson(errorJson?.toString());
         completeOnce(IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.error,
@@ -82,17 +84,30 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     return completer.future.timeout(
       const Duration(minutes: 5),
       onTimeout: () {
-        // Try to close popin on timeout
-        try {
-          final kr = js.context['KR'];
-          kr?.callMethod('closePopin', <dynamic>[]);
-        } catch (_) {}
+        _cleanupKryptonForm();
         return const IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.timedOut,
           message: 'El checkout no respondio a tiempo.',
         );
       },
     );
+  }
+
+  /// Close the Krypton popin and remove leftover DOM elements (the "Pagar" button).
+  void _cleanupKryptonForm() {
+    try {
+      final kr = js.context['KR'];
+      if (kr != null) {
+        try { kr.callMethod('closePopin', <dynamic>[]); } catch (_) {}
+        try { kr.callMethod('removeForms', <dynamic>[]); } catch (_) {}
+      }
+    } catch (_) {}
+    try {
+      html.document.getElementById('kr-payment-wrapper')?.remove();
+      // Krypton may leave orphan overlays/backdrops in the body
+      html.document.querySelectorAll('.kr-popin-modal-overlay, .kr-popin-modal, .kr-smart-form-modal-overlay, .kr-embedded')
+          .forEach((el) => el.remove());
+    } catch (_) {}
   }
 
   /// JavaScript code that uses the KR API to show the payment pop-in.

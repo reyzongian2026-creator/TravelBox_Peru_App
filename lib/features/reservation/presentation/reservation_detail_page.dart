@@ -488,8 +488,8 @@ class ReservationDetailPage extends ConsumerWidget {
       try {
         overlay = CriticalOperationOverlay.show(
           context,
-          message: 'Procesando cancelación y reembolso...',
-          submessage: 'Esto puede tardar unos segundos',
+          message: 'Procesando reembolso...',
+          submessage: 'No cierres esta ventana, esto puede tardar unos segundos',
         );
 
         await paymentRepo.confirmCancellation(
@@ -540,15 +540,34 @@ class ReservationDetailPage extends ConsumerWidget {
     ref.invalidate(adminReservationsProvider);
     ref.invalidate(adminReservationListProvider);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          requiresRefund
-              ? context.l10n.t('reservation_refund_cancel_success')
-              : context.l10n.t('reservation_cancel_success'),
+
+    if (requiresRefund) {
+      // Show prominent success dialog for refunds
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
+          title: const Text('Reembolso procesado'),
+          content: const Text(
+            'Tu deposito ha sido reembolsado y tu reserva ha sido cancelada exitosamente.\n\n'
+            'El reembolso puede tardar unos minutos en reflejarse en tu cuenta.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Entendido'),
+            ),
+          ],
         ),
-      ),
-    );
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.t('reservation_cancel_success')),
+        ),
+      );
+    }
   }
 }
 
