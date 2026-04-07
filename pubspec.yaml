@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   decimal: ^3.0.2
   dio: ^5.8.0+1
-  dio_smart_retry: ^6.0.0
+  dio_smart_retry: ^7.0.1
   file_picker: ^10.3.3
   flare_flutter:
     path: third_party/flare_flutter
