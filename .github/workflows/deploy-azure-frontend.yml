@@ -1,23 +1,31 @@
-name: Deploy to Azure (Frontend)
+name: Deploy Frontend to Azure Static Web Apps
 
 on:
   push:
     branches:
       - main
+    paths:
+      - "lib/**"
+      - "web/**"
+      - "assets/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/deploy-azure-frontend.yml"
   workflow_dispatch:
 
 env:
   AZURE_SUBSCRIPTION: "33815caa-4cfb-4a9e-b60a-8fee5caa2b08"
-  STATIC_WEB_APP_NAME: "travelbox-frontend"
+  KEY_VAULT_NAME: "kvtravelboxpe"
+  API_BASE_URL: "https://api.inkavoy.pe/api/v1"
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  build-and-deploy:
+  deploy-frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -27,7 +35,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.41.5'
+          flutter-version: "3.41.5"
           cache: true
 
       - name: Login Azure
@@ -35,14 +43,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS_JSON }}
 
-      - name: Load secrets from Key Vault
+      - name: Load frontend secrets from Key Vault
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $vault = "kvtravelboxpe"
+          az account set --subscription "${{ env.AZURE_SUBSCRIPTION }}"
+          $vault = "${{ env.KEY_VAULT_NAME }}"
           $map = @(
-            @{ secret = "tbx-azure-client-id"; env = "AZURE_CLIENT_ID"; required = $false },
-            @{ secret = "tbx-azure-tenant-id"; env = "AZURE_TENANT_ID"; required = $false },
+            @{ secret = "tbx-azure-client-id"; env = "AZURE_CLIENT_ID"; required = $true },
+            @{ secret = "tbx-azure-tenant-id"; env = "AZURE_TENANT_ID"; required = $true },
             @{ secret = "tbx-azure-maps-api-key"; env = "AZURE_MAPS_API_KEY"; required = $false }
           )
 
@@ -61,21 +70,22 @@ jobs:
         run: flutter pub get
 
       - name: Build Flutter web
+        shell: bash
         run: |
-          flutter build web --release \
+          flutter build web --release --no-wasm-dry-run \
             --dart-define=APP_ENV=prod \
             --dart-define=USE_MOCK_FALLBACK=false \
-            --dart-define=API_BASE_URL=https://api.inkavoy.pe/api/v1 \
-            --dart-define=AZURE_MAPS_API_KEY=${{ env.AZURE_MAPS_API_KEY }} \
-            --dart-define=AZURE_CLIENT_ID=${{ env.AZURE_CLIENT_ID }} \
-            --dart-define=AZURE_TENANT_ID=${{ env.AZURE_TENANT_ID }}
+            --dart-define=API_BASE_URL=${API_BASE_URL} \
+            --dart-define=AZURE_MAPS_API_KEY=${AZURE_MAPS_API_KEY:-} \
+            --dart-define=AZURE_CLIENT_ID=${AZURE_CLIENT_ID} \
+            --dart-define=AZURE_TENANT_ID=${AZURE_TENANT_ID}
 
       - name: Deploy to Azure Static Web Apps
-        id: deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/build/web"
-          output_location: "/"
+          skip_app_build: true
+          app_location: "build/web"
+          output_location: ""
