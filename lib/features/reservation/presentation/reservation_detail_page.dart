@@ -553,7 +553,7 @@ class ReservationDetailPage extends ConsumerWidget {
         );
         return;
       }
-      if (overlay != null) CriticalOperationOverlay.dismiss(overlay);
+      CriticalOperationOverlay.dismiss(overlay);
     } else {
       // No refund needed — simple cancel via existing repository
       final reason = context.l10n.t('reservation_timeline_cancel_requested_app');

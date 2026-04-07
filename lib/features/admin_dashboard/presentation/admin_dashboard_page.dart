@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
+import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../shared/state/currency_preference.dart';
 import '../../../shared/utils/peru_time.dart';
@@ -54,7 +55,7 @@ class AdminDashboardPage extends ConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ref.read(adminDashboardNotifierProvider.notifier).refresh();
           });
-          return const LoadingStateView();
+          return const _DashboardShimmerPlaceholder();
         },
         error: (error, _) => ErrorStateView(
           message: '${context.l10n.t('dashboard_load_failed')}: $error',
@@ -782,4 +783,45 @@ String _formattedDate(dynamic value) {
     return '-';
   }
   return PeruTime.formatDateTime(parsed);
+}
+
+/// Shimmer placeholder shown while the dashboard data is loading.
+/// Mimics the real layout: a row of 3 stat summary cards on top,
+/// followed by 3 stacked section cards below.
+class _DashboardShimmerPlaceholder extends StatelessWidget {
+  const _DashboardShimmerPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Stat summary row (3 cards) ──
+          Row(
+            children: List.generate(3, (i) {
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: i == 0 ? 0 : 8,
+                    right: i == 2 ? 0 : 8,
+                  ),
+                  child: const ShimmerCardPlaceholder(height: 100),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Stacked section cards (3) ──
+          const ShimmerCardPlaceholder(height: 140),
+          const SizedBox(height: 16),
+          const ShimmerCardPlaceholder(height: 140),
+          const SizedBox(height: 16),
+          const ShimmerCardPlaceholder(height: 140),
+        ],
+      ),
+    );
+  }
 }

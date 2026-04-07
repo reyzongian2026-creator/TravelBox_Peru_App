@@ -18,6 +18,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/critical_operation_overlay.dart';
+import '../../../shared/widgets/payment_onboarding_guide.dart';
 import '../../../shared/widgets/payment_celebration_overlay.dart';
 import '../../payments/data/izipay_checkout_service.dart';
 import '../../payments/data/payment_repository.dart';
@@ -43,7 +44,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   bool processing = false;
   bool _submitting = false; // synchronous guard against double-tap
-  bool _paymentJustConfirmed = false; // set when payment is confirmed, used to trigger celebration
+  bool _paymentJustConfirmed =
+      false; // set when payment is confirmed, used to trigger celebration
   String? _emailError;
   int? _selectedSavedCardId;
   String paymentMethod = AppEnv.forceCashPaymentsOnly
@@ -72,7 +74,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       final paymentRepo = ref.read(paymentRepositoryProvider);
       final balance = await paymentRepo.getWalletBalance();
       if (mounted) setState(() => _walletBalance = balance);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[CheckoutPage] Error loading wallet balance: $e');
+    }
   }
 
   @override
@@ -123,415 +127,494 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
           child: ListView(
-        padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 24),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    draft.warehouse.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _CheckoutInfoRow(
-                    icon: Icons.schedule_outlined,
-                    label: _reservationWindowLabel(context),
-                    value: _formatReservationWindow(context, draft),
-                  ),
-                  const SizedBox(height: 10),
-                  _CheckoutInfoRow(
-                    icon: Icons.luggage_outlined,
-                    label: _reservationSummaryLabel(context),
-                    value:
-                        '${draft.bagCount} ${context.l10n.t('bultos')} - ${context.l10n.t('main_size')} ${draft.size}',
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+            padding: responsive.pageInsets(
+              top: responsive.verticalPadding,
+              bottom: 24,
+            ),
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _SummaryChip(
-                        label:
-                            '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                      Text(
+                        draft.warehouse.name,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      _SummaryChip(
-                        label:
-                            '${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                      const SizedBox(height: 12),
+                      _CheckoutInfoRow(
+                        icon: Icons.schedule_outlined,
+                        label: _reservationWindowLabel(context),
+                        value: _formatReservationWindow(context, draft),
                       ),
-                      _SummaryChip(
-                        label:
-                            '${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
+                      const SizedBox(height: 10),
+                      _CheckoutInfoRow(
+                        icon: Icons.luggage_outlined,
+                        label: _reservationSummaryLabel(context),
+                        value:
+                            '${draft.bagCount} ${context.l10n.t('bultos')} - ${context.l10n.t('main_size')} ${draft.size}',
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.t('checkout_choose_method'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    context.l10n.t('checkout_choose_method_subtitle'),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).hintColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (forceCashOnly)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.payments_outlined),
-                      title: Text(context.l10n.t('cash_only')),
-                      subtitle: Text(
-                        context.l10n.t('checkout_digital_payments_disabled'),
-                      ),
-                    )
-                  else ...[
-                    Text(
-                      context.l10n.t('checkout_digital_section'),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).hintColor,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 3.0,
-                      children: [
-                        _PaymentGridCard(
-                          icon: Icons.credit_card,
-                          label: context.l10n.t('checkout_method_card_label'),
-                          sublabel: context.l10n.t('checkout_method_card_sublabel'),
-                          selected: selectedPaymentMethod == PaymentConstants.methodCard,
-                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCard; _selectedDigitalSubmethod = 'card'; }),
-                        ),
-                        _PaymentGridCard(
-                          icon: Icons.qr_code_2,
-                          label: 'Yape',
-                          sublabel: context.l10n.t('checkout_method_yape_sublabel'),
-                          selected: _selectedDigitalSubmethod == 'yape',
-                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodYape; _selectedDigitalSubmethod = 'yape'; }),
-                        ),
-                        _PaymentGridCard(
-                          icon: Icons.phone_android,
-                          label: 'Plin',
-                          sublabel: context.l10n.t('checkout_method_plin_sublabel'),
-                          selected: _selectedDigitalSubmethod == 'plin',
-                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodPlin; _selectedDigitalSubmethod = 'plin'; }),
-                        ),
-                        _PaymentGridCard(
-                          icon: Icons.qr_code,
-                          label: 'QR',
-                          sublabel: context.l10n.t('checkout_method_qr_sublabel'),
-                          selected: _selectedDigitalSubmethod == 'qr',
-                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodWallet; _selectedDigitalSubmethod = 'qr'; }),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      context.l10n.t('checkout_onsite_section'),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).hintColor,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 3.0,
-                      children: [
-                        _PaymentGridCard(
-                          icon: Icons.storefront_outlined,
-                          label: context.l10n.t('checkout_method_counter_label'),
-                          sublabel: context.l10n.t('checkout_method_counter_sublabel'),
-                          selected: selectedPaymentMethod == PaymentConstants.methodCounter,
-                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCounter; _selectedDigitalSubmethod = null; }),
-                        ),
-                        _PaymentGridCard(
-                          icon: Icons.payments_outlined,
-                          label: context.l10n.t('checkout_method_cash_label'),
-                          sublabel: context.l10n.t('checkout_method_cash_sublabel'),
-                          selected: selectedPaymentMethod == PaymentConstants.methodCash,
-                          onTap: () => setState(() { paymentMethod = PaymentConstants.methodCash; _selectedDigitalSubmethod = null; }),
-                        ),
-                      ],
-                    ),
-                  ],
-                  if (!forceCashOnly &&
-                      !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _customerEmailController,
-                      keyboardType: TextInputType.emailAddress,
-                      onChanged: (value) {
-                        final trimmed = value.trim();
-                        setState(() {
-                          if (trimmed.isEmpty) {
-                            _emailError = null;
-                          } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$').hasMatch(trimmed)) {
-                            _emailError = context.l10n.t('invalid_email');
-                          } else {
-                            _emailError = null;
-                          }
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: _customerEmailLabel(context),
-                        hintText: _customerEmailHint(context),
-                        helperText: _emailError == null ? _checkoutEmailHelper(context) : null,
-                        errorText: _emailError,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _customerPhoneController,
-                      decoration: InputDecoration(
-                        labelText: context.l10n.t('phone_number_label'),
-                        hintText: context.l10n.t('phone_hint'),
-                        prefixIcon: const Icon(Icons.phone),
-                        border: const OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return context.l10n.t('phone_required');
-                        }
-                        final phone = value.replaceAll(RegExp(r'[^\d+]'), '');
-                        if (!RegExp(r'^\+?51\d{9}$').hasMatch(phone)) {
-                          return context.l10n.t('phone_invalid');
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        _normalizedPhone = value?.replaceAll(RegExp(r'[^\d+]'), '');
-                      },
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.t('final_total'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _totalBreakdownCaption(context),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).hintColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _CheckoutAmountRow(
-                    label: context.l10n.t('checkout_breakdown_storage'),
-                    value: _formatMoney(draft.storageSubtotal(), draft),
-                  ),
-                  if (draft.pickupCost() > 0)
-                    _CheckoutAmountRow(
-                      label: context.l10n.t('checkout_breakdown_pickup'),
-                      value: _formatMoney(draft.pickupCost(), draft),
-                    ),
-                  if (draft.dropoffCost() > 0)
-                    _CheckoutAmountRow(
-                      label: context.l10n.t('checkout_breakdown_dropoff'),
-                      value: _formatMoney(draft.dropoffCost(), draft),
-                    ),
-                  if (draft.insuranceCost() > 0)
-                    _CheckoutAmountRow(
-                      label: context.l10n.t('checkout_breakdown_insurance'),
-                      value: _formatMoney(draft.insuranceCost(), draft),
-                    ),
-                  const Divider(height: 24),
-                  if (_promoResult != null && _promoResult!.valid && _promoResult!.calculatedDiscount != null)
-                    _CheckoutAmountRow(
-                      label: context.l10n.t('promo_discount'),
-                      value: '- ${_formatMoney(_promoResult!.calculatedDiscount!, draft)}',
-                      emphasize: false,
-                    ),
-                  if (_useWallet && _walletBalance > 0)
-                    _CheckoutAmountRow(
-                      label: context.l10n.t('wallet_credit'),
-                      value: '- ${_formatMoney(_walletBalance.clamp(0, _effectiveTotal(draft)), draft)}',
-                      emphasize: false,
-                    ),
-                  _CheckoutAmountRow(
-                    label: context.l10n.t('final_total'),
-                    value: _formatMoney(
-                      _computeFinalTotal(draft),
-                      draft,
-                    ),
-                    emphasize: true,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // ── Promo code input ──────────────────────────────
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    context.l10n.t('promo_code_title'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _promoCodeController,
-                          textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(
-                            hintText: context.l10n.t('promo_code_hint'),
-                            border: const OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                          enabled: _appliedPromoCode == null,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (_appliedPromoCode == null)
-                        FilledButton(
-                          onPressed: _promoLoading ? null : () => _validatePromoCode(draft.estimatePrice()),
-                          child: _promoLoading
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                              : Text(context.l10n.t('promo_apply')),
-                        )
-                      else
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _promoResult = null;
-                              _appliedPromoCode = null;
-                              _promoCodeController.clear();
-                            });
-                          },
-                          child: Text(context.l10n.t('promo_remove')),
-                        ),
-                    ],
-                  ),
-                  if (_promoResult != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _promoResult!.message ?? '',
-                      style: TextStyle(
-                        color: _promoResult!.valid ? Colors.green.shade700 : Theme.of(context).colorScheme.error,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Wallet credit toggle ──────────────────────────
-          if (_walletBalance > 0)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          Text(
-                            context.l10n.t('wallet_credit'),
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          _SummaryChip(
+                            label:
+                                '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'S/ ${_walletBalance.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.green.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          _SummaryChip(
+                            label:
+                                '${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                          ),
+                          _SummaryChip(
+                            label:
+                                '${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
                           ),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.t('checkout_choose_method'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        context.l10n.t('checkout_choose_method_subtitle'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).hintColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (forceCashOnly)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.payments_outlined),
+                          title: Text(context.l10n.t('cash_only')),
+                          subtitle: Text(
+                            context.l10n.t(
+                              'checkout_digital_payments_disabled',
+                            ),
+                          ),
+                        )
+                      else ...[
+                        Text(
+                          context.l10n.t('checkout_digital_section'),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(context).hintColor,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 3.0,
+                          children: [
+                            _PaymentGridCard(
+                              icon: Icons.credit_card,
+                              label: context.l10n.t(
+                                'checkout_method_card_label',
+                              ),
+                              sublabel: context.l10n.t(
+                                'checkout_method_card_sublabel',
+                              ),
+                              selected:
+                                  selectedPaymentMethod ==
+                                  PaymentConstants.methodCard,
+                              onTap: () => setState(() {
+                                paymentMethod = PaymentConstants.methodCard;
+                                _selectedDigitalSubmethod = 'card';
+                              }),
+                            ),
+                            _PaymentGridCard(
+                              icon: Icons.qr_code_2,
+                              label: 'Yape',
+                              sublabel: context.l10n.t(
+                                'checkout_method_yape_sublabel',
+                              ),
+                              selected: _selectedDigitalSubmethod == 'yape',
+                              onTap: () => setState(() {
+                                paymentMethod = PaymentConstants.methodYape;
+                                _selectedDigitalSubmethod = 'yape';
+                              }),
+                            ),
+                            _PaymentGridCard(
+                              icon: Icons.phone_android,
+                              label: 'Plin',
+                              sublabel: context.l10n.t(
+                                'checkout_method_plin_sublabel',
+                              ),
+                              selected: _selectedDigitalSubmethod == 'plin',
+                              onTap: () => setState(() {
+                                paymentMethod = PaymentConstants.methodPlin;
+                                _selectedDigitalSubmethod = 'plin';
+                              }),
+                            ),
+                            _PaymentGridCard(
+                              icon: Icons.qr_code,
+                              label: 'QR',
+                              sublabel: context.l10n.t(
+                                'checkout_method_qr_sublabel',
+                              ),
+                              selected: _selectedDigitalSubmethod == 'qr',
+                              onTap: () => setState(() {
+                                paymentMethod = PaymentConstants.methodWallet;
+                                _selectedDigitalSubmethod = 'qr';
+                              }),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          context.l10n.t('checkout_onsite_section'),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(context).hintColor,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 3.0,
+                          children: [
+                            _PaymentGridCard(
+                              icon: Icons.storefront_outlined,
+                              label: context.l10n.t(
+                                'checkout_method_counter_label',
+                              ),
+                              sublabel: context.l10n.t(
+                                'checkout_method_counter_sublabel',
+                              ),
+                              selected:
+                                  selectedPaymentMethod ==
+                                  PaymentConstants.methodCounter,
+                              onTap: () => setState(() {
+                                paymentMethod = PaymentConstants.methodCounter;
+                                _selectedDigitalSubmethod = null;
+                              }),
+                            ),
+                            _PaymentGridCard(
+                              icon: Icons.payments_outlined,
+                              label: context.l10n.t(
+                                'checkout_method_cash_label',
+                              ),
+                              sublabel: context.l10n.t(
+                                'checkout_method_cash_sublabel',
+                              ),
+                              selected:
+                                  selectedPaymentMethod ==
+                                  PaymentConstants.methodCash,
+                              onTap: () => setState(() {
+                                paymentMethod = PaymentConstants.methodCash;
+                                _selectedDigitalSubmethod = null;
+                              }),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (!forceCashOnly &&
+                          !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: _customerEmailController,
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (value) {
+                            final trimmed = value.trim();
+                            setState(() {
+                              if (trimmed.isEmpty) {
+                                _emailError = null;
+                              } else if (!RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$',
+                              ).hasMatch(trimmed)) {
+                                _emailError = context.l10n.t('invalid_email');
+                              } else {
+                                _emailError = null;
+                              }
+                            });
+                          },
+                          decoration: InputDecoration(
+                            labelText: _customerEmailLabel(context),
+                            hintText: _customerEmailHint(context),
+                            helperText: _emailError == null
+                                ? _checkoutEmailHelper(context)
+                                : null,
+                            errorText: _emailError,
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _customerPhoneController,
+                          decoration: InputDecoration(
+                            labelText: context.l10n.t('phone_number_label'),
+                            hintText: context.l10n.t('phone_hint'),
+                            prefixIcon: const Icon(Icons.phone),
+                            border: const OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return context.l10n.t('phone_required');
+                            }
+                            final phone = value.replaceAll(
+                              RegExp(r'[^\d+]'),
+                              '',
+                            );
+                            if (!RegExp(r'^\+?51\d{9}$').hasMatch(phone)) {
+                              return context.l10n.t('phone_invalid');
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _normalizedPhone = value?.replaceAll(
+                              RegExp(r'[^\d+]'),
+                              '',
+                            );
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.t('final_total'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _totalBreakdownCaption(context),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).hintColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _CheckoutAmountRow(
+                        label: context.l10n.t('checkout_breakdown_storage'),
+                        value: _formatMoney(draft.storageSubtotal(), draft),
+                      ),
+                      if (draft.pickupCost() > 0)
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('checkout_breakdown_pickup'),
+                          value: _formatMoney(draft.pickupCost(), draft),
+                        ),
+                      if (draft.dropoffCost() > 0)
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('checkout_breakdown_dropoff'),
+                          value: _formatMoney(draft.dropoffCost(), draft),
+                        ),
+                      if (draft.insuranceCost() > 0)
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('checkout_breakdown_insurance'),
+                          value: _formatMoney(draft.insuranceCost(), draft),
+                        ),
+                      const Divider(height: 24),
+                      if (_promoResult != null &&
+                          _promoResult!.valid &&
+                          _promoResult!.calculatedDiscount != null)
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('promo_discount'),
+                          value:
+                              '- ${_formatMoney(_promoResult!.calculatedDiscount!, draft)}',
+                          emphasize: false,
+                        ),
+                      if (_useWallet && _walletBalance > 0)
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('wallet_credit'),
+                          value:
+                              '- ${_formatMoney(_walletBalance.clamp(0, _effectiveTotal(draft)), draft)}',
+                          emphasize: false,
+                        ),
+                      _CheckoutAmountRow(
+                        label: context.l10n.t('final_total'),
+                        value: _formatMoney(_computeFinalTotal(draft), draft),
+                        emphasize: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // ── Promo code input ──────────────────────────────
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.t('promo_code_title'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _promoCodeController,
+                              textCapitalization: TextCapitalization.characters,
+                              decoration: InputDecoration(
+                                hintText: context.l10n.t('promo_code_hint'),
+                                border: const OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              enabled: _appliedPromoCode == null,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (_appliedPromoCode == null)
+                            FilledButton(
+                              onPressed: _promoLoading
+                                  ? null
+                                  : () => _validatePromoCode(
+                                      draft.estimatePrice(),
+                                    ),
+                              child: _promoLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(context.l10n.t('promo_apply')),
+                            )
+                          else
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _promoResult = null;
+                                  _appliedPromoCode = null;
+                                  _promoCodeController.clear();
+                                });
+                              },
+                              child: Text(context.l10n.t('promo_remove')),
+                            ),
+                        ],
+                      ),
+                      if (_promoResult != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _promoResult!.message ?? '',
+                          style: TextStyle(
+                            color: _promoResult!.valid
+                                ? Colors.green.shade700
+                                : Theme.of(context).colorScheme.error,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Wallet credit toggle ──────────────────────────
+              if (_walletBalance > 0)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.l10n.t('wallet_credit'),
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'S/ ${_walletBalance.toStringAsFixed(2)}',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Colors.green.shade700,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _useWallet,
+                          onChanged: (v) => setState(() => _useWallet = v),
+                        ),
+                      ],
                     ),
-                    Switch(
-                      value: _useWallet,
-                      onChanged: (v) => setState(() => _useWallet = v),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              if (!forceCashOnly &&
+                  !_isOfflinePaymentMethod(selectedPaymentMethod))
+                Card(
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.info_outline,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                  ],
+                    title: Text(_paymentHelp(context, selectedPaymentMethod)),
+                  ),
                 ),
-              ),
-            ),
-          const SizedBox(height: 12),
-          if (!forceCashOnly && !_isOfflinePaymentMethod(selectedPaymentMethod))
-            Card(
-              child: ListTile(
-                leading: Icon(
-                  Icons.info_outline,
-                  color: Theme.of(context).colorScheme.primary,
+              if (!forceCashOnly &&
+                  !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
+                const SizedBox(height: 12),
+                PaymentOnboardingGuide(method: selectedPaymentMethod),
+              ],
+              if (selectedPaymentMethod == PaymentConstants.methodCounter ||
+                  selectedPaymentMethod == PaymentConstants.methodCash)
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: Text(context.l10n.t('counter_validation')),
+                    subtitle: Text(
+                      context.l10n.t(
+                        'checkout_pending_offline_approval_notice',
+                      ),
+                    ),
+                  ),
                 ),
-                title: Text(_paymentHelp(context, selectedPaymentMethod)),
-              ),
-            ),
-          if (selectedPaymentMethod == PaymentConstants.methodCounter ||
-              selectedPaymentMethod == PaymentConstants.methodCash)
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: Text(context.l10n.t('counter_validation')),
-                subtitle: Text(
-                  context.l10n.t('checkout_pending_offline_approval_notice'),
-                ),
-              ),
-            ),
-          const SizedBox(height: 80), // space for bottom button
-        ],
+              const SizedBox(height: 80), // space for bottom button
+            ],
           ),
         ),
       ),
@@ -552,11 +635,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             onPressed: processing
                 ? null
                 : () => _handleConfirmPayment(
-                      user: user!,
-                      draft: draft,
-                      selectedPaymentMethod: selectedPaymentMethod,
-                      forceCashOnly: forceCashOnly,
-                    ),
+                    user: user!,
+                    draft: draft,
+                    selectedPaymentMethod: selectedPaymentMethod,
+                    forceCashOnly: forceCashOnly,
+                  ),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 52),
             ),
@@ -564,8 +647,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
               processing
                   ? context.l10n.t('checkout_processing')
                   : _isOfflinePaymentMethod(selectedPaymentMethod)
-                      ? context.l10n.t('checkout_confirm_payment')
-                      : context.l10n.t('checkout_continue_purchase'),
+                  ? context.l10n.t('checkout_confirm_payment')
+                  : context.l10n.t('checkout_continue_purchase'),
             ),
           ),
         ),
@@ -575,7 +658,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   double _effectiveTotal(dynamic draft) {
     double total = draft.estimatePrice();
-    if (_promoResult != null && _promoResult!.valid && _promoResult!.calculatedDiscount != null) {
+    if (_promoResult != null &&
+        _promoResult!.valid &&
+        _promoResult!.calculatedDiscount != null) {
       total -= _promoResult!.calculatedDiscount!;
     }
     return total.clamp(0, double.infinity);
@@ -595,16 +680,23 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     setState(() => _promoLoading = true);
     try {
       final paymentRepo = ref.read(paymentRepositoryProvider);
-      final result = await paymentRepo.validatePromoCode(code: code, amount: orderAmount);
+      final result = await paymentRepo.validatePromoCode(
+        code: code,
+        amount: orderAmount,
+      );
       setState(() {
         _promoResult = result;
         if (result.valid) {
           _appliedPromoCode = code;
         }
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[CheckoutPage] Error validating promo code: $e');
       setState(() {
-        _promoResult = PromoCodeResult(valid: false, message: context.l10n.t('checkout_promo_error'));
+        _promoResult = PromoCodeResult(
+          valid: false,
+          message: context.l10n.t('checkout_promo_error'),
+        );
       });
     } finally {
       setState(() => _promoLoading = false);
@@ -619,21 +711,27 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   }) async {
     if (_submitting) return;
     _submitting = true;
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final l10n = context.l10n;
 
     // Generate idempotency key to prevent duplicate payments
-    final idempotencyKey = '${DateTime.now().millisecondsSinceEpoch}-${math.Random().nextInt(999999).toString().padLeft(6, '0')}';
+    final idempotencyKey =
+        '${DateTime.now().millisecondsSinceEpoch}-${math.Random().nextInt(999999).toString().padLeft(6, '0')}';
     debugPrint('[Checkout] idempotency=$idempotencyKey');
 
     // Normalize phone early so onSaved fires
-    _normalizedPhone ??= _customerPhoneController.text.replaceAll(RegExp(r'[^\d+]'), '');
+    _normalizedPhone ??= _customerPhoneController.text.replaceAll(
+      RegExp(r'[^\d+]'),
+      '',
+    );
 
     // Block submission if email field has validation error
     final email = _customerEmailController.text.trim();
-    if (email.isNotEmpty && !RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
       _submitting = false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('invalid_email'))),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.t('invalid_email'))));
       return;
     }
 
@@ -647,13 +745,13 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         PaymentConstants.methodPlin,
         PaymentConstants.methodWallet,
       }.contains(selectedPaymentMethod);
-      if (context.mounted) {
+      if (mounted) {
         overlay = CriticalOperationOverlay.show(
           context,
           message: isManualTransfer
-              ? context.l10n.t('checkout_overlay_generating_qr')
-              : context.l10n.t('checkout_overlay_processing_payment'),
-          submessage: context.l10n.t('checkout_overlay_submessage'),
+              ? l10n.t('checkout_overlay_generating_qr')
+              : l10n.t('checkout_overlay_processing_payment'),
+          submessage: l10n.t('checkout_overlay_submessage'),
         );
       }
 
@@ -685,37 +783,30 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       ref.invalidate(myReservationsProvider);
       ref.invalidate(adminReservationsProvider);
       ref.invalidate(adminReservationListProvider);
-      ref.invalidate(
-        reservationByIdProvider(reservation.id.toString()),
-      );
+      ref.invalidate(reservationByIdProvider(reservation.id.toString()));
       ref.read(reservationDraftProvider.notifier).state = null;
 
-      if (!context.mounted) return;
-      if (_paymentJustConfirmed || (checkoutMessage != null && checkoutMessage.contains('verified'))) {
+      if (!mounted) return;
+      if (_paymentJustConfirmed ||
+          (checkoutMessage != null && checkoutMessage.contains('verified'))) {
         PaymentCelebration.show(context);
         await Future.delayed(const Duration(milliseconds: 500));
         _paymentJustConfirmed = false;
-        if (!context.mounted) return;
+        if (!mounted) return;
       }
       if (checkoutMessage != null && checkoutMessage.isNotEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(checkoutMessage)));
+        messenger.showSnackBar(SnackBar(content: Text(checkoutMessage)));
       }
-      if (!context.mounted) return;
-      context.go(
-        '/reservation/${reservation.id.toString()}?back=home',
-      );
+      if (!mounted) return;
+      router.go('/reservation/${reservation.id.toString()}?back=home');
     } catch (error) {
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       if (_isPreconditionError(error)) {
         final redirectRoute = _preconditionRedirectRoute(error);
         if (redirectRoute != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_errorMessage(error))),
-          );
-          context.go(redirectRoute);
+          messenger.showSnackBar(SnackBar(content: Text(_errorMessage(error))));
+          router.go(redirectRoute);
           return;
         }
       }
@@ -725,13 +816,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           ref.invalidate(myReservationsProvider);
           ref.invalidate(adminReservationsProvider);
           ref.invalidate(adminReservationListProvider);
-          ref.invalidate(
-            reservationByIdProvider(reservation.id.toString()),
-          );
+          ref.invalidate(reservationByIdProvider(reservation.id.toString()));
           ref.read(reservationDraftProvider.notifier).state = null;
-          context.go(
-            '/reservation/${reservation.id.toString()}?back=home',
-          );
+          router.go('/reservation/${reservation.id.toString()}?back=home');
           return;
         }
       }
@@ -741,29 +828,23 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         ref.invalidate(myReservationsProvider);
         ref.invalidate(adminReservationsProvider);
         ref.invalidate(adminReservationListProvider);
-        ref.invalidate(
-          reservationByIdProvider(reservation.id.toString()),
-        );
+        ref.invalidate(reservationByIdProvider(reservation.id.toString()));
         ref.read(reservationDraftProvider.notifier).state = null;
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text(
-              '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
-              '$message',
+              '${l10n.t('checkout_payment_process_failed_prefix')}: $message',
             ),
           ),
         );
-        context.go(
-          '/reservation/${reservation.id.toString()}?back=home',
-        );
+        router.go('/reservation/${reservation.id.toString()}?back=home');
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
-            '${context.l10n.t('checkout_payment_process_failed_prefix')}: '
-            '$message',
+            '${l10n.t('checkout_payment_process_failed_prefix')}: $message',
           ),
         ),
       );
@@ -784,6 +865,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     required bool forceCashOnly,
     VoidCallback? onBeforeManualTransferDialog,
   }) async {
+    final l10n = context.l10n;
     if (forceCashOnly || _isOfflinePaymentMethod(paymentMethod)) {
       return null;
     }
@@ -821,7 +903,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     );
     final paymentIntentId = int.tryParse(intent.id);
 
-    final customerPhone = _normalizedPhone ?? _customerPhoneController.text.replaceAll(RegExp(r'[^\d+]'), '');
+    final customerPhone =
+        _normalizedPhone ??
+        _customerPhoneController.text.replaceAll(RegExp(r'[^\d+]'), '');
     final confirmation = await _confirmPaymentWithRetry(
       paymentRepo: paymentRepo,
       paymentIntentId: paymentIntentId,
@@ -851,9 +935,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       );
       if (confirmed == true) {
         _paymentJustConfirmed = true;
-        return context.l10n.t('checkout_payment_verified');
+        return l10n.t('checkout_payment_verified');
       }
-      return context.l10n.t('checkout_payment_being_verified');
+      return l10n.t('checkout_payment_being_verified');
     }
 
     if (confirmation.requiresIzipayCheckout) {
@@ -924,10 +1008,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     }
     if (status.isFailed) {
       throw StateError(
-        _checkoutFailureMessage(
-          confirmation.message,
-          status.paymentStatus,
-        ),
+        _checkoutFailureMessage(confirmation.message, status.paymentStatus),
       );
     }
     return _defaultPendingPaymentMessage();
@@ -943,6 +1024,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     String? customerPhone,
     int maxAttempts = 3,
   }) async {
+    final l10n = context.l10n;
     int attempts = 0;
     Duration backoff = const Duration(seconds: 1);
 
@@ -959,7 +1041,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         if (e.response?.statusCode == 429) {
           attempts++;
           if (attempts >= maxAttempts) {
-            throw StateError(context.l10n.t('rate_limit_exceeded'));
+            throw StateError(l10n.t('rate_limit_exceeded'));
           }
           await Future.delayed(backoff);
           backoff = Duration(seconds: backoff.inSeconds * 2);
@@ -1011,8 +1093,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     final qrUrl = rawQrUrl.startsWith('http')
         ? rawQrUrl
         : rawQrUrl.isNotEmpty
-            ? Uri.parse(AppEnv.resolvedApiBaseUrl).resolve(rawQrUrl).toString()
-            : '';
+        ? Uri.parse(AppEnv.resolvedApiBaseUrl).resolve(rawQrUrl).toString()
+        : '';
     final amount = action['amount']?.toString() ?? '';
     final currency = action['currency']?.toString() ?? 'PEN';
 
@@ -1464,7 +1546,9 @@ class _PaymentGridCard extends StatelessWidget {
               Icon(
                 icon,
                 size: 22,
-                color: selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant,
+                color: selected
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1476,7 +1560,9 @@ class _PaymentGridCard extends StatelessWidget {
                       label,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
+                        color: selected
+                            ? scheme.onPrimaryContainer
+                            : scheme.onSurface,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1484,7 +1570,9 @@ class _PaymentGridCard extends StatelessWidget {
                     Text(
                       sublabel,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: selected ? scheme.onPrimaryContainer.withValues(alpha: 0.7) : scheme.onSurfaceVariant,
+                        color: selected
+                            ? scheme.onPrimaryContainer.withValues(alpha: 0.7)
+                            : scheme.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1520,10 +1608,7 @@ class _TransferStep extends StatelessWidget {
           width: 24,
           height: 24,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: brandColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: brandColor, shape: BoxShape.circle),
           child: Text(
             number,
             style: const TextStyle(
@@ -1539,7 +1624,9 @@ class _TransferStep extends StatelessWidget {
             padding: const EdgeInsets.only(top: 3),
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.3),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.3),
             ),
           ),
         ),
@@ -1554,12 +1641,13 @@ class _TransferStep extends StatelessWidget {
 
 enum _TransferPhase { showQr, validating, success, pending }
 
-typedef _WaitForStatus = Future<PaymentStatusResult> Function({
-  required int? paymentIntentId,
-  required int reservationId,
-  int attempts,
-  int intervalSeconds,
-});
+typedef _WaitForStatus =
+    Future<PaymentStatusResult> Function({
+      required int? paymentIntentId,
+      required int reservationId,
+      int attempts,
+      int intervalSeconds,
+    });
 
 class _ManualTransferDialog extends StatefulWidget {
   const _ManualTransferDialog({
@@ -1619,7 +1707,8 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
       } else {
         setState(() => _phase = _TransferPhase.pending);
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[CheckoutPage] Error during manual transfer validation: $e');
       if (mounted) setState(() => _phase = _TransferPhase.pending);
     }
   }
@@ -1643,7 +1732,9 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
               decoration: BoxDecoration(
                 color: widget.brandColor,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
               ),
               child: Column(
                 children: [
@@ -1658,7 +1749,10 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
                   ),
                   const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -1681,29 +1775,29 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
               duration: const Duration(milliseconds: 300),
               child: switch (_phase) {
                 _TransferPhase.showQr => _QrPhaseBody(
-                    key: const ValueKey('qr'),
-                    widget: widget,
-                    theme: theme,
-                    l10n: l10n,
-                    onTransferred: _onTransferred,
-                  ),
+                  key: const ValueKey('qr'),
+                  widget: widget,
+                  theme: theme,
+                  l10n: l10n,
+                  onTransferred: _onTransferred,
+                ),
                 _TransferPhase.validating => _ValidatingPhaseBody(
-                    key: const ValueKey('validating'),
-                    theme: theme,
-                    l10n: l10n,
-                    brandName: widget.brandName,
-                  ),
+                  key: const ValueKey('validating'),
+                  theme: theme,
+                  l10n: l10n,
+                  brandName: widget.brandName,
+                ),
                 _TransferPhase.success => _SuccessPhaseBody(
-                    key: const ValueKey('success'),
-                    theme: theme,
-                    l10n: l10n,
-                  ),
+                  key: const ValueKey('success'),
+                  theme: theme,
+                  l10n: l10n,
+                ),
                 _TransferPhase.pending => _PendingPhaseBody(
-                    key: const ValueKey('pending'),
-                    theme: theme,
-                    l10n: l10n,
-                    onClose: () => Navigator.of(context).pop(false),
-                  ),
+                  key: const ValueKey('pending'),
+                  theme: theme,
+                  l10n: l10n,
+                  onClose: () => Navigator.of(context).pop(false),
+                ),
               },
             ),
           ],
@@ -1765,40 +1859,69 @@ class _QrPhaseBody extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: widget.brandLight,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: widget.brandColor.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: widget.brandColor.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Column(
                       children: [
                         if (widget.recipientName.isNotEmpty) ...[
-                          Row(children: [
-                            Icon(Icons.person_outline, size: 18, color: widget.brandColor),
-                            const SizedBox(width: 8),
-                            Text(l10n.t('checkout_recipient'),
-                                style: theme.textTheme.labelSmall?.copyWith(color: widget.brandColor)),
-                          ]),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 18,
+                                color: widget.brandColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                l10n.t('checkout_recipient'),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: widget.brandColor,
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 2),
                           Align(
                             alignment: Alignment.centerLeft,
-                            child: Text(widget.recipientName,
-                                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                            child: Text(
+                              widget.recipientName,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
-                        if (widget.recipientName.isNotEmpty && widget.phone.isNotEmpty)
+                        if (widget.recipientName.isNotEmpty &&
+                            widget.phone.isNotEmpty)
                           const SizedBox(height: 10),
                         if (widget.phone.isNotEmpty) ...[
-                          Row(children: [
-                            Icon(Icons.phone_outlined, size: 18, color: widget.brandColor),
-                            const SizedBox(width: 8),
-                            Text(l10n.t('checkout_phone_number'),
-                                style: theme.textTheme.labelSmall?.copyWith(color: widget.brandColor)),
-                          ]),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.phone_outlined,
+                                size: 18,
+                                color: widget.brandColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                l10n.t('checkout_phone_number'),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: widget.brandColor,
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 2),
                           Align(
                             alignment: Alignment.centerLeft,
                             child: SelectableText(
                               widget.phone,
-                              style: theme.textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.2,
+                              ),
                             ),
                           ),
                         ],
@@ -1812,7 +1935,9 @@ class _QrPhaseBody extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5FAFC),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1855,9 +1980,10 @@ class _QrPhaseBody extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4))
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                       border: Border.all(color: Colors.grey.shade200),
                     ),
@@ -1868,15 +1994,22 @@ class _QrPhaseBody extends StatelessWidget {
                         width: 200,
                         height: 200,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => SizedBox(
+                        errorBuilder: (_, error, stackTrace) => SizedBox(
                           width: 200,
                           height: 200,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey.shade400),
+                              Icon(
+                                Icons.broken_image_outlined,
+                                size: 48,
+                                color: Colors.grey.shade400,
+                              ),
                               const SizedBox(height: 8),
-                              Text(l10n.t('checkout_qr_load_failed'), style: theme.textTheme.bodySmall),
+                              Text(
+                                l10n.t('checkout_qr_load_failed'),
+                                style: theme.textTheme.bodySmall,
+                              ),
                             ],
                           ),
                         ),
@@ -1895,20 +2028,31 @@ class _QrPhaseBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l10n.t('checkout_transfer_steps_title'),
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                      Text(
+                        l10n.t('checkout_transfer_steps_title'),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const SizedBox(height: 12),
-                      _TransferStep(number: '1', text: widget.stepVerb, brandColor: widget.brandColor),
+                      _TransferStep(
+                        number: '1',
+                        text: widget.stepVerb,
+                        brandColor: widget.brandColor,
+                      ),
                       const SizedBox(height: 8),
                       _TransferStep(
-                          number: '2',
-                          text: '${l10n.t('checkout_transfer_step2')} ${widget.currency} ${widget.amount}',
-                          brandColor: widget.brandColor),
+                        number: '2',
+                        text:
+                            '${l10n.t('checkout_transfer_step2')} ${widget.currency} ${widget.amount}',
+                        brandColor: widget.brandColor,
+                      ),
                       const SizedBox(height: 8),
                       _TransferStep(
-                          number: '3',
-                          text: l10n.t('checkout_transfer_step3'),
-                          brandColor: widget.brandColor),
+                        number: '3',
+                        text: l10n.t('checkout_transfer_step3'),
+                        brandColor: widget.brandColor,
+                      ),
                     ],
                   ),
                 ),
@@ -1923,13 +2067,19 @@ class _QrPhaseBody extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.schedule, color: Colors.amber.shade800, size: 20),
+                      Icon(
+                        Icons.schedule,
+                        color: Colors.amber.shade800,
+                        size: 20,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           l10n.t('checkout_transfer_notice'),
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: Colors.amber.shade900, height: 1.4),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.amber.shade900,
+                            height: 1.4,
+                          ),
                         ),
                       ),
                     ],
@@ -1949,10 +2099,17 @@ class _QrPhaseBody extends StatelessWidget {
               onPressed: onTransferred,
               style: FilledButton.styleFrom(
                 backgroundColor: widget.brandColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: Text(l10n.t('checkout_transfer_done'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(
+                l10n.t('checkout_transfer_done'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ),
@@ -1988,7 +2145,9 @@ class _ValidatingPhaseBody extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             '${l10n.t('checkout_validating_transfer')} $brandName...',
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -2068,12 +2227,17 @@ class _PendingPhaseBody extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.hourglass_empty_outlined,
-              size: 56, color: theme.colorScheme.onSurfaceVariant),
+          Icon(
+            Icons.hourglass_empty_outlined,
+            size: 56,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(height: 20),
           Text(
             l10n.t('checkout_transfer_pending_title'),
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),

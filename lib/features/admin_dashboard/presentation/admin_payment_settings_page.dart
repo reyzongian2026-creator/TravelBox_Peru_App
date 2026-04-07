@@ -286,7 +286,8 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(qrUrl, width: 200, height: 200, fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Text('No se pudo cargar la imagen')),
+                    errorBuilder: (_, error, stackTrace) =>
+                        const Text('No se pudo cargar la imagen')),
                 ),
               )
             else

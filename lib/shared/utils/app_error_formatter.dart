@@ -20,21 +20,31 @@ class AppErrorFormatter {
     );
   }
 
-  static String readable(Object error, String Function(String key, {Map<String, dynamic>? params}) translator) {
+  static String readable(
+    Object error,
+    String Function(String key, {Map<String, dynamic>? params}) translator,
+  ) {
+    final firebaseInitMessage = _firebaseInitializationMessage(error);
+    if (firebaseInitMessage != null) {
+      return firebaseInitMessage;
+    }
     final appError = getError(error);
-    var translated = translator(appError.translationKey, params: appError.params);
-    
+    var translated = translator(
+      appError.translationKey,
+      params: appError.params,
+    );
+
     // Handle parameter substitution (e.g., {seconds} -> 60)
     if (appError.params.isNotEmpty) {
       appError.params.forEach((key, value) {
         translated = translated.replaceAll('{$key}', value.toString());
       });
     }
-    
+
     if (appError.hasBackendMessage) {
       return '$translated: ${appError.backendMessage}';
     }
-    
+
     return translated;
   }
 
@@ -50,13 +60,18 @@ class AppErrorFormatter {
     final payload = _normalizeErrorData(data);
     final extractedMessage = payload?['message']?.toString().trim();
     final extractedDetails = _extractDetails(payload);
-    final joinedMessage = _joinMessageWithDetails(extractedMessage, extractedDetails);
+    final joinedMessage = _joinMessageWithDetails(
+      extractedMessage,
+      extractedDetails,
+    );
 
     if (statusCode == 429) {
       final retryAfter = _extractRetryAfterSeconds(error.response?.headers);
       return AppError(
         AppErrorCode.errorRateLimit,
-        params: retryAfter != null && retryAfter > 0 ? {'seconds': retryAfter} : {},
+        params: retryAfter != null && retryAfter > 0
+            ? {'seconds': retryAfter}
+            : {},
       );
     }
 
@@ -85,16 +100,10 @@ class AppErrorFormatter {
       );
     }
     if (statusCode == 409) {
-      return AppError(
-        AppErrorCode.errorGeneric,
-        backendMessage: joinedMessage,
-      );
+      return AppError(AppErrorCode.errorGeneric, backendMessage: joinedMessage);
     }
     if (statusCode == 428) {
-      return AppError(
-        AppErrorCode.errorGeneric,
-        backendMessage: joinedMessage,
-      );
+      return AppError(AppErrorCode.errorGeneric, backendMessage: joinedMessage);
     }
     if (statusCode != null && statusCode >= 500) {
       return AppError(
@@ -103,26 +112,41 @@ class AppErrorFormatter {
       );
     }
 
-    return AppError(
-      AppErrorCode.errorGeneric,
-      backendMessage: joinedMessage,
-    );
+    return AppError(AppErrorCode.errorGeneric, backendMessage: joinedMessage);
   }
 
-  static String translateError(Object error, String Function(String key, {Map<String, dynamic>? params}) translator) {
+  static String translateError(
+    Object error,
+    String Function(String key, {Map<String, dynamic>? params}) translator,
+  ) {
+    final firebaseInitMessage = _firebaseInitializationMessage(error);
+    if (firebaseInitMessage != null) {
+      return firebaseInitMessage;
+    }
     final appError = getError(error);
-    
+
     if (appError.hasBackendMessage) {
-      final translated = translator(appError.translationKey, params: appError.params);
+      final translated = translator(
+        appError.translationKey,
+        params: appError.params,
+      );
       return '$translated: ${appError.backendMessage}';
     }
-    
+
     return translator(appError.translationKey, params: appError.params);
   }
 
   static String getErrorKey(Object error) {
     final appError = getError(error);
     return appError.translationKey;
+  }
+
+  static String? _firebaseInitializationMessage(Object error) {
+    final raw = error.toString();
+    if (!raw.contains('[core/no-app]')) {
+      return null;
+    }
+    return 'Firebase no se inicializo en esta app. Revisa las variables FIREBASE_* y vuelve a ejecutar el build.';
   }
 
   static Map<String, dynamic>? _normalizeErrorData(dynamic rawData) {

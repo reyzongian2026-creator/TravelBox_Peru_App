@@ -1,5 +1,3 @@
-import 'dart:math' show cos, sin;
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/layout/responsive_layout.dart';
@@ -110,10 +108,10 @@ class AuthCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF151A30) : Colors.white,
+        color: isDark ? TravelBoxBrand.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(AuthUi.cardRadius),
         border: Border.all(
-          color: isDark ? const Color(0xFF2B3550) : const Color(0xFFE0E7F1),
+          color: isDark ? TravelBoxBrand.darkCardBorder : const Color(0xFFE0E7F1),
         ),
         boxShadow: [
           BoxShadow(
@@ -301,12 +299,12 @@ class AuthSplitScaffold extends StatelessWidget {
                         return Container(
                           decoration: BoxDecoration(
                             color: isDark
-                                ? const Color(0xFF11182D)
+                                ? TravelBoxBrand.darkPanelSurface
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(32),
                             border: Border.all(
                               color: isDark
-                                  ? const Color(0xFF2B3550)
+                                  ? TravelBoxBrand.darkCardBorder
                                   : const Color(0xFFE0E7F1),
                             ),
                             boxShadow: [
@@ -349,7 +347,7 @@ class AuthSplitScaffold extends StatelessWidget {
                               VerticalDivider(
                                 width: 1,
                                 color: isDark
-                                    ? const Color(0xFF2B3550)
+                                    ? TravelBoxBrand.darkCardBorder
                                     : const Color(0xFFE8EDF5),
                               ),
                               Expanded(

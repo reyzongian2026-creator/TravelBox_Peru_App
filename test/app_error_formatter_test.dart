@@ -2,6 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travelbox_peru_app/shared/utils/app_error_formatter.dart';
 
+String _translate(String key, {Map<String, dynamic>? params}) {
+  switch (key) {
+    case 'error_rate_limit':
+      return 'Demasiados intentos. Espera {seconds}s e intenta nuevamente.';
+    case 'error_generic':
+      return 'Ocurrio un error inesperado';
+    default:
+      return key;
+  }
+}
+
 void main() {
   test('formats 429 errors using Retry-After header', () {
     final requestOptions = RequestOptions(path: '/api/v1/auth/login');
@@ -23,7 +34,7 @@ void main() {
     );
 
     expect(
-      AppErrorFormatter.readable(error, (key, {params}) => key),
+      AppErrorFormatter.readable(error, _translate),
       'Demasiados intentos. Espera 45s e intenta nuevamente.',
     );
   });
@@ -34,7 +45,7 @@ void main() {
     );
 
     expect(
-      AppErrorFormatter.readable(error, (key, {params}) => key),
+      AppErrorFormatter.readable(error, _translate),
       'Firebase no se inicializo en esta app. Revisa las variables FIREBASE_* y vuelve a ejecutar el build.',
     );
   });

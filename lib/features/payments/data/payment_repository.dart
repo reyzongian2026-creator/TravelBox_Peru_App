@@ -434,13 +434,16 @@ class PaymentRepositoryImpl implements PaymentRepository {
     String? reservationId,
   }) async {
     try {
+      final queryParameters = <String, dynamic>{
+        'page': page,
+        'size': size,
+      };
+      if (reservationId != null) {
+        queryParameters['reservationId'] = reservationId;
+      }
       final response = await _dio.get<Map<String, dynamic>>(
         '/payments/history',
-        queryParameters: {
-          'page': page,
-          'size': size,
-          if (reservationId != null) 'reservationId': reservationId,
-        },
+        queryParameters: queryParameters,
       );
 
       final data = response.data;
@@ -513,11 +516,13 @@ class PaymentRepositoryImpl implements PaymentRepository {
     String? notes,
   }) async {
     try {
+      final payload = <String, dynamic>{};
+      if (notes != null) {
+        payload['notes'] = notes;
+      }
       await _dio.post<void>(
         '/payments/cash/$paymentIntentId/approve',
-        data: {
-          if (notes != null) 'notes': notes,
-        },
+        data: payload,
       );
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
@@ -645,11 +650,13 @@ class PaymentRepositoryImpl implements PaymentRepository {
     String? reason,
   }) async {
     try {
+      final payload = <String, dynamic>{};
+      if (reason != null) {
+        payload['reason'] = reason;
+      }
       final response = await _dio.post<Map<String, dynamic>>(
         '/payments/cancellation-confirm/$reservationId',
-        data: {
-          if (reason != null) 'reason': reason,
-        },
+        data: payload,
       );
       if (response.statusCode == 204 || response.data == null) {
         return null;

@@ -118,8 +118,12 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                   .read(notificationCenterControllerProvider.notifier)
                   .markSeen(item.id);
               final route = item.route;
-              if (route != null && route.isNotEmpty) {
-                context.push(route);
+              if (route != null && route.isNotEmpty && route.startsWith('/')) {
+                try {
+                  context.push(route);
+                } catch (e) {
+                  debugPrint('[Notifications] Navigation failed for route: $route -- $e');
+                }
               }
             },
             onDelete: () => _deleteNotification(item),

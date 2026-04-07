@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -77,7 +76,6 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
   StreamSubscription? _subscription;
   Timer? _reconnectTimer;
   Timer? _heartbeatTimer;
-  String? _accessToken;
   bool _manuallyDisconnected = false;
   final List<void Function(WebSocketEvent)> _eventListeners = [];
   int _reconnectAttempts = 0;
@@ -113,7 +111,6 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
       return;
     }
 
-    _accessToken = token;
     _manuallyDisconnected = false;
     await _establishConnection();
   }

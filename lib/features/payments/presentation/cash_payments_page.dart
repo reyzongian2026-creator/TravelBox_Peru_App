@@ -263,23 +263,31 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
                           spacing: 8,
                           runSpacing: 8,
                           children: [
-                            FilledButton.tonal(
-                              onPressed: _processing
-                                  ? null
-                                  : () => _decide(
-                                      paymentIntentId: payment.paymentIntentId,
-                                      approve: true,
-                                    ),
-                              child: Text(context.l10n.t('aprobar')),
+                            Semantics(
+                              label: 'Aprobar pago',
+                              button: true,
+                              child: FilledButton.tonal(
+                                onPressed: _processing
+                                    ? null
+                                    : () => _decide(
+                                        paymentIntentId: payment.paymentIntentId,
+                                        approve: true,
+                                      ),
+                                child: Text(context.l10n.t('aprobar')),
+                              ),
                             ),
-                            OutlinedButton(
-                              onPressed: _processing
-                                  ? null
-                                  : () => _decide(
-                                      paymentIntentId: payment.paymentIntentId,
-                                      approve: false,
-                                    ),
-                              child: Text(context.l10n.t('rechazar')),
+                            Semantics(
+                              label: 'Rechazar pago',
+                              button: true,
+                              child: OutlinedButton(
+                                onPressed: _processing
+                                    ? null
+                                    : () => _decide(
+                                        paymentIntentId: payment.paymentIntentId,
+                                        approve: false,
+                                      ),
+                                child: Text(context.l10n.t('rechazar')),
+                              ),
                             ),
                           ],
                         ),

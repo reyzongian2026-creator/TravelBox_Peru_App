@@ -96,7 +96,8 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                       child: ListView.separated(
                         padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 24),
                         itemCount: _favorites!.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        separatorBuilder: (_, index) =>
+                            const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final fav = _favorites![index];
                           return Card(

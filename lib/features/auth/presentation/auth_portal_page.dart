@@ -430,13 +430,6 @@ class _AuthPanel extends StatelessWidget {
       desktopSmall: 32,
       desktop: 34,
     );
-    final accessTitleSize = responsive.adaptiveFont(
-      mobileSmall: 15,
-      mobile: 16,
-      tablet: 17,
-      desktopSmall: 18,
-      desktop: 18,
-    );
     final headlineColor = isDark ? const Color(0xFFF6ECDE) : TravelBoxBrand.ink;
     final descriptionColor = isDark
         ? Colors.white.withValues(alpha: 0.72)

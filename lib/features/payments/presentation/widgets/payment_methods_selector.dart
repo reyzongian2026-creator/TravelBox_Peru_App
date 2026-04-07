@@ -118,7 +118,7 @@ class _PaymentMethodsSelectorState extends State<PaymentMethodsSelector> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _methods.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final method = _methods[index];
             final isSelected = _selectedMethod == method.type;

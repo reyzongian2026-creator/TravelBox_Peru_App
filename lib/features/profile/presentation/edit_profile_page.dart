@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/env/app_env.dart';
+import '../../../core/theme/brand_tokens.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../shared/models/app_user.dart';
 import '../../../shared/state/session_controller.dart';
@@ -147,7 +148,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           padding: const EdgeInsets.all(16),
           children: [
             Card(
-              color: const Color(0xFFF6F1E8),
+              color: TravelBoxBrand.adminCardBg,
               child: ListTile(
                 leading: const Icon(Icons.admin_panel_settings_outlined),
                 title: Text(context.l10n.t('edicion_bloqueada')),
@@ -191,7 +192,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             const SizedBox(height: 12),
             if (_requiresSensitiveReauth && _requiresLocalPasswordReauth)
               Card(
-                color: const Color(0xFFFFF7E8),
+                color: TravelBoxBrand.sensitiveCardBg,
                 child: ListTile(
                   leading: Icon(Icons.lock_outline),
                   title: Text(context.l10n.t('cambio_sensible_detectado')),

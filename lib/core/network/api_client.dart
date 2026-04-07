@@ -22,6 +22,7 @@ final dioProvider = Provider<Dio>((ref) {
       baseUrl: AppEnv.resolvedApiBaseUrl,
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 45),
+      sendTimeout: const Duration(seconds: 30),
       headers: {'Content-Type': 'application/json'},
     ),
   );
@@ -90,6 +91,7 @@ final dioProvider = Provider<Dio>((ref) {
                     baseUrl: AppEnv.resolvedApiBaseUrl,
                     connectTimeout: const Duration(seconds: 20),
                     receiveTimeout: const Duration(seconds: 45),
+                    sendTimeout: const Duration(seconds: 10),
                     headers: {'Content-Type': 'application/json'},
                   ),
                 );
@@ -196,7 +198,9 @@ void _reportNetworkError(DioException error) {
         requestBody = data.toString();
       }
     }
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('[ApiClient] Error reading request body: $e');
+  }
 
   service.reportNetworkError(
     endpoint,

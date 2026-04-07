@@ -87,4 +87,21 @@ class TravelBoxBrand {
     end: Alignment.bottomCenter,
     colors: [Color(0x14FFFFFF), Color(0x00FFFFFF)],
   );
+
+  // ── Dark mode surface tokens ──
+  static const darkCardSurface = Color(0xFF151A30);
+  static const darkCardBorder = Color(0xFF2B3550);
+  static const darkPanelSurface = Color(0xFF11182D);
+  static const darkPanelBorder = Color(0xFF25304D);
+
+  // ── Discovery/map page tokens ──
+  static const discoveryControlSurface = Color(0xFF1B1718);
+  static const discoveryControlBorder = Color(0xFF4A3934);
+
+  // ── Light accent text tokens ──
+  static const headlineLight = Color(0xFFF6ECDE);
+
+  // ── Profile/admin card tokens ──
+  static const adminCardBg = Color(0xFFF6F1E8);
+  static const sensitiveCardBg = Color(0xFFFFF7E8);
 }

@@ -2,17 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:travelbox_peru_app/core/l10n/app_localizations.dart';
+import 'package:travelbox_peru_app/core/l10n/app_localizations_fixed.dart';
 import 'package:travelbox_peru_app/features/auth/presentation/auth_portal_page.dart';
-
-Finder textContainsAny(List<String> snippets) {
-  final normalized = snippets.map((s) => s.toLowerCase()).toList();
-  return find.byWidgetPredicate((widget) {
-    if (widget is! Text) return false;
-    final data = (widget.data ?? '').toLowerCase();
-    return normalized.any(data.contains);
-  });
-}
 
 void main() {
   testWidgets('Auth portal page loads and displays form elements', (

@@ -16,8 +16,6 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
   static const _scriptElementId = 'travelbox-kr-sdk';
   static const _cssElementId = 'travelbox-kr-css';
   static const _themeElementId = 'travelbox-kr-theme';
-  static const _containerId = 'kr-payment-container';
-
   @override
   Future<IzipayCheckoutOutcome> openCheckout(IzipayCheckoutRequest request) async {
     // 1. Load the Krypton script + theme CSS/JS

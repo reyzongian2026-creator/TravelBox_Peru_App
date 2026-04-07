@@ -66,7 +66,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       desktop: 38,
     );
     final headlineColor = isDark
-        ? const Color(0xFFF6ECDE)
+        ? TravelBoxBrand.headlineLight
         : TravelBoxBrand.ink;
     final descriptionColor = isDark
         ? Colors.white.withValues(alpha: 0.72)

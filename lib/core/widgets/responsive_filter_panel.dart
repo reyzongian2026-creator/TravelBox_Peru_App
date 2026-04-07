@@ -24,10 +24,10 @@ class ResponsiveFilterPanel extends StatelessWidget {
             responsive.isMobile ? responsive.cardPadding : responsive.cardPadding + 2,
           ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11182D) : Colors.white,
+        color: isDark ? TravelBoxBrand.darkPanelSurface : Colors.white,
         borderRadius: BorderRadius.circular(responsive.isMobile ? 24 : 28),
         border: Border.all(
-          color: isDark ? const Color(0xFF25304D) : TravelBoxBrand.border,
+          color: isDark ? TravelBoxBrand.darkPanelBorder : TravelBoxBrand.border,
         ),
       ),
       child: child,
