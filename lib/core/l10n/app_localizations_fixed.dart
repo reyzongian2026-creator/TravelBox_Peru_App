@@ -2169,7 +2169,7 @@ class AppLocalizations {
       'validation_password_match': 'Passwords do not match.',
       'validation_required': 'This field is required.',
       'verify_email_description':
-          'Enter the verification code sent to your email. In mock mode it is also shown for local tests.',
+          'Enter the verification code sent to your email.',
       'verify_email_resend_failed_prefix': 'Could not resend',
       'verifying': 'Verificando...',
       'warehouse_deactivation_confirmation':

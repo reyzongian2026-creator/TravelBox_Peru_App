@@ -155,9 +155,25 @@ void _showSessionExpiredSnackBar() {
   final messenger = rootScaffoldMessengerKey.currentState;
   if (messenger == null) return;
   messenger.showSnackBar(
-    const SnackBar(
-      content: Text('Tu sesión ha expirado. Inicia sesión nuevamente.'),
-      duration: Duration(seconds: 4),
+    SnackBar(
+      content: const Row(
+        children: [
+          Icon(Icons.logout, color: Colors.white, size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
+            ),
+          ),
+        ],
+      ),
+      duration: const Duration(seconds: 5),
+      behavior: SnackBarBehavior.floating,
+      action: SnackBarAction(
+        label: 'OK',
+        textColor: Colors.white,
+        onPressed: () => messenger.hideCurrentSnackBar(),
+      ),
     ),
   );
 }

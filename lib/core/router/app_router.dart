@@ -396,6 +396,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/admin/system',
             builder: (context, state) => const AdminShellPage(),
           ),
+          GoRoute(
+            path: '/admin/payment-settings',
+            builder: (context, state) => const AdminShellPage(),
+          ),
         ],
       ),
       GoRoute(

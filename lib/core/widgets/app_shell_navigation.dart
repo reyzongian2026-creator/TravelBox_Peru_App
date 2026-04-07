@@ -116,6 +116,11 @@ List<ShellNavSection> buildShellSections(
             route: '/admin/system',
           ),
           ShellNavItem(
+            label: 'Pagos Manuales',
+            icon: Icons.qr_code_2,
+            route: '/admin/payment-settings',
+          ),
+          ShellNavItem(
             label: l10n.t('profile'),
             icon: Icons.person_outline_rounded,
             route: '/profile',

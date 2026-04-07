@@ -20,6 +20,38 @@ class TravelBoxBrand {
   static const darkSidebar = Color(0xFF151A30);
   static const darkBackground = Color(0xFF101426);
 
+  // ── Payment method colors ──
+  static const yape = Color(0xFF6B2D8B);
+  static const plin = Color(0xFF00BFA5);
+  static const cardPayment = Color(0xFF1565C0);
+  static const cashPayment = Color(0xFF2E7D32);
+  static const counterPayment = Color(0xFF5D4037);
+  static const qrPayment = Color(0xFF0277BD);
+
+  // ── Status colors ──
+  static const statusSuccess = Color(0xFF168F64);
+  static const statusError = Color(0xFFC43D3D);
+  static const statusPending = Color(0xFF1F6E8C);
+  static const statusWarning = Color(0xFFF29F05);
+  static const statusExpired = Color(0xFF78909C);
+  static const statusActive = Color(0xFF2E7D32);
+
+  // ── Spacing scale (8dp grid) ──
+  static const double space4 = 4;
+  static const double space8 = 8;
+  static const double space12 = 12;
+  static const double space16 = 16;
+  static const double space20 = 20;
+  static const double space24 = 24;
+  static const double space32 = 32;
+  static const double space48 = 48;
+
+  // ── Border radii ──
+  static const double radiusS = 8;
+  static const double radiusM = 16;
+  static const double radiusL = 24;
+  static const double radiusXL = 28;
+
   static const authGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,

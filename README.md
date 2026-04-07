@@ -39,6 +39,32 @@ Frontend completo en Flutter para plataforma de almacenamiento turistico:
   - incidencias (admin/support/operator y cliente por reserva)
 - Limpieza i18n en guias operativas y formularios con textos sueltos.
 
+## Actualizacion 2026-04-07 (audit improvements)
+
+- **Brand tokens centralizados**: Colores de pago (yape, plin, card, cash, counter, QR) y status (success, error, pending, warning, expired, active) en `brand_tokens.dart`. Spacing scale y border radii.
+- **Shimmer loading**: Widget custom `ShimmerLoading` sin dependencia externa. Integrado en `LoadingStateView(useShimmer: true)`.
+- **Image caching**: `AppSmartImage` con `cacheHeight/cacheWidth` (2x display) para reducir memoria + `AnimatedOpacity` fadeIn 300ms.
+- **State views i18n + a11y**: Textos hardcoded reemplazados con claves i18n (`state_loading_subtitle`, `state_error_subtitle`, `state_empty_subtitle`). Semantics wrapper en progress indicator.
+- **Page transitions**: `FadeUpwardsPageTransitionsBuilder` (Android/Linux/Windows), `CupertinoPageTransitionsBuilder` (iOS/macOS).
+- **Colores centralizados**: `reservation.dart` y `admin_payment_settings_page.dart` usan `TravelBoxBrand.*` en vez de colores hardcoded.
+- **Admin payment settings**: Nueva pagina para gestionar metodos de pago (Yape, Plin, QR Universal).
+- **Checkout i18n**: 17+ strings del flujo checkout ahora traducibles.
+
+## Despliegue produccion (frontend)
+
+```powershell
+cd C:\Users\MiniOS\Documents\TravelBox_Peru_App
+flutter build web --release
+
+$token = az staticwebapp secrets list --resource-group travelbox-peru-rg `
+  --name travelbox-frontend --query "properties.apiKey" -o tsv
+swa deploy build/web --deployment-token $token --env production
+```
+
+- URL produccion: `https://www.inkavoy.pe`
+- API base URL (prod): `https://api.inkavoy.pe/api/v1`
+- Framework: Azure Static Web App
+
 ## Stack
 - Flutter 3.41.4 (via Puro)
 - Riverpod

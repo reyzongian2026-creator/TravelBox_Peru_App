@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/app_localizations_fixed.dart';
 import 'admin_dashboard_page.dart';
+import 'admin_payment_settings_page.dart';
 import 'admin_ratings_page.dart';
 import 'system_admin_page.dart';
 import '../../admin_incidents/presentation/admin_incidents_page.dart';
@@ -56,6 +57,9 @@ class AdminShellPage extends StatelessWidget {
     }
     if (currentPath.startsWith('/admin/system')) {
       return SystemAdminPage();
+    }
+    if (currentPath.startsWith('/admin/payment-settings')) {
+      return const AdminPaymentSettingsPage();
     }
     return const AdminDashboardPage();
   }

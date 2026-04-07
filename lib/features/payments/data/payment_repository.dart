@@ -148,6 +148,10 @@ class PaymentIntentResult {
       paymentFlow == 'OPEN_IZIPAY_CHECKOUT' &&
       nextAction?['type'] == 'OPEN_IZIPAY_CHECKOUT';
 
+  bool get requiresManualTransfer =>
+      paymentFlow == 'WAITING_MANUAL_TRANSFER' &&
+      nextAction?['type'] == 'SHOW_TRANSFER_QR';
+
   bool get isConfirmed =>
       status == 'CONFIRMED' || paymentFlow == 'DIRECT_CHARGE' || paymentFlow == 'DIRECT_CONFIRMATION';
 

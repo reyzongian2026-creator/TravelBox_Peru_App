@@ -177,27 +177,86 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
                   );
                 }
                 final payment = rows[index];
+                final Color methodColor;
+                final IconData methodIcon;
+                final String methodLabel;
+                if (payment.paymentMethod == 'yape') {
+                  methodColor = const Color(0xFF6B2D8B);
+                  methodIcon = Icons.qr_code_2;
+                  methodLabel = 'Yape';
+                } else if (payment.paymentMethod == 'plin') {
+                  methodColor = const Color(0xFF00BFA5);
+                  methodIcon = Icons.phone_android;
+                  methodLabel = 'Plin';
+                } else if (payment.paymentMethod == 'wallet') {
+                  methodColor = const Color(0xFF1565C0);
+                  methodIcon = Icons.qr_code;
+                  methodLabel = 'QR Universal';
+                } else {
+                  methodColor = Colors.grey.shade700;
+                  methodIcon = Icons.payments_outlined;
+                  methodLabel = payment.paymentMethod.toUpperCase();
+                }
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${context.l10n.t('operator_attempt')} #${payment.paymentIntentId} - '
-                          '${context.l10n.t('operator_reservation')} #${payment.reservationId}',
-                          style: Theme.of(context).textTheme.titleSmall,
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: methodColor.withAlpha(25),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(methodIcon, color: methodColor, size: 20),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${context.l10n.t('operator_attempt')} #${payment.paymentIntentId} - '
+                                    '${context.l10n.t('operator_reservation')} #${payment.reservationId}',
+                                    style: Theme.of(context).textTheme.titleSmall,
+                                  ),
+                                  Text(
+                                    '${payment.userName} (${payment.userEmail})',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text('${payment.userName} (${payment.userEmail})'),
+                        const SizedBox(height: 8),
                         Text(
-                          '${context.l10n.t('amount')}: S/${payment.amount.toStringAsFixed(2)} - '
-                          '${context.l10n.t('reservation_method')}: ${payment.paymentMethod}',
+                          '${context.l10n.t('amount')}: S/${payment.amount.toStringAsFixed(2)} — '
+                          '$methodLabel',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         Text(
                           '${context.l10n.t('schedule')}: ${payment.startAt} -> ${payment.endAt}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
+                        if (payment.gatewayMessage.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              payment.gatewayMessage,
+                              style: TextStyle(fontSize: 12, color: Colors.blue.shade900),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 10),
                         Wrap(
                           spacing: 8,
@@ -298,6 +357,8 @@ class CashPendingPayment {
     required this.userEmail,
     required this.amount,
     required this.paymentMethod,
+    this.gatewayStatus = '',
+    this.gatewayMessage = '',
     required this.startAt,
     required this.endAt,
   });
@@ -308,8 +369,12 @@ class CashPendingPayment {
   final String userEmail;
   final double amount;
   final String paymentMethod;
+  final String gatewayStatus;
+  final String gatewayMessage;
   final DateTime startAt;
   final DateTime endAt;
+
+  bool get isManualTransfer => paymentMethod == 'yape' || paymentMethod == 'plin' || paymentMethod == 'wallet';
 
   factory CashPendingPayment.fromJson(Map<String, dynamic> json) {
     return CashPendingPayment(
@@ -319,6 +384,8 @@ class CashPendingPayment {
       userEmail: json['userEmail']?.toString() ?? '-',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       paymentMethod: json['paymentMethod']?.toString() ?? 'cash',
+      gatewayStatus: json['gatewayStatus']?.toString() ?? '',
+      gatewayMessage: json['gatewayMessage']?.toString() ?? '',
       startAt:
           DateTime.tryParse(json['reservationStartAt']?.toString() ?? '') ??
           DateTime.now(),
@@ -340,6 +407,8 @@ class CashPendingPayment {
       userEmail: userEmail,
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       paymentMethod: json['paymentMethod']?.toString() ?? 'cash',
+      gatewayStatus: json['gatewayStatus']?.toString() ?? '',
+      gatewayMessage: json['gatewayMessage']?.toString() ?? '',
       startAt: createdAt,
       endAt: createdAt,
     );

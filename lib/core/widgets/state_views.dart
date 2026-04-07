@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations_fixed.dart';
+import 'shimmer_loading.dart';
 
 class LoadingStateView extends StatelessWidget {
-  const LoadingStateView({super.key, this.message = 'Cargando...'});
+  const LoadingStateView({super.key, this.message = 'Cargando...', this.useShimmer = false});
 
   final String message;
+  final bool useShimmer;
 
   @override
   Widget build(BuildContext context) {
+    if (useShimmer) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: ShimmerListPlaceholder(itemCount: 4),
+      );
+    }
+
     final theme = Theme.of(context);
     return Center(
       child: ConstrainedBox(
@@ -33,12 +42,15 @@ class LoadingStateView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  height: 42,
-                  width: 42,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3.2,
-                    color: theme.colorScheme.primary,
+                Semantics(
+                  label: context.l10n.t('loading'),
+                  child: SizedBox(
+                    height: 42,
+                    width: 42,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3.2,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -52,7 +64,7 @@ class LoadingStateView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Estamos preparando tu vista.',
+                  context.l10n.t('state_loading_subtitle'),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -111,7 +123,7 @@ class ErrorStateView extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Revisa tu conexion o intentalo nuevamente.',
+                  context.l10n.t('state_error_subtitle'),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -187,7 +199,7 @@ class EmptyStateView extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Cuando haya contenido disponible, aparecera aqui.',
+                  context.l10n.t('state_empty_subtitle'),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,

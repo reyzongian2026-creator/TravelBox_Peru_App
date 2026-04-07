@@ -62,17 +62,30 @@ class AppSmartImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
+      cacheHeight: height != null ? (height! * 2).toInt() : null,
+      cacheWidth: width != null ? (width! * 2).toInt() : null,
       errorBuilder: (_, error, stackTrace) {
         return _fallbackWithDebug(resolvedUrl, error);
       },
       loadingBuilder: (context, child, progress) {
         if (progress == null) {
-          return child;
+          return AnimatedOpacity(
+            opacity: 1.0,
+            duration: const Duration(milliseconds: 300),
+            child: child,
+          );
         }
         return SizedBox(
           width: width,
           height: height,
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              value: progress.expectedTotalBytes != null
+                  ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                  : null,
+            ),
+          ),
         );
       },
     );

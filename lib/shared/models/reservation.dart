@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/brand_tokens.dart';
 import 'warehouse.dart';
 
 enum ReservationStatus {
@@ -74,21 +75,21 @@ extension ReservationStatusX on ReservationStatus {
   Color get color {
     switch (this) {
       case ReservationStatus.completed:
-        return const Color(0xFF168F64);
+        return TravelBoxBrand.statusSuccess;
       case ReservationStatus.cancelled:
       case ReservationStatus.incident:
-        return const Color(0xFFC43D3D);
+        return TravelBoxBrand.statusError;
       case ReservationStatus.expired:
-        return const Color(0xFF6B7280);
+        return TravelBoxBrand.statusExpired;
       case ReservationStatus.stored:
       case ReservationStatus.confirmed:
       case ReservationStatus.readyForPickup:
-        return const Color(0xFF1F6E8C);
+        return TravelBoxBrand.statusPending;
       case ReservationStatus.pendingPayment:
       case ReservationStatus.checkinPending:
       case ReservationStatus.outForDelivery:
       case ReservationStatus.draft:
-        return const Color(0xFFF29F05);
+        return TravelBoxBrand.statusWarning;
     }
   }
 }
