@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/layout/responsive_layout.dart';
+import '../../../core/theme/brand_tokens.dart';
 import '../../../core/constants/payment_constants.dart';
 import '../../../core/env/app_env.dart';
 import '../../../core/l10n/app_localizations_fixed.dart';
@@ -35,7 +37,9 @@ class CheckoutPage extends ConsumerStatefulWidget {
 class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   final _izipayCheckoutService = createIzipayCheckoutService();
   final _customerEmailController = TextEditingController();
+  final _customerPhoneController = TextEditingController();
   final _promoCodeController = TextEditingController();
+  String? _normalizedPhone;
 
   bool processing = false;
   bool _submitting = false; // synchronous guard against double-tap
@@ -74,6 +78,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   @override
   void dispose() {
     _customerEmailController.dispose();
+    _customerPhoneController.dispose();
     _promoCodeController.dispose();
     super.dispose();
   }
@@ -306,6 +311,30 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                         errorText: _emailError,
                         border: const OutlineInputBorder(),
                       ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      controller: _customerPhoneController,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.t('phone_number_label'),
+                        hintText: context.l10n.t('phone_hint'),
+                        prefixIcon: const Icon(Icons.phone),
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return context.l10n.t('phone_required');
+                        }
+                        final phone = value.replaceAll(RegExp(r'[^\d+]'), '');
+                        if (!RegExp(r'^\+?51\d{9}$').hasMatch(phone)) {
+                          return context.l10n.t('phone_invalid');
+                        }
+                        return null;
+                      },
+                      onSaved: (value) {
+                        _normalizedPhone = value?.replaceAll(RegExp(r'[^\d+]'), '');
+                      },
                     ),
                   ],
                 ],
@@ -591,6 +620,13 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     if (_submitting) return;
     _submitting = true;
 
+    // Generate idempotency key to prevent duplicate payments
+    final idempotencyKey = '${DateTime.now().millisecondsSinceEpoch}-${math.Random().nextInt(999999).toString().padLeft(6, '0')}';
+    debugPrint('[Checkout] idempotency=$idempotencyKey');
+
+    // Normalize phone early so onSaved fires
+    _normalizedPhone ??= _customerPhoneController.text.replaceAll(RegExp(r'[^\d+]'), '');
+
     // Block submission if email field has validation error
     final email = _customerEmailController.text.trim();
     if (email.isNotEmpty && !RegExp(r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
@@ -655,10 +691,11 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       ref.read(reservationDraftProvider.notifier).state = null;
 
       if (!context.mounted) return;
-      if (_paymentJustConfirmed) {
+      if (_paymentJustConfirmed || (checkoutMessage != null && checkoutMessage.contains('verified'))) {
         PaymentCelebration.show(context);
         await Future.delayed(const Duration(milliseconds: 500));
         _paymentJustConfirmed = false;
+        if (!context.mounted) return;
       }
       if (checkoutMessage != null && checkoutMessage.isNotEmpty) {
         ScaffoldMessenger.of(
@@ -784,13 +821,16 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     );
     final paymentIntentId = int.tryParse(intent.id);
 
-    final confirmation = await paymentRepo.confirmPayment(
+    final customerPhone = _normalizedPhone ?? _customerPhoneController.text.replaceAll(RegExp(r'[^\d+]'), '');
+    final confirmation = await _confirmPaymentWithRetry(
+      paymentRepo: paymentRepo,
       paymentIntentId: paymentIntentId,
       reservationId: parsedReservationId,
       paymentMethod: paymentMethod,
       customerEmail: _normalizedCustomerEmail(
         ref.read(sessionControllerProvider).user?.email,
       ),
+      customerPhone: customerPhone.isNotEmpty ? customerPhone : null,
     );
 
     if (confirmation.isConfirmed) {
@@ -891,6 +931,43 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       );
     }
     return _defaultPendingPaymentMessage();
+  }
+
+  /// Confirms payment with exponential backoff retry on rate limiting (HTTP 429).
+  Future<PaymentIntentResult> _confirmPaymentWithRetry({
+    required PaymentRepository paymentRepo,
+    int? paymentIntentId,
+    int? reservationId,
+    required String paymentMethod,
+    String? customerEmail,
+    String? customerPhone,
+    int maxAttempts = 3,
+  }) async {
+    int attempts = 0;
+    Duration backoff = const Duration(seconds: 1);
+
+    while (true) {
+      try {
+        return await paymentRepo.confirmPayment(
+          paymentIntentId: paymentIntentId,
+          reservationId: reservationId,
+          paymentMethod: paymentMethod,
+          customerEmail: customerEmail,
+          customerPhone: customerPhone,
+        );
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 429) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw StateError(context.l10n.t('rate_limit_exceeded'));
+          }
+          await Future.delayed(backoff);
+          backoff = Duration(seconds: backoff.inSeconds * 2);
+        } else {
+          rethrow;
+        }
+      }
+    }
   }
 
   Future<IzipayCheckoutOutcome> _openIzipayCheckout(
@@ -1652,6 +1729,24 @@ class _QrPhaseBody extends StatelessWidget {
   final AppLocalizations l10n;
   final VoidCallback onTransferred;
 
+  String _maskPhone(String? phone) {
+    if (phone == null || phone.length < 4) return '';
+    return '+51 **** *** ${phone.substring(math.max(0, phone.length - 2))}';
+  }
+
+  String _getMethodLabel(String method) {
+    switch (method.toLowerCase()) {
+      case 'yape':
+        return 'Yape';
+      case 'plin':
+        return 'Plin';
+      case 'qr':
+        return 'QR Wallet';
+      default:
+        return method;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -1710,6 +1805,47 @@ class _QrPhaseBody extends StatelessWidget {
                       ],
                     ),
                   ),
+                // ── Payment verification details ──
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.t('payment_details'),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _PaymentDataRow(
+                        label: l10n.t('amount'),
+                        value: '${widget.currency} ${widget.amount}',
+                        isHighlight: true,
+                      ),
+                      _PaymentDataRow(
+                        label: l10n.t('recipient'),
+                        value: widget.recipientName.isNotEmpty
+                            ? widget.recipientName
+                            : 'No disponible',
+                      ),
+                      _PaymentDataRow(
+                        label: l10n.t('phone'),
+                        value: _maskPhone(widget.phone),
+                      ),
+                      _PaymentDataRow(
+                        label: l10n.t('method'),
+                        value: _getMethodLabel(widget.brandName),
+                      ),
+                    ],
+                  ),
+                ),
                 if (widget.qrUrl.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   Container(
@@ -1844,20 +1980,31 @@ class _ValidatingPhaseBody extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const SizedBox(
+            width: 56,
+            height: 56,
+            child: CircularProgressIndicator(strokeWidth: 4),
+          ),
           const SizedBox(height: 24),
           Text(
-            '${l10n.t('checkout_validating_transfer')} $brandName…',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            '${l10n.t('checkout_validating_transfer')} $brandName...',
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             l10n.t('checkout_validating_transfer_subtitle'),
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            DateFormat('HH:mm:ss').format(DateTime.now()),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            ),
           ),
         ],
       ),
@@ -1944,6 +2091,40 @@ class _PendingPhaseBody extends StatelessWidget {
               onPressed: onClose,
               child: Text(l10n.t('checkout_view_reservation')),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentDataRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isHighlight;
+
+  const _PaymentDataRow({
+    required this.label,
+    required this.value,
+    this.isHighlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            value,
+            style: isHighlight
+                ? Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: TravelBoxBrand.primaryBlue,
+                  )
+                : Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
