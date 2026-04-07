@@ -20,7 +20,7 @@ dependencies:
     path: third_party/flare_flutter
   flutter_secure_storage: ^9.2.4
   flutter_map: ^8.2.2
-  google_maps_flutter: ^2.10.0
+  google_maps_flutter: ^2.17.0
   flutter_local_notifications: ^19.4.2
   flutter_riverpod: ^2.6.1
   geolocator: ^14.0.2
