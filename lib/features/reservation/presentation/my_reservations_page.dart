@@ -12,9 +12,14 @@ import '../../../shared/utils/status_localizer.dart';
 import 'reservation_providers.dart';
 
 class MyReservationsPage extends ConsumerStatefulWidget {
-  const MyReservationsPage({super.key, this.currentRoute = '/reservations'});
+  const MyReservationsPage({
+    super.key,
+    this.currentRoute = '/reservations',
+    this.trackingOnly = false,
+  });
 
   final String currentRoute;
+  final bool trackingOnly;
 
   @override
   ConsumerState<MyReservationsPage> createState() => _MyReservationsPageState();
@@ -29,16 +34,27 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
     final l10n = context.l10n;
     final syncState = ref.watch(myReservationsProvider);
     ref.watch(myReservationIdsSignatureProvider);
-    final reservationIds = ref.read(myReservationIdsProvider);
+    final allReservationIds = ref.read(myReservationIdsProvider);
+    final reservationIds = widget.trackingOnly
+        ? allReservationIds.where((reservationId) {
+            final reservation = ref.watch(
+              reservationInStoreByIdProvider(reservationId),
+            );
+            return reservation != null && _isTrackingCandidate(reservation);
+          }).toList()
+        : allReservationIds;
 
     final content = _buildBody(
       context,
       syncState: syncState,
       reservationIds: reservationIds,
+      hasAnyReservations: allReservationIds.isNotEmpty,
     );
 
     return AppShellScaffold(
-      title: l10n.t('my_reservations_title'),
+      title: l10n.t(
+        widget.trackingOnly ? 'tracking_logistico' : 'my_reservations_title',
+      ),
       currentRoute: widget.currentRoute,
       child: content,
     );
@@ -48,19 +64,27 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
     BuildContext context, {
     required AsyncValue<List<Reservation>> syncState,
     required List<String> reservationIds,
+    required bool hasAnyReservations,
   }) {
     final l10n = context.l10n;
     final responsive = context.responsive;
-    if (syncState.isLoading && reservationIds.isEmpty) {
+    if (syncState.isLoading && !hasAnyReservations) {
       return const LoadingStateView();
     }
-    if (syncState.hasError && reservationIds.isEmpty) {
+    if (syncState.hasError && !hasAnyReservations) {
       return ErrorStateView(
         message: '${l10n.t('my_reservations_load_failed')}: ${syncState.error}',
         onRetry: () => ref.invalidate(myReservationsProvider),
       );
     }
     if (reservationIds.isEmpty) {
+      if (widget.trackingOnly) {
+        return EmptyStateView(
+          message: l10n.t('tracking_no_disponible'),
+          actionLabel: l10n.t('go_my_reservations'),
+          onAction: () => context.go('/reservations'),
+        );
+      }
       return EmptyStateView(
         message: l10n.t('my_reservations_empty'),
         actionLabel: l10n.t('my_reservations_browse_warehouses'),
@@ -94,9 +118,15 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: responsive.pageInsets(top: responsive.verticalPadding, bottom: 16),
+              padding: responsive.pageInsets(
+                top: responsive.verticalPadding,
+                bottom: 16,
+              ),
               children: [
-                _LatestReservationHeroById(reservationId: latestReservationId),
+                _LatestReservationHeroById(
+                  reservationId: latestReservationId,
+                  trackingOnly: widget.trackingOnly,
+                ),
                 const SizedBox(height: 18),
                 if (historyReservationIds.isNotEmpty) ...[
                   Row(
@@ -118,7 +148,10 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
                   ...visibleHistoryIds.map(
                     (reservationId) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _ReservationCardById(reservationId: reservationId),
+                      child: _ReservationCardById(
+                        reservationId: reservationId,
+                        trackingOnly: widget.trackingOnly,
+                      ),
                     ),
                   ),
                 ] else
@@ -168,9 +201,13 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
 }
 
 class _LatestReservationHeroById extends ConsumerWidget {
-  const _LatestReservationHeroById({required this.reservationId});
+  const _LatestReservationHeroById({
+    required this.reservationId,
+    required this.trackingOnly,
+  });
 
   final String reservationId;
+  final bool trackingOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -180,14 +217,21 @@ class _LatestReservationHeroById extends ConsumerWidget {
     if (reservation == null) {
       return const SizedBox.shrink();
     }
-    return _LatestReservationHero(reservation: reservation);
+    return _LatestReservationHero(
+      reservation: reservation,
+      trackingOnly: trackingOnly,
+    );
   }
 }
 
 class _ReservationCardById extends ConsumerWidget {
-  const _ReservationCardById({required this.reservationId});
+  const _ReservationCardById({
+    required this.reservationId,
+    required this.trackingOnly,
+  });
 
   final String reservationId;
+  final bool trackingOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -197,14 +241,21 @@ class _ReservationCardById extends ConsumerWidget {
     if (reservation == null) {
       return const SizedBox.shrink();
     }
-    return _ReservationCard(reservation: reservation);
+    return _ReservationCard(
+      reservation: reservation,
+      trackingOnly: trackingOnly,
+    );
   }
 }
 
 class _LatestReservationHero extends StatelessWidget {
-  const _LatestReservationHero({required this.reservation});
+  const _LatestReservationHero({
+    required this.reservation,
+    required this.trackingOnly,
+  });
 
   final Reservation reservation;
+  final bool trackingOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -268,9 +319,19 @@ class _LatestReservationHero extends StatelessWidget {
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF173B56),
             ),
-            onPressed: () => context.push('/reservation/${reservation.id}'),
-            icon: const Icon(Icons.receipt_long_outlined),
-            label: Text(l10n.t('view_detail')),
+            onPressed: () => context.push(
+              _primaryReservationRoute(reservation, trackingOnly: trackingOnly),
+            ),
+            icon: Icon(
+              trackingOnly
+                  ? Icons.local_shipping_outlined
+                  : Icons.receipt_long_outlined,
+            ),
+            label: Text(
+              trackingOnly
+                  ? _trackingActionLabel(context, reservation)
+                  : l10n.t('view_detail'),
+            ),
           ),
         ],
       ),
@@ -297,9 +358,13 @@ class _HeroChip extends StatelessWidget {
 }
 
 class _ReservationCard extends StatelessWidget {
-  const _ReservationCard({required this.reservation});
+  const _ReservationCard({
+    required this.reservation,
+    required this.trackingOnly,
+  });
 
   final Reservation reservation;
+  final bool trackingOnly;
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +372,9 @@ class _ReservationCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push('/reservation/${reservation.id}'),
+        onTap: () => context.push(
+          _primaryReservationRoute(reservation, trackingOnly: trackingOnly),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -341,10 +408,67 @@ class _ReservationCard extends StatelessWidget {
                 '${l10n.t('my_reservations_total_prefix')} S/${reservation.totalPrice.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
+              if (trackingOnly) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.local_shipping_outlined, size: 18),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _trackingActionLabel(context, reservation),
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
+}
+
+bool _isTrackingCandidate(Reservation reservation) {
+  if (reservation.pickupRequested || reservation.dropoffRequested) {
+    return true;
+  }
+  switch (reservation.status) {
+    case ReservationStatus.checkinPending:
+    case ReservationStatus.stored:
+    case ReservationStatus.outForDelivery:
+    case ReservationStatus.readyForPickup:
+    case ReservationStatus.completed:
+      return true;
+    case ReservationStatus.draft:
+    case ReservationStatus.pendingPayment:
+    case ReservationStatus.confirmed:
+    case ReservationStatus.cancelled:
+    case ReservationStatus.incident:
+    case ReservationStatus.expired:
+      return false;
+  }
+}
+
+String _primaryReservationRoute(
+  Reservation reservation, {
+  required bool trackingOnly,
+}) {
+  if (trackingOnly) {
+    return '/tracking/${reservation.id}';
+  }
+  return '/reservation/${reservation.id}';
+}
+
+String _trackingActionLabel(BuildContext context, Reservation reservation) {
+  if (reservation.status == ReservationStatus.checkinPending) {
+    return context.l10n.t('reservation_tracking_pickup');
+  }
+  if (reservation.status == ReservationStatus.outForDelivery ||
+      reservation.dropoffRequested) {
+    return context.l10n.t('reservation_tracking_delivery');
+  }
+  return context.l10n.t('tracking');
 }

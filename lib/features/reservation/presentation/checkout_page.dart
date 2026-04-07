@@ -17,6 +17,7 @@ import '../../../shared/state/currency_preference.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error.dart';
 import '../../../shared/utils/app_error_formatter.dart';
+import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/critical_operation_overlay.dart';
 import '../../../shared/widgets/payment_onboarding_guide.dart';
 import '../../../shared/widgets/payment_celebration_overlay.dart';
@@ -1685,31 +1686,35 @@ class _ManualTransferDialog extends StatefulWidget {
 }
 
 class _ManualTransferDialogState extends State<_ManualTransferDialog> {
-  _TransferPhase _phase = _TransferPhase.showQr;
+  final _phase = _TransferPhase.showQr;
+  bool _submittingTransfer = false;
 
   Future<void> _onTransferred() async {
-    setState(() => _phase = _TransferPhase.validating);
+    if (_submittingTransfer) {
+      return;
+    }
+    setState(() => _submittingTransfer = true);
 
     try {
       // Poll up to ~5 min (100 × 3s) for auto-confirmation
       final status = await widget.waitForStatus(
         paymentIntentId: widget.paymentIntentId,
         reservationId: widget.reservationId,
-        attempts: 100,
-        intervalSeconds: 3,
+        attempts: 1,
+        intervalSeconds: 1,
       );
 
       if (!mounted) return;
       if (status.isConfirmed) {
-        setState(() => _phase = _TransferPhase.success);
-        await Future.delayed(const Duration(milliseconds: 1800));
-        if (mounted) Navigator.of(context).pop(true);
-      } else {
-        setState(() => _phase = _TransferPhase.pending);
+        Navigator.of(context).pop(true);
+        return;
       }
+      Navigator.of(context).pop(false);
     } catch (e) {
       debugPrint('[CheckoutPage] Error during manual transfer validation: $e');
-      if (mounted) setState(() => _phase = _TransferPhase.pending);
+      if (mounted) {
+        Navigator.of(context).pop(false);
+      }
     }
   }
 
@@ -1780,6 +1785,7 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
                   theme: theme,
                   l10n: l10n,
                   onTransferred: _onTransferred,
+                  isSubmitting: _submittingTransfer,
                 ),
                 _TransferPhase.validating => _ValidatingPhaseBody(
                   key: const ValueKey('validating'),
@@ -1816,12 +1822,14 @@ class _QrPhaseBody extends StatelessWidget {
     required this.theme,
     required this.l10n,
     required this.onTransferred,
+    required this.isSubmitting,
   });
 
   final _ManualTransferDialog widget;
   final ThemeData theme;
   final AppLocalizations l10n;
   final VoidCallback onTransferred;
+  final bool isSubmitting;
 
   String _maskPhone(String? phone) {
     if (phone == null || phone.length < 4) return '';
@@ -1989,12 +1997,12 @@ class _QrPhaseBody extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        widget.qrUrl,
+                      child: AppSmartImage(
+                        source: widget.qrUrl,
                         width: 200,
                         height: 200,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, error, stackTrace) => SizedBox(
+                        fallback: SizedBox(
                           width: 200,
                           height: 200,
                           child: Column(
@@ -2096,7 +2104,7 @@ class _QrPhaseBody extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: FilledButton(
-              onPressed: onTransferred,
+              onPressed: isSubmitting ? null : onTransferred,
               style: FilledButton.styleFrom(
                 backgroundColor: widget.brandColor,
                 shape: RoundedRectangleBorder(
@@ -2104,7 +2112,9 @@ class _QrPhaseBody extends StatelessWidget {
                 ),
               ),
               child: Text(
-                l10n.t('checkout_transfer_done'),
+                isSubmitting
+                    ? l10n.t('processing')
+                    : l10n.t('checkout_transfer_done'),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

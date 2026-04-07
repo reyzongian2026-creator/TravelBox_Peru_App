@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/brand_tokens.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/app_smart_image.dart';
 
-final _paymentSettingsProvider = FutureProvider<Map<String, String>>((ref) async {
+final _paymentSettingsProvider = FutureProvider<Map<String, String>>((
+  ref,
+) async {
   // Depend on session so the request waits until auth token is available
   final session = ref.watch(sessionControllerProvider);
   if (session.accessToken == null || session.accessToken!.isEmpty) {
@@ -22,10 +26,12 @@ class AdminPaymentSettingsPage extends ConsumerStatefulWidget {
   const AdminPaymentSettingsPage({super.key});
 
   @override
-  ConsumerState<AdminPaymentSettingsPage> createState() => _AdminPaymentSettingsPageState();
+  ConsumerState<AdminPaymentSettingsPage> createState() =>
+      _AdminPaymentSettingsPageState();
 }
 
-class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsPage> {
+class _AdminPaymentSettingsPageState
+    extends ConsumerState<AdminPaymentSettingsPage> {
   final _yapePhoneController = TextEditingController();
   final _yapeNameController = TextEditingController();
   final _plinPhoneController = TextEditingController();
@@ -67,15 +73,15 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
       final dio = ref.read(dioProvider);
       await dio.put('/admin/settings/$key', data: {'value': value});
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Configuracion guardada')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Configuracion guardada')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -90,6 +96,17 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
     if (file.bytes == null || file.bytes!.isEmpty) return;
+    final mediaType = _resolveImageMediaType(file);
+    if (mediaType == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Formato no soportado. Usa PNG, JPG o WebP.'),
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _uploading = true);
     try {
@@ -98,6 +115,7 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
         'file': MultipartFile.fromBytes(
           file.bytes!,
           filename: file.name,
+          contentType: mediaType,
         ),
       });
       final response = await dio.post<Map<String, dynamic>>(
@@ -113,19 +131,34 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
           if (method == 'qr') _qrQrUrl = qrUrl;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('QR de ${method.toUpperCase()} subido correctamente')),
+          SnackBar(
+            content: Text('QR de ${method.toUpperCase()} subido correctamente'),
+          ),
         );
         ref.invalidate(_paymentSettingsProvider);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error subiendo QR: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error subiendo QR: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
+  }
+
+  MediaType? _resolveImageMediaType(PlatformFile file) {
+    final filename = file.name.trim().toLowerCase();
+    final extension =
+        file.extension?.trim().toLowerCase() ??
+        (filename.contains('.') ? filename.split('.').last : '');
+    return switch (extension) {
+      'png' => MediaType('image', 'png'),
+      'jpg' || 'jpeg' => MediaType('image', 'jpeg'),
+      'webp' => MediaType('image', 'webp'),
+      _ => null,
+    };
   }
 
   @override
@@ -136,7 +169,8 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
       appBar: AppBar(title: const Text('Configuracion de Pagos Manuales')),
       body: settingsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error cargando configuracion: $e')),
+        error: (e, _) =>
+            Center(child: Text('Error cargando configuracion: $e')),
         data: (settings) {
           // Load only once
           if (_yapePhoneController.text.isEmpty && settings.isNotEmpty) {
@@ -197,13 +231,15 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
                     children: [
                       Icon(Icons.verified_user, color: Colors.blue),
                       SizedBox(width: 12),
-                      Expanded(child: Text(
-                        'Verificacion activa: Los pagos por Yape se verifican '
-                        'automaticamente mediante las notificaciones de correo. '
-                        'El operador puede revisar y confirmar manualmente en '
-                        'caso de que sea necesario.',
-                        style: TextStyle(fontSize: 13),
-                      )),
+                      Expanded(
+                        child: Text(
+                          'Verificacion activa: Los pagos por Yape se verifican '
+                          'automaticamente mediante las notificaciones de correo. '
+                          'El operador puede revisar y confirmar manualmente en '
+                          'caso de que sea necesario.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -238,7 +274,14 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
               children: [
                 Icon(icon, color: color, size: 28),
                 const SizedBox(width: 8),
-                Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -267,27 +310,49 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _saving ? null : () async {
-                      await _saveSetting(phoneKey, phoneController.text.trim());
-                      await _saveSetting(nameKey, nameController.text.trim());
-                    },
+                    onPressed: _saving
+                        ? null
+                        : () async {
+                            await _saveSetting(
+                              phoneKey,
+                              phoneController.text.trim(),
+                            );
+                            await _saveSetting(
+                              nameKey,
+                              nameController.text.trim(),
+                            );
+                          },
                     icon: const Icon(Icons.save),
                     label: Text(_saving ? 'Guardando...' : 'Guardar datos'),
-                    style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ),
               ],
             ),
             const Divider(height: 32),
-            Text('Codigo QR de $title', style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              'Codigo QR de $title',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             if (qrUrl != null && qrUrl.isNotEmpty)
               Center(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(qrUrl, width: 200, height: 200, fit: BoxFit.contain,
-                    errorBuilder: (_, error, stackTrace) =>
-                        const Text('No se pudo cargar la imagen')),
+                  child: AppSmartImage(
+                    source: qrUrl,
+                    width: 200,
+                    height: 200,
+                    fit: BoxFit.contain,
+                    fallback: const SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: Center(child: Text('No se pudo cargar la imagen')),
+                    ),
+                  ),
                 ),
               )
             else
@@ -297,17 +362,29 @@ class _AdminPaymentSettingsPageState extends ConsumerState<AdminPaymentSettingsP
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                  border: Border.all(
+                    color: Colors.grey.shade300,
+                    style: BorderStyle.solid,
+                  ),
                 ),
-                child: const Center(child: Text('Sin QR configurado', style: TextStyle(color: Colors.grey))),
+                child: const Center(
+                  child: Text(
+                    'Sin QR configurado',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
               ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: _uploading ? null : () => _uploadQr(method),
-                icon: Icon(_uploading ? Icons.hourglass_top : Icons.upload_file),
-                label: Text(_uploading ? 'Subiendo...' : 'Subir imagen QR de $title'),
+                icon: Icon(
+                  _uploading ? Icons.hourglass_top : Icons.upload_file,
+                ),
+                label: Text(
+                  _uploading ? 'Subiendo...' : 'Subir imagen QR de $title',
+                ),
               ),
             ),
           ],

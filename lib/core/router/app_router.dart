@@ -266,7 +266,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/tracking-list',
-        builder: (context, state) => MyReservationsPage(currentRoute: '/tracking-list'),
+        builder: (context, state) => MyReservationsPage(
+          currentRoute: '/tracking-list',
+          trackingOnly: true,
+        ),
       ),
       GoRoute(
         path: '/reservation/:reservationId',
@@ -327,8 +330,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/payments-history',
         builder: (_, state) => const PaymentHistoryPage(),
       ),
-      GoRoute(path: '/favorites', builder: (context, state) => const FavoritesPage()),
-      GoRoute(path: '/referral', builder: (context, state) => const ReferralPage()),
+      GoRoute(
+        path: '/favorites',
+        builder: (context, state) => const FavoritesPage(),
+      ),
+      GoRoute(
+        path: '/referral',
+        builder: (context, state) => const ReferralPage(),
+      ),
       GoRoute(path: '/profile', builder: (context, state) => ProfilePage()),
       GoRoute(
         path: '/profile/edit',
