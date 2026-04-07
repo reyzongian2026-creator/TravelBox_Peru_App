@@ -16,6 +16,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error.dart';
 import '../../../shared/utils/app_error_formatter.dart';
 import '../../../shared/widgets/critical_operation_overlay.dart';
+import '../../../shared/widgets/payment_celebration_overlay.dart';
 import '../../payments/data/izipay_checkout_service.dart';
 import '../../payments/data/payment_repository.dart';
 import '../data/reservation_repository_impl.dart';
@@ -38,6 +39,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   bool processing = false;
   bool _submitting = false; // synchronous guard against double-tap
+  bool _paymentJustConfirmed = false; // set when payment is confirmed, used to trigger celebration
   String? _emailError;
   int? _selectedSavedCardId;
   String paymentMethod = AppEnv.forceCashPaymentsOnly
@@ -510,7 +512,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -653,11 +655,17 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       ref.read(reservationDraftProvider.notifier).state = null;
 
       if (!context.mounted) return;
+      if (_paymentJustConfirmed) {
+        PaymentCelebration.show(context);
+        await Future.delayed(const Duration(milliseconds: 500));
+        _paymentJustConfirmed = false;
+      }
       if (checkoutMessage != null && checkoutMessage.isNotEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(checkoutMessage)));
       }
+      if (!context.mounted) return;
       context.go(
         '/reservation/${reservation.id.toString()}?back=home',
       );
@@ -795,36 +803,17 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       // Let the framework remove the overlay before showing the dialog
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return null;
-      await _showManualTransferDialog(confirmation);
-
-      // Show verification overlay while polling
-      if (!mounted) return null;
-      OverlayEntry? verifyOverlay;
-      if (context.mounted) {
-        verifyOverlay = CriticalOperationOverlay.show(
-          context,
-          message: context.l10n.t('checkout_overlay_verifying_payment'),
-          submessage: context.l10n.t('checkout_overlay_submessage'),
-        );
+      // The dialog handles all 3 phases internally (QR → Validating → Success/Pending)
+      final confirmed = await _showManualTransferDialog(
+        confirmation,
+        paymentIntentId: int.tryParse(confirmation.id) ?? paymentIntentId,
+        reservationId: parsedReservationId,
+      );
+      if (confirmed == true) {
+        _paymentJustConfirmed = true;
+        return context.l10n.t('checkout_payment_verified');
       }
-
-      try {
-        // Poll longer for auto-confirmation via Yape email (up to ~90s)
-        final status = await _waitForPaymentFinalStatus(
-          paymentIntentId: int.tryParse(confirmation.id) ?? paymentIntentId,
-          reservationId: parsedReservationId,
-          attempts: 30, // 30 × 3s = 90s
-          intervalSeconds: 3,
-        );
-        if (status.isConfirmed) {
-          return context.l10n.t('checkout_payment_verified');
-        }
-        return context.l10n.t('checkout_payment_being_verified');
-      } finally {
-        if (verifyOverlay != null) {
-          CriticalOperationOverlay.dismiss(verifyOverlay);
-        }
-      }
+      return context.l10n.t('checkout_payment_being_verified');
     }
 
     if (confirmation.requiresIzipayCheckout) {
@@ -844,6 +833,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             reservationId: parsedReservationId,
           );
           if (validationResult.isConfirmed) {
+            _paymentJustConfirmed = true;
             return _checkoutResultMessage(checkoutOutcome) ??
                 validationResult.message;
           }
@@ -869,6 +859,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       );
 
       if (status.isConfirmed) {
+        _paymentJustConfirmed = true;
         return _checkoutResultMessage(checkoutOutcome);
       }
       if (status.isFailed) {
@@ -888,6 +879,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       attempts: 8,
     );
     if (status.isConfirmed) {
+      _paymentJustConfirmed = true;
       return confirmation.message;
     }
     if (status.isFailed) {
@@ -926,7 +918,14 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     return _izipayCheckoutService.openCheckout(request);
   }
 
-  Future<void> _showManualTransferDialog(PaymentIntentResult confirmation) async {
+  /// Shows the 3-phase manual transfer dialog.
+  /// Returns `true` if the payment was confirmed during the dialog,
+  /// `false` / `null` if it is still pending.
+  Future<bool?> _showManualTransferDialog(
+    PaymentIntentResult confirmation, {
+    required int? paymentIntentId,
+    required int reservationId,
+  }) async {
     final action = confirmation.nextAction ?? <String, dynamic>{};
     final method = (action['method']?.toString() ?? 'yape').toLowerCase();
     final phone = action['phone']?.toString() ?? '';
@@ -969,240 +968,24 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         stepVerb = context.l10n.t('checkout_open_generic');
     }
 
-    await showDialog<void>(
+    return showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── Header con color de marca ──
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-                  decoration: BoxDecoration(
-                    color: brandColor,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(brandIcon, color: Colors.white, size: 36),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${context.l10n.t('checkout_pay_with')} $brandName',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '$currency $amount',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // ── Body ──
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Datos del destinatario
-                        if (recipientName.isNotEmpty || phone.isNotEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: brandLight,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: brandColor.withValues(alpha: 0.2)),
-                            ),
-                            child: Column(
-                              children: [
-                                if (recipientName.isNotEmpty) ...[
-                                  Row(
-                                    children: [
-                                      Icon(Icons.person_outline, size: 18, color: brandColor),
-                                      const SizedBox(width: 8),
-                                      Text(context.l10n.t('checkout_recipient'), style: theme.textTheme.labelSmall?.copyWith(color: brandColor)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      recipientName,
-                                      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                ],
-                                if (recipientName.isNotEmpty && phone.isNotEmpty) const SizedBox(height: 10),
-                                if (phone.isNotEmpty) ...[
-                                  Row(
-                                    children: [
-                                      Icon(Icons.phone_outlined, size: 18, color: brandColor),
-                                      const SizedBox(width: 8),
-                                      Text(context.l10n.t('checkout_phone_number'), style: theme.textTheme.labelSmall?.copyWith(color: brandColor)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: SelectableText(
-                                      phone,
-                                      style: theme.textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-
-                        // QR
-                        if (qrUrl.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.08),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                              border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                qrUrl,
-                                width: 200,
-                                height: 200,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => Container(
-                                  width: 200,
-                                  height: 200,
-                                  alignment: Alignment.center,
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey.shade400),
-                                      const SizedBox(height: 8),
-                                      Text(context.l10n.t('checkout_qr_load_failed'), style: theme.textTheme.bodySmall),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-
-                        // Pasos
-                        const SizedBox(height: 20),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.l10n.t('checkout_transfer_steps_title'),
-                                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 12),
-                              _TransferStep(number: '1', text: stepVerb, brandColor: brandColor),
-                              const SizedBox(height: 8),
-                              _TransferStep(number: '2', text: '${context.l10n.t('checkout_transfer_step2')} $currency $amount', brandColor: brandColor),
-                              const SizedBox(height: 8),
-                              _TransferStep(number: '3', text: context.l10n.t('checkout_transfer_step3'), brandColor: brandColor),
-                            ],
-                          ),
-                        ),
-
-                        // Aviso
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade50,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.amber.shade200),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.schedule, color: Colors.amber.shade800, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  context.l10n.t('checkout_transfer_notice'),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: Colors.amber.shade900,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ── Footer ──
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: brandColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: Text(context.l10n.t('checkout_transfer_done'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (ctx) => _ManualTransferDialog(
+        brandColor: brandColor,
+        brandLight: brandLight,
+        brandName: brandName,
+        brandIcon: brandIcon,
+        stepVerb: stepVerb,
+        recipientName: recipientName,
+        phone: phone,
+        qrUrl: qrUrl,
+        amount: amount,
+        currency: currency,
+        paymentIntentId: paymentIntentId,
+        reservationId: reservationId,
+        waitForStatus: _waitForPaymentFinalStatus,
+      ),
     );
   }
 
@@ -1624,7 +1407,7 @@ class _PaymentGridCard extends StatelessWidget {
                     Text(
                       sublabel,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: selected ? scheme.onPrimaryContainer.withOpacity(0.7) : scheme.onSurfaceVariant,
+                        color: selected ? scheme.onPrimaryContainer.withValues(alpha: 0.7) : scheme.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1684,6 +1467,486 @@ class _TransferStep extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3-phase manual transfer dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum _TransferPhase { showQr, validating, success, pending }
+
+typedef _WaitForStatus = Future<PaymentStatusResult> Function({
+  required int? paymentIntentId,
+  required int reservationId,
+  int attempts,
+  int intervalSeconds,
+});
+
+class _ManualTransferDialog extends StatefulWidget {
+  const _ManualTransferDialog({
+    required this.brandColor,
+    required this.brandLight,
+    required this.brandName,
+    required this.brandIcon,
+    required this.stepVerb,
+    required this.recipientName,
+    required this.phone,
+    required this.qrUrl,
+    required this.amount,
+    required this.currency,
+    required this.paymentIntentId,
+    required this.reservationId,
+    required this.waitForStatus,
+  });
+
+  final Color brandColor;
+  final Color brandLight;
+  final String brandName;
+  final IconData brandIcon;
+  final String stepVerb;
+  final String recipientName;
+  final String phone;
+  final String qrUrl;
+  final String amount;
+  final String currency;
+  final int? paymentIntentId;
+  final int reservationId;
+  final _WaitForStatus waitForStatus;
+
+  @override
+  State<_ManualTransferDialog> createState() => _ManualTransferDialogState();
+}
+
+class _ManualTransferDialogState extends State<_ManualTransferDialog> {
+  _TransferPhase _phase = _TransferPhase.showQr;
+
+  Future<void> _onTransferred() async {
+    setState(() => _phase = _TransferPhase.validating);
+
+    try {
+      // Poll up to ~5 min (100 × 3s) for auto-confirmation
+      final status = await widget.waitForStatus(
+        paymentIntentId: widget.paymentIntentId,
+        reservationId: widget.reservationId,
+        attempts: 100,
+        intervalSeconds: 3,
+      );
+
+      if (!mounted) return;
+      if (status.isConfirmed) {
+        setState(() => _phase = _TransferPhase.success);
+        await Future.delayed(const Duration(milliseconds: 1800));
+        if (mounted) Navigator.of(context).pop(true);
+      } else {
+        setState(() => _phase = _TransferPhase.pending);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _phase = _TransferPhase.pending);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Header ──
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+              decoration: BoxDecoration(
+                color: widget.brandColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  Icon(widget.brandIcon, color: Colors.white, size: 36),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.t('checkout_pay_with')} ${widget.brandName}',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${widget.currency} ${widget.amount}',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Body (switches per phase) ──
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: switch (_phase) {
+                _TransferPhase.showQr => _QrPhaseBody(
+                    key: const ValueKey('qr'),
+                    widget: widget,
+                    theme: theme,
+                    l10n: l10n,
+                    onTransferred: _onTransferred,
+                  ),
+                _TransferPhase.validating => _ValidatingPhaseBody(
+                    key: const ValueKey('validating'),
+                    theme: theme,
+                    l10n: l10n,
+                    brandName: widget.brandName,
+                  ),
+                _TransferPhase.success => _SuccessPhaseBody(
+                    key: const ValueKey('success'),
+                    theme: theme,
+                    l10n: l10n,
+                  ),
+                _TransferPhase.pending => _PendingPhaseBody(
+                    key: const ValueKey('pending'),
+                    theme: theme,
+                    l10n: l10n,
+                    onClose: () => Navigator.of(context).pop(false),
+                  ),
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Phase bodies ──────────────────────────────────────────────────────────────
+
+class _QrPhaseBody extends StatelessWidget {
+  const _QrPhaseBody({
+    super.key,
+    required this.widget,
+    required this.theme,
+    required this.l10n,
+    required this.onTransferred,
+  });
+
+  final _ManualTransferDialog widget;
+  final ThemeData theme;
+  final AppLocalizations l10n;
+  final VoidCallback onTransferred;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.recipientName.isNotEmpty || widget.phone.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: widget.brandLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: widget.brandColor.withValues(alpha: 0.2)),
+                    ),
+                    child: Column(
+                      children: [
+                        if (widget.recipientName.isNotEmpty) ...[
+                          Row(children: [
+                            Icon(Icons.person_outline, size: 18, color: widget.brandColor),
+                            const SizedBox(width: 8),
+                            Text(l10n.t('checkout_recipient'),
+                                style: theme.textTheme.labelSmall?.copyWith(color: widget.brandColor)),
+                          ]),
+                          const SizedBox(height: 2),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(widget.recipientName,
+                                style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                        if (widget.recipientName.isNotEmpty && widget.phone.isNotEmpty)
+                          const SizedBox(height: 10),
+                        if (widget.phone.isNotEmpty) ...[
+                          Row(children: [
+                            Icon(Icons.phone_outlined, size: 18, color: widget.brandColor),
+                            const SizedBox(width: 8),
+                            Text(l10n.t('checkout_phone_number'),
+                                style: theme.textTheme.labelSmall?.copyWith(color: widget.brandColor)),
+                          ]),
+                          const SizedBox(height: 2),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: SelectableText(
+                              widget.phone,
+                              style: theme.textTheme.bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                if (widget.qrUrl.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4))
+                      ],
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        widget.qrUrl,
+                        width: 200,
+                        height: 200,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey.shade400),
+                              const SizedBox(height: 8),
+                              Text(l10n.t('checkout_qr_load_failed'), style: theme.textTheme.bodySmall),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.t('checkout_transfer_steps_title'),
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 12),
+                      _TransferStep(number: '1', text: widget.stepVerb, brandColor: widget.brandColor),
+                      const SizedBox(height: 8),
+                      _TransferStep(
+                          number: '2',
+                          text: '${l10n.t('checkout_transfer_step2')} ${widget.currency} ${widget.amount}',
+                          brandColor: widget.brandColor),
+                      const SizedBox(height: 8),
+                      _TransferStep(
+                          number: '3',
+                          text: l10n.t('checkout_transfer_step3'),
+                          brandColor: widget.brandColor),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.schedule, color: Colors.amber.shade800, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          l10n.t('checkout_transfer_notice'),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: Colors.amber.shade900, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton(
+              onPressed: onTransferred,
+              style: FilledButton.styleFrom(
+                backgroundColor: widget.brandColor,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(l10n.t('checkout_transfer_done'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ValidatingPhaseBody extends StatelessWidget {
+  const _ValidatingPhaseBody({
+    super.key,
+    required this.theme,
+    required this.l10n,
+    required this.brandName,
+  });
+
+  final ThemeData theme;
+  final AppLocalizations l10n;
+  final String brandName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 24),
+          Text(
+            '${l10n.t('checkout_validating_transfer')} $brandName…',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.t('checkout_validating_transfer_subtitle'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SuccessPhaseBody extends StatelessWidget {
+  const _SuccessPhaseBody({super.key, required this.theme, required this.l10n});
+
+  final ThemeData theme;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_outline, color: Colors.green, size: 64),
+          const SizedBox(height: 20),
+          Text(
+            l10n.t('checkout_payment_confirmed_title'),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.green.shade700,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.t('checkout_payment_confirmed_subtitle'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingPhaseBody extends StatelessWidget {
+  const _PendingPhaseBody({
+    super.key,
+    required this.theme,
+    required this.l10n,
+    required this.onClose,
+  });
+
+  final ThemeData theme;
+  final AppLocalizations l10n;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 40, 32, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.hourglass_empty_outlined,
+              size: 56, color: theme.colorScheme.onSurfaceVariant),
+          const SizedBox(height: 20),
+          Text(
+            l10n.t('checkout_transfer_pending_title'),
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.t('checkout_transfer_pending_subtitle'),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onClose,
+              child: Text(l10n.t('checkout_view_reservation')),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ import '../../../shared/widgets/app_smart_image.dart';
 import '../../../shared/widgets/cancellation_preview_dialog.dart';
 import '../../../shared/widgets/critical_operation_overlay.dart';
 import '../../incidents/data/evidence_picker.dart';
+import '../../../shared/widgets/payment_celebration_overlay.dart';
 import '../../payments/data/payment_repository.dart';
 import '../data/reservation_repository_impl.dart';
 import 'reservation_providers.dart';
@@ -60,6 +61,21 @@ class ReservationDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reservationAsync = ref.watch(reservationByIdProvider(reservationId));
+
+    // Fire celebration when the reservation transitions to confirmed from a
+    // non-confirmed state (e.g. Yape reconciliation confirms while user is here).
+    ref.listen<AsyncValue<Reservation?>>(
+      reservationByIdProvider(reservationId),
+      (prev, next) {
+        final prevStatus = prev?.valueOrNull?.status;
+        final nextStatus = next.valueOrNull?.status;
+        if (prevStatus != null &&
+            prevStatus != ReservationStatus.confirmed &&
+            nextStatus == ReservationStatus.confirmed) {
+          PaymentCelebration.show(context);
+        }
+      },
+    );
 
     return PopScope(
       canPop: !lockBackNavigation,
@@ -576,15 +592,12 @@ class ReservationDetailPage extends ConsumerWidget {
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           icon: const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
-          title: const Text('Reembolso procesado'),
-          content: const Text(
-            'Tu deposito ha sido reembolsado y tu reserva ha sido cancelada exitosamente.\n\n'
-            'El reembolso puede tardar unos minutos en reflejarse en tu cuenta.',
-          ),
+          title: Text(context.l10n.t('refund_success_title')),
+          content: Text(context.l10n.t('refund_success_body')),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Entendido'),
+              child: Text(context.l10n.t('understood')),
             ),
           ],
         ),

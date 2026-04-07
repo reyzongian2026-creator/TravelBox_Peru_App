@@ -110,9 +110,15 @@ class WarehouseDetailPage extends ConsumerWidget {
               Text(
                 warehouse.name,
                 style: Theme.of(context).textTheme.headlineSmall,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
               ),
               const SizedBox(height: 6),
-              Text('${warehouse.address}, ${warehouse.city}'),
+              Text(
+                '${warehouse.address}, ${warehouse.city}',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
               const SizedBox(height: 14),
               Card(
                 child: Padding(

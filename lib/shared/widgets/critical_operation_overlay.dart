@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/app_localizations_fixed.dart';
 
 /// A full-screen blocking overlay displayed during critical operations
 /// (payment processing, refund execution, cancellation).
@@ -64,7 +65,7 @@ class CriticalOperationOverlay extends StatelessWidget {
                   ],
                   const SizedBox(height: 12),
                   Text(
-                    'No cierres esta ventana',
+                    context.l10n.t('do_not_close_window'),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.error,

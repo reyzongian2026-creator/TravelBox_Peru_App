@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/payment_constants.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/theme/brand_tokens.dart';
 import '../../../core/widgets/app_shell_scaffold.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../reservation/presentation/reservation_providers.dart';
@@ -181,15 +182,15 @@ class _CashPaymentsPageState extends ConsumerState<CashPaymentsPage> {
                 final IconData methodIcon;
                 final String methodLabel;
                 if (payment.paymentMethod == 'yape') {
-                  methodColor = const Color(0xFF6B2D8B);
+                  methodColor = TravelBoxBrand.yape;
                   methodIcon = Icons.qr_code_2;
                   methodLabel = 'Yape';
                 } else if (payment.paymentMethod == 'plin') {
-                  methodColor = const Color(0xFF00BFA5);
+                  methodColor = TravelBoxBrand.plin;
                   methodIcon = Icons.phone_android;
                   methodLabel = 'Plin';
                 } else if (payment.paymentMethod == 'wallet') {
-                  methodColor = const Color(0xFF1565C0);
+                  methodColor = TravelBoxBrand.cardPayment;
                   methodIcon = Icons.qr_code;
                   methodLabel = 'QR Universal';
                 } else {

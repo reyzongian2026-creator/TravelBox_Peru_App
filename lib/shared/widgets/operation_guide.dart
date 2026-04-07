@@ -259,7 +259,7 @@ Future<void> showOperationGuideSheet(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: SingleChildScrollView(
@@ -281,7 +281,7 @@ Future<void> showOperationGuideSheet(
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF6E7),
+                          color: Theme.of(context).colorScheme.tertiaryContainer,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
@@ -307,18 +307,20 @@ Future<void> showOperationGuideSheet(
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5FAFC),
+                            color: Theme.of(context).colorScheme.surfaceContainerLowest,
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFFDCEAF0)),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               CircleAvatar(
-                                backgroundColor: const Color(0xFFDBEEF3),
+                                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
                                 child: Icon(
                                   step.icon,
-                                  color: const Color(0xFF14532D),
+                                  color: Theme.of(context).colorScheme.tertiary,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -427,7 +429,7 @@ class OperationGuideSummaryCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(step.icon, size: 5, color: const Color(0xFF14532D)),
+                    Icon(step.icon, size: 18, color: Theme.of(context).colorScheme.tertiary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
