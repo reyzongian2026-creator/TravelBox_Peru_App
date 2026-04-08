@@ -8,6 +8,7 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'shared/state/session_controller.dart';
 import 'shared/state/theme_mode_controller.dart';
+import 'shared/widgets/connectivity_banner.dart';
 
 /// Global key to show SnackBars from non-widget code (e.g. DIO interceptors).
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -39,6 +40,9 @@ class TravelBoxApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
+      builder: (context, child) {
+        return ConnectivityBanner(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }

@@ -423,11 +423,22 @@ class SessionController extends StateNotifier<SessionState> {
     if (token == null || token.isEmpty) return;
 
     final exp = _extractExpFromJwt(token);
+    final iat = _extractIatFromJwt(token);
     if (exp == null) return;
 
     final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    // Refresh 2 minutes before expiry, minimum 30 seconds from now
-    final delaySeconds = (exp - nowSec - 120).clamp(30, 86400);
+
+    int delaySeconds;
+    if (iat != null && exp > iat) {
+      // Refresh at 75% of token lifetime (Facebook-style proactive refresh)
+      // For a 30-min token: refresh after ~22.5 min (7.5 min before expiry)
+      final totalLifetime = exp - iat;
+      final refreshAt = iat + (totalLifetime * 3 ~/ 4);
+      delaySeconds = (refreshAt - nowSec).clamp(30, 86400);
+    } else {
+      // Fallback: refresh 2 minutes before expiry
+      delaySeconds = (exp - nowSec - 120).clamp(30, 86400);
+    }
 
     _proactiveRefreshTimer = Timer(
       Duration(seconds: delaySeconds),
@@ -482,6 +493,24 @@ class SessionController extends StateNotifier<SessionState> {
       if (exp is int) return exp;
       if (exp is num) return exp.toInt();
       return int.tryParse(exp.toString());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int? _extractIatFromJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length < 2) return null;
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final map = jsonDecode(payload);
+      if (map is! Map<String, dynamic>) return null;
+      final iat = map['iat'];
+      if (iat is int) return iat;
+      if (iat is num) return iat.toInt();
+      return int.tryParse(iat.toString());
     } catch (_) {
       return null;
     }

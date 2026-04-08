@@ -112,6 +112,7 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
     }
 
     _manuallyDisconnected = false;
+    _reconnectAttempts = 0; // Reset on fresh connect (new session)
     await _establishConnection();
   }
 
@@ -198,6 +199,16 @@ class WebSocketManager extends StateNotifier<AsyncValue<WebSocketConnectionStatu
 
   void _scheduleReconnect() {
     if (_manuallyDisconnected || _reconnectAttempts >= _maxReconnectAttempts) {
+      // After max attempts, wait 60s then reset and try once more
+      if (!_manuallyDisconnected && _reconnectAttempts >= _maxReconnectAttempts) {
+        _reconnectTimer?.cancel();
+        _reconnectTimer = Timer(const Duration(seconds: 60), () {
+          if (!_manuallyDisconnected) {
+            _reconnectAttempts = 0;
+            _establishConnection();
+          }
+        });
+      }
       state = const AsyncValue.data(WebSocketConnectionStatus.disconnected);
       return;
     }
