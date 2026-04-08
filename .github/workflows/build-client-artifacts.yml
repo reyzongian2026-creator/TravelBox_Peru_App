@@ -185,7 +185,7 @@ jobs:
             --dart-define=AZURE_TENANT_ID=${AZURE_TENANT_ID}
 
       - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: travelbox-android-apk-release
           path: build/app/outputs/flutter-apk/app-release.apk
@@ -267,7 +267,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app build/ios/travelbox-ios-runner.app.zip
 
       - name: Upload iOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: travelbox-ios-runner-app-unsigned
           path: build/ios/travelbox-ios-runner.app.zip
@@ -358,7 +358,7 @@ jobs:
           Compress-Archive -Path "$releaseDir\*" -DestinationPath $zipPath -Force
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: travelbox-windows-release
           path: build/windows/travelbox-windows-release.zip
