@@ -4,7 +4,8 @@ import 'dart:io';
 
 import 'notification_live_events_client.dart';
 
-const _reconnectDelay = Duration(seconds: 3);
+const _reconnectBaseDelay = Duration(seconds: 3);
+const _reconnectMaxDelay = Duration(seconds: 60);
 // Si no recibimos NADA (ni latidos ni data) en 45s, asumimos que el socket murió
 const _idleTimeout = Duration(seconds: 45);
 
@@ -15,6 +16,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
   int _connectionId = 0;
   bool _manuallyDisconnected = false;
   bool _reconnectScheduled = false;
+  int _consecutiveErrors = 0;
   String? _apiBaseUrl;
   String? _accessToken;
   int? _lastEventId;
@@ -61,6 +63,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
   void disconnect() {
     _manuallyDisconnected = true;
     _reconnectScheduled = false;
+    _consecutiveErrors = 0;
     _connectionId += 1;
     _lastEventId = null;
     _idleWatchdog?.cancel();
@@ -118,6 +121,7 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
         return;
       }
 
+      _consecutiveErrors = 0; // Successful connection
       String? eventName;
       var dataLines = <String>[];
       _resetWatchdog(connectionId); // Iniciamos el watchdog
@@ -200,9 +204,15 @@ class _IoNotificationLiveEventsClient implements NotificationLiveEventsClient {
         failedConnectionId != _connectionId) {
       return;
     }
+    _consecutiveErrors++;
     _reconnectScheduled = true;
+    final backoffMs = (_reconnectBaseDelay.inMilliseconds * _consecutiveErrors)
+        .clamp(
+          _reconnectBaseDelay.inMilliseconds,
+          _reconnectMaxDelay.inMilliseconds,
+        );
     unawaited(
-      Future<void>.delayed(_reconnectDelay, () {
+      Future<void>.delayed(Duration(milliseconds: backoffMs), () {
         if (_manuallyDisconnected || failedConnectionId != _connectionId) {
           _reconnectScheduled = false;
           return;

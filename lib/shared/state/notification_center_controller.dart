@@ -118,11 +118,15 @@ class NotificationCenterController
   UserRole? _activeRole;
   Timer? _refreshDebounceTimer;
   Timer? _periodicRefreshTimer;
+  Timer? _sseReconnectTimer;
+  int _sseConsecutiveErrors = 0;
+  static const _sseMaxBackoffSeconds = 60;
 
   @override
   void dispose() {
     _refreshDebounceTimer?.cancel();
     _periodicRefreshTimer?.cancel();
+    _sseReconnectTimer?.cancel();
     _disconnectLiveEvents();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -134,11 +138,13 @@ class NotificationCenterController
     if (!session.isAuthenticated || userId == null || userId.isEmpty) {
       _refreshDebounceTimer?.cancel();
       _periodicRefreshTimer?.cancel();
+      _sseReconnectTimer?.cancel();
       _disconnectLiveEvents();
       _activeUserId = null;
       _activeAccessToken = null;
       _activeRole = null;
       _seededFromServer = false;
+      _sseConsecutiveErrors = 0;
       _announcedIds.clear();
       state = NotificationCenterState.initial();
       return;
@@ -147,8 +153,10 @@ class NotificationCenterController
     if (_activeUserId != userId) {
       _refreshDebounceTimer?.cancel();
       _periodicRefreshTimer?.cancel();
+      _sseReconnectTimer?.cancel();
       _activeUserId = userId;
       _seededFromServer = false;
+      _sseConsecutiveErrors = 0;
       _announcedIds.clear();
       state = NotificationCenterState.initial();
       unawaited(_restoreSeenIdsForActiveUser());
@@ -219,10 +227,12 @@ class NotificationCenterController
       return;
     }
     _liveEventsConnected = true;
-    unawaited(_connectWithSseToken(
-      accessToken: accessToken,
-      lastEventId: lastEventId ?? state.cursor,
-    ));
+    unawaited(
+      _connectWithSseToken(
+        accessToken: accessToken,
+        lastEventId: lastEventId ?? state.cursor,
+      ),
+    );
   }
 
   Future<void> _connectWithSseToken({
@@ -231,28 +241,23 @@ class NotificationCenterController
   }) async {
     try {
       final response = await _dio.post(
-        '/api/v1/notifications/sse-token',
-        options: Options(
-          headers: {'Authorization': 'Bearer $accessToken'},
-        ),
+        '/notifications/sse-token',
+        options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
       );
       final sseToken = response.data?['token'] as String?;
-      if (sseToken == null || sseToken.isEmpty) {
-        _liveEventsClient.connect(
-          apiBaseUrl: AppEnv.resolvedApiBaseUrl,
-          accessToken: accessToken,
-          lastEventId: lastEventId,
-          onNotification: (event) => _handleLiveEvent(event),
-          onError: (_) => _scheduleRefreshDebounced(),
-        );
-        return;
-      }
+      final token = (sseToken != null && sseToken.isNotEmpty)
+          ? sseToken
+          : accessToken;
+      _sseConsecutiveErrors = 0;
       _liveEventsClient.connect(
         apiBaseUrl: AppEnv.resolvedApiBaseUrl,
-        accessToken: sseToken,
+        accessToken: token,
         lastEventId: lastEventId,
-        onNotification: (event) => _handleLiveEvent(event),
-        onError: (_) => _scheduleRefreshDebounced(),
+        onNotification: (event) {
+          _sseConsecutiveErrors = 0;
+          _handleLiveEvent(event);
+        },
+        onError: (_) => _handleSseError(),
       );
     } catch (_) {
       // Fallback: connect with original JWT if token endpoint fails
@@ -260,10 +265,35 @@ class NotificationCenterController
         apiBaseUrl: AppEnv.resolvedApiBaseUrl,
         accessToken: accessToken,
         lastEventId: lastEventId,
-        onNotification: (event) => _handleLiveEvent(event),
-        onError: (_) => _scheduleRefreshDebounced(),
+        onNotification: (event) {
+          _sseConsecutiveErrors = 0;
+          _handleLiveEvent(event);
+        },
+        onError: (_) => _handleSseError(),
       );
     }
+  }
+
+  void _handleSseError() {
+    _sseConsecutiveErrors++;
+    _scheduleRefreshDebounced();
+
+    // Disconnect stale SSE and reconnect with fresh token after backoff
+    _disconnectLiveEvents();
+    final backoffSeconds = (_sseConsecutiveErrors * 3).clamp(
+      3,
+      _sseMaxBackoffSeconds,
+    );
+    _sseReconnectTimer?.cancel();
+    _sseReconnectTimer = Timer(Duration(seconds: backoffSeconds), () {
+      _sseReconnectTimer = null;
+      if (!_isAppForeground || _activeAccessToken == null) return;
+      _ensureLiveEventsSubscription(
+        _activeAccessToken,
+        lastEventId: state.cursor,
+        forceReconnect: true,
+      );
+    });
   }
 
   void _handleLiveEvent(NotificationLiveEvent event) {
@@ -598,9 +628,7 @@ class NotificationCenterController
       if (status == 404 || status == 405) {
         return;
       }
-      state = previous.copyWith(
-        errorKey: 'notification_delete_error',
-      );
+      state = previous.copyWith(errorKey: 'notification_delete_error');
       await refreshNow();
     } catch (error) {
       state = previous.copyWith(errorKey: 'notification_delete_error');
@@ -626,14 +654,10 @@ class NotificationCenterController
       if (status == 404 || status == 405) {
         return;
       }
-      state = previous.copyWith(
-        errorKey: 'notification_delete_all_error',
-      );
+      state = previous.copyWith(errorKey: 'notification_delete_all_error');
       await refreshNow();
     } catch (error) {
-      state = previous.copyWith(
-        errorKey: 'notification_delete_all_error',
-      );
+      state = previous.copyWith(errorKey: 'notification_delete_all_error');
       await refreshNow();
     }
   }

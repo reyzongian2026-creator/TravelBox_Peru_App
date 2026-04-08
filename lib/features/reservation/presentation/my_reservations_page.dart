@@ -9,6 +9,7 @@ import '../../../shared/models/reservation.dart';
 import '../../../shared/utils/peru_time.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../shared/utils/status_localizer.dart';
+import '../domain/reservation_repository.dart';
 import 'reservation_providers.dart';
 
 class MyReservationsPage extends ConsumerStatefulWidget {
@@ -26,29 +27,21 @@ class MyReservationsPage extends ConsumerStatefulWidget {
 }
 
 class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
-  static const int _historyPageSize = 4;
-  int _historyPage = 0;
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final syncState = ref.watch(myReservationsProvider);
-    ref.watch(myReservationIdsSignatureProvider);
-    final allReservationIds = ref.read(myReservationIdsProvider);
-    final reservationIds = widget.trackingOnly
-        ? allReservationIds.where((reservationId) {
-            final reservation = ref.watch(
-              reservationInStoreByIdProvider(reservationId),
-            );
-            return reservation != null && _isTrackingCandidate(reservation);
-          }).toList()
-        : allReservationIds;
+    final pageResult = ref.watch(myReservationPageResultProvider);
 
-    final content = _buildBody(
-      context,
-      syncState: syncState,
-      reservationIds: reservationIds,
-      hasAnyReservations: allReservationIds.isNotEmpty,
+    final content = pageResult.when(
+      data: (result) => _buildPagedBody(context, result),
+      loading: () => const LoadingStateView(),
+      error: (error, _) => ErrorStateView(
+        message: '${l10n.t('my_reservations_load_failed')}: $error',
+        onRetry: () {
+          ref.read(myReservationPageProvider.notifier).state = 0;
+          ref.invalidate(myReservationPageResultProvider);
+        },
+      ),
     );
 
     return AppShellScaffold(
@@ -60,24 +53,14 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
     );
   }
 
-  Widget _buildBody(
-    BuildContext context, {
-    required AsyncValue<List<Reservation>> syncState,
-    required List<String> reservationIds,
-    required bool hasAnyReservations,
-  }) {
+  Widget _buildPagedBody(BuildContext context, ReservationPagedResult result) {
     final l10n = context.l10n;
     final responsive = context.responsive;
-    if (syncState.isLoading && !hasAnyReservations) {
-      return const LoadingStateView();
-    }
-    if (syncState.hasError && !hasAnyReservations) {
-      return ErrorStateView(
-        message: '${l10n.t('my_reservations_load_failed')}: ${syncState.error}',
-        onRetry: () => ref.invalidate(myReservationsProvider),
-      );
-    }
-    if (reservationIds.isEmpty) {
+    final items = widget.trackingOnly
+        ? result.items.where(_isTrackingCandidate).toList()
+        : result.items;
+
+    if (items.isEmpty && result.page == 0) {
       if (widget.trackingOnly) {
         return EmptyStateView(
           message: l10n.t('tracking_no_disponible'),
@@ -92,29 +75,17 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
       );
     }
 
-    final latestReservationId = reservationIds.first;
-    final historyReservationIds = reservationIds.skip(1).toList();
-    final totalHistoryPages = historyReservationIds.isEmpty
-        ? 0
-        : ((historyReservationIds.length - 1) ~/ _historyPageSize) + 1;
-    final effectiveHistoryPage = totalHistoryPages == 0
-        ? 0
-        : _historyPage.clamp(0, totalHistoryPages - 1);
-    final visibleHistoryIds = totalHistoryPages == 0
-        ? const <String>[]
-        : historyReservationIds
-              .skip(effectiveHistoryPage * _historyPageSize)
-              .take(_historyPageSize)
-              .toList();
+    final latestReservation = items.isNotEmpty ? items.first : null;
+    final historyItems = items.length > 1 ? items.sublist(1) : <Reservation>[];
 
     return Column(
       children: [
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
-              setState(() => _historyPage = 0);
-              ref.invalidate(myReservationsProvider);
-              await ref.read(myReservationsProvider.future);
+              ref.read(myReservationPageProvider.notifier).state = 0;
+              ref.invalidate(myReservationPageResultProvider);
+              await ref.read(myReservationPageResultProvider.future);
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -123,12 +94,13 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
                 bottom: 16,
               ),
               children: [
-                _LatestReservationHeroById(
-                  reservationId: latestReservationId,
-                  trackingOnly: widget.trackingOnly,
-                ),
+                if (latestReservation != null)
+                  _LatestReservationHero(
+                    reservation: latestReservation,
+                    trackingOnly: widget.trackingOnly,
+                  ),
                 const SizedBox(height: 18),
-                if (historyReservationIds.isNotEmpty) ...[
+                if (historyItems.isNotEmpty) ...[
                   Row(
                     children: [
                       Expanded(
@@ -137,24 +109,24 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
-                      if (totalHistoryPages > 1)
+                      if (result.totalPages > 1)
                         Text(
-                          '${l10n.t('my_reservations_page')} ${effectiveHistoryPage + 1} ${l10n.t('my_reservations_of')} $totalHistoryPages',
+                          '${l10n.t('my_reservations_page')} ${result.page + 1} ${l10n.t('my_reservations_of')} ${result.totalPages}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  ...visibleHistoryIds.map(
-                    (reservationId) => Padding(
+                  ...historyItems.map(
+                    (reservation) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _ReservationCardById(
-                        reservationId: reservationId,
+                      child: _ReservationCard(
+                        reservation: reservation,
                         trackingOnly: widget.trackingOnly,
                       ),
                     ),
                   ),
-                ] else
+                ] else if (latestReservation != null)
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -168,7 +140,7 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
             ),
           ),
         ),
-        if (totalHistoryPages > 1)
+        if (result.totalPages > 1)
           Padding(
             padding: EdgeInsets.symmetric(
               horizontal: responsive.horizontalPadding,
@@ -178,17 +150,23 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton.icon(
-                  onPressed: effectiveHistoryPage == 0
+                  onPressed: !result.hasPrevious
                       ? null
-                      : () => setState(() => _historyPage -= 1),
+                      : () {
+                          ref.read(myReservationPageProvider.notifier).state =
+                              result.page - 1;
+                        },
                   icon: const Icon(Icons.chevron_left),
                   label: Text(l10n.t('previous')),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: effectiveHistoryPage >= totalHistoryPages - 1
+                  onPressed: !result.hasNext
                       ? null
-                      : () => setState(() => _historyPage += 1),
+                      : () {
+                          ref.read(myReservationPageProvider.notifier).state =
+                              result.page + 1;
+                        },
                   icon: const Icon(Icons.chevron_right),
                   label: Text(l10n.t('next')),
                 ),
@@ -196,54 +174,6 @@ class _MyReservationsPageState extends ConsumerState<MyReservationsPage> {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _LatestReservationHeroById extends ConsumerWidget {
-  const _LatestReservationHeroById({
-    required this.reservationId,
-    required this.trackingOnly,
-  });
-
-  final String reservationId;
-  final bool trackingOnly;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final reservation = ref.watch(
-      reservationInStoreByIdProvider(reservationId),
-    );
-    if (reservation == null) {
-      return const SizedBox.shrink();
-    }
-    return _LatestReservationHero(
-      reservation: reservation,
-      trackingOnly: trackingOnly,
-    );
-  }
-}
-
-class _ReservationCardById extends ConsumerWidget {
-  const _ReservationCardById({
-    required this.reservationId,
-    required this.trackingOnly,
-  });
-
-  final String reservationId;
-  final bool trackingOnly;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final reservation = ref.watch(
-      reservationInStoreByIdProvider(reservationId),
-    );
-    if (reservation == null) {
-      return const SizedBox.shrink();
-    }
-    return _ReservationCard(
-      reservation: reservation,
-      trackingOnly: trackingOnly,
     );
   }
 }

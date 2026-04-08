@@ -20,6 +20,21 @@ final myReservationsProvider = FutureProvider<List<Reservation>>((ref) async {
   return ref.read(reservationRepositoryProvider).getReservationsByUser(userId);
 });
 
+// ── Paginated user reservations (mirrors admin pattern) ──────────────
+final myReservationPageProvider = StateProvider<int>((ref) => 0);
+final myReservationPageSizeProvider = Provider<int>((ref) => 10);
+
+final myReservationPageResultProvider = FutureProvider<ReservationPagedResult>((
+  ref,
+) {
+  ref.watch(reservationRealtimeEventCursorProvider);
+  final page = ref.watch(myReservationPageProvider);
+  final size = ref.watch(myReservationPageSizeProvider);
+  return ref
+      .read(reservationRepositoryProvider)
+      .getAllReservationsPage(page: page, size: size);
+});
+
 final myReservationIdsSignatureProvider = Provider<String>((ref) {
   final userId = ref.watch(sessionControllerProvider).user?.id;
   if (userId == null || userId.isEmpty) {

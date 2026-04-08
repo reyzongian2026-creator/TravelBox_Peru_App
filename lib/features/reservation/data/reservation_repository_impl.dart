@@ -307,7 +307,17 @@ class ReservationRepositoryImpl implements ReservationRepository {
   @override
   Future<List<Reservation>> getReservationsByUser(String userId) async {
     try {
-      final reservations = await _loadUserReservationsPageByPage(userId);
+      // Load only the first page (max 10 items) instead of all pages
+      final response = await _dio.get<dynamic>(
+        '/reservations/page',
+        queryParameters: {'page': 0, 'size': 10},
+      );
+      final reservations = _extractList(response.data)
+          .map(
+            (item) =>
+                _mapReservation(item as Map<String, dynamic>, userId: userId),
+          )
+          .toList();
       await _ref
           .read(reservationStoreProvider.notifier)
           .replaceForUser(userId, reservations);
@@ -316,6 +326,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
       try {
         final response = await _dio.get<dynamic>('/reservations');
         final reservations = _extractList(response.data)
+            .take(10)
             .map(
               (item) =>
                   _mapReservation(item as Map<String, dynamic>, userId: userId),
@@ -339,39 +350,6 @@ class ReservationRepositoryImpl implements ReservationRepository {
             .toList();
       }
     }
-  }
-
-  Future<List<Reservation>> _loadUserReservationsPageByPage(
-    String userId,
-  ) async {
-    final merged = <String, Reservation>{};
-    var page = 0;
-    var hasNext = true;
-
-    while (hasNext && page < 10) {
-      final response = await _dio.get<dynamic>(
-        '/reservations/page',
-        queryParameters: {'page': page, 'size': 40},
-      );
-      final pageItems = _extractList(response.data)
-          .map(
-            (item) =>
-                _mapReservation(item as Map<String, dynamic>, userId: userId),
-          )
-          .toList();
-      for (final item in pageItems) {
-        merged[item.id] = item;
-      }
-      final isLast = _extractBool(response.data, 'last');
-      hasNext = !isLast;
-      if (!hasNext || pageItems.isEmpty) {
-        break;
-      }
-      page += 1;
-    }
-
-    final reservations = merged.values.toList();
-    return reservations;
   }
 
   @override
@@ -470,16 +448,15 @@ class ReservationRepositoryImpl implements ReservationRepository {
         }
         throw AppException.fromError(error);
       }
-      final localItems =
-          _ref
-              .read(reservationStoreProvider)
-              .map(_applyMemoryLuggagePhotos)
-              .where(
-                (item) =>
-                    (status == null || item.status == status) &&
-                    _matchesReservationQuery(item, normalizedQuery),
-              )
-              .toList();
+      final localItems = _ref
+          .read(reservationStoreProvider)
+          .map(_applyMemoryLuggagePhotos)
+          .where(
+            (item) =>
+                (status == null || item.status == status) &&
+                _matchesReservationQuery(item, normalizedQuery),
+          )
+          .toList();
       final start = normalizedPage * normalizedSize;
       if (start >= localItems.length) {
         return ReservationPagedResult(
@@ -1022,9 +999,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     try {
       final response = await _dio.get<dynamic>(
         '/reservations/$reservationId/qr',
-        options: Options(
-          responseType: ResponseType.bytes,
-        ),
+        options: Options(responseType: ResponseType.bytes),
       );
 
       final bytes = response.data as List<int>;
@@ -1039,7 +1014,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
   }
 
   @override
-  Future<ReservationTracking> getReservationTracking(String reservationId) async {
+  Future<ReservationTracking> getReservationTracking(
+    String reservationId,
+  ) async {
     try {
       final response = await _dio.get<Map<String, dynamic>>(
         '/reservations/$reservationId/tracking',
@@ -1054,7 +1031,10 @@ class ReservationRepositoryImpl implements ReservationRepository {
     }
   }
 
-  ReservationTracking _mapReservationTracking(Map<String, dynamic> data, String reservationId) {
+  ReservationTracking _mapReservationTracking(
+    Map<String, dynamic> data,
+    String reservationId,
+  ) {
     return ReservationTracking(
       reservationId: reservationId,
       status: data['status']?.toString() ?? '',
@@ -1062,17 +1042,20 @@ class ReservationRepositoryImpl implements ReservationRepository {
       estimatedCompletion: data['estimatedCompletion'] != null
           ? DateTime.tryParse(data['estimatedCompletion'].toString())
           : null,
-      steps: (data['steps'] as List<dynamic>?)
-              ?.map((s) => TrackingStep(
-                    id: s['id']?.toString() ?? '',
-                    title: s['title']?.toString() ?? '',
-                    description: s['description']?.toString() ?? '',
-                    timestamp: s['timestamp'] != null
-                        ? DateTime.tryParse(s['timestamp'].toString())
-                        : null,
-                    isCompleted: s['isCompleted'] as bool? ?? false,
-                    isActive: s['isActive'] as bool? ?? false,
-                  ))
+      steps:
+          (data['steps'] as List<dynamic>?)
+              ?.map(
+                (s) => TrackingStep(
+                  id: s['id']?.toString() ?? '',
+                  title: s['title']?.toString() ?? '',
+                  description: s['description']?.toString() ?? '',
+                  timestamp: s['timestamp'] != null
+                      ? DateTime.tryParse(s['timestamp'].toString())
+                      : null,
+                  isCompleted: s['isCompleted'] as bool? ?? false,
+                  isActive: s['isActive'] as bool? ?? false,
+                ),
+              )
               .toList() ??
           [],
     );

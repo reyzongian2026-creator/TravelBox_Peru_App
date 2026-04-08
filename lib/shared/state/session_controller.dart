@@ -394,6 +394,9 @@ class SessionController extends StateNotifier<SessionState> {
       isReady: true,
     );
     await _persist();
+    // Clear reservation cache on logout
+    await _prefs.remove('travelbox.reservations.v2');
+    await _prefs.remove('travelbox.reservations.v1');
   }
 
   Future<void> completeOnboarding() async {
@@ -456,10 +459,7 @@ class SessionController extends StateNotifier<SessionState> {
       final newRefresh = data['refreshToken']?.toString().trim() ?? '';
       if (!_hasUsableAccessToken(newAccess) || newRefresh.isEmpty) return;
 
-      state = state.copyWith(
-        accessToken: newAccess,
-        refreshToken: newRefresh,
-      );
+      state = state.copyWith(accessToken: newAccess, refreshToken: newRefresh);
       await _persist();
       _scheduleProactiveRefresh();
     } catch (_) {

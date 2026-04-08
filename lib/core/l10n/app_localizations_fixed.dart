@@ -207,11 +207,13 @@ class AppLocalizations {
           'El reembolso puede tardar unos minutos en reflejarse en tu cuenta.',
       'do_not_close_window': 'No cierres esta ventana',
       'checkout_validating_transfer': 'Validando proceso de transferencia',
-      'checkout_validating_transfer_subtitle': 'Esto puede tomar unos minutos mientras verificamos tu pago.',
+      'checkout_validating_transfer_subtitle':
+          'Esto puede tomar unos minutos mientras verificamos tu pago.',
       'checkout_payment_confirmed_title': '¡Pago validado!',
       'checkout_payment_confirmed_subtitle': 'Serás redirigido a tu reserva…',
       'checkout_transfer_pending_title': 'Pago en revisión',
-      'checkout_transfer_pending_subtitle': 'Un operador verificará tu transferencia en breve.',
+      'checkout_transfer_pending_subtitle':
+          'Un operador verificará tu transferencia en breve.',
       'checkout_view_reservation': 'Ver mi reserva',
       'login_title': 'Iniciar sesión',
       'logout': 'Cerrar sesión',
@@ -564,15 +566,21 @@ class AppLocalizations {
       'solicitar_delivery': 'Solicitar delivery',
       'solicitar_recojo': 'Solicitar recojo',
       'checkout_choose_method': 'Elige tu método de pago',
-      'checkout_choose_method_subtitle': 'Selecciona cómo deseas pagar tu reserva',
+      'checkout_choose_method_subtitle':
+          'Selecciona cómo deseas pagar tu reserva',
       'checkout_digital_section': 'PAGO DIGITAL',
       'checkout_onsite_section': 'PAGO PRESENCIAL',
       'checkout_continue_purchase': 'Continuar compra',
-      'checkout_help_yape': 'Se abrirá el checkout de Izipay donde podrás escanear el código QR con tu app de Yape.',
-      'checkout_help_plin': 'Se abrirá el checkout de Izipay donde podrás completar tu pago con Plin.',
-      'checkout_help_qr': 'Se abrirá el checkout de Izipay donde podrás escanear un QR con cualquier app bancaria.',
-      'checkout_help_card': 'Se abrirá el checkout seguro de Izipay donde podrás ingresar los datos de tu tarjeta.',
-      'social_no_valid_session': 'No se recibió una sesión válida desde el proveedor social.',
+      'checkout_help_yape':
+          'Se abrirá el checkout de Izipay donde podrás escanear el código QR con tu app de Yape.',
+      'checkout_help_plin':
+          'Se abrirá el checkout de Izipay donde podrás completar tu pago con Plin.',
+      'checkout_help_qr':
+          'Se abrirá el checkout de Izipay donde podrás escanear un QR con cualquier app bancaria.',
+      'checkout_help_card':
+          'Se abrirá el checkout seguro de Izipay donde podrás ingresar los datos de tu tarjeta.',
+      'social_no_valid_session':
+          'No se recibió una sesión válida desde el proveedor social.',
       'social_login_failed': 'No se pudo completar el inicio de sesión social.',
       'social_login_error': 'No se pudo iniciar sesión.',
       'social_login_processing': 'Completando inicio de sesión social...',
@@ -615,11 +623,13 @@ class AppLocalizations {
       'policy_unknown': 'Desconocido',
       'wallet_credit': 'Crédito de billetera',
       'insurance_active': 'Seguro activo',
-      'insurance_coverage_desc': 'Tu equipaje está protegido con seguro extra. En caso de incidencia, reporta desde el botón de soporte.',
+      'insurance_coverage_desc':
+          'Tu equipaje está protegido con seguro extra. En caso de incidencia, reporta desde el botón de soporte.',
       'rebook': 'Reservar de nuevo',
       'favorites': 'Favoritos',
       'favorites_empty': 'Aún no tienes favoritos',
-      'favorites_empty_hint': 'Guarda tus almacenes favoritos para encontrarlos rápidamente.',
+      'favorites_empty_hint':
+          'Guarda tus almacenes favoritos para encontrarlos rápidamente.',
     },
     'en': {
       'accept_terms': 'I accept the terms and conditions',
@@ -686,11 +696,14 @@ class AppLocalizations {
           'The refund may take a few minutes to appear in your account.',
       'do_not_close_window': 'Do not close this window',
       'checkout_validating_transfer': 'Validating transfer',
-      'checkout_validating_transfer_subtitle': 'This may take a few minutes while we verify your payment.',
+      'checkout_validating_transfer_subtitle':
+          'This may take a few minutes while we verify your payment.',
       'checkout_payment_confirmed_title': 'Payment verified!',
-      'checkout_payment_confirmed_subtitle': 'You will be redirected to your reservation…',
+      'checkout_payment_confirmed_subtitle':
+          'You will be redirected to your reservation…',
       'checkout_transfer_pending_title': 'Payment under review',
-      'checkout_transfer_pending_subtitle': 'An operator will verify your transfer shortly.',
+      'checkout_transfer_pending_subtitle':
+          'An operator will verify your transfer shortly.',
       'checkout_view_reservation': 'View reservation',
       'login_description': 'Sign in to continue with InkaVoy.',
       'login_title': 'Sign in',
@@ -1067,15 +1080,21 @@ class AppLocalizations {
       'solicitar_delivery': 'Request delivery',
       'solicitar_recojo': 'Request pickup',
       'checkout_choose_method': 'Choose your payment method',
-      'checkout_choose_method_subtitle': 'Select how you want to pay for your reservation',
+      'checkout_choose_method_subtitle':
+          'Select how you want to pay for your reservation',
       'checkout_digital_section': 'DIGITAL PAYMENT',
       'checkout_onsite_section': 'ON-SITE PAYMENT',
       'checkout_continue_purchase': 'Continue purchase',
-      'checkout_help_yape': 'The Izipay checkout will open where you can scan the QR code with your Yape app.',
-      'checkout_help_plin': 'The Izipay checkout will open where you can complete your payment with Plin.',
-      'checkout_help_qr': 'The Izipay checkout will open where you can scan a QR with any banking app.',
-      'checkout_help_card': 'The secure Izipay checkout will open where you can enter your card details.',
-      'social_no_valid_session': 'No valid session was received from the social provider.',
+      'checkout_help_yape':
+          'The Izipay checkout will open where you can scan the QR code with your Yape app.',
+      'checkout_help_plin':
+          'The Izipay checkout will open where you can complete your payment with Plin.',
+      'checkout_help_qr':
+          'The Izipay checkout will open where you can scan a QR with any banking app.',
+      'checkout_help_card':
+          'The secure Izipay checkout will open where you can enter your card details.',
+      'social_no_valid_session':
+          'No valid session was received from the social provider.',
       'social_login_failed': 'Could not complete social sign-in.',
       'social_login_error': 'Could not sign in.',
       'social_login_processing': 'Completing social sign-in...',
@@ -1118,11 +1137,13 @@ class AppLocalizations {
       'policy_unknown': 'Unknown',
       'wallet_credit': 'Wallet credit',
       'insurance_active': 'Insurance active',
-      'insurance_coverage_desc': 'Your luggage is protected with extra insurance. In case of an incident, report using the support button.',
+      'insurance_coverage_desc':
+          'Your luggage is protected with extra insurance. In case of an incident, report using the support button.',
       'rebook': 'Book again',
       'favorites': 'Favorites',
       'favorites_empty': 'No favorites yet',
-      'favorites_empty_hint': 'Save your favorite warehouses to find them quickly.',
+      'favorites_empty_hint':
+          'Save your favorite warehouses to find them quickly.',
     },
   };
   static final Map<String, Map<String, String>> _t = {
@@ -1766,7 +1787,7 @@ class AppLocalizations {
       'baggage_quantity': 'Number of bags',
       'bultos': 'Bags',
       'busqueda_y_cambios_de_estado': 'Search and status changes',
-      'cambiar_foto': 'Foto andern',
+      'cambiar_foto': 'Change photo',
       'cancelar': 'Cancelar',
       'cargando_tickets': 'Cargando tickets',
       'cash_payment_approved_ok': 'Payment approved successfully.',
@@ -2006,7 +2027,7 @@ class AppLocalizations {
           'No luggage ID yet. Generate the tag to register custody.',
       'ops_qr_customer_language_for_messages': 'Customer language for messages',
       'ops_qr_customer_message_hint':
-          'Ej. Hello, please show your QR to Validieren your Reservierungtion and luggage.',
+          'E.g. Hello, please show your QR to validate your reservation and luggage.',
       'ops_qr_customer_view_prefix': 'Customer view',
       'ops_qr_delivery_completed_ok':
           'Delivery handoff completed successfully.',
@@ -2039,10 +2060,10 @@ class AppLocalizations {
       'ops_qr_scan_or_enter_code_first': 'Enter or scan a QR code first.',
       'ops_qr_store_not_allowed_prefix':
           'Cannot register warehouse check-in with status',
-      'ops_qr_tab_scan': 'EEscanearear',
-      'otra': 'Andere',
-      'otro': 'Andere',
-      'otro_valido': 'Andere gultige ID',
+      'ops_qr_tab_scan': 'Scan',
+      'otra': 'Other',
+      'otro': 'Other',
+      'otro_valido': 'Other valid ID',
       'pago_pendiente_de_aprobacion': 'Payment pending approval',
       'password_reset_code_required': 'Enter the recovery code.',
       'payment': 'Payment',

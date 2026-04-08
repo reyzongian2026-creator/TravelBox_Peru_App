@@ -317,10 +317,12 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
   }) async {
     final formData = FormData.fromMap({
       'bagUnits': bagUnits.clamp(1, 20),
-      'photos': photoBase64List.map((base64) => FormData.fromMap({
-        'data': base64,
-        'contentType': 'image/jpeg',
-      })).toList(),
+      'photos': photoBase64List
+          .map(
+            (base64) =>
+                FormData.fromMap({'data': base64, 'contentType': 'image/jpeg'}),
+          )
+          .toList(),
     });
     final response = await _dio.post<Map<String, dynamic>>(
       '/ops/qr-handoff/reservations/$reservationId/store-with-photos',
@@ -489,6 +491,35 @@ class QrHandoffController extends StateNotifier<QrHandoffState> {
       );
       _consumeBackendCase(response.data ?? const <String, dynamic>{});
     } catch (_) {}
+  }
+
+  /// Pre-loads handoff cases from the backend for all given reservation IDs.
+  /// Called when the ops QR page mounts to restore previously registered cases.
+  Future<void> syncCases(List<String> reservationIds) async {
+    final idsToSync = reservationIds
+        .where(
+          (id) =>
+              id.trim().isNotEmpty &&
+              !state.casesByReservationId.containsKey(id),
+        )
+        .toList();
+    if (idsToSync.isEmpty) return;
+
+    try {
+      final response = await _dio.get<List<dynamic>>(
+        '/ops/qr-handoff/reservations/batch',
+        queryParameters: {'ids': idsToSync.join(',')},
+      );
+      final items = response.data ?? const <dynamic>[];
+      for (final raw in items) {
+        if (raw is Map<String, dynamic>) {
+          _consumeBackendCase(raw);
+        }
+      }
+    } catch (_) {
+      // Fallback: sync individually if batch fails
+      await Future.wait(idsToSync.map((id) => syncCase(id)));
+    }
   }
 
   void dismissNotification(String notificationId) {

@@ -97,9 +97,43 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
       _pendingAutoScanValue = initialScan;
       _scanController.text = initialScan;
     }
-    Future<void>.microtask(
-      () => ref.read(qrHandoffControllerProvider.notifier).refreshApprovals(),
-    );
+    Future<void>.microtask(() {
+      ref.read(qrHandoffControllerProvider.notifier).refreshApprovals();
+      _syncExistingHandoffCases();
+    });
+  }
+
+  /// Pre-loads QR handoff cases from the backend for active reservations
+  /// so they persist across page navigations.
+  Future<void> _syncExistingHandoffCases() async {
+    final reservationsAsync = ref.read(opsReservationsProvider);
+    final reservations = reservationsAsync.valueOrNull;
+    if (reservations != null && reservations.isNotEmpty) {
+      await _doSyncCases(reservations);
+      return;
+    }
+    // If not yet loaded, listen for the first data event
+    ref.listenManual(opsReservationsProvider, (previous, next) {
+      final data = next.valueOrNull;
+      if (data != null && data.isNotEmpty) {
+        _doSyncCases(data);
+      }
+    }, fireImmediately: false);
+  }
+
+  Future<void> _doSyncCases(List<Reservation> reservations) async {
+    final activeIds = reservations
+        .where(
+          (r) =>
+              r.status != ReservationStatus.cancelled &&
+              r.status != ReservationStatus.expired &&
+              r.status != ReservationStatus.draft,
+        )
+        .map((r) => r.id)
+        .toList();
+    if (activeIds.isNotEmpty) {
+      await ref.read(qrHandoffControllerProvider.notifier).syncCases(activeIds);
+    }
   }
 
   @override
@@ -185,10 +219,9 @@ class _OpsQrHandoffPageState extends ConsumerState<OpsQrHandoffPage> {
                                   10,
                                 ),
                                 child: OperationGuideSummaryCard(
-                                  guide:
-                                      resolveOperationGuide(
-                                        '/ops/qr-handoff',
-                                      )!,
+                                  guide: resolveOperationGuide(
+                                    '/ops/qr-handoff',
+                                  )!,
                                   compact: true,
                                 ),
                               ),

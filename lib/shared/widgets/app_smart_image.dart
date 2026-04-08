@@ -62,8 +62,12 @@ class AppSmartImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      cacheHeight: height != null ? (height! * 2).toInt() : null,
-      cacheWidth: width != null ? (width! * 2).toInt() : null,
+      cacheHeight: height != null && height!.isFinite
+          ? (height! * 2).toInt()
+          : null,
+      cacheWidth: width != null && width!.isFinite
+          ? (width! * 2).toInt()
+          : null,
       errorBuilder: (_, error, stackTrace) {
         return _fallbackWithDebug(resolvedUrl, error);
       },
@@ -82,7 +86,8 @@ class AppSmartImage extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2,
               value: progress.expectedTotalBytes != null
-                  ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                  ? progress.cumulativeBytesLoaded /
+                        progress.expectedTotalBytes!
                   : null,
             ),
           ),
