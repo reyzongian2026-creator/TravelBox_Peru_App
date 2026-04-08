@@ -1148,6 +1148,24 @@ class AppLocalizations {
   };
   static final Map<String, Map<String, String>> _t = {
     'es': {
+      // -- AppErrorCode translations (used by AppErrorFormatter) --
+      'error_connection':
+          'Error de conexion. Verifica tu internet e intenta de nuevo.',
+      'error_rate_limit':
+          'Demasiadas solicitudes. Intenta en {seconds} segundos.',
+      'error_no_permissions': 'No tienes permisos para esta accion.',
+      'error_not_found': 'Recurso no encontrado.',
+      'error_server_error': 'Error del servidor. Intenta de nuevo.',
+      'error_generic': 'Ocurrio un error inesperado.',
+      'error_invalid_request': 'Solicitud invalida.',
+      'error_unauthorized': 'Sesion expirada. Inicia sesion de nuevo.',
+      'error_bad_request': 'Solicitud invalida.',
+      'err_no_response': 'No se recibio respuesta del servidor.',
+      'err_upload_failed': 'Error al subir archivo.',
+      'err_fetch_failed': 'Error al obtener datos.',
+      'err_update_failed': 'Error al actualizar.',
+      'err_delete_failed': 'Error al eliminar.',
+      'err_export_failed': 'Error al exportar.',
       'abrir_modulo_qrpin': 'Abrir módulo QR/PIN',
       'aceptar_servicio': 'Aceptar servicio',
       'actual': 'Actual',
@@ -1695,6 +1713,24 @@ class AppLocalizations {
           'Desliza horizontalmente para ver más columnas.',
     },
     'en': {
+      // -- AppErrorCode translations (used by AppErrorFormatter) --
+      'error_connection':
+          'Connection error. Check your internet and try again.',
+      'error_rate_limit': 'Too many requests. Try again in {seconds} seconds.',
+      'error_no_permissions':
+          'You do not have permissions to perform this action.',
+      'error_not_found': 'Resource not found.',
+      'error_server_error': 'Server error. Please try again.',
+      'error_generic': 'An unexpected error occurred.',
+      'error_invalid_request': 'Invalid request.',
+      'error_unauthorized': 'Session expired. Please sign in again.',
+      'error_bad_request': 'Invalid request.',
+      'err_no_response': 'No response received from server.',
+      'err_upload_failed': 'File upload failed.',
+      'err_fetch_failed': 'Failed to fetch data.',
+      'err_update_failed': 'Update failed.',
+      'err_delete_failed': 'Delete failed.',
+      'err_export_failed': 'Export failed.',
       // 421
       'activo': 'Active',
       'activos': 'Active',
