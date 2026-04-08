@@ -37,6 +37,17 @@
 
   <title>InkaVoy</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Application Insights JS SDK — captura errores, page views y performance del frontend -->
+  <script type="text/javascript">
+  !function(T,l,y){var S=T.location,k="script",D="instrumentationKey",C="ingestionendpoint",I="disableExceptionTracking",E="ai.device.",b="toLowerCase",w="crossOrigin",N="POST",e="appInsightsSDK",t=y.name||"appInsights";(y.name||T[e])&&(T[e]=t);var n=T[t]||function(d){var g=!1,f=!1,m={initialize:!0,queue:[],sv:"8",version:2,config:d};function v(e,t){var n={},a="Browser";return n[E+"id"]=a[b](),n[E+"type"]=a,n["ai.operation.name"]=S&&S.pathname||"_unknown_",n["ai.internal.sdkVersion"]="javascript:snippet:"+(m.sv||m.version),n}var h=d.url||y.src;function a(e){var t,n,a,i,o,s,r,c,u,p,l;if(f)return;f=!0,m.queue=[],g||(g=!0,T[t=e?"]]>":"src"]=h)}var i=T[e]=m;setTimeout(function(){var e=l.getElementsByTagName(k)[0];var t=l.createElement(k);t.src=h;t[w]="anonymous";e.parentNode.insertBefore(t,e)},0);try{m.cookie=l.cookie}catch(e){}return i}(y.cfg);T[t]=n,n.queue&&0===n.queue.length&&n.trackPageView({})}(window,document,{
+    src: "https://js.monitor.azure.com/scripts/b/ai.2.min.js",
+    crossOrigin: "anonymous",
+    cfg: {
+      connectionString: "InstrumentationKey=b8ba2787-7a28-49f4-b503-11f5f82d9d97;IngestionEndpoint=https://westus3-1.in.applicationinsights.azure.com/;LiveEndpoint=https://westus3.livediagnostics.monitor.azure.com/;ApplicationId=03adb0a9-0b44-4149-996d-48021da72f36"
+    }
+  });
+  </script>
   <style>
     :root {
       --travelbox-safe-top: env(safe-area-inset-top, 0px);
