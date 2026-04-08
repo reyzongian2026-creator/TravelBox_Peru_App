@@ -48,7 +48,7 @@ $AZURE = @{
     SubscriptionId   = "33815caa-4cfb-4a9e-b60a-8fee5caa2b08"
     ResourceGroup    = "travelbox-peru-rg"
     StaticWebAppName = "travelbox-frontend"
-    KeyVaultName     = "kvtravelboxpe"
+    KeyVaultName     = "kvtravelboxpebs"
     Region           = "eastus"
 }
 
@@ -70,6 +70,7 @@ $KV_FRONTEND_SECRETS = @(
     @{ Secret = "tbx-azure-client-id"; Env = "AZURE_CLIENT_ID"; Required = $false }
     @{ Secret = "tbx-azure-tenant-id"; Env = "AZURE_TENANT_ID"; Required = $false }
     @{ Secret = "tbx-azure-maps-api-key"; Env = "AZURE_MAPS_API_KEY"; Required = $false }
+    @{ Secret = "tbx-app-google-maps-api-key"; Env = "GOOGLE_MAPS_API_KEY"; Required = $false }
 )
 
 # ============================================================================

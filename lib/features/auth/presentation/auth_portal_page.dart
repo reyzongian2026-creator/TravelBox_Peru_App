@@ -49,7 +49,7 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
   @override
   void initState() {
     super.initState();
-    _accessMode = _AccessMode.internal;
+    _accessMode = _AccessMode.client;
     _loginEmailFocusNode.addListener(_syncLlamaFromFocus);
     _loginPasswordFocusNode.addListener(_syncLlamaFromFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,9 +100,9 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
       heroLabel: context.l10n.t('app_name'),
       heroTitle: context.l10n.t('app_name').toUpperCase(),
       heroSubtitle: context.l10n.t('auth_portal_hero_subtitle'),
-      showGuardianLlama: false,
-      showCompactHero: false,
-      showHeroIllustration: false,
+      showGuardianLlama: true,
+      showCompactHero: true,
+      showHeroIllustration: true,
       heroAnimation: _llamaAnimation,
       formChild: _AuthPanel(
         accessMode: _accessMode,
@@ -497,21 +497,19 @@ class _AuthPanel extends StatelessWidget {
               height: 1.1,
             ),
           ),
-          if (!isMobile) ...[
-            const SizedBox(height: 4),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: width > 600 ? 20 : 8),
-              child: Text(
-                l10n.t('login_description'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: descriptionColor,
-                  height: 1.35,
-                  fontSize: 13,
-                ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: width > 600 ? 20 : 8),
+            child: Text(
+              l10n.t('login_description'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: descriptionColor,
+                height: 1.35,
+                fontSize: isMobile ? 11.5 : 13,
               ),
             ),
-          ],
+          ),
           SizedBox(height: isMobile ? 8 : 18),
           SegmentedButton<_AccessMode>(
             segments: [
@@ -636,6 +634,7 @@ class _AuthPanel extends StatelessWidget {
                 ? l10n.t('login_as_client')
                 : l10n.t('login_as_internal'),
             filled: true,
+            loading: authState.isLoading,
           ),
           if (isClient) ...[
             const SizedBox(height: 6),
@@ -731,7 +730,7 @@ class _AuthPanel extends StatelessWidget {
                   ),
                   onPressed: authState.isLoading ? null : onEmailRegisterPressed,
                   child: Text(l10n.t('create_client_account'),
-                      style: const TextStyle(fontSize: 11)),
+                      style: const TextStyle(fontSize: 13)),
                 ),
                 Text(' · ',
                     style: TextStyle(
@@ -748,7 +747,7 @@ class _AuthPanel extends StatelessWidget {
                 onPressed: authState.isLoading ? null : onPasswordResetPressed,
                 child: Text(
                   isClient ? l10n.t('recover_password') : l10n.t('forgot_password'),
-                  style: const TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
             ],

@@ -772,6 +772,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       final checkoutMessage = await _processOnlinePayment(
         reservationId: reservation.id.toString(),
         paymentMethod: selectedPaymentMethod,
+        idempotencyKey: idempotencyKey,
         forceCashOnly: forceCashOnly,
         onBeforeManualTransferDialog: () {
           if (overlay != null && !overlayDismissed) {
@@ -863,6 +864,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
   Future<String?> _processOnlinePayment({
     required String reservationId,
     required String paymentMethod,
+    required String idempotencyKey,
     required bool forceCashOnly,
     VoidCallback? onBeforeManualTransferDialog,
   }) async {
@@ -912,6 +914,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       paymentIntentId: paymentIntentId,
       reservationId: parsedReservationId,
       paymentMethod: paymentMethod,
+      idempotencyKey: idempotencyKey,
       customerEmail: _normalizedCustomerEmail(
         ref.read(sessionControllerProvider).user?.email,
       ),
@@ -1021,6 +1024,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     int? paymentIntentId,
     int? reservationId,
     required String paymentMethod,
+    required String idempotencyKey,
     String? customerEmail,
     String? customerPhone,
     int maxAttempts = 3,
@@ -1035,6 +1039,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           paymentIntentId: paymentIntentId,
           reservationId: reservationId,
           paymentMethod: paymentMethod,
+          idempotencyKey: idempotencyKey,
           customerEmail: customerEmail,
           customerPhone: customerPhone,
         );

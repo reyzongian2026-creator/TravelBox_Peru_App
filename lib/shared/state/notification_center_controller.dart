@@ -259,8 +259,29 @@ class NotificationCenterController
         },
         onError: (_) => _handleSseError(),
       );
+    } on DioException catch (error) {
+      final statusCode = error.response?.statusCode ?? 0;
+      final isAuthFailure = statusCode == 401 || statusCode == 403;
+      if (isAuthFailure) {
+        _handleSseError();
+        return;
+      }
+
+      // Fallback only for non-auth failures; reusing a rejected JWT just
+      // produces a noisy loop of unauthorized SSE attempts.
+      _liveEventsClient.connect(
+        apiBaseUrl: AppEnv.resolvedApiBaseUrl,
+        accessToken: accessToken,
+        lastEventId: lastEventId,
+        onNotification: (event) {
+          _sseConsecutiveErrors = 0;
+          _handleLiveEvent(event);
+        },
+        onError: (_) => _handleSseError(),
+      );
     } catch (_) {
-      // Fallback: connect with original JWT if token endpoint fails
+      // Fallback: connect with original JWT if token endpoint fails before
+      // receiving an HTTP auth decision.
       _liveEventsClient.connect(
         apiBaseUrl: AppEnv.resolvedApiBaseUrl,
         accessToken: accessToken,

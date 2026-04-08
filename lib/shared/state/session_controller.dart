@@ -231,16 +231,35 @@ class SessionController extends StateNotifier<SessionState> {
         );
       }
 
-      if (!_hasUsableAccessToken(restoredState.accessToken)) {
+      if (!_hasJwtLikeAccessToken(restoredState.accessToken)) {
         await _prefs.remove(_sessionKey);
         await _tokenStorage.clearTokens();
         state = state.copyWith(isReady: true);
         return;
       }
-      var normalizedState = _normalizeRoleFromAccessToken(restoredState)
+      var refreshedExpiredSession = false;
+      var effectiveState = restoredState;
+      if (!_hasUsableAccessToken(effectiveState.accessToken)) {
+        final refreshedTokens = await _requestTokenRefresh(
+          effectiveState.refreshToken,
+        );
+        if (refreshedTokens == null) {
+          await _prefs.remove(_sessionKey);
+          await _tokenStorage.clearTokens();
+          state = state.copyWith(isReady: true);
+          return;
+        }
+        effectiveState = effectiveState.copyWith(
+          accessToken: refreshedTokens.accessToken,
+          refreshToken: refreshedTokens.refreshToken,
+        );
+        refreshedExpiredSession = true;
+      }
+
+      var normalizedState = _normalizeRoleFromAccessToken(effectiveState)
           .copyWith(
             isReady: true,
-            onboardingCompleted: _isOnboardingCompleted(restoredState.user),
+            onboardingCompleted: _isOnboardingCompleted(effectiveState.user),
           );
       final backendOnboardingCompleted =
           await _fetchOnboardingCompletedFromBackend(
@@ -254,6 +273,7 @@ class SessionController extends StateNotifier<SessionState> {
       }
       state = normalizedState;
       if (requiresTokenMigration ||
+          refreshedExpiredSession ||
           normalizedState.user?.role != restoredState.user?.role ||
           backendOnboardingCompleted != null) {
         await _persist();
@@ -421,6 +441,10 @@ class SessionController extends StateNotifier<SessionState> {
 
     final token = state.accessToken;
     if (token == null || token.isEmpty) return;
+    if (_isTokenExpired(token, leewaySeconds: 30)) {
+      unawaited(_performProactiveRefresh());
+      return;
+    }
 
     final exp = _extractExpFromJwt(token);
     final iat = _extractIatFromJwt(token);
@@ -434,14 +458,19 @@ class SessionController extends StateNotifier<SessionState> {
       // For a 30-min token: refresh after ~22.5 min (7.5 min before expiry)
       final totalLifetime = exp - iat;
       final refreshAt = iat + (totalLifetime * 3 ~/ 4);
-      delaySeconds = (refreshAt - nowSec).clamp(30, 86400);
+      delaySeconds = refreshAt - nowSec;
     } else {
       // Fallback: refresh 2 minutes before expiry
-      delaySeconds = (exp - nowSec - 120).clamp(30, 86400);
+      delaySeconds = exp - nowSec - 120;
+    }
+
+    if (delaySeconds <= 30) {
+      unawaited(_performProactiveRefresh());
+      return;
     }
 
     _proactiveRefreshTimer = Timer(
-      Duration(seconds: delaySeconds),
+      Duration(seconds: delaySeconds.clamp(30, 86400)),
       () => unawaited(_performProactiveRefresh()),
     );
   }
@@ -449,6 +478,24 @@ class SessionController extends StateNotifier<SessionState> {
   Future<void> _performProactiveRefresh() async {
     final currentRefreshToken = state.refreshToken?.trim();
     if (currentRefreshToken == null || currentRefreshToken.isEmpty) return;
+    final refreshedTokens = await _requestTokenRefresh(currentRefreshToken);
+    if (refreshedTokens == null) {
+      return;
+    }
+
+    state = state.copyWith(
+      accessToken: refreshedTokens.accessToken,
+      refreshToken: refreshedTokens.refreshToken,
+    );
+    await _persist();
+    _scheduleProactiveRefresh();
+  }
+
+  Future<_RefreshedTokens?> _requestTokenRefresh(String? refreshToken) async {
+    final normalizedRefreshToken = refreshToken?.trim() ?? '';
+    if (normalizedRefreshToken.isEmpty) {
+      return null;
+    }
 
     final client = Dio(
       BaseOptions(
@@ -460,60 +507,42 @@ class SessionController extends StateNotifier<SessionState> {
     );
     try {
       final response = await client.post<Map<String, dynamic>>(
-        '/api/v1/auth/refresh',
-        data: {'refreshToken': currentRefreshToken},
+        '/auth/refresh',
+        data: {'refreshToken': normalizedRefreshToken},
       );
       final data = response.data;
-      if (data == null) return;
+      if (data == null) {
+        return null;
+      }
 
       final newAccess = data['accessToken']?.toString().trim() ?? '';
-      final newRefresh = data['refreshToken']?.toString().trim() ?? '';
-      if (!_hasUsableAccessToken(newAccess) || newRefresh.isEmpty) return;
+      final refreshedRefreshToken =
+          data['refreshToken']?.toString().trim() ?? '';
+      final nextRefreshToken = refreshedRefreshToken.isNotEmpty
+          ? refreshedRefreshToken
+          : normalizedRefreshToken;
+      if (!_hasUsableAccessToken(newAccess) || nextRefreshToken.isEmpty) {
+        return null;
+      }
 
-      state = state.copyWith(accessToken: newAccess, refreshToken: newRefresh);
-      await _persist();
-      _scheduleProactiveRefresh();
+      return _RefreshedTokens(
+        accessToken: newAccess,
+        refreshToken: nextRefreshToken,
+      );
     } catch (_) {
       // Silently fail — the reactive 401 interceptor will handle it
+      return null;
     } finally {
       client.close(force: true);
     }
   }
 
   int? _extractExpFromJwt(String token) {
-    try {
-      final parts = token.split('.');
-      if (parts.length < 2) return null;
-      final payload = utf8.decode(
-        base64Url.decode(base64Url.normalize(parts[1])),
-      );
-      final map = jsonDecode(payload);
-      if (map is! Map<String, dynamic>) return null;
-      final exp = map['exp'];
-      if (exp is int) return exp;
-      if (exp is num) return exp.toInt();
-      return int.tryParse(exp.toString());
-    } catch (_) {
-      return null;
-    }
+    return _extractJwtIntClaim(token, 'exp');
   }
 
   int? _extractIatFromJwt(String token) {
-    try {
-      final parts = token.split('.');
-      if (parts.length < 2) return null;
-      final payload = utf8.decode(
-        base64Url.decode(base64Url.normalize(parts[1])),
-      );
-      final map = jsonDecode(payload);
-      if (map is! Map<String, dynamic>) return null;
-      final iat = map['iat'];
-      if (iat is int) return iat;
-      if (iat is num) return iat.toInt();
-      return int.tryParse(iat.toString());
-    } catch (_) {
-      return null;
-    }
+    return _extractJwtIntClaim(token, 'iat');
   }
 
   SessionState _normalizeRoleFromAccessToken(SessionState currentState) {
@@ -741,20 +770,73 @@ String _normalizeSessionLanguage(String? raw) {
   return 'es';
 }
 
-bool _hasUsableAccessToken(String? rawToken) {
+bool _hasJwtLikeAccessToken(String? rawToken) {
   final token = rawToken?.trim() ?? '';
   if (token.isEmpty) {
     return false;
   }
 
-  if (token.startsWith('mock-access-token') ||
-      token.startsWith('local-token-')) {
+  if (_isMockAccessToken(token)) {
     return _isMockTokenAllowed();
   }
 
   final segments = token.split('.');
   return segments.length == 3 &&
       segments.every((segment) => segment.trim().isNotEmpty);
+}
+
+bool _hasUsableAccessToken(String? rawToken) {
+  final token = rawToken?.trim() ?? '';
+  if (!_hasJwtLikeAccessToken(token)) {
+    return false;
+  }
+  if (_isMockAccessToken(token)) {
+    return true;
+  }
+
+  final exp = _extractJwtIntClaim(token, 'exp');
+  if (exp == null) {
+    return true;
+  }
+
+  final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  return exp > nowSec + 15;
+}
+
+bool _isTokenExpired(String? rawToken, {int leewaySeconds = 0}) {
+  final token = rawToken?.trim() ?? '';
+  if (token.isEmpty || _isMockAccessToken(token)) {
+    return false;
+  }
+  final exp = _extractJwtIntClaim(token, 'exp');
+  if (exp == null) {
+    return false;
+  }
+  final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  return exp <= nowSec + leewaySeconds;
+}
+
+int? _extractJwtIntClaim(String token, String claim) {
+  try {
+    final parts = token.split('.');
+    if (parts.length < 2) return null;
+    final payload = utf8.decode(
+      base64Url.decode(base64Url.normalize(parts[1])),
+    );
+    final map = jsonDecode(payload);
+    if (map is! Map<String, dynamic>) return null;
+    final value = map[claim];
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  } catch (_) {
+    return null;
+  }
+}
+
+bool _isMockAccessToken(String token) {
+  return token.startsWith('mock-access-token') ||
+      token.startsWith('local-token-');
 }
 
 bool _isMockTokenAllowed() {
@@ -768,4 +850,14 @@ bool _isMockTokenAllowed() {
       host == '::1' ||
       host == '10.0.2.2' ||
       host == '10.0.3.2';
+}
+
+class _RefreshedTokens {
+  const _RefreshedTokens({
+    required this.accessToken,
+    required this.refreshToken,
+  });
+
+  final String accessToken;
+  final String refreshToken;
 }

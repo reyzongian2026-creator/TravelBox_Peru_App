@@ -847,6 +847,7 @@ class AuthStripeButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.filled,
+    this.loading = false,
     super.key,
   });
 
@@ -854,6 +855,7 @@ class AuthStripeButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool filled;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -912,7 +914,16 @@ class AuthStripeButton extends StatelessWidget {
                     ),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(icon, color: iconColor, size: 22),
+                  child: loading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: iconColor,
+                          ),
+                        )
+                      : Icon(icon, color: iconColor, size: 22),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

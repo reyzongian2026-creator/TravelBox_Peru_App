@@ -572,11 +572,11 @@ class AppLocalizations {
       'checkout_onsite_section': 'PAGO PRESENCIAL',
       'checkout_continue_purchase': 'Continuar compra',
       'checkout_help_yape':
-          'Se abrirá el checkout de Izipay donde podrás escanear el código QR con tu app de Yape.',
+          'Se mostrará el QR de Yape y los datos del receptor para completar tu transferencia.',
       'checkout_help_plin':
-          'Se abrirá el checkout de Izipay donde podrás completar tu pago con Plin.',
+          'Se mostrará el QR de Plin y los datos del receptor para completar tu transferencia.',
       'checkout_help_qr':
-          'Se abrirá el checkout de Izipay donde podrás escanear un QR con cualquier app bancaria.',
+          'Se mostrará un QR y los datos del receptor para completar tu transferencia bancaria.',
       'checkout_help_card':
           'Se abrirá el checkout seguro de Izipay donde podrás ingresar los datos de tu tarjeta.',
       'social_no_valid_session':
@@ -1086,11 +1086,11 @@ class AppLocalizations {
       'checkout_onsite_section': 'ON-SITE PAYMENT',
       'checkout_continue_purchase': 'Continue purchase',
       'checkout_help_yape':
-          'The Izipay checkout will open where you can scan the QR code with your Yape app.',
+          'A Yape QR and the recipient details will be shown so you can complete the transfer.',
       'checkout_help_plin':
-          'The Izipay checkout will open where you can complete your payment with Plin.',
+          'A Plin QR and the recipient details will be shown so you can complete the transfer.',
       'checkout_help_qr':
-          'The Izipay checkout will open where you can scan a QR with any banking app.',
+          'A QR code and the recipient details will be shown so you can complete the bank transfer.',
       'checkout_help_card':
           'The secure Izipay checkout will open where you can enter your card details.',
       'social_no_valid_session':

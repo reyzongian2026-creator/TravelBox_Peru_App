@@ -14,6 +14,7 @@ abstract class PaymentRepository {
     int? paymentIntentId,
     int? reservationId,
     required String paymentMethod,
+    String? idempotencyKey,
     String? sourceTokenId,
     String? customerEmail,
     String? customerFirstName,
@@ -344,6 +345,7 @@ class PaymentRepositoryImpl implements PaymentRepository {
     int? paymentIntentId,
     int? reservationId,
     required String paymentMethod,
+    String? idempotencyKey,
     String? sourceTokenId,
     String? customerEmail,
     String? customerFirstName,
@@ -370,6 +372,9 @@ class PaymentRepositoryImpl implements PaymentRepository {
     }
     if (normalizedSourceTokenId != null && normalizedSourceTokenId.isNotEmpty) {
       payload['sourceTokenId'] = normalizedSourceTokenId;
+    }
+    if (idempotencyKey != null && idempotencyKey.isNotEmpty) {
+      payload['idempotencyKey'] = idempotencyKey;
     }
     if (normalizedCustomerEmail != null && normalizedCustomerEmail.isNotEmpty) {
       payload['customerEmail'] = normalizedCustomerEmail;

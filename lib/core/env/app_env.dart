@@ -90,11 +90,6 @@ class AppEnv {
         'Configuracion insegura: faltan AZURE_CLIENT_ID y AZURE_TENANT_ID en APP_ENV=prod.',
       );
     }
-    if (!hasAzureMapsConfig && googleMapsApiKey.trim().isEmpty) {
-      throw StateError(
-        'Configuracion insegura: faltan AZURE_MAPS_API_KEY o GOOGLE_MAPS_API_KEY en APP_ENV=prod.',
-      );
-    }
     final apiHost =
         Uri.tryParse(resolvedApiBaseUrl)?.host.trim().toLowerCase() ?? '';
     if (apiHost.isEmpty ||
