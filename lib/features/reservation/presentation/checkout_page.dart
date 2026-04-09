@@ -49,6 +49,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       false; // set when payment is confirmed, used to trigger celebration
   String? _emailError;
   int? _selectedSavedCardId;
+  String? _activeCheckoutReservationId;
+  bool _leavingCheckout = false;
   String paymentMethod = AppEnv.forceCashPaymentsOnly
       ? PaymentConstants.methodCash
       : PaymentConstants.methodCard;
@@ -88,6 +90,136 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     super.dispose();
   }
 
+  bool _shouldConfirmCheckoutExit({
+    required String selectedPaymentMethod,
+    required bool forceCashOnly,
+  }) {
+    if (_leavingCheckout ||
+        processing ||
+        _submitting ||
+        _paymentJustConfirmed) {
+      return false;
+    }
+    if (_activeCheckoutReservationId != null) {
+      return true;
+    }
+    if (forceCashOnly) {
+      return false;
+    }
+    return !_isOfflinePaymentMethod(selectedPaymentMethod);
+  }
+
+  Future<bool> _confirmCheckoutExit({
+    required String selectedPaymentMethod,
+  }) async {
+    final isEnglish = context.l10n.locale.languageCode == 'en';
+    final methodLabel = switch (selectedPaymentMethod.trim().toLowerCase()) {
+      PaymentConstants.methodYape => 'Yape',
+      PaymentConstants.methodPlin => 'Plin',
+      PaymentConstants.methodWallet => 'QR',
+      PaymentConstants.methodCard => isEnglish ? 'card' : 'tarjeta',
+      PaymentConstants.methodSavedCard => isEnglish ? 'card' : 'tarjeta',
+      _ => isEnglish ? 'payment' : 'pago',
+    };
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          isEnglish
+              ? 'Leave checkout and cancel the reservation?'
+              : 'Salir de Caja y pago y cancelar la reserva?',
+        ),
+        content: Text(
+          isEnglish
+              ? 'The current reservation linked to the $methodLabel flow will be canceled if you leave this screen. Do you want to continue?'
+              : 'La reserva actual asociada al flujo de $methodLabel se cancelara si sales de esta pantalla. Quieres continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(isEnglish ? 'No, stay here' : 'No, quedarme aqui'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(isEnglish ? 'Yes, leave' : 'Si, salir'),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
+  Future<bool> _cancelCheckoutReservationIfNeeded() async {
+    final reservationId = _activeCheckoutReservationId;
+    if (reservationId == null) {
+      return true;
+    }
+    try {
+      await ref
+          .read(reservationRepositoryProvider)
+          .refundAndCancelReservation(
+            reservationId: reservationId,
+            reason: context.l10n.locale.languageCode == 'en'
+                ? 'Checkout canceled before completing the payment.'
+                : 'Checkout cancelado antes de completar el pago.',
+          );
+      return true;
+    } catch (error) {
+      if (!mounted) {
+        return false;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_errorMessage(error))));
+      return false;
+    } finally {
+      _activeCheckoutReservationId = null;
+      ref.invalidate(myReservationsProvider);
+      ref.invalidate(adminReservationsProvider);
+      ref.invalidate(adminReservationListProvider);
+    }
+  }
+
+  void _navigateAwayFromCheckout() {
+    final fallbackRoute = '/reservation/new/${widget.warehouseId}';
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop();
+      return;
+    }
+    context.go(fallbackRoute);
+  }
+
+  Future<void> _handleCheckoutExit({
+    required String selectedPaymentMethod,
+    required bool forceCashOnly,
+  }) async {
+    if (!mounted || _leavingCheckout) {
+      return;
+    }
+    if (!_shouldConfirmCheckoutExit(
+      selectedPaymentMethod: selectedPaymentMethod,
+      forceCashOnly: forceCashOnly,
+    )) {
+      _navigateAwayFromCheckout();
+      return;
+    }
+    final confirmed = await _confirmCheckoutExit(
+      selectedPaymentMethod: selectedPaymentMethod,
+    );
+    if (!confirmed || !mounted) {
+      return;
+    }
+    _leavingCheckout = true;
+    final canceled = await _cancelCheckoutReservationIfNeeded();
+    if (!canceled || !mounted) {
+      _leavingCheckout = false;
+      return;
+    }
+    ref.read(reservationDraftProvider.notifier).state = null;
+    _navigateAwayFromCheckout();
+  }
+
   @override
   Widget build(BuildContext context) {
     final draft = ref.watch(reservationDraftProvider);
@@ -116,540 +248,558 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     }
 
     final responsive = context.responsive;
-    return Scaffold(
-      appBar: AppBar(
-        leading: AppBackButton(
-          fallbackRoute: '/reservation/new/${widget.warehouseId}',
-        ),
-        title: Text(context.l10n.t('checkout_payment')),
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: ListView(
-            padding: responsive.pageInsets(
-              top: responsive.verticalPadding,
-              bottom: 24,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop || !context.mounted) {
+          return;
+        }
+        _handleCheckoutExit(
+          selectedPaymentMethod: selectedPaymentMethod,
+          forceCashOnly: forceCashOnly,
+        );
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: context.l10n.t('back'),
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _handleCheckoutExit(
+              selectedPaymentMethod: selectedPaymentMethod,
+              forceCashOnly: forceCashOnly,
             ),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        draft.warehouse.name,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 12),
-                      _CheckoutInfoRow(
-                        icon: Icons.schedule_outlined,
-                        label: _reservationWindowLabel(context),
-                        value: _formatReservationWindow(context, draft),
-                      ),
-                      const SizedBox(height: 10),
-                      _CheckoutInfoRow(
-                        icon: Icons.luggage_outlined,
-                        label: _reservationSummaryLabel(context),
-                        value:
-                            '${draft.bagCount} ${context.l10n.t('bultos')} - ${context.l10n.t('main_size')} ${draft.size}',
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _SummaryChip(
-                            label:
-                                '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
-                          ),
-                          _SummaryChip(
-                            label:
-                                '${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
-                          ),
-                          _SummaryChip(
-                            label:
-                                '${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+          ),
+          title: Text(context.l10n.t('checkout_payment')),
+        ),
+        body: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: ListView(
+              padding: responsive.pageInsets(
+                top: responsive.verticalPadding,
+                bottom: 24,
               ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.l10n.t('checkout_choose_method'),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        context.l10n.t('checkout_choose_method_subtitle'),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).hintColor,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (forceCashOnly)
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.payments_outlined),
-                          title: Text(context.l10n.t('cash_only')),
-                          subtitle: Text(
-                            context.l10n.t(
-                              'checkout_digital_payments_disabled',
-                            ),
-                          ),
-                        )
-                      else ...[
-                        Text(
-                          context.l10n.t('checkout_digital_section'),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(context).hintColor,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 3.0,
-                          children: [
-                            _PaymentGridCard(
-                              icon: Icons.credit_card,
-                              label: context.l10n.t(
-                                'checkout_method_card_label',
-                              ),
-                              sublabel: context.l10n.t(
-                                'checkout_method_card_sublabel',
-                              ),
-                              selected:
-                                  selectedPaymentMethod ==
-                                  PaymentConstants.methodCard,
-                              onTap: () => setState(() {
-                                paymentMethod = PaymentConstants.methodCard;
-                                _selectedDigitalSubmethod = 'card';
-                              }),
-                            ),
-                            _PaymentGridCard(
-                              icon: Icons.qr_code_2,
-                              label: 'Yape',
-                              sublabel: context.l10n.t(
-                                'checkout_method_yape_sublabel',
-                              ),
-                              selected: _selectedDigitalSubmethod == 'yape',
-                              onTap: () => setState(() {
-                                paymentMethod = PaymentConstants.methodYape;
-                                _selectedDigitalSubmethod = 'yape';
-                              }),
-                            ),
-                            _PaymentGridCard(
-                              icon: Icons.phone_android,
-                              label: 'Plin',
-                              sublabel: context.l10n.t(
-                                'checkout_method_plin_sublabel',
-                              ),
-                              selected: _selectedDigitalSubmethod == 'plin',
-                              onTap: () => setState(() {
-                                paymentMethod = PaymentConstants.methodPlin;
-                                _selectedDigitalSubmethod = 'plin';
-                              }),
-                            ),
-                            _PaymentGridCard(
-                              icon: Icons.qr_code,
-                              label: 'QR',
-                              sublabel: context.l10n.t(
-                                'checkout_method_qr_sublabel',
-                              ),
-                              selected: _selectedDigitalSubmethod == 'qr',
-                              onTap: () => setState(() {
-                                paymentMethod = PaymentConstants.methodWallet;
-                                _selectedDigitalSubmethod = 'qr';
-                              }),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          context.l10n.t('checkout_onsite_section'),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(context).hintColor,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 3.0,
-                          children: [
-                            _PaymentGridCard(
-                              icon: Icons.storefront_outlined,
-                              label: context.l10n.t(
-                                'checkout_method_counter_label',
-                              ),
-                              sublabel: context.l10n.t(
-                                'checkout_method_counter_sublabel',
-                              ),
-                              selected:
-                                  selectedPaymentMethod ==
-                                  PaymentConstants.methodCounter,
-                              onTap: () => setState(() {
-                                paymentMethod = PaymentConstants.methodCounter;
-                                _selectedDigitalSubmethod = null;
-                              }),
-                            ),
-                            _PaymentGridCard(
-                              icon: Icons.payments_outlined,
-                              label: context.l10n.t(
-                                'checkout_method_cash_label',
-                              ),
-                              sublabel: context.l10n.t(
-                                'checkout_method_cash_sublabel',
-                              ),
-                              selected:
-                                  selectedPaymentMethod ==
-                                  PaymentConstants.methodCash,
-                              onTap: () => setState(() {
-                                paymentMethod = PaymentConstants.methodCash;
-                                _selectedDigitalSubmethod = null;
-                              }),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (!forceCashOnly &&
-                          !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: _customerEmailController,
-                          keyboardType: TextInputType.emailAddress,
-                          onChanged: (value) {
-                            final trimmed = value.trim();
-                            setState(() {
-                              if (trimmed.isEmpty) {
-                                _emailError = null;
-                              } else if (!RegExp(
-                                r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$',
-                              ).hasMatch(trimmed)) {
-                                _emailError = context.l10n.t('invalid_email');
-                              } else {
-                                _emailError = null;
-                              }
-                            });
-                          },
-                          decoration: InputDecoration(
-                            labelText: _customerEmailLabel(context),
-                            hintText: _customerEmailHint(context),
-                            helperText: _emailError == null
-                                ? _checkoutEmailHelper(context)
-                                : null,
-                            errorText: _emailError,
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _customerPhoneController,
-                          decoration: InputDecoration(
-                            labelText: context.l10n.t('phone_number_label'),
-                            hintText: context.l10n.t('phone_hint'),
-                            prefixIcon: const Icon(Icons.phone),
-                            border: const OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.phone,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return context.l10n.t('phone_required');
-                            }
-                            final phone = value.replaceAll(
-                              RegExp(r'[^\d+]'),
-                              '',
-                            );
-                            if (!RegExp(r'^\+?51\d{9}$').hasMatch(phone)) {
-                              return context.l10n.t('phone_invalid');
-                            }
-                            return null;
-                          },
-                          onSaved: (value) {
-                            _normalizedPhone = value?.replaceAll(
-                              RegExp(r'[^\d+]'),
-                              '',
-                            );
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.l10n.t('final_total'),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _totalBreakdownCaption(context),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).hintColor,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _CheckoutAmountRow(
-                        label: context.l10n.t('checkout_breakdown_storage'),
-                        value: _formatMoney(draft.storageSubtotal(), draft),
-                      ),
-                      if (draft.pickupCost() > 0)
-                        _CheckoutAmountRow(
-                          label: context.l10n.t('checkout_breakdown_pickup'),
-                          value: _formatMoney(draft.pickupCost(), draft),
-                        ),
-                      if (draft.dropoffCost() > 0)
-                        _CheckoutAmountRow(
-                          label: context.l10n.t('checkout_breakdown_dropoff'),
-                          value: _formatMoney(draft.dropoffCost(), draft),
-                        ),
-                      if (draft.insuranceCost() > 0)
-                        _CheckoutAmountRow(
-                          label: context.l10n.t('checkout_breakdown_insurance'),
-                          value: _formatMoney(draft.insuranceCost(), draft),
-                        ),
-                      const Divider(height: 24),
-                      if (_promoResult != null &&
-                          _promoResult!.valid &&
-                          _promoResult!.calculatedDiscount != null)
-                        _CheckoutAmountRow(
-                          label: context.l10n.t('promo_discount'),
-                          value:
-                              '- ${_formatMoney(_promoResult!.calculatedDiscount!, draft)}',
-                          emphasize: false,
-                        ),
-                      if (_useWallet && _walletBalance > 0)
-                        _CheckoutAmountRow(
-                          label: context.l10n.t('wallet_credit'),
-                          value:
-                              '- ${_formatMoney(_walletBalance.clamp(0, _effectiveTotal(draft)), draft)}',
-                          emphasize: false,
-                        ),
-                      _CheckoutAmountRow(
-                        label: context.l10n.t('final_total'),
-                        value: _formatMoney(_computeFinalTotal(draft), draft),
-                        emphasize: true,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // ── Promo code input ──────────────────────────────
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.l10n.t('promo_code_title'),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _promoCodeController,
-                              textCapitalization: TextCapitalization.characters,
-                              decoration: InputDecoration(
-                                hintText: context.l10n.t('promo_code_hint'),
-                                border: const OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              enabled: _appliedPromoCode == null,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          if (_appliedPromoCode == null)
-                            FilledButton(
-                              onPressed: _promoLoading
-                                  ? null
-                                  : () => _validatePromoCode(
-                                      draft.estimatePrice(),
-                                    ),
-                              child: _promoLoading
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(context.l10n.t('promo_apply')),
-                            )
-                          else
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _promoResult = null;
-                                  _appliedPromoCode = null;
-                                  _promoCodeController.clear();
-                                });
-                              },
-                              child: Text(context.l10n.t('promo_remove')),
-                            ),
-                        ],
-                      ),
-                      if (_promoResult != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          _promoResult!.message ?? '',
-                          style: TextStyle(
-                            color: _promoResult!.valid
-                                ? Colors.green.shade700
-                                : Theme.of(context).colorScheme.error,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // ── Wallet credit toggle ──────────────────────────
-              if (_walletBalance > 0)
+              children: [
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.l10n.t('wallet_credit'),
-                                style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'S/ ${_walletBalance.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Colors.green.shade700,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ],
-                          ),
+                        Text(
+                          draft.warehouse.name,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        Switch(
-                          value: _useWallet,
-                          onChanged: (v) => setState(() => _useWallet = v),
+                        const SizedBox(height: 12),
+                        _CheckoutInfoRow(
+                          icon: Icons.schedule_outlined,
+                          label: _reservationWindowLabel(context),
+                          value: _formatReservationWindow(context, draft),
+                        ),
+                        const SizedBox(height: 10),
+                        _CheckoutInfoRow(
+                          icon: Icons.luggage_outlined,
+                          label: _reservationSummaryLabel(context),
+                          value:
+                              '${draft.bagCount} ${context.l10n.t('bultos')} - ${context.l10n.t('main_size')} ${draft.size}',
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _SummaryChip(
+                              label:
+                                  '${context.l10n.t('checkout_summary_pickup')}: ${draft.pickupRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                            ),
+                            _SummaryChip(
+                              label:
+                                  '${context.l10n.t('checkout_summary_dropoff')}: ${draft.dropoffRequested ? context.l10n.t('yes') : context.l10n.t('no')}',
+                            ),
+                            _SummaryChip(
+                              label:
+                                  '${context.l10n.t('checkout_summary_insurance')}: ${draft.extraInsurance ? context.l10n.t('yes') : context.l10n.t('no')}',
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                 ),
-              const SizedBox(height: 12),
-              if (!forceCashOnly &&
-                  !_isOfflinePaymentMethod(selectedPaymentMethod))
+                const SizedBox(height: 12),
                 Card(
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.info_outline,
-                      color: Theme.of(context).colorScheme.primary,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.t('checkout_choose_method'),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          context.l10n.t('checkout_choose_method_subtitle'),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Theme.of(context).hintColor),
+                        ),
+                        const SizedBox(height: 16),
+                        if (forceCashOnly)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.payments_outlined),
+                            title: Text(context.l10n.t('cash_only')),
+                            subtitle: Text(
+                              context.l10n.t(
+                                'checkout_digital_payments_disabled',
+                              ),
+                            ),
+                          )
+                        else ...[
+                          Text(
+                            context.l10n.t('checkout_digital_section'),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).hintColor,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 3.0,
+                            children: [
+                              _PaymentGridCard(
+                                icon: Icons.credit_card,
+                                label: context.l10n.t(
+                                  'checkout_method_card_label',
+                                ),
+                                sublabel: context.l10n.t(
+                                  'checkout_method_card_sublabel',
+                                ),
+                                selected:
+                                    selectedPaymentMethod ==
+                                    PaymentConstants.methodCard,
+                                onTap: () => setState(() {
+                                  paymentMethod = PaymentConstants.methodCard;
+                                  _selectedDigitalSubmethod = 'card';
+                                }),
+                              ),
+                              _PaymentGridCard(
+                                icon: Icons.qr_code_2,
+                                label: 'Yape',
+                                sublabel: context.l10n.t(
+                                  'checkout_method_yape_sublabel',
+                                ),
+                                selected: _selectedDigitalSubmethod == 'yape',
+                                onTap: () => setState(() {
+                                  paymentMethod = PaymentConstants.methodYape;
+                                  _selectedDigitalSubmethod = 'yape';
+                                }),
+                              ),
+                              _PaymentGridCard(
+                                icon: Icons.phone_android,
+                                label: 'Plin',
+                                sublabel: context.l10n.t(
+                                  'checkout_method_plin_sublabel',
+                                ),
+                                selected: _selectedDigitalSubmethod == 'plin',
+                                onTap: () => setState(() {
+                                  paymentMethod = PaymentConstants.methodPlin;
+                                  _selectedDigitalSubmethod = 'plin';
+                                }),
+                              ),
+                              _PaymentGridCard(
+                                icon: Icons.qr_code,
+                                label: 'QR',
+                                sublabel: context.l10n.t(
+                                  'checkout_method_qr_sublabel',
+                                ),
+                                selected: _selectedDigitalSubmethod == 'qr',
+                                onTap: () => setState(() {
+                                  paymentMethod = PaymentConstants.methodWallet;
+                                  _selectedDigitalSubmethod = 'qr';
+                                }),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            context.l10n.t('checkout_onsite_section'),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).hintColor,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 8,
+                            childAspectRatio: 3.0,
+                            children: [
+                              _PaymentGridCard(
+                                icon: Icons.storefront_outlined,
+                                label: context.l10n.t(
+                                  'checkout_method_counter_label',
+                                ),
+                                sublabel: context.l10n.t(
+                                  'checkout_method_counter_sublabel',
+                                ),
+                                selected:
+                                    selectedPaymentMethod ==
+                                    PaymentConstants.methodCounter,
+                                onTap: () => setState(() {
+                                  paymentMethod =
+                                      PaymentConstants.methodCounter;
+                                  _selectedDigitalSubmethod = null;
+                                }),
+                              ),
+                              _PaymentGridCard(
+                                icon: Icons.payments_outlined,
+                                label: context.l10n.t(
+                                  'checkout_method_cash_label',
+                                ),
+                                sublabel: context.l10n.t(
+                                  'checkout_method_cash_sublabel',
+                                ),
+                                selected:
+                                    selectedPaymentMethod ==
+                                    PaymentConstants.methodCash,
+                                onTap: () => setState(() {
+                                  paymentMethod = PaymentConstants.methodCash;
+                                  _selectedDigitalSubmethod = null;
+                                }),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (!forceCashOnly &&
+                            !_isOfflinePaymentMethod(
+                              selectedPaymentMethod,
+                            )) ...[
+                          const SizedBox(height: 14),
+                          TextField(
+                            controller: _customerEmailController,
+                            keyboardType: TextInputType.emailAddress,
+                            onChanged: (value) {
+                              final trimmed = value.trim();
+                              setState(() {
+                                if (trimmed.isEmpty) {
+                                  _emailError = null;
+                                } else if (!RegExp(
+                                  r'^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$',
+                                ).hasMatch(trimmed)) {
+                                  _emailError = context.l10n.t('invalid_email');
+                                } else {
+                                  _emailError = null;
+                                }
+                              });
+                            },
+                            decoration: InputDecoration(
+                              labelText: _customerEmailLabel(context),
+                              hintText: _customerEmailHint(context),
+                              helperText: _emailError == null
+                                  ? _checkoutEmailHelper(context)
+                                  : null,
+                              errorText: _emailError,
+                              border: const OutlineInputBorder(),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: _customerPhoneController,
+                            decoration: InputDecoration(
+                              labelText: context.l10n.t('phone_number_label'),
+                              hintText: context.l10n.t('phone_hint'),
+                              prefixIcon: const Icon(Icons.phone),
+                              border: const OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return context.l10n.t('phone_required');
+                              }
+                              final phone = value.replaceAll(
+                                RegExp(r'[^\d+]'),
+                                '',
+                              );
+                              if (!RegExp(r'^\+?51\d{9}$').hasMatch(phone)) {
+                                return context.l10n.t('phone_invalid');
+                              }
+                              return null;
+                            },
+                            onSaved: (value) {
+                              _normalizedPhone = value?.replaceAll(
+                                RegExp(r'[^\d+]'),
+                                '',
+                              );
+                            },
+                          ),
+                        ],
+                      ],
                     ),
-                    title: Text(_paymentHelp(context, selectedPaymentMethod)),
                   ),
                 ),
-              if (!forceCashOnly &&
-                  !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
                 const SizedBox(height: 12),
-                PaymentOnboardingGuide(method: selectedPaymentMethod),
-              ],
-              if (selectedPaymentMethod == PaymentConstants.methodCounter ||
-                  selectedPaymentMethod == PaymentConstants.methodCash)
                 Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: Text(context.l10n.t('counter_validation')),
-                    subtitle: Text(
-                      context.l10n.t(
-                        'checkout_pending_offline_approval_notice',
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.t('final_total'),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _totalBreakdownCaption(context),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Theme.of(context).hintColor),
+                        ),
+                        const SizedBox(height: 16),
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('checkout_breakdown_storage'),
+                          value: _formatMoney(draft.storageSubtotal(), draft),
+                        ),
+                        if (draft.pickupCost() > 0)
+                          _CheckoutAmountRow(
+                            label: context.l10n.t('checkout_breakdown_pickup'),
+                            value: _formatMoney(draft.pickupCost(), draft),
+                          ),
+                        if (draft.dropoffCost() > 0)
+                          _CheckoutAmountRow(
+                            label: context.l10n.t('checkout_breakdown_dropoff'),
+                            value: _formatMoney(draft.dropoffCost(), draft),
+                          ),
+                        if (draft.insuranceCost() > 0)
+                          _CheckoutAmountRow(
+                            label: context.l10n.t(
+                              'checkout_breakdown_insurance',
+                            ),
+                            value: _formatMoney(draft.insuranceCost(), draft),
+                          ),
+                        const Divider(height: 24),
+                        if (_promoResult != null &&
+                            _promoResult!.valid &&
+                            _promoResult!.calculatedDiscount != null)
+                          _CheckoutAmountRow(
+                            label: context.l10n.t('promo_discount'),
+                            value:
+                                '- ${_formatMoney(_promoResult!.calculatedDiscount!, draft)}',
+                            emphasize: false,
+                          ),
+                        if (_useWallet && _walletBalance > 0)
+                          _CheckoutAmountRow(
+                            label: context.l10n.t('wallet_credit'),
+                            value:
+                                '- ${_formatMoney(_walletBalance.clamp(0, _effectiveTotal(draft)), draft)}',
+                            emphasize: false,
+                          ),
+                        _CheckoutAmountRow(
+                          label: context.l10n.t('final_total'),
+                          value: _formatMoney(_computeFinalTotal(draft), draft),
+                          emphasize: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // ── Promo code input ──────────────────────────────
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.l10n.t('promo_code_title'),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _promoCodeController,
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                decoration: InputDecoration(
+                                  hintText: context.l10n.t('promo_code_hint'),
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                                enabled: _appliedPromoCode == null,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (_appliedPromoCode == null)
+                              FilledButton(
+                                onPressed: _promoLoading
+                                    ? null
+                                    : () => _validatePromoCode(
+                                        draft.estimatePrice(),
+                                      ),
+                                child: _promoLoading
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Text(context.l10n.t('promo_apply')),
+                              )
+                            else
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _promoResult = null;
+                                    _appliedPromoCode = null;
+                                    _promoCodeController.clear();
+                                  });
+                                },
+                                child: Text(context.l10n.t('promo_remove')),
+                              ),
+                          ],
+                        ),
+                        if (_promoResult != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            _promoResult!.message ?? '',
+                            style: TextStyle(
+                              color: _promoResult!.valid
+                                  ? Colors.green.shade700
+                                  : Theme.of(context).colorScheme.error,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // ── Wallet credit toggle ──────────────────────────
+                if (_walletBalance > 0)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.l10n.t('wallet_credit'),
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'S/ ${_walletBalance.toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.green.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _useWallet,
+                            onChanged: (v) => setState(() => _useWallet = v),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ),
-              const SizedBox(height: 80), // space for bottom button
-            ],
+                const SizedBox(height: 12),
+                if (!forceCashOnly &&
+                    !_isOfflinePaymentMethod(selectedPaymentMethod))
+                  Card(
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.info_outline,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      title: Text(_paymentHelp(context, selectedPaymentMethod)),
+                    ),
+                  ),
+                if (!forceCashOnly &&
+                    !_isOfflinePaymentMethod(selectedPaymentMethod)) ...[
+                  const SizedBox(height: 12),
+                  PaymentOnboardingGuide(method: selectedPaymentMethod),
+                ],
+                if (selectedPaymentMethod == PaymentConstants.methodCounter ||
+                    selectedPaymentMethod == PaymentConstants.methodCash)
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.info_outline),
+                      title: Text(context.l10n.t('counter_validation')),
+                      subtitle: Text(
+                        context.l10n.t(
+                          'checkout_pending_offline_approval_notice',
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 80), // space for bottom button
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: FilledButton(
-            onPressed: processing
-                ? null
-                : () => _handleConfirmPayment(
-                    user: user!,
-                    draft: draft,
-                    selectedPaymentMethod: selectedPaymentMethod,
-                    forceCashOnly: forceCashOnly,
-                  ),
-            style: FilledButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
-            ),
-            child: Text(
-              processing
-                  ? context.l10n.t('checkout_processing')
-                  : _isOfflinePaymentMethod(selectedPaymentMethod)
-                  ? context.l10n.t('checkout_confirm_payment')
-                  : context.l10n.t('checkout_continue_purchase'),
+        bottomNavigationBar: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: FilledButton(
+              onPressed: processing
+                  ? null
+                  : () => _handleConfirmPayment(
+                      user: user!,
+                      draft: draft,
+                      selectedPaymentMethod: selectedPaymentMethod,
+                      forceCashOnly: forceCashOnly,
+                    ),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+              ),
+              child: Text(
+                processing
+                    ? context.l10n.t('checkout_processing')
+                    : _isOfflinePaymentMethod(selectedPaymentMethod)
+                    ? context.l10n.t('checkout_confirm_payment')
+                    : context.l10n.t('checkout_continue_purchase'),
+              ),
             ),
           ),
         ),
@@ -746,6 +896,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         PaymentConstants.methodPlin,
         PaymentConstants.methodWallet,
       }.contains(selectedPaymentMethod);
+      final persistReservationLocally =
+          forceCashOnly || _isOfflinePaymentMethod(selectedPaymentMethod);
       if (mounted) {
         overlay = CriticalOperationOverlay.show(
           context,
@@ -767,7 +919,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             customerEmail: forceCashOnly
                 ? null
                 : _normalizedCustomerEmail(user.email),
+            persistLocally: persistReservationLocally,
           );
+      _activeCheckoutReservationId = reservation.id.toString();
 
       final checkoutMessage = await _processOnlinePayment(
         reservationId: reservation.id.toString(),
@@ -787,6 +941,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       ref.invalidate(adminReservationListProvider);
       ref.invalidate(reservationByIdProvider(reservation.id.toString()));
       ref.read(reservationDraftProvider.notifier).state = null;
+      _activeCheckoutReservationId = null;
 
       if (!mounted) return;
       if (_paymentJustConfirmed ||
@@ -804,6 +959,20 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     } catch (error) {
       if (!mounted) return;
 
+      if (_shouldRestoreCheckoutAfterDigitalAbort(
+        error,
+        selectedPaymentMethod: selectedPaymentMethod,
+        forceCashOnly: forceCashOnly,
+      )) {
+        if (reservation != null) {
+          await _releaseAbortedDigitalReservation(reservation.id.toString());
+        }
+        messenger.showSnackBar(
+          SnackBar(content: Text(_digitalAbortMessage(error))),
+        );
+        return;
+      }
+
       if (_isPreconditionError(error)) {
         final redirectRoute = _preconditionRedirectRoute(error);
         if (redirectRoute != null) {
@@ -815,6 +984,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
       if (_isPaymentAlreadyConfirmedError(error)) {
         if (reservation != null) {
+          _activeCheckoutReservationId = null;
           ref.invalidate(myReservationsProvider);
           ref.invalidate(adminReservationsProvider);
           ref.invalidate(adminReservationListProvider);
@@ -827,6 +997,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
       final message = _errorMessage(error);
       if (reservation != null) {
+        _activeCheckoutReservationId = null;
         ref.invalidate(myReservationsProvider);
         ref.invalidate(adminReservationsProvider);
         ref.invalidate(adminReservationListProvider);
@@ -932,14 +1103,19 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       await Future.delayed(const Duration(milliseconds: 100));
       if (!mounted) return null;
       // The dialog handles all 3 phases internally (QR → Validating → Success/Pending)
-      final confirmed = await _showManualTransferDialog(
+      final dialogResult = await _showManualTransferDialog(
         confirmation,
         paymentIntentId: int.tryParse(confirmation.id) ?? paymentIntentId,
         reservationId: parsedReservationId,
       );
-      if (confirmed == true) {
+      if (dialogResult == _ManualTransferDialogResult.confirmed) {
         _paymentJustConfirmed = true;
         return l10n.t('checkout_payment_verified');
+      }
+      if (dialogResult == _ManualTransferDialogResult.canceled) {
+        throw _DigitalCheckoutRetryException(
+          _manualTransferCanceledMessage(paymentMethod),
+        );
       }
       return l10n.t('checkout_payment_being_verified');
     }
@@ -966,7 +1142,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 validationResult.message;
           }
           if (validationResult.isFailed) {
-            throw StateError(
+            throw _DigitalCheckoutRetryException(
               _checkoutFailureMessage(
                 checkoutOutcome.message,
                 validationResult.status,
@@ -991,12 +1167,15 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         return _checkoutResultMessage(checkoutOutcome);
       }
       if (status.isFailed) {
-        throw StateError(
+        throw _DigitalCheckoutRetryException(
           _checkoutFailureMessage(
             checkoutOutcome.message,
             status.paymentStatus,
           ),
         );
+      }
+      if (checkoutOutcome.isCanceled) {
+        throw _DigitalCheckoutRetryException(_checkoutCanceledMessage());
       }
       return _pendingPaymentMessage(checkoutOutcome);
     }
@@ -1083,10 +1262,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     return _izipayCheckoutService.openCheckout(request);
   }
 
-  /// Shows the 3-phase manual transfer dialog.
-  /// Returns `true` if the payment was confirmed during the dialog,
-  /// `false` / `null` if it is still pending.
-  Future<bool?> _showManualTransferDialog(
+  Future<_ManualTransferDialogResult?> _showManualTransferDialog(
     PaymentIntentResult confirmation, {
     required int? paymentIntentId,
     required int reservationId,
@@ -1133,7 +1309,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         stepVerb = context.l10n.t('checkout_open_generic');
     }
 
-    return showDialog<bool>(
+    return showDialog<_ManualTransferDialogResult>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _ManualTransferDialog(
@@ -1203,6 +1379,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     return _defaultPendingPaymentMessage();
   }
 
+  String _checkoutCanceledMessage() {
+    return context.l10n.locale.languageCode == 'en'
+        ? 'The Izipay checkout was closed. Choose another payment method to continue.'
+        : 'Cerraste el checkout de Izipay. Elige otro método de pago para continuar.';
+  }
+
   String _defaultPendingPaymentMessage() {
     return context.l10n.locale.languageCode == 'en'
         ? 'Your reservation was created and the payment is still pending validation.'
@@ -1240,6 +1422,62 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
 
   bool _isOfflinePaymentMethod(String method) {
     return PaymentConstants.isOffline(method);
+  }
+
+  bool _shouldRestoreCheckoutAfterDigitalAbort(
+    Object error, {
+    required String selectedPaymentMethod,
+    required bool forceCashOnly,
+  }) {
+    if (forceCashOnly || _isOfflinePaymentMethod(selectedPaymentMethod)) {
+      return false;
+    }
+    return error is _DigitalCheckoutRetryException;
+  }
+
+  String _manualTransferCanceledMessage(String method) {
+    final methodLabel = switch (method.trim().toLowerCase()) {
+      PaymentConstants.methodYape => 'Yape',
+      PaymentConstants.methodPlin => 'Plin',
+      PaymentConstants.methodWallet => 'QR',
+      _ => 'QR',
+    };
+    return context.l10n.locale.languageCode == 'en'
+        ? 'The $methodLabel payment request was canceled. Choose another payment method to continue.'
+        : 'Se canceló la solicitud de pago por $methodLabel. Elige otro método de pago para continuar.';
+  }
+
+  String _digitalAbortMessage(Object error) {
+    if (error is _DigitalCheckoutRetryException) {
+      return error.message;
+    }
+    return _errorMessage(error);
+  }
+
+  Future<void> _releaseAbortedDigitalReservation(String reservationId) async {
+    try {
+      await ref
+          .read(reservationRepositoryProvider)
+          .refundAndCancelReservation(
+            reservationId: reservationId,
+            reason: context.l10n.locale.languageCode == 'en'
+                ? 'Digital checkout aborted before payment confirmation.'
+                : 'Checkout digital cancelado antes de confirmar el pago.',
+          );
+    } catch (error) {
+      debugPrint(
+        '[CheckoutPage] Failed to release aborted digital reservation '
+        '$reservationId: $error',
+      );
+    } finally {
+      if (_activeCheckoutReservationId == reservationId) {
+        _activeCheckoutReservationId = null;
+      }
+      ref.invalidate(myReservationsProvider);
+      ref.invalidate(adminReservationsProvider);
+      ref.invalidate(adminReservationListProvider);
+      ref.invalidate(reservationByIdProvider(reservationId));
+    }
   }
 
   bool _isPreconditionError(Object error) {
@@ -1400,6 +1638,12 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         ? 'Review the reservation amount before confirming your payment.'
         : 'Revisa el desglose de tu reserva antes de confirmar el pago.';
   }
+}
+
+class _DigitalCheckoutRetryException implements Exception {
+  const _DigitalCheckoutRetryException(this.message);
+
+  final String message;
 }
 
 class _CheckoutInfoRow extends StatelessWidget {
@@ -1647,6 +1891,8 @@ class _TransferStep extends StatelessWidget {
 
 enum _TransferPhase { showQr, validating, success, pending }
 
+enum _ManualTransferDialogResult { confirmed, pending, canceled }
+
 typedef _WaitForStatus =
     Future<PaymentStatusResult> Function({
       required int? paymentIntentId,
@@ -1711,69 +1957,174 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
 
       if (!mounted) return;
       if (status.isConfirmed) {
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(_ManualTransferDialogResult.confirmed);
         return;
       }
-      Navigator.of(context).pop(false);
+      Navigator.of(context).pop(_ManualTransferDialogResult.pending);
     } catch (e) {
       debugPrint('[CheckoutPage] Error during manual transfer validation: $e');
       if (mounted) {
-        Navigator.of(context).pop(false);
+        Navigator.of(context).pop(_ManualTransferDialogResult.pending);
       }
     }
+  }
+
+  Future<void> _onChangePaymentMethod() async {
+    if (_submittingTransfer) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_cancelDialogTitle()),
+        content: Text(_cancelDialogBody()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(_goBackLabel()),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(_changePaymentMethodLabel()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      Navigator.of(context).pop(_ManualTransferDialogResult.canceled);
+    }
+  }
+
+  String _cancelDialogTitle() {
+    return Localizations.localeOf(context).languageCode == 'en'
+        ? 'Cancel this QR payment?'
+        : '¿Cancelar este pago QR?';
+  }
+
+  String _cancelDialogBody() {
+    return Localizations.localeOf(context).languageCode == 'en'
+        ? 'If you already sent the ${widget.brandName} transfer, this cancellation does not generate an automatic refund. Continue only if you want to return and choose another payment method.'
+        : 'Si ya hiciste la transferencia por ${widget.brandName}, esta cancelación no genera reembolso automático. Continúa solo si deseas volver y elegir otro método de pago.';
+  }
+
+  String _goBackLabel() {
+    return Localizations.localeOf(context).languageCode == 'en'
+        ? 'Go back'
+        : 'Volver';
+  }
+
+  String _changePaymentMethodLabel() {
+    return Localizations.localeOf(context).languageCode == 'en'
+        ? 'Change payment method'
+        : 'Cambiar método de pago';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final mediaQuery = MediaQuery.of(context);
+    final size = mediaQuery.size;
+    final isCompact = size.width < 520 || size.height < 760;
+    final maxDialogHeight = math
+        .max(
+          420,
+          math.min(820, size.height - mediaQuery.viewInsets.bottom - 24),
+        )
+        .toDouble();
+    final headerCloseAction = _headerCloseAction();
 
     return Dialog(
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 24,
+        vertical: isCompact ? 12 : 32,
+      ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
+        constraints: BoxConstraints(maxWidth: 420, maxHeight: maxDialogHeight),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
             // ── Header ──
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+              padding: EdgeInsets.fromLTRB(
+                isCompact ? 16 : 24,
+                isCompact ? 14 : 18,
+                isCompact ? 16 : 24,
+                isCompact ? 12 : 16,
+              ),
               decoration: BoxDecoration(
                 color: widget.brandColor,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
                 ),
               ),
-              child: Column(
+              child: Stack(
                 children: [
-                  Icon(widget.brandIcon, color: Colors.white, size: 36),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${l10n.t('checkout_pay_with')} ${widget.brandName}',
-                    style: theme.textTheme.titleLarge?.copyWith(
+                  Positioned(
+                    top: -6,
+                    right: -10,
+                    child: IconButton(
+                      onPressed: headerCloseAction,
+                      tooltip: _closeTooltip(),
+                      splashRadius: 20,
+                      icon: const Icon(Icons.close_rounded),
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.14),
+                        disabledBackgroundColor: Colors.white.withValues(
+                          alpha: 0.08,
+                        ),
+                        disabledForegroundColor: Colors.white.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${widget.currency} ${widget.amount}',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 32),
+                    child: Column(
+                      children: [
+                        Icon(
+                          widget.brandIcon,
+                          color: Colors.white,
+                          size: isCompact ? 30 : 36,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${l10n.t('checkout_pay_with')} ${widget.brandName}',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isCompact ? 18 : null,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompact ? 14 : 16,
+                            vertical: isCompact ? 5 : 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${widget.currency} ${widget.amount}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              fontSize: isCompact ? 17 : null,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -1781,40 +2132,66 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
             ),
 
             // ── Body (switches per phase) ──
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: switch (_phase) {
-                _TransferPhase.showQr => _QrPhaseBody(
-                  key: const ValueKey('qr'),
-                  widget: widget,
-                  theme: theme,
-                  l10n: l10n,
-                  onTransferred: _onTransferred,
-                  isSubmitting: _submittingTransfer,
-                ),
-                _TransferPhase.validating => _ValidatingPhaseBody(
-                  key: const ValueKey('validating'),
-                  theme: theme,
-                  l10n: l10n,
-                  brandName: widget.brandName,
-                ),
-                _TransferPhase.success => _SuccessPhaseBody(
-                  key: const ValueKey('success'),
-                  theme: theme,
-                  l10n: l10n,
-                ),
-                _TransferPhase.pending => _PendingPhaseBody(
-                  key: const ValueKey('pending'),
-                  theme: theme,
-                  l10n: l10n,
-                  onClose: () => Navigator.of(context).pop(false),
-                ),
-              },
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: switch (_phase) {
+                  _TransferPhase.showQr => _QrPhaseBody(
+                    key: const ValueKey('qr'),
+                    widget: widget,
+                    theme: theme,
+                    l10n: l10n,
+                    onTransferred: _onTransferred,
+                    onChangePaymentMethod: _onChangePaymentMethod,
+                    isSubmitting: _submittingTransfer,
+                  ),
+                  _TransferPhase.validating => _ValidatingPhaseBody(
+                    key: const ValueKey('validating'),
+                    theme: theme,
+                    l10n: l10n,
+                    brandName: widget.brandName,
+                  ),
+                  _TransferPhase.success => _SuccessPhaseBody(
+                    key: const ValueKey('success'),
+                    theme: theme,
+                    l10n: l10n,
+                  ),
+                  _TransferPhase.pending => _PendingPhaseBody(
+                    key: const ValueKey('pending'),
+                    theme: theme,
+                    l10n: l10n,
+                    onClose: () => Navigator.of(
+                      context,
+                    ).pop(_ManualTransferDialogResult.pending),
+                  ),
+                },
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  VoidCallback? _headerCloseAction() {
+    switch (_phase) {
+      case _TransferPhase.showQr:
+        return _submittingTransfer ? null : _onChangePaymentMethod;
+      case _TransferPhase.validating:
+        return null;
+      case _TransferPhase.success:
+        return () =>
+            Navigator.of(context).pop(_ManualTransferDialogResult.confirmed);
+      case _TransferPhase.pending:
+        return () =>
+            Navigator.of(context).pop(_ManualTransferDialogResult.pending);
+    }
+  }
+
+  String _closeTooltip() {
+    return Localizations.localeOf(context).languageCode == 'en'
+        ? 'Close'
+        : 'Cerrar';
   }
 }
 
@@ -1827,6 +2204,7 @@ class _QrPhaseBody extends StatelessWidget {
     required this.theme,
     required this.l10n,
     required this.onTransferred,
+    required this.onChangePaymentMethod,
     required this.isSubmitting,
   });
 
@@ -1834,6 +2212,7 @@ class _QrPhaseBody extends StatelessWidget {
   final ThemeData theme;
   final AppLocalizations l10n;
   final VoidCallback onTransferred;
+  final VoidCallback onChangePaymentMethod;
   final bool isSubmitting;
 
   String _maskPhone(String? phone) {
@@ -1856,16 +2235,27 @@ class _QrPhaseBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final isCompact = size.width < 520 || size.height < 760;
+    final qrSize = math
+        .max(168, math.min(isCompact ? 188 : 220, size.width - 120))
+        .toDouble();
+
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       children: [
-        Flexible(
+        Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+            padding: EdgeInsets.fromLTRB(
+              isCompact ? 16 : 24,
+              isCompact ? 16 : 20,
+              isCompact ? 16 : 24,
+              0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.recipientName.isNotEmpty || widget.phone.isNotEmpty)
+                if (widget.recipientName.isNotEmpty)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
@@ -1906,38 +2296,6 @@ class _QrPhaseBody extends StatelessWidget {
                             ),
                           ),
                         ],
-                        if (widget.recipientName.isNotEmpty &&
-                            widget.phone.isNotEmpty)
-                          const SizedBox(height: 10),
-                        if (widget.phone.isNotEmpty) ...[
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.phone_outlined,
-                                size: 18,
-                                color: widget.brandColor,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                l10n.t('checkout_phone_number'),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: widget.brandColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: SelectableText(
-                              widget.phone,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -1973,10 +2331,11 @@ class _QrPhaseBody extends StatelessWidget {
                             ? widget.recipientName
                             : 'No disponible',
                       ),
-                      _PaymentDataRow(
-                        label: l10n.t('phone'),
-                        value: _maskPhone(widget.phone),
-                      ),
+                      if (widget.phone.isNotEmpty)
+                        _PaymentDataRow(
+                          label: l10n.t('phone'),
+                          value: _maskPhone(widget.phone),
+                        ),
                       _PaymentDataRow(
                         label: l10n.t('method'),
                         value: _getMethodLabel(widget.brandName),
@@ -2004,12 +2363,12 @@ class _QrPhaseBody extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       child: AppSmartImage(
                         source: widget.qrUrl,
-                        width: 200,
-                        height: 200,
+                        width: qrSize,
+                        height: qrSize,
                         fit: BoxFit.contain,
                         fallback: SizedBox(
-                          width: 200,
-                          height: 200,
+                          width: qrSize,
+                          height: qrSize,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -2104,28 +2463,51 @@ class _QrPhaseBody extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-          child: SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: FilledButton(
-              onPressed: isSubmitting ? null : onTransferred,
-              style: FilledButton.styleFrom(
-                backgroundColor: widget.brandColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          padding: EdgeInsets.fromLTRB(
+            isCompact ? 16 : 24,
+            8,
+            isCompact ? 16 : 24,
+            isCompact ? 16 : 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  onPressed: isSubmitting ? null : onTransferred,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: widget.brandColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    isSubmitting
+                        ? l10n.t('processing')
+                        : l10n.t('checkout_transfer_done'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
-              child: Text(
-                isSubmitting
-                    ? l10n.t('processing')
-                    : l10n.t('checkout_transfer_done'),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: OutlinedButton(
+                  onPressed: isSubmitting ? null : onChangePaymentMethod,
+                  child: Text(
+                    Localizations.localeOf(context).languageCode == 'en'
+                        ? 'Change payment method'
+                        : 'Cambiar método de pago',
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ],

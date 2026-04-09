@@ -16,8 +16,11 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
   static const _scriptElementId = 'travelbox-kr-sdk';
   static const _cssElementId = 'travelbox-kr-css';
   static const _themeElementId = 'travelbox-kr-theme';
+
   @override
-  Future<IzipayCheckoutOutcome> openCheckout(IzipayCheckoutRequest request) async {
+  Future<IzipayCheckoutOutcome> openCheckout(
+    IzipayCheckoutRequest request,
+  ) async {
     // 1. Load the Krypton script + theme CSS/JS
     await _ensureKryptonLoaded(request.scriptUrl, request.publicKey);
 
@@ -29,42 +32,54 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
 
     // 4. Set up payment callback + run KR integration via JS
     final completer = Completer<IzipayCheckoutOutcome>();
+    Timer? closeWatchdog;
+    var popinWasVisible = false;
 
     void completeOnce(IzipayCheckoutOutcome outcome) {
       if (!completer.isCompleted) {
+        closeWatchdog?.cancel();
         completer.complete(outcome);
       }
     }
 
     // Expose callbacks to JavaScript
-    js.context['__tbxOnPaymentComplete'] = js.JsFunction.withThis(
-      (dynamic _, [dynamic paymentDataJson, dynamic rawAnswerStr, dynamic hashStr]) {
-        _cleanupKryptonForm();
-        final data = _parseJson(paymentDataJson?.toString());
-        completeOnce(IzipayCheckoutOutcome(
+    js.context['__tbxOnPaymentComplete'] = js.JsFunction.withThis((
+      dynamic _, [
+      dynamic paymentDataJson,
+      dynamic rawAnswerStr,
+      dynamic hashStr,
+    ]) {
+      _cleanupKryptonForm();
+      final data = _parseJson(paymentDataJson?.toString());
+      completeOnce(
+        IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.completed,
           response: data,
           message: data['orderStatus']?.toString() ?? 'Pago completado',
           rawClientAnswer: rawAnswerStr?.toString(),
           hash: hashStr?.toString(),
-        ));
-      },
-    );
+        ),
+      );
+    });
 
-    js.context['__tbxOnPaymentError'] = js.JsFunction.withThis(
-      (dynamic _, [dynamic errorJson]) {
-        _cleanupKryptonForm();
-        final data = _parseJson(errorJson?.toString());
-        completeOnce(IzipayCheckoutOutcome(
+    js.context['__tbxOnPaymentError'] = js.JsFunction.withThis((
+      dynamic _, [
+      dynamic errorJson,
+    ]) {
+      _cleanupKryptonForm();
+      final data = _parseJson(errorJson?.toString());
+      completeOnce(
+        IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.error,
           response: data,
-          message: data['errorMessage']?.toString() ??
+          message:
+              data['errorMessage']?.toString() ??
               data['detailedErrorMessage']?.toString() ??
               errorJson?.toString() ??
               'Error en el pago',
-        ));
-      },
-    );
+        ),
+      );
+    });
 
     // Pass the formToken safely to JS (avoid eval injection)
     js.context['__tbxFormToken'] = request.authorization;
@@ -73,15 +88,35 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     try {
       js.context.callMethod('eval', <dynamic>[_krPopinCode]);
     } catch (e) {
-      completeOnce(IzipayCheckoutOutcome(
-        status: IzipayCheckoutOutcomeStatus.error,
-        message: 'Error al inicializar el formulario de pago: $e',
-      ));
+      completeOnce(
+        IzipayCheckoutOutcome(
+          status: IzipayCheckoutOutcomeStatus.error,
+          message: 'Error al inicializar el formulario de pago: $e',
+        ),
+      );
     }
+
+    closeWatchdog = Timer.periodic(const Duration(milliseconds: 250), (_) {
+      if (completer.isCompleted) {
+        return;
+      }
+      final hasVisiblePopin = _hasVisiblePopin();
+      popinWasVisible = popinWasVisible || hasVisiblePopin;
+      if (popinWasVisible && !hasVisiblePopin) {
+        _cleanupKryptonForm();
+        completeOnce(
+          const IzipayCheckoutOutcome(
+            status: IzipayCheckoutOutcomeStatus.canceled,
+            message: 'El checkout fue cerrado antes de completar el pago.',
+          ),
+        );
+      }
+    });
 
     return completer.future.timeout(
       const Duration(minutes: 5),
       onTimeout: () {
+        closeWatchdog?.cancel();
         _cleanupKryptonForm();
         return const IzipayCheckoutOutcome(
           status: IzipayCheckoutOutcomeStatus.timedOut,
@@ -96,14 +131,21 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
     try {
       final kr = js.context['KR'];
       if (kr != null) {
-        try { kr.callMethod('closePopin', <dynamic>[]); } catch (_) {}
-        try { kr.callMethod('removeForms', <dynamic>[]); } catch (_) {}
+        try {
+          kr.callMethod('closePopin', <dynamic>[]);
+        } catch (_) {}
+        try {
+          kr.callMethod('removeForms', <dynamic>[]);
+        } catch (_) {}
       }
     } catch (_) {}
     try {
       html.document.getElementById('kr-payment-wrapper')?.remove();
       // Krypton may leave orphan overlays/backdrops in the body
-      html.document.querySelectorAll('.kr-popin-modal-overlay, .kr-popin-modal, .kr-smart-form-modal-overlay, .kr-embedded')
+      html.document
+          .querySelectorAll(
+            '.kr-popin-modal-overlay, .kr-popin-modal, .kr-smart-form-modal-overlay, .kr-embedded',
+          )
           .forEach((el) => el.remove());
     } catch (_) {}
   }
@@ -306,6 +348,24 @@ class _WebIzipayCheckoutService implements IzipayCheckoutService {
       if (decoded is Map) return Map<String, dynamic>.from(decoded);
     } catch (_) {}
     return <String, dynamic>{'raw': jsonStr};
+  }
+
+  bool _hasVisiblePopin() {
+    try {
+      final selectors = <String>[
+        '.kr-popin-modal',
+        '.kr-popin-modal-overlay',
+        '.kr-smart-form-modal-overlay',
+        '.kr-popin-wrapper',
+      ];
+      for (final selector in selectors) {
+        final element = html.document.querySelector(selector);
+        if (element != null) {
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
   }
 }
 

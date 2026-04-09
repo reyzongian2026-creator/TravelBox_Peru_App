@@ -100,9 +100,9 @@ class _AuthPortalPageState extends ConsumerState<AuthPortalPage> {
       heroLabel: context.l10n.t('app_name'),
       heroTitle: context.l10n.t('app_name').toUpperCase(),
       heroSubtitle: context.l10n.t('auth_portal_hero_subtitle'),
-      showGuardianLlama: true,
-      showCompactHero: true,
-      showHeroIllustration: true,
+      showGuardianLlama: false,
+      showCompactHero: false,
+      showHeroIllustration: false,
       heroAnimation: _llamaAnimation,
       formChild: _AuthPanel(
         accessMode: _accessMode,
@@ -465,8 +465,9 @@ class _AuthPanel extends StatelessWidget {
                       fontSize: isMobile ? 18 : 24,
                       fontWeight: FontWeight.w800,
                       foreground: Paint()
-                        ..shader = TravelBoxBrand.brandGradient
-                            .createShader(const Rect.fromLTWH(0, 0, 200, 40)),
+                        ..shader = TravelBoxBrand.brandGradient.createShader(
+                          const Rect.fromLTWH(0, 0, 200, 40),
+                        ),
                       letterSpacing: 0.8,
                     ),
                   ),
@@ -549,9 +550,11 @@ class _AuthPanel extends StatelessWidget {
               onChanged: onPasswordTyping,
               obscureText: !loginPasswordVisible,
               validator: FormValidators.password,
-              decoration: AuthUi.lineFieldDecoration(l10n.t('password_hint'),
-                  prefixIcon: Icons.lock_outline_rounded)
-                  .copyWith(
+              decoration:
+                  AuthUi.lineFieldDecoration(
+                    l10n.t('password_hint'),
+                    prefixIcon: Icons.lock_outline_rounded,
+                  ).copyWith(
                     suffixIcon: IconButton(
                       tooltip: loginPasswordVisible
                           ? l10n.t('hide_password')
@@ -577,8 +580,7 @@ class _AuthPanel extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   onChanged: authState.isLoading
                       ? null
-                      : (value) =>
-                            onKeepSignedInChanged(value ?? keepSignedIn),
+                      : (value) => onKeepSignedInChanged(value ?? keepSignedIn),
                 ),
                 const Expanded(child: _KeepSignedInLabel()),
                 if (isClient)
@@ -591,8 +593,10 @@ class _AuthPanel extends StatelessWidget {
                     onPressed: authState.isLoading
                         ? null
                         : onEmailRegisterPressed,
-                    child: Text(l10n.t('create_account'),
-                        style: const TextStyle(fontSize: 12)),
+                    child: Text(
+                      l10n.t('create_account'),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
               ],
             )
@@ -724,29 +728,43 @@ class _AuthPanel extends StatelessWidget {
               if (isClient) ...[
                 TextButton(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 0,
+                    ),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  onPressed: authState.isLoading ? null : onEmailRegisterPressed,
-                  child: Text(l10n.t('create_client_account'),
-                      style: const TextStyle(fontSize: 13)),
+                  onPressed: authState.isLoading
+                      ? null
+                      : onEmailRegisterPressed,
+                  child: Text(
+                    l10n.t('create_client_account'),
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
-                Text(' · ',
-                    style: TextStyle(
-                      color: descriptionColor.withValues(alpha: 0.5),
-                      fontSize: 11,
-                    )),
+                Text(
+                  ' · ',
+                  style: TextStyle(
+                    color: descriptionColor.withValues(alpha: 0.5),
+                    fontSize: 11,
+                  ),
+                ),
               ],
               TextButton(
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 0,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: authState.isLoading ? null : onPasswordResetPressed,
                 child: Text(
-                  isClient ? l10n.t('recover_password') : l10n.t('forgot_password'),
+                  isClient
+                      ? l10n.t('recover_password')
+                      : l10n.t('forgot_password'),
                   style: const TextStyle(fontSize: 13),
                 ),
               ),
@@ -759,9 +777,7 @@ class _AuthPanel extends StatelessWidget {
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
-                  isDark
-                      ? const Color(0xFF2E3A52)
-                      : const Color(0xFFDDE3EE),
+                  isDark ? const Color(0xFF2E3A52) : const Color(0xFFDDE3EE),
                   Colors.transparent,
                 ],
               ),
@@ -912,8 +928,9 @@ class _PolicyDialog extends StatelessWidget {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPrivacy = type == 'privacy';
-    final title =
-        isPrivacy ? l10n.t('privacy_policy') : l10n.t('terms_of_service');
+    final title = isPrivacy
+        ? l10n.t('privacy_policy')
+        : l10n.t('terms_of_service');
 
     return Dialog(
       backgroundColor: isDark ? const Color(0xFF151A30) : Colors.white,
@@ -936,7 +953,9 @@ class _PolicyDialog extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: Icon(
-                      isPrivacy ? Icons.shield_outlined : Icons.description_outlined,
+                      isPrivacy
+                          ? Icons.shield_outlined
+                          : Icons.description_outlined,
                       color: Colors.white,
                       size: 20,
                     ),
@@ -964,9 +983,7 @@ class _PolicyDialog extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: Text(
-                  isPrivacy
-                      ? _privacyPolicyText
-                      : _termsOfServiceText,
+                  isPrivacy ? _privacyPolicyText : _termsOfServiceText,
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.6,
@@ -1205,10 +1222,10 @@ class _LoginPeruMapPainter extends CustomPainter {
 
     // Lima -77.03/-12.05, Cusco -71.97/-13.52, Arequipa -71.54/-16.41, Iquitos -73.25/-3.75
     final cities = [
-      Offset(size.width * 0.34, size.height * 0.645),  // Lima
-      Offset(size.width * 0.73, size.height * 0.724),  // Cusco
-      Offset(size.width * 0.76, size.height * 0.877),  // Arequipa
-      Offset(size.width * 0.63, size.height * 0.201),  // Iquitos
+      Offset(size.width * 0.34, size.height * 0.645), // Lima
+      Offset(size.width * 0.73, size.height * 0.724), // Cusco
+      Offset(size.width * 0.76, size.height * 0.877), // Arequipa
+      Offset(size.width * 0.63, size.height * 0.201), // Iquitos
     ];
     for (final pos in cities) {
       canvas.drawCircle(pos, 2.0, dotPaint);

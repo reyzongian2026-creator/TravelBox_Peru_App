@@ -55,6 +55,7 @@ abstract class ReservationRepository {
     String paymentMethod = 'card',
     String? sourceTokenId,
     String? customerEmail,
+    bool persistLocally = true,
   });
 
   Future<List<Reservation>> getReservationsByUser(String userId);

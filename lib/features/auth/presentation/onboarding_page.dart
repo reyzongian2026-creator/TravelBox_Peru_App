@@ -245,20 +245,49 @@ class _SlideImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF2F7FB),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.asset(
-          imageAsset,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontalInset = constraints.maxWidth < 360 ? 10.0 : 18.0;
+        final verticalInset = constraints.maxHeight < 220 ? 10.0 : 18.0;
+        final maxImageWidth = (constraints.maxWidth - (horizontalInset * 2))
+            .clamp(0.0, double.infinity)
+            .toDouble();
+        final maxImageHeight = (constraints.maxHeight - (verticalInset * 2))
+            .clamp(140.0, 360.0)
+            .toDouble();
+
+        return Container(
           width: double.infinity,
-          fit: BoxFit.contain,
-        ),
-      ),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2F7FB),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalInset,
+                vertical: verticalInset,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: maxImageWidth,
+                    maxHeight: maxImageHeight,
+                  ),
+                  child: Image.asset(
+                    imageAsset,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -254,7 +254,9 @@ class ReservationDetailPage extends ConsumerWidget {
                                 color: Colors.orange,
                               ),
                               title: Text(
-                                context.l10n.t('reservation_late_pickup_surcharge'),
+                                context.l10n.t(
+                                  'reservation_late_pickup_surcharge',
+                                ),
                               ),
                               subtitle: Text(
                                 context.l10n.t(
@@ -263,9 +265,7 @@ class ReservationDetailPage extends ConsumerWidget {
                               ),
                               trailing: Text(
                                 'S/${reservation.latePickupSurcharge.toStringAsFixed(2)}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
+                                style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       color: Colors.orange,
                                       fontWeight: FontWeight.bold,
@@ -288,9 +288,7 @@ class ReservationDetailPage extends ConsumerWidget {
                         color: Colors.green.shade700,
                       ),
                       title: Text(context.l10n.t('insurance_active')),
-                      subtitle: Text(
-                        context.l10n.t('insurance_coverage_desc'),
-                      ),
+                      subtitle: Text(context.l10n.t('insurance_coverage_desc')),
                       trailing: Icon(
                         Icons.verified_outlined,
                         color: Colors.green.shade700,
@@ -342,7 +340,8 @@ class ReservationDetailPage extends ConsumerWidget {
                   children: [
                     if (canOperate)
                       if (reservation.status == ReservationStatus.confirmed ||
-                          reservation.status == ReservationStatus.checkinPending)
+                          reservation.status ==
+                              ReservationStatus.checkinPending)
                         FilledButton.tonalIcon(
                           onPressed: () => context.push(
                             '/ops/qr-handoff?scan=${Uri.encodeComponent(reservation.code)}',
@@ -373,6 +372,7 @@ class ReservationDetailPage extends ConsumerWidget {
                           ref: ref,
                           reservation: reservation,
                           requiresRefund: requiresRefundForCancel,
+                          paymentSnapshot: paymentSnapshot,
                         ),
                         icon: Icon(Icons.cancel_outlined),
                         label: Text(
@@ -499,6 +499,7 @@ class ReservationDetailPage extends ConsumerWidget {
     required WidgetRef ref,
     required Reservation reservation,
     required bool requiresRefund,
+    required Map<String, dynamic>? paymentSnapshot,
   }) async {
     if (requiresRefund) {
       // Step 1: Get cancellation preview from backend
@@ -510,7 +511,10 @@ class ReservationDetailPage extends ConsumerWidget {
         );
       } catch (error) {
         if (!context.mounted) return;
-        final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+        final readable = AppErrorFormatter.readable(
+          error,
+          (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al obtener vista previa: $readable')),
         );
@@ -533,17 +537,23 @@ class ReservationDetailPage extends ConsumerWidget {
         overlay = CriticalOperationOverlay.show(
           context,
           message: 'Procesando reembolso...',
-          submessage: 'No cierres esta ventana, esto puede tardar unos segundos',
+          submessage:
+              'No cierres esta ventana, esto puede tardar unos segundos',
         );
 
         await paymentRepo.confirmCancellation(
           reservationId: int.parse(reservationId),
-          reason: context.l10n.t('reservation_timeline_cancel_requested_refund_app'),
+          reason: context.l10n.t(
+            'reservation_timeline_cancel_requested_refund_app',
+          ),
         );
       } catch (error) {
         if (overlay != null) CriticalOperationOverlay.dismiss(overlay);
         if (!context.mounted) return;
-        final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+        final readable = AppErrorFormatter.readable(
+          error,
+          (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -556,7 +566,16 @@ class ReservationDetailPage extends ConsumerWidget {
       CriticalOperationOverlay.dismiss(overlay);
     } else {
       // No refund needed — simple cancel via existing repository
-      final reason = context.l10n.t('reservation_timeline_cancel_requested_app');
+      if (_shouldWarnNoRefundForManualDigitalPayment(paymentSnapshot)) {
+        final confirmed = await _showManualDigitalNoRefundWarning(
+          context,
+          paymentSnapshot,
+        );
+        if (confirmed != true || !context.mounted) return;
+      }
+      final reason = context.l10n.t(
+        'reservation_timeline_cancel_requested_app',
+      );
       try {
         await ref
             .read(reservationRepositoryProvider)
@@ -566,7 +585,10 @@ class ReservationDetailPage extends ConsumerWidget {
             );
       } catch (error) {
         if (!context.mounted) return;
-        final readable = AppErrorFormatter.readable(error, (String key, {Map<String, dynamic>? params}) => context.l10n.t(key));
+        final readable = AppErrorFormatter.readable(
+          error,
+          (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -591,7 +613,11 @@ class ReservationDetailPage extends ConsumerWidget {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.check_circle_outline, color: Colors.green, size: 48),
+          icon: const Icon(
+            Icons.check_circle_outline,
+            color: Colors.green,
+            size: 48,
+          ),
           title: Text(context.l10n.t('refund_success_title')),
           content: Text(context.l10n.t('refund_success_body')),
           actions: [
@@ -604,9 +630,7 @@ class ReservationDetailPage extends ConsumerWidget {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.t('reservation_cancel_success')),
-        ),
+        SnackBar(content: Text(context.l10n.t('reservation_cancel_success'))),
       );
     }
   }
@@ -983,10 +1007,54 @@ bool _requiresRefundForCancellation(Map<String, dynamic>? payment) {
   if (status != 'CONFIRMED') {
     return false;
   }
-  return method == 'CARD' ||
-      method == 'YAPE' ||
-      method == 'PLIN' ||
-      method == 'WALLET';
+  return method == 'CARD' || method == 'SAVED_CARD';
+}
+
+bool _shouldWarnNoRefundForManualDigitalPayment(Map<String, dynamic>? payment) {
+  if (payment == null) {
+    return false;
+  }
+  final method = payment['paymentMethod']?.toString().trim().toUpperCase();
+  return method == 'YAPE' || method == 'PLIN' || method == 'WALLET';
+}
+
+Future<bool?> _showManualDigitalNoRefundWarning(
+  BuildContext context,
+  Map<String, dynamic>? payment,
+) {
+  final method = payment?['paymentMethod']?.toString().trim().toUpperCase();
+  final methodLabel = switch (method) {
+    'YAPE' => 'Yape',
+    'PLIN' => 'Plin',
+    'WALLET' => 'QR',
+    _ => 'QR',
+  };
+  final isEnglish = context.l10n.locale.languageCode == 'en';
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(
+        isEnglish
+            ? 'Cancel reservation without refund?'
+            : '¿Cancelar reserva sin reembolso?',
+      ),
+      content: Text(
+        isEnglish
+            ? 'If you already paid using $methodLabel, this cancellation does not generate an automatic refund. Continue only if you agree to cancel without refund.'
+            : 'Si ya pagaste usando $methodLabel, esta cancelación no genera reembolso automático. Continúa solo si aceptas cancelar sin devolución.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(isEnglish ? 'Go back' : 'Volver'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: Text(isEnglish ? 'Cancel anyway' : 'Cancelar de todos modos'),
+        ),
+      ],
+    ),
+  );
 }
 
 String _cancelBlockedReason(BuildContext context, ReservationStatus status) {

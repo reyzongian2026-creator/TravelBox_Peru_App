@@ -35,6 +35,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     String paymentMethod = PaymentConstants.methodCard,
     String? sourceTokenId,
     String? customerEmail,
+    bool persistLocally = true,
   }) async {
     try {
       final warehouseId = int.tryParse(draft.warehouse.id);
@@ -91,9 +92,11 @@ class ReservationRepositoryImpl implements ReservationRepository {
 
       final refreshed = await getReservationById(reservation.id);
       final finalReservation = refreshed ?? reservation;
-      await _ref
-          .read(reservationStoreProvider.notifier)
-          .upsert(finalReservation);
+      if (persistLocally) {
+        await _ref
+            .read(reservationStoreProvider.notifier)
+            .upsert(finalReservation);
+      }
       return finalReservation;
     } catch (error) {
       if (!AppEnv.useMockFallback) {
@@ -125,7 +128,9 @@ class ReservationRepositoryImpl implements ReservationRepository {
         dropoffRequested: draft.dropoffRequested,
         extraInsurance: draft.extraInsurance,
       );
-      await _ref.read(reservationStoreProvider.notifier).upsert(reservation);
+      if (persistLocally) {
+        await _ref.read(reservationStoreProvider.notifier).upsert(reservation);
+      }
       return reservation;
     }
   }
@@ -911,9 +916,7 @@ class ReservationRepositoryImpl implements ReservationRepository {
     }
     final normalized = paymentMethod.trim().toLowerCase();
     return normalized == PaymentConstants.methodCard ||
-        normalized == PaymentConstants.methodYape ||
-        normalized == 'plin' ||
-        normalized == PaymentConstants.methodWallet;
+        normalized == PaymentConstants.methodSavedCard;
   }
 
   bool _matchesReservationQuery(Reservation item, String? query) {

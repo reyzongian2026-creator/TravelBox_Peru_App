@@ -28,13 +28,14 @@ class AuthUi {
       prefixIcon: prefixIcon != null
           ? Padding(
               padding: const EdgeInsets.only(left: 2, right: 8),
-              child: Icon(prefixIcon, size: 19, color: TravelBoxBrand.textMuted),
+              child: Icon(
+                prefixIcon,
+                size: 19,
+                color: TravelBoxBrand.textMuted,
+              ),
             )
           : null,
-      prefixIconConstraints: const BoxConstraints(
-        minWidth: 38,
-        minHeight: 38,
-      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 38),
       border: InputBorder.none,
       enabledBorder: InputBorder.none,
       focusedBorder: InputBorder.none,
@@ -111,7 +112,9 @@ class AuthCard extends StatelessWidget {
         color: isDark ? TravelBoxBrand.darkCardSurface : Colors.white,
         borderRadius: BorderRadius.circular(AuthUi.cardRadius),
         border: Border.all(
-          color: isDark ? TravelBoxBrand.darkCardBorder : const Color(0xFFE0E7F1),
+          color: isDark
+              ? TravelBoxBrand.darkCardBorder
+              : const Color(0xFFE0E7F1),
         ),
         boxShadow: [
           BoxShadow(
@@ -140,8 +143,8 @@ class AuthSplitScaffold extends StatelessWidget {
     required this.heroTitle,
     required this.heroSubtitle,
     this.heroLabel = 'InkaVoy',
-    this.showGuardianLlama = true,
-    this.showHeroIllustration = true,
+    this.showGuardianLlama = false,
+    this.showHeroIllustration = false,
     this.showCompactHero = true,
     this.heroAnimation = 'idle',
     this.maxWidth = 1260,
@@ -186,7 +189,7 @@ class AuthSplitScaffold extends StatelessWidget {
                   final outScreenW = MediaQuery.of(context).size.width;
                   final outIsMobile = outScreenW <= 480;
                   final outerPad = outIsMobile
-                      ? const EdgeInsets.symmetric(horizontal: 4, vertical: 2)
+                      ? const EdgeInsets.symmetric(horizontal: 4, vertical: 0)
                       : EdgeInsets.all(responsive.horizontalPadding + 4);
                   return Padding(
                     padding: outerPad,
@@ -203,37 +206,58 @@ class AuthSplitScaffold extends StatelessWidget {
                           final cardPadding = isMobileSmall
                               ? const EdgeInsets.fromLTRB(18, 8, 18, 10)
                               : isMobile
-                                  ? const EdgeInsets.fromLTRB(22, 10, 22, 14)
-                                  : const EdgeInsets.fromLTRB(26, 14, 26, 16);
+                              ? const EdgeInsets.fromLTRB(22, 10, 22, 14)
+                              : const EdgeInsets.fromLTRB(26, 14, 26, 16);
                           final sheetPadding = isMobile
                               ? EdgeInsets.zero
                               : constraints.maxWidth < 520
-                                  ? const EdgeInsets.fromLTRB(8, 4, 8, 8)
-                                  : const EdgeInsets.fromLTRB(10, 6, 10, 10);
+                              ? const EdgeInsets.fromLTRB(8, 4, 8, 8)
+                              : const EdgeInsets.fromLTRB(10, 6, 10, 10);
                           if (!showCompactHero) {
                             final isDarkCompact =
                                 Theme.of(context).brightness == Brightness.dark;
                             if (isMobile) {
-                              return AuthCard(
-                                scrollable: true,
-                                padding: cardPadding,
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minHeight: constraints.maxHeight -
-                                        cardPadding.vertical - 4,
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                    children: [
-                                      formChild,
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 24),
-                                        child: _MobileTravelTeaser(
-                                            isDark: isDarkCompact),
-                                      ),
-                                    ],
+                              final mobileScrollPadding = EdgeInsets.fromLTRB(
+                                0,
+                                isMobileSmall ? 18 : 28,
+                                0,
+                                isMobileSmall ? 12 : 18,
+                              );
+                              return SizedBox(
+                                height: constraints.maxHeight,
+                                child: AuthCard(
+                                  scrollable: false,
+                                  padding: EdgeInsets.zero,
+                                  child: LayoutBuilder(
+                                    builder: (context, cardConstraints) {
+                                      final minContentHeight =
+                                          (cardConstraints.maxHeight -
+                                                  (isMobileSmall ? 54 : 72))
+                                              .clamp(0.0, double.infinity)
+                                              .toDouble();
+                                      return SingleChildScrollView(
+                                        padding: mobileScrollPadding,
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            minHeight: minContentHeight,
+                                          ),
+                                          child: Padding(
+                                            padding: cardPadding,
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                formChild,
+                                                const SizedBox(height: 18),
+                                                _MobileTravelTeaser(
+                                                  isDark: isDarkCompact,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               );
@@ -253,8 +277,7 @@ class AuthSplitScaffold extends StatelessWidget {
                                       child: formChild,
                                     ),
                                     const SizedBox(height: 20),
-                                    _MobileTravelTeaser(
-                                        isDark: isDarkCompact),
+                                    _MobileTravelTeaser(isDark: isDarkCompact),
                                   ],
                                 ),
                               ),
@@ -267,8 +290,7 @@ class AuthSplitScaffold extends StatelessWidget {
                                 minHeight: constraints.maxHeight,
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   SizedBox(
                                     height: heroHeight,
@@ -317,16 +339,16 @@ class AuthSplitScaffold extends StatelessWidget {
                               ),
                               if (!isDark)
                                 BoxShadow(
-                                  color: TravelBoxBrand.primaryBlue
-                                      .withValues(alpha: 0.05),
+                                  color: TravelBoxBrand.primaryBlue.withValues(
+                                    alpha: 0.05,
+                                  ),
                                   blurRadius: 60,
                                   offset: const Offset(0, 30),
                                 ),
                             ],
                           ),
                           child: Row(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
                                 flex: 6,
@@ -338,8 +360,7 @@ class AuthSplitScaffold extends StatelessWidget {
                                     subtitle: heroSubtitle,
                                     compact: false,
                                     showGuardianLlama: showGuardianLlama,
-                                    showHeroIllustration:
-                                        showHeroIllustration,
+                                    showHeroIllustration: showHeroIllustration,
                                     heroAnimation: heroAnimation,
                                   ),
                                 ),
@@ -354,11 +375,17 @@ class AuthSplitScaffold extends StatelessWidget {
                                 flex: 6,
                                 child: Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                    24, 22, 24, 22,
+                                    24,
+                                    22,
+                                    24,
+                                    22,
                                   ),
                                   child: AuthCard(
                                     padding: const EdgeInsets.fromLTRB(
-                                      28, 26, 28, 26,
+                                      28,
+                                      26,
+                                      28,
+                                      26,
                                     ),
                                     child: formChild,
                                   ),
@@ -579,8 +606,10 @@ class _MobileTravelTeaser extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: _destinations.map((d) {
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: chipColor,
                   borderRadius: BorderRadius.circular(20),
@@ -685,11 +714,11 @@ class _PeruMapHeroArt extends StatelessWidget {
         return Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: constraints.maxWidth * 0.82,
-              maxHeight: constraints.maxHeight * 0.94,
+              maxWidth: constraints.maxWidth * 0.94,
+              maxHeight: constraints.maxHeight * 0.96,
             ),
             child: AspectRatio(
-              aspectRatio: 0.8,
+              aspectRatio: 0.96,
               child: CustomPaint(painter: _PeruMapArtPainter()),
             ),
           ),
@@ -770,8 +799,9 @@ class _AuthLineFieldState extends State<AuthLineField> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final focusBorderColor = TravelBoxBrand.primaryBlue;
-    final idleBorderColor =
-        isDark ? const Color(0xFF2E3A52) : const Color(0xFFDDE3EE);
+    final idleBorderColor = isDark
+        ? const Color(0xFF2E3A52)
+        : const Color(0xFFDDE3EE);
     final idleBg = isDark ? const Color(0xFF1A1F34) : const Color(0xFFFCFCFD);
     final focusBg = isDark ? const Color(0xFF1A1E2E) : Colors.white;
 
@@ -816,10 +846,7 @@ class _AuthLineFieldState extends State<AuthLineField> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: _hasFocus
-                      ? [
-                          TravelBoxBrand.primaryBlue,
-                          TravelBoxBrand.seafoam,
-                        ]
+                      ? [TravelBoxBrand.primaryBlue, TravelBoxBrand.seafoam]
                       : [
                           TravelBoxBrand.primaryBlue.withValues(alpha: 0.35),
                           TravelBoxBrand.seafoam.withValues(alpha: 0.25),
@@ -895,7 +922,9 @@ class AuthStripeButton extends StatelessWidget {
               boxShadow: filled
                   ? [
                       BoxShadow(
-                        color: TravelBoxBrand.primaryBlue.withValues(alpha: 0.30),
+                        color: TravelBoxBrand.primaryBlue.withValues(
+                          alpha: 0.30,
+                        ),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
@@ -905,8 +934,12 @@ class AuthStripeButton extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: MediaQuery.of(context).size.shortestSide < 600 ? 48 : 54,
-                  height: MediaQuery.of(context).size.shortestSide < 600 ? 48 : 54,
+                  width: MediaQuery.of(context).size.shortestSide < 600
+                      ? 48
+                      : 54,
+                  height: MediaQuery.of(context).size.shortestSide < 600
+                      ? 48
+                      : 54,
                   decoration: BoxDecoration(
                     color: iconBg,
                     borderRadius: const BorderRadius.horizontal(
@@ -958,31 +991,81 @@ class AuthStripeButton extends StatelessWidget {
 class _AuthHeroPainter extends CustomPainter {
   // Real Peru border from Natural Earth GeoJSON (76 points, normalised).
   static const _peruBorder = <List<double>>[
-    [0.911, 0.9404], [0.8907, 0.9673], [0.852, 0.9808],
-    [0.7763, 0.9506], [0.7698, 0.929], [0.6202, 0.8762],
-    [0.4849, 0.8187], [0.4267, 0.7863], [0.3955, 0.7429],
-    [0.4079, 0.7278], [0.344, 0.6588], [0.2696, 0.5618],
-    [0.1983, 0.4571], [0.1675, 0.4331], [0.1437, 0.3944],
-    [0.0851, 0.3601], [0.0314, 0.3388], [0.0558, 0.3154],
-    [0.0192, 0.2652], [0.0427, 0.2284], [0.1028, 0.1952],
-    [0.1118, 0.2171], [0.0903, 0.2296], [0.0923, 0.2489],
-    [0.1235, 0.2447], [0.154, 0.2504], [0.1856, 0.2769],
-    [0.2283, 0.2553], [0.2426, 0.2198], [0.2888, 0.1741],
-    [0.3795, 0.1534], [0.4618, 0.0983], [0.4852, 0.0641],
-    [0.4747, 0.0242], [0.4948, 0.0192], [0.545, 0.0441],
-    [0.5691, 0.0689], [0.604, 0.0825], [0.6484, 0.1376],
-    [0.7046, 0.1442], [0.7462, 0.1303], [0.7734, 0.1394],
-    [0.8187, 0.1349], [0.8765, 0.1595], [0.8278, 0.213],
-    [0.8503, 0.2142], [0.8881, 0.2422], [0.8201, 0.2397],
-    [0.81, 0.2476], [0.7482, 0.2577], [0.6619, 0.2935],
-    [0.6564, 0.318], [0.6372, 0.3363], [0.6447, 0.3648],
-    [0.5991, 0.3799], [0.5992, 0.4021], [0.5793, 0.4117],
-    [0.6107, 0.4591], [0.6526, 0.4911], [0.6366, 0.5136],
-    [0.6867, 0.5167], [0.7152, 0.5447], [0.7818, 0.5461],
-    [0.8437, 0.5151], [0.8387, 0.595], [0.873, 0.601],
-    [0.9155, 0.592], [0.9808, 0.6766], [0.9645, 0.6944],
-    [0.9608, 0.7313], [0.9594, 0.776], [0.9299, 0.8023],
-    [0.9434, 0.8218], [0.9261, 0.8395], [0.9585, 0.8837],
+    [0.911, 0.9404],
+    [0.8907, 0.9673],
+    [0.852, 0.9808],
+    [0.7763, 0.9506],
+    [0.7698, 0.929],
+    [0.6202, 0.8762],
+    [0.4849, 0.8187],
+    [0.4267, 0.7863],
+    [0.3955, 0.7429],
+    [0.4079, 0.7278],
+    [0.344, 0.6588],
+    [0.2696, 0.5618],
+    [0.1983, 0.4571],
+    [0.1675, 0.4331],
+    [0.1437, 0.3944],
+    [0.0851, 0.3601],
+    [0.0314, 0.3388],
+    [0.0558, 0.3154],
+    [0.0192, 0.2652],
+    [0.0427, 0.2284],
+    [0.1028, 0.1952],
+    [0.1118, 0.2171],
+    [0.0903, 0.2296],
+    [0.0923, 0.2489],
+    [0.1235, 0.2447],
+    [0.154, 0.2504],
+    [0.1856, 0.2769],
+    [0.2283, 0.2553],
+    [0.2426, 0.2198],
+    [0.2888, 0.1741],
+    [0.3795, 0.1534],
+    [0.4618, 0.0983],
+    [0.4852, 0.0641],
+    [0.4747, 0.0242],
+    [0.4948, 0.0192],
+    [0.545, 0.0441],
+    [0.5691, 0.0689],
+    [0.604, 0.0825],
+    [0.6484, 0.1376],
+    [0.7046, 0.1442],
+    [0.7462, 0.1303],
+    [0.7734, 0.1394],
+    [0.8187, 0.1349],
+    [0.8765, 0.1595],
+    [0.8278, 0.213],
+    [0.8503, 0.2142],
+    [0.8881, 0.2422],
+    [0.8201, 0.2397],
+    [0.81, 0.2476],
+    [0.7482, 0.2577],
+    [0.6619, 0.2935],
+    [0.6564, 0.318],
+    [0.6372, 0.3363],
+    [0.6447, 0.3648],
+    [0.5991, 0.3799],
+    [0.5992, 0.4021],
+    [0.5793, 0.4117],
+    [0.6107, 0.4591],
+    [0.6526, 0.4911],
+    [0.6366, 0.5136],
+    [0.6867, 0.5167],
+    [0.7152, 0.5447],
+    [0.7818, 0.5461],
+    [0.8437, 0.5151],
+    [0.8387, 0.595],
+    [0.873, 0.601],
+    [0.9155, 0.592],
+    [0.9808, 0.6766],
+    [0.9645, 0.6944],
+    [0.9608, 0.7313],
+    [0.9594, 0.776],
+    [0.9299, 0.8023],
+    [0.9434, 0.8218],
+    [0.9261, 0.8395],
+    [0.9585, 0.8837],
   ];
 
   @override
@@ -995,36 +1078,44 @@ class _AuthHeroPainter extends CustomPainter {
       Offset(w * 0.78, h * 0.15),
       w * 0.30,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.07),
-            Colors.transparent,
-          ],
-        ).createShader(
-          Rect.fromCircle(center: Offset(w * 0.78, h * 0.15), radius: w * 0.30),
-        ),
+        ..shader =
+            RadialGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.07),
+                Colors.transparent,
+              ],
+            ).createShader(
+              Rect.fromCircle(
+                center: Offset(w * 0.78, h * 0.15),
+                radius: w * 0.30,
+              ),
+            ),
     );
     canvas.drawCircle(
       Offset(w * 0.12, h * 0.68),
       w * 0.22,
       Paint()
-        ..shader = RadialGradient(
-          colors: [
-            Colors.white.withValues(alpha: 0.05),
-            Colors.transparent,
-          ],
-        ).createShader(
-          Rect.fromCircle(center: Offset(w * 0.12, h * 0.68), radius: w * 0.22),
-        ),
+        ..shader =
+            RadialGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.05),
+                Colors.transparent,
+              ],
+            ).createShader(
+              Rect.fromCircle(
+                center: Offset(w * 0.12, h * 0.68),
+                radius: w * 0.22,
+              ),
+            ),
     );
 
     // ═══════════════════════════════════════════
     // LARGE PERU MAP (centered, real GeoJSON 76 points)
     // ═══════════════════════════════════════════
     {
-      // Map occupies 70% width, 90% height, centered
-      final mapW = w * 0.70;
-      final mapH = h * 0.90;
+      // Map occupies more horizontal space to avoid an overly thin silhouette.
+      final mapW = w * 0.82;
+      final mapH = h * 0.88;
       final mapX = (w - mapW) / 2; // centered horizontally
       final mapY = (h - mapH) / 2; // centered vertically
 
@@ -1209,13 +1300,14 @@ class _AuthHeroPainter extends CustomPainter {
           textDirection: TextDirection.ltr,
         )..layout();
         // Smart label placement to reduce overlap
-        final bool placeLeft = entry.key == 'Colca' ||
+        final bool placeLeft =
+            entry.key == 'Colca' ||
             entry.key == 'Lago Titicaca' ||
             entry.key == 'Machu Picchu' ||
             entry.key == 'Puno' ||
             entry.key == 'P. Maldonado';
-        final bool placeAbove = entry.key == 'Huacachina' ||
-            entry.key == 'Ayacucho';
+        final bool placeAbove =
+            entry.key == 'Huacachina' || entry.key == 'Ayacucho';
         double dx, dy;
         if (placeLeft) {
           dx = pos.dx - tp.width - 3;
@@ -1268,7 +1360,7 @@ class _AuthHeroPainter extends CustomPainter {
     canvas.save();
     canvas.translate(w * 0.84, h * 0.11);
     canvas.rotate(-0.6);
-    final apS = w * 0.0032;  // scale 24-unit viewbox to panel size
+    final apS = w * 0.0032; // scale 24-unit viewbox to panel size
     canvas.scale(apS, apS);
     canvas.translate(-12, -12); // center the 24x24 icon
     final airplane = Path()
@@ -1296,59 +1388,7 @@ class _AuthHeroPainter extends CustomPainter {
     canvas.restore();
 
     // ═══════════════════════════════════════════
-    // 2. LLAMA (Twemoji real SVG — viewBox 36×36)
-    //    Full body with smooth cubic bezier curves
-    // ═══════════════════════════════════════════
-    canvas.save();
-    canvas.translate(w * 0.02, h * 0.26);
-    final llS = w * 0.0050; // scale 36-unit viewbox
-    canvas.scale(llS, llS);
-    final llama = Path()
-      ..moveTo(8.19, 0.74)
-      ..cubicTo(8.52, 1.07, 8.93, 3.13, 8.93, 3.13)
-      ..cubicTo(8.93, 3.13, 10.21, 3.22, 11.33, 3.92)
-      ..cubicTo(15.83, 6.69, 13.88, 13.46, 15.28, 15.02)
-      ..cubicTo(15.71, 15.50, 24.96, 13.38, 29.50, 15.56)
-      ..cubicTo(33.34, 17.41, 32.58, 20.21, 33.58, 20.83)
-      ..cubicTo(34.34, 21.31, 31.58, 22.08, 31.00, 18.52)
-      ..cubicTo(30.50, 29.67, 29.93, 32.39, 29.33, 34.87)
-      ..cubicTo(28.99, 36.28, 27.35, 36.48, 27.54, 34.54)
-      ..cubicTo(27.64, 33.51, 28.00, 27.32, 26.96, 25.75)
-      ..cubicTo(26.21, 24.62, 22.25, 28.17, 15.25, 27.52)
-      ..cubicTo(14.77, 31.80, 14.15, 34.66, 13.98, 35.04)
-      ..cubicTo(13.42, 36.27, 12.12, 36.26, 12.30, 35.03)
-      ..cubicTo(12.49, 33.80, 12.75, 30.08, 11.42, 26.02)
-      ..cubicTo(5.79, 22.04, 9.79, 11.83, 8.16, 9.88)
-      ..cubicTo(7.80, 9.44, 5.52, 8.90, 4.85, 8.83)
-      ..cubicTo(4.18, 8.76, 3.59, 8.66, 3.19, 8.59)
-      ..cubicTo(2.79, 8.52, 2.19, 6.81, 2.26, 6.35)
-      ..cubicTo(2.33, 5.88, 2.65, 5.72, 3.52, 5.39)
-      ..cubicTo(4.39, 5.06, 4.51, 5.17, 4.46, 4.66)
-      ..cubicTo(4.36, 3.61, 6.64, 2.89, 7.94, 3.02)
-      ..cubicTo(7.81, 2.89, 6.86, 1.23, 6.59, 0.63)
-      ..cubicTo(6.24, -0.15, 7.66, 0.18, 8.19, 0.74)
-      ..close();
-    // Ear paths from Twemoji SVG
-    final llamaEar = Path()
-      ..moveTo(6.76, 2.25)
-      ..cubicTo(6.31, 1.88, 5.71, 1.27, 5.13, 0.95)
-      ..cubicTo(4.63, 0.67, 4.88, 1.87, 5.30, 2.34)
-      ..cubicTo(5.72, 2.81, 7.12, 3.68, 7.76, 4.15)
-      ..cubicTo(8.39, 4.62, 8.69, 4.55, 8.07, 3.68)
-      ..cubicTo(7.42, 2.77, 6.76, 2.25, 6.76, 2.25)
-      ..close();
-    // Eye dot
-    final llamaEye = Path()
-      ..addOval(Rect.fromCircle(center: const Offset(6.85, 4.81), radius: 0.73));
-    canvas.drawPath(llama, lp);
-    canvas.drawPath(llamaEar, lp);
-    canvas.drawPath(llamaEye, Paint()
-      ..style = PaintingStyle.stroke..strokeWidth = 0.5
-      ..color = Colors.white.withValues(alpha: 0.13));
-    canvas.restore();
-
-    // ═══════════════════════════════════════════
-    // 3. INTI / SOL INCA (MDI sun-compass — viewBox 24×24)
+    // 2. INTI / SOL INCA (MDI sun-compass — viewBox 24×24)
     //    Real SVG compound path with rays, circle, inner diamond
     // ═══════════════════════════════════════════
     canvas.save();
@@ -1506,19 +1546,29 @@ class _AuthHeroPainter extends CustomPainter {
     canvas.scale(tmS, tmS);
     final tumi = Path()
       // Blade
-      ..moveTo(0, 0)..lineTo(-8, 40)..lineTo(8, 40)..lineTo(0, 0)
+      ..moveTo(0, 0)
+      ..lineTo(-8, 40)
+      ..lineTo(8, 40)
+      ..lineTo(0, 0)
       // Handle semicircle
       ..moveTo(-10, 0)
       ..quadraticBezierTo(-14, -16, 0, -20)
       ..quadraticBezierTo(14, -16, 10, 0)
       // Face in handle
-      ..moveTo(-4, -10)..lineTo(-2, -8)
-      ..moveTo(4, -10)..lineTo(2, -8)
-      ..moveTo(-2, -4)..quadraticBezierTo(0, -2, 2, -4);
-    canvas.drawPath(tumi, Paint()
-      ..style = PaintingStyle.stroke..strokeWidth = 0.9
-      ..strokeCap = StrokeCap.round
-      ..color = Colors.white.withValues(alpha: 0.12));
+      ..moveTo(-4, -10)
+      ..lineTo(-2, -8)
+      ..moveTo(4, -10)
+      ..lineTo(2, -8)
+      ..moveTo(-2, -4)
+      ..quadraticBezierTo(0, -2, 2, -4);
+    canvas.drawPath(
+      tumi,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..strokeCap = StrokeCap.round
+        ..color = Colors.white.withValues(alpha: 0.12),
+    );
     canvas.restore();
 
     // ═══════════════════════════════════════════
@@ -1526,24 +1576,43 @@ class _AuthHeroPainter extends CustomPainter {
     // ═══════════════════════════════════════════
     final mt1 = Path()
       ..moveTo(w * 0.35, h * 0.94)
-      ..lineTo(w * 0.45, h * 0.82)..lineTo(w * 0.52, h * 0.86)
-      ..lineTo(w * 0.60, h * 0.76)..lineTo(w * 0.68, h * 0.82)
-      ..lineTo(w * 0.76, h * 0.72)..lineTo(w * 0.85, h * 0.79)
-      ..lineTo(w * 0.92, h * 0.74)..lineTo(w, h * 0.78)
-      ..lineTo(w, h * 0.94)..close();
-    canvas.drawPath(mt1, Paint()
-      ..color = Colors.white.withValues(alpha: 0.04)..style = PaintingStyle.fill);
+      ..lineTo(w * 0.45, h * 0.82)
+      ..lineTo(w * 0.52, h * 0.86)
+      ..lineTo(w * 0.60, h * 0.76)
+      ..lineTo(w * 0.68, h * 0.82)
+      ..lineTo(w * 0.76, h * 0.72)
+      ..lineTo(w * 0.85, h * 0.79)
+      ..lineTo(w * 0.92, h * 0.74)
+      ..lineTo(w, h * 0.78)
+      ..lineTo(w, h * 0.94)
+      ..close();
+    canvas.drawPath(
+      mt1,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.04)
+        ..style = PaintingStyle.fill,
+    );
     final mt2 = Path()
       ..moveTo(w * 0.42, h * 0.94)
-      ..lineTo(w * 0.52, h * 0.83)..lineTo(w * 0.57, h * 0.87)
-      ..lineTo(w * 0.64, h * 0.78)..lineTo(w * 0.70, h * 0.83)
-      ..lineTo(w * 0.78, h * 0.73)..lineTo(w * 0.87, h * 0.82)
-      ..lineTo(w * 0.95, h * 0.76)..lineTo(w, h * 0.80);
-    canvas.drawPath(mt2, Paint()
-      ..style = PaintingStyle.stroke..strokeWidth = 1.3
-      ..strokeJoin = StrokeJoin.round
-      ..color = Colors.white.withValues(alpha: 0.12));
-    final snow = Paint()..color = Colors.white.withValues(alpha: 0.14)..style = PaintingStyle.fill;
+      ..lineTo(w * 0.52, h * 0.83)
+      ..lineTo(w * 0.57, h * 0.87)
+      ..lineTo(w * 0.64, h * 0.78)
+      ..lineTo(w * 0.70, h * 0.83)
+      ..lineTo(w * 0.78, h * 0.73)
+      ..lineTo(w * 0.87, h * 0.82)
+      ..lineTo(w * 0.95, h * 0.76)
+      ..lineTo(w, h * 0.80);
+    canvas.drawPath(
+      mt2,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.3
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white.withValues(alpha: 0.12),
+    );
+    final snow = Paint()
+      ..color = Colors.white.withValues(alpha: 0.14)
+      ..style = PaintingStyle.fill;
     _drawSnowCap(canvas, w * 0.78, h * 0.73, w * 0.018, snow);
     _drawSnowCap(canvas, w * 0.64, h * 0.78, w * 0.014, snow);
     _drawSnowCap(canvas, w * 0.92, h * 0.74, w * 0.013, snow);
@@ -1551,26 +1620,44 @@ class _AuthHeroPainter extends CustomPainter {
     // ═══════════════════════════════════════════
     // 8. CHAKANA — Inca cross (precise geometry)
     // ═══════════════════════════════════════════
-    _drawChakana(canvas, Offset(w * 0.48, h * 0.58), w * 0.022,
-      Colors.white.withValues(alpha: 0.09));
-    _drawChakana(canvas, Offset(w * 0.14, h * 0.20), w * 0.015,
-      Colors.white.withValues(alpha: 0.07));
+    _drawChakana(
+      canvas,
+      Offset(w * 0.48, h * 0.58),
+      w * 0.022,
+      Colors.white.withValues(alpha: 0.09),
+    );
+    _drawChakana(
+      canvas,
+      Offset(w * 0.14, h * 0.20),
+      w * 0.015,
+      Colors.white.withValues(alpha: 0.07),
+    );
 
     // ═══════════════════════════════════════════
     // 9. Scatter dots
     // ═══════════════════════════════════════════
     final sDot = Paint()..color = Colors.white.withValues(alpha: 0.08);
     for (final p in [
-      Offset(w * 0.30, h * 0.12), Offset(w * 0.42, h * 0.18),
-      Offset(w * 0.70, h * 0.60), Offset(w * 0.55, h * 0.68),
-      Offset(w * 0.92, h * 0.28), Offset(w * 0.08, h * 0.48),
-      Offset(w * 0.35, h * 0.90), Offset(w * 0.65, h * 0.92),
+      Offset(w * 0.30, h * 0.12),
+      Offset(w * 0.42, h * 0.18),
+      Offset(w * 0.70, h * 0.60),
+      Offset(w * 0.55, h * 0.68),
+      Offset(w * 0.92, h * 0.28),
+      Offset(w * 0.08, h * 0.48),
+      Offset(w * 0.35, h * 0.90),
+      Offset(w * 0.65, h * 0.92),
     ]) {
       canvas.drawCircle(p, 1.2, sDot);
     }
   }
 
-  void _drawSnowCap(Canvas canvas, double cx, double cy, double r, Paint paint) {
+  void _drawSnowCap(
+    Canvas canvas,
+    double cx,
+    double cy,
+    double r,
+    Paint paint,
+  ) {
     final p = Path()
       ..moveTo(cx, cy)
       ..lineTo(cx - r, cy + r * 1.2)
@@ -1612,31 +1699,81 @@ class _AuthHeroPainter extends CustomPainter {
 class _PeruMapArtPainter extends CustomPainter {
   // Real Peru border from Natural Earth GeoJSON (76 points, normalised).
   static const _border = <List<double>>[
-    [0.911, 0.9404], [0.8907, 0.9673], [0.852, 0.9808],
-    [0.7763, 0.9506], [0.7698, 0.929], [0.6202, 0.8762],
-    [0.4849, 0.8187], [0.4267, 0.7863], [0.3955, 0.7429],
-    [0.4079, 0.7278], [0.344, 0.6588], [0.2696, 0.5618],
-    [0.1983, 0.4571], [0.1675, 0.4331], [0.1437, 0.3944],
-    [0.0851, 0.3601], [0.0314, 0.3388], [0.0558, 0.3154],
-    [0.0192, 0.2652], [0.0427, 0.2284], [0.1028, 0.1952],
-    [0.1118, 0.2171], [0.0903, 0.2296], [0.0923, 0.2489],
-    [0.1235, 0.2447], [0.154, 0.2504], [0.1856, 0.2769],
-    [0.2283, 0.2553], [0.2426, 0.2198], [0.2888, 0.1741],
-    [0.3795, 0.1534], [0.4618, 0.0983], [0.4852, 0.0641],
-    [0.4747, 0.0242], [0.4948, 0.0192], [0.545, 0.0441],
-    [0.5691, 0.0689], [0.604, 0.0825], [0.6484, 0.1376],
-    [0.7046, 0.1442], [0.7462, 0.1303], [0.7734, 0.1394],
-    [0.8187, 0.1349], [0.8765, 0.1595], [0.8278, 0.213],
-    [0.8503, 0.2142], [0.8881, 0.2422], [0.8201, 0.2397],
-    [0.81, 0.2476], [0.7482, 0.2577], [0.6619, 0.2935],
-    [0.6564, 0.318], [0.6372, 0.3363], [0.6447, 0.3648],
-    [0.5991, 0.3799], [0.5992, 0.4021], [0.5793, 0.4117],
-    [0.6107, 0.4591], [0.6526, 0.4911], [0.6366, 0.5136],
-    [0.6867, 0.5167], [0.7152, 0.5447], [0.7818, 0.5461],
-    [0.8437, 0.5151], [0.8387, 0.595], [0.873, 0.601],
-    [0.9155, 0.592], [0.9808, 0.6766], [0.9645, 0.6944],
-    [0.9608, 0.7313], [0.9594, 0.776], [0.9299, 0.8023],
-    [0.9434, 0.8218], [0.9261, 0.8395], [0.9585, 0.8837],
+    [0.911, 0.9404],
+    [0.8907, 0.9673],
+    [0.852, 0.9808],
+    [0.7763, 0.9506],
+    [0.7698, 0.929],
+    [0.6202, 0.8762],
+    [0.4849, 0.8187],
+    [0.4267, 0.7863],
+    [0.3955, 0.7429],
+    [0.4079, 0.7278],
+    [0.344, 0.6588],
+    [0.2696, 0.5618],
+    [0.1983, 0.4571],
+    [0.1675, 0.4331],
+    [0.1437, 0.3944],
+    [0.0851, 0.3601],
+    [0.0314, 0.3388],
+    [0.0558, 0.3154],
+    [0.0192, 0.2652],
+    [0.0427, 0.2284],
+    [0.1028, 0.1952],
+    [0.1118, 0.2171],
+    [0.0903, 0.2296],
+    [0.0923, 0.2489],
+    [0.1235, 0.2447],
+    [0.154, 0.2504],
+    [0.1856, 0.2769],
+    [0.2283, 0.2553],
+    [0.2426, 0.2198],
+    [0.2888, 0.1741],
+    [0.3795, 0.1534],
+    [0.4618, 0.0983],
+    [0.4852, 0.0641],
+    [0.4747, 0.0242],
+    [0.4948, 0.0192],
+    [0.545, 0.0441],
+    [0.5691, 0.0689],
+    [0.604, 0.0825],
+    [0.6484, 0.1376],
+    [0.7046, 0.1442],
+    [0.7462, 0.1303],
+    [0.7734, 0.1394],
+    [0.8187, 0.1349],
+    [0.8765, 0.1595],
+    [0.8278, 0.213],
+    [0.8503, 0.2142],
+    [0.8881, 0.2422],
+    [0.8201, 0.2397],
+    [0.81, 0.2476],
+    [0.7482, 0.2577],
+    [0.6619, 0.2935],
+    [0.6564, 0.318],
+    [0.6372, 0.3363],
+    [0.6447, 0.3648],
+    [0.5991, 0.3799],
+    [0.5992, 0.4021],
+    [0.5793, 0.4117],
+    [0.6107, 0.4591],
+    [0.6526, 0.4911],
+    [0.6366, 0.5136],
+    [0.6867, 0.5167],
+    [0.7152, 0.5447],
+    [0.7818, 0.5461],
+    [0.8437, 0.5151],
+    [0.8387, 0.595],
+    [0.873, 0.601],
+    [0.9155, 0.592],
+    [0.9808, 0.6766],
+    [0.9645, 0.6944],
+    [0.9608, 0.7313],
+    [0.9594, 0.776],
+    [0.9299, 0.8023],
+    [0.9434, 0.8218],
+    [0.9261, 0.8395],
+    [0.9585, 0.8837],
   ];
 
   @override

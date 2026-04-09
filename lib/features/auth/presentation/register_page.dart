@@ -59,10 +59,10 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final isMobile = MediaQuery.of(context).size.shortestSide < 600;
     final responsive = context.responsive;
     final titleSize = responsive.adaptiveFont(
-      mobileSmall: 30,
-      mobile: 33,
-      tablet: 35,
-      desktopSmall: 37,
+      mobileSmall: 24,
+      mobile: 28,
+      tablet: 33,
+      desktopSmall: 36,
       desktop: 38,
     );
     final headlineColor = isDark
@@ -104,6 +104,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       heroTitle: context.l10n.t('register_hero_title'),
       heroSubtitle: context.l10n.t('register_hero_subtitle'),
       showGuardianLlama: false,
+      showCompactHero: false,
       formChild: Form(
         key: _formKey,
         autovalidateMode: _showValidation
@@ -116,9 +117,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               Align(
                 alignment: Alignment.center,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 12 : 16,
+                    vertical: isMobile ? 7 : 10,
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
@@ -134,16 +135,16 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   child: Text(
                     l10n.t('app_name').toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 15,
+                      fontSize: isMobile ? 13 : 15,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.2,
                     ),
                   ),
                 ),
               ),
-            if (isMobile) const SizedBox(height: 12),
+            if (isMobile) const SizedBox(height: 8),
             Text(
               l10n.t('register_title'),
               textAlign: TextAlign.center,
@@ -154,14 +155,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: isMobile ? 4 : 6),
             Text(
               l10n.t('register_description'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: descriptionColor,
-                height: 1.35,
-                fontSize: responsive.isMobile ? 12.8 : 13,
+                height: 1.3,
+                fontSize: isMobile ? 12 : 13,
               ),
             ),
             Align(
@@ -191,7 +192,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: isMobile ? 8 : 10),
             _textLineField(
               controller: _emailController,
               hint: l10n.t('email_hint'),
@@ -273,7 +274,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 },
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: isMobile ? 8 : 10),
             _textLineField(
               controller: _passwordController,
               hint: l10n.t('password_hint'),
