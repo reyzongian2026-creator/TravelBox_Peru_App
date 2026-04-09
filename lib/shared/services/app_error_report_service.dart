@@ -5,10 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../state/session_token_storage.dart';
+
 class AppErrorReportService {
-  AppErrorReportService(this._dio);
+  AppErrorReportService(this._dio, {SessionTokenStorage? tokenStorage})
+    : _tokenStorage = tokenStorage;
 
   final Dio _dio;
+  final SessionTokenStorage? _tokenStorage;
   final List<AppErrorEntry> _pendingErrors = [];
   Timer? _flushTimer;
   bool _isReporting = false;
@@ -25,13 +29,16 @@ class AppErrorReportService {
     _preInitializedInstance = service;
   }
 
-  static Future<AppErrorReportService> getInstance(Dio dio) async {
+  static Future<AppErrorReportService> getInstance(
+    Dio dio, {
+    SessionTokenStorage? tokenStorage,
+  }) async {
     if (_instance != null) return _instance!;
     if (_preInitializedInstance != null) {
       _instance = _preInitializedInstance;
       return _instance!;
     }
-    _instance = AppErrorReportService(dio);
+    _instance = AppErrorReportService(dio, tokenStorage: tokenStorage);
     await _instance!._loadFromStorage();
     return _instance!;
   }
@@ -232,8 +239,14 @@ class AppErrorReportService {
     await _saveToStorage();
 
     try {
+      final authHeaders = await _buildAuthHeaders();
+      if (authHeaders == null) {
+        return;
+      }
+
       await _dio.post(
         '/admin/i18n-report/errors',
+        options: Options(headers: authHeaders),
         data: {
           'locale': _getMostCommonLocale(errorsToSend),
           'keys': errorsToSend.map((e) => '${e.type.name}:${e.key}').toList(),
@@ -273,6 +286,20 @@ class AppErrorReportService {
     } finally {
       _isReporting = false;
     }
+  }
+
+  Future<Map<String, String>?> _buildAuthHeaders() async {
+    final tokenStorage = _tokenStorage;
+    if (tokenStorage == null) {
+      return null;
+    }
+
+    final accessToken = (await tokenStorage.readAccessToken())?.trim() ?? '';
+    if (!_hasUsableJwtToken(accessToken)) {
+      return null;
+    }
+
+    return <String, String>{'Authorization': 'Bearer $accessToken'};
   }
 
   Future<bool> _canSyncToAdminEndpoint() async {
@@ -369,7 +396,52 @@ class AppErrorReportService {
     final statusCode = additionalData?['statusCode'];
     return statusCode == 401 &&
         (endpoint.startsWith('/notifications/stream') ||
-            endpoint.startsWith('/notifications/events'));
+            endpoint.startsWith('/notifications/events') ||
+            endpoint.startsWith('/admin/i18n-report/errors'));
+  }
+}
+
+bool _hasUsableJwtToken(String token) {
+  final normalized = token.trim();
+  if (normalized.isEmpty) {
+    return false;
+  }
+
+  final segments = normalized.split('.');
+  if (segments.length != 3 || segments.any((segment) => segment.trim().isEmpty)) {
+    return false;
+  }
+
+  final exp = _extractJwtClaimAsInt(normalized, 'exp');
+  if (exp == null) {
+    return true;
+  }
+
+  final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  return exp > nowSec + 15;
+}
+
+int? _extractJwtClaimAsInt(String token, String claim) {
+  try {
+    final parts = token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+    final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+    final decoded = jsonDecode(payload);
+    if (decoded is! Map<String, dynamic>) {
+      return null;
+    }
+    final value = decoded[claim];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    return int.tryParse(value?.toString() ?? '');
+  } catch (_) {
+    return null;
   }
 }
 

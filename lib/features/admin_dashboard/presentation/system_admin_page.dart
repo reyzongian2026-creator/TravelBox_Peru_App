@@ -6,11 +6,11 @@ import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../core/widgets/state_views.dart';
 import '../data/admin_dashboard_repository.dart';
 
-final systemHealthProvider = FutureProvider<SystemHealthInfo>((ref) async {
+final systemHealthProvider = FutureProvider.autoDispose<SystemHealthInfo>((ref) async {
   return ref.read(adminDashboardRepositoryProvider).getSystemHealth();
 });
 
-final auditLogProvider = FutureProvider<List<AuditLogEntry>>((ref) async {
+final auditLogProvider = FutureProvider.autoDispose<List<AuditLogEntry>>((ref) async {
   return ref.read(adminDashboardRepositoryProvider).getAuditLog(limit: 50);
 });
 

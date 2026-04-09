@@ -491,6 +491,38 @@ class SessionController extends StateNotifier<SessionState> {
     _scheduleProactiveRefresh();
   }
 
+  Future<String?> ensureFreshAccessToken({int leewaySeconds = 45}) async {
+    final currentAccessToken = state.accessToken?.trim() ?? '';
+    if (_hasUsableAccessToken(currentAccessToken) &&
+        !_isTokenExpired(currentAccessToken, leewaySeconds: leewaySeconds)) {
+      return currentAccessToken;
+    }
+
+    final currentRefreshToken = state.refreshToken?.trim() ?? '';
+    if (currentRefreshToken.isEmpty) {
+      return _hasUsableAccessToken(currentAccessToken)
+          ? currentAccessToken
+          : null;
+    }
+
+    final refreshedTokens = await _requestTokenRefresh(currentRefreshToken);
+    if (refreshedTokens == null) {
+      return _hasUsableAccessToken(currentAccessToken)
+          ? currentAccessToken
+          : null;
+    }
+
+    state = _normalizeRoleFromAccessToken(
+      state.copyWith(
+        accessToken: refreshedTokens.accessToken,
+        refreshToken: refreshedTokens.refreshToken,
+      ),
+    );
+    await _persist();
+    _scheduleProactiveRefresh();
+    return state.accessToken?.trim();
+  }
+
   Future<_RefreshedTokens?> _requestTokenRefresh(String? refreshToken) async {
     final normalizedRefreshToken = refreshToken?.trim() ?? '';
     if (normalizedRefreshToken.isEmpty) {

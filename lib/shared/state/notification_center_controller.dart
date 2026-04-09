@@ -608,15 +608,24 @@ class NotificationCenterController
   }
 
   void markSeen(String notificationId) {
-    final seen = {...state.seenIds, notificationId};
+    final seen = _pruneSeenIds({...state.seenIds, notificationId});
     state = state.copyWith(seenIds: seen);
     unawaited(_persistSeenIds(seen));
   }
 
   void markAllSeen() {
-    final seen = {...state.seenIds, ...state.items.map((item) => item.id)};
+    final seen = _pruneSeenIds(
+      {...state.seenIds, ...state.items.map((item) => item.id)},
+    );
     state = state.copyWith(seenIds: seen);
     unawaited(_persistSeenIds(seen));
+  }
+
+  /// Keeps only the [_seenIdsMax] most-recently added IDs so the in-memory
+  /// set never grows without bound (Dart Set spread preserves insertion order).
+  Set<String> _pruneSeenIds(Set<String> ids) {
+    if (ids.length <= _seenIdsMax) return ids;
+    return ids.skip(ids.length - _seenIdsMax).toSet();
   }
 
   Future<void> deleteNotification(String notificationId) async {

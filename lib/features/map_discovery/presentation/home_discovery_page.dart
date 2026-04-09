@@ -36,7 +36,7 @@ final discoveryViewModeProvider = StateProvider<DiscoveryViewMode>(
 final currentPositionProvider = StateProvider<Position?>((ref) => null);
 final discoveryFeaturedCityProvider = StateProvider<String?>((ref) => null);
 
-final discoveryWarehousesProvider = FutureProvider<List<Warehouse>>((ref) {
+final discoveryWarehousesProvider = FutureProvider.autoDispose<List<Warehouse>>((ref) {
   ref.watch(realtimeAppEventCursorProvider);
   final query = ref.watch(discoveryQueryProvider);
   final position = ref.watch(currentPositionProvider);
@@ -1188,7 +1188,6 @@ class _WarehouseCard extends StatelessWidget {
     final responsive = context.responsive;
     final cardPadding = responsive.cardPadding;
     final sectionGap = responsive.sectionGap;
-    final imageHeight = responsive.isMobile ? 132.0 : 146.0;
     final tourism = PeruTourismCatalog.forCity(warehouse.city);
     return Card(
       child: Padding(
@@ -1198,12 +1197,12 @@ class _WarehouseCard extends StatelessWidget {
           children: [
             AppSmartImage(
               source: warehouse.imageUrl,
-              height: imageHeight,
+              aspectRatio: 16 / 9,
               width: double.infinity,
               borderRadius: BorderRadius.circular(14),
               fallback: PeruFlatScene(
                 city: warehouse.city,
-                height: imageHeight,
+                height: 160,
               ),
             ),
             SizedBox(height: sectionGap),

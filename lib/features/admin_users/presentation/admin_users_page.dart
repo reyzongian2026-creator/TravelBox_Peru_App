@@ -149,7 +149,7 @@ class AdminUserPagedItem {
   }
 }
 
-final adminUsersProvider = FutureProvider<List<AdminUserItem>>((ref) async {
+final adminUsersProvider = FutureProvider.autoDispose<List<AdminUserItem>>((ref) async {
   ref.watch(realtimeAppEventCursorProvider);
   final shouldLoad = ref.watch(adminUsersLoadRequestedProvider);
   if (!shouldLoad) {
@@ -173,7 +173,7 @@ final adminUsersProvider = FutureProvider<List<AdminUserItem>>((ref) async {
       .toList();
 });
 
-final adminUsersSummaryProvider = FutureProvider<AdminUsersSummaryData?>((
+final adminUsersSummaryProvider = FutureProvider.autoDispose<AdminUsersSummaryData?>((
   ref,
 ) async {
   ref.watch(realtimeAppEventCursorProvider);

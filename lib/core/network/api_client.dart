@@ -67,8 +67,17 @@ final dioProvider = Provider<Dio>((ref) {
   // ── Auth + Connectivity Interceptor ──
   dio.interceptors.add(
     QueuedInterceptorsWrapper(
-      onRequest: (options, handler) {
-        final token = ref.read(sessionControllerProvider).accessToken;
+      onRequest: (options, handler) async {
+        final session = ref.read(sessionControllerProvider);
+        final isAuthEndpoint = options.path.startsWith('/auth/');
+        String? token = session.accessToken;
+        if (!isAuthEndpoint &&
+            session.user != null &&
+            (session.refreshToken?.trim().isNotEmpty ?? false)) {
+          token = await ref
+              .read(sessionControllerProvider.notifier)
+              .ensureFreshAccessToken();
+        }
         if (token != null && token.isNotEmpty) {
           options.headers['Authorization'] = 'Bearer $token';
         }

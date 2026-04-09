@@ -15,7 +15,7 @@ import '../../../shared/widgets/operation_guide.dart';
 import '../../payments/presentation/cash_payments_page.dart';
 import '../../reservation/presentation/reservation_providers.dart';
 
-final opsPendingApprovalsProvider = FutureProvider<int>((ref) async {
+final opsPendingApprovalsProvider = FutureProvider.autoDispose<int>((ref) async {
   ref.watch(reservationRealtimeEventCursorProvider);
   final dio = ref.watch(dioProvider);
   try {

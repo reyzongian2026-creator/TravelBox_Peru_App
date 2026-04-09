@@ -27,6 +27,7 @@ Future<void> bootstrap() async {
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 45),
     )),
+    tokenStorage: tokenStorage,
   );
 
   AppErrorReportNotifier.setGlobalService(errorService);

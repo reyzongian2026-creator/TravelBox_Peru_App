@@ -303,16 +303,18 @@ final webSocketManagerProvider =
 
 final realtimeEventProvider = StreamProvider<WebSocketEvent>((ref) {
   final controller = StreamController<WebSocketEvent>();
-
   final manager = ref.read(webSocketManagerProvider.notifier);
-  manager.addEventListener((event) {
+
+  void listener(WebSocketEvent event) {
     if (!controller.isClosed) {
       controller.add(event);
     }
-  });
+  }
+
+  manager.addEventListener(listener);
 
   ref.onDispose(() {
-    manager.removeEventListener((_) {});
+    manager.removeEventListener(listener);
     controller.close();
   });
 

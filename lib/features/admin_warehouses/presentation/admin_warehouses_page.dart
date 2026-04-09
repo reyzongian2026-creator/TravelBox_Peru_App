@@ -30,7 +30,7 @@ final adminWarehouseActiveFilterProvider = StateProvider<String>(
   (ref) => 'ACTIVE',
 );
 
-final adminWarehousesProvider = FutureProvider<List<AdminWarehouse>>((
+final adminWarehousesProvider = FutureProvider.autoDispose<List<AdminWarehouse>>((
   ref,
 ) async {
   ref.watch(realtimeAppEventCursorProvider);
@@ -56,7 +56,7 @@ final adminWarehousesProvider = FutureProvider<List<AdminWarehouse>>((
       .toList();
 });
 
-final adminCitiesProvider = FutureProvider<List<CityOption>>((ref) async {
+final adminCitiesProvider = FutureProvider.autoDispose<List<CityOption>>((ref) async {
   final dio = ref.read(dioProvider);
   final response = await dio.get<List<dynamic>>('/geo/cities');
   return (response.data ?? const [])
@@ -1593,9 +1593,8 @@ class _WarehousePhotoPreview extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        height: previewHeight,
-        width: double.infinity,
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
         child: child,
       ),
     );

@@ -298,11 +298,13 @@ class _IncidentsPageState extends ConsumerState<IncidentsPage> {
               SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.memory(
-                  _selectedImage!.bytes,
-                  height: 220,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+                child: AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: Image.memory(
+                    _selectedImage!.bytes,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ],
@@ -716,7 +718,7 @@ class _TicketCard extends ConsumerWidget {
               const SizedBox(height: 12),
               AppSmartImage(
                 source: item.evidenceUrl,
-                height: 180,
+                aspectRatio: 4 / 3,
                 width: double.infinity,
                 borderRadius: BorderRadius.circular(12),
               ),

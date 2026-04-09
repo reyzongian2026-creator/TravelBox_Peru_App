@@ -11,6 +11,7 @@ class AppSmartImage extends StatelessWidget {
     required this.source,
     this.width,
     this.height,
+    this.aspectRatio,
     this.fit = BoxFit.cover,
     this.borderRadius,
     this.fallback,
@@ -19,17 +20,21 @@ class AppSmartImage extends StatelessWidget {
   final String? source;
   final double? width;
   final double? height;
+  final double? aspectRatio;
   final BoxFit fit;
   final BorderRadius? borderRadius;
   final Widget? fallback;
 
   @override
   Widget build(BuildContext context) {
-    final child = _buildImage();
-    if (borderRadius == null) {
-      return child;
+    Widget child = _buildImage();
+    if (borderRadius != null) {
+      child = ClipRRect(borderRadius: borderRadius!, child: child);
     }
-    return ClipRRect(borderRadius: borderRadius!, child: child);
+    if (aspectRatio != null) {
+      child = AspectRatio(aspectRatio: aspectRatio!, child: child);
+    }
+    return child;
   }
 
   Widget _buildImage() {
