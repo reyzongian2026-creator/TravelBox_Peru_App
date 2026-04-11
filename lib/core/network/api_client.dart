@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../logger/app_logger.dart';
 
 import '../../app.dart';
 import '../../shared/models/app_user.dart';
@@ -120,7 +121,7 @@ final dioProvider = Provider<Dio>((ref) {
               return;
             }
           } catch (e) {
-            debugPrint('Token refresh queue failed: $e');
+            AppLog.e('ApiClient', 'Token refresh queue failed', e);
           }
 
           // Refresh failed — sign out
@@ -188,11 +189,13 @@ Future<String?> _enqueueRefresh(Ref ref) async {
           currentUser: session.user!,
           refreshData: refreshData,
         );
-        await ref.read(sessionControllerProvider.notifier).signIn(
-          user: refreshedUser,
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
-        );
+        await ref
+            .read(sessionControllerProvider.notifier)
+            .signIn(
+              user: refreshedUser,
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+            );
 
         _refreshCompleter!.complete(newAccessToken);
         return newAccessToken;
@@ -212,7 +215,8 @@ Future<String?> _enqueueRefresh(Ref ref) async {
 }
 
 void _trackConnectivity(Ref ref, DioException error) {
-  final isOffline = error.type == DioExceptionType.connectionError ||
+  final isOffline =
+      error.type == DioExceptionType.connectionError ||
       error.type == DioExceptionType.connectionTimeout ||
       error.type == DioExceptionType.sendTimeout;
 
@@ -228,8 +232,7 @@ void _markOnline(Ref ref) {
   try {
     final current = ref.read(connectivityProvider);
     if (current != ConnectivityStatus.online) {
-      ref.read(connectivityProvider.notifier).state =
-          ConnectivityStatus.online;
+      ref.read(connectivityProvider.notifier).state = ConnectivityStatus.online;
     }
   } catch (_) {}
 }
@@ -280,7 +283,7 @@ void _reportNetworkError(DioException error) {
       }
     }
   } catch (e) {
-    debugPrint('[ApiClient] Error reading request body: $e');
+    AppLog.w('ApiClient', 'Error reading request body', e);
   }
 
   service.reportNetworkError(
@@ -291,9 +294,7 @@ void _reportNetworkError(DioException error) {
     requestBody,
   );
 
-  if (kDebugMode) {
-    debugPrint('[NETWORK ERROR] $statusCode $endpoint - $message');
-  }
+  AppLog.e('ApiClient', '[$statusCode] $endpoint - $message');
 }
 
 bool _shouldReportNetworkError(DioException error) {

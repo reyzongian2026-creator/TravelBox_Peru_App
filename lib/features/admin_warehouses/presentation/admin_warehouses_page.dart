@@ -30,33 +30,34 @@ final adminWarehouseActiveFilterProvider = StateProvider<String>(
   (ref) => 'ACTIVE',
 );
 
-final adminWarehousesProvider = FutureProvider.autoDispose<List<AdminWarehouse>>((
+final adminWarehousesProvider =
+    FutureProvider.autoDispose<List<AdminWarehouse>>((ref) async {
+      ref.watch(realtimeAppEventCursorProvider);
+      ref.watch(warehouseCatalogVersionProvider);
+      final dio = ref.read(dioProvider);
+      final query = ref.watch(adminWarehouseSearchProvider).trim();
+      final activeFilter = ref.watch(adminWarehouseActiveFilterProvider);
+      final active = switch (activeFilter) {
+        'ACTIVE' => true,
+        'INACTIVE' => false,
+        _ => null,
+      };
+      final response = await dio.get<List<dynamic>>(
+        '/admin/warehouses',
+        queryParameters: {
+          if (query.isNotEmpty) 'query': query,
+          // ignore: use_null_aware_elements
+          if (active case final activeValue?) 'active': activeValue,
+        },
+      );
+      return (response.data ?? const [])
+          .map((item) => AdminWarehouse.fromJson(item as Map<String, dynamic>))
+          .toList();
+    });
+
+final adminCitiesProvider = FutureProvider.autoDispose<List<CityOption>>((
   ref,
 ) async {
-  ref.watch(realtimeAppEventCursorProvider);
-  ref.watch(warehouseCatalogVersionProvider);
-  final dio = ref.read(dioProvider);
-  final query = ref.watch(adminWarehouseSearchProvider).trim();
-  final activeFilter = ref.watch(adminWarehouseActiveFilterProvider);
-  final active = switch (activeFilter) {
-    'ACTIVE' => true,
-    'INACTIVE' => false,
-    _ => null,
-  };
-  final response = await dio.get<List<dynamic>>(
-    '/admin/warehouses',
-    queryParameters: {
-      if (query.isNotEmpty) 'query': query,
-      // ignore: use_null_aware_elements
-      if (active case final activeValue?) 'active': activeValue,
-    },
-  );
-  return (response.data ?? const [])
-      .map((item) => AdminWarehouse.fromJson(item as Map<String, dynamic>))
-      .toList();
-});
-
-final adminCitiesProvider = FutureProvider.autoDispose<List<CityOption>>((ref) async {
   final dio = ref.read(dioProvider);
   final response = await dio.get<List<dynamic>>('/geo/cities');
   return (response.data ?? const [])
@@ -107,15 +108,16 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
     return AppShellScaffold(
       title: context.l10n.t('admin_warehouses_title'),
       currentRoute: '/admin/warehouses',
-      child: SingleChildScrollView(child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: responsive.pageInsets(top: responsive.verticalPadding),
-            child: _buildToolbar(context, activeFilter: activeFilter),
-          ),
-          SizedBox(height: itemGap),
-          warehouses.when(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: responsive.pageInsets(top: responsive.verticalPadding),
+              child: _buildToolbar(context, activeFilter: activeFilter),
+            ),
+            SizedBox(height: itemGap),
+            warehouses.when(
               data: (items) {
                 if (items.isEmpty) {
                   return SizedBox(
@@ -200,7 +202,8 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                   ],
                 );
               },
-              loading: () => const SizedBox(height: 300, child: LoadingStateView()),
+              loading: () =>
+                  const SizedBox(height: 300, child: LoadingStateView()),
               error: (error, _) => SizedBox(
                 height: 300,
                 child: ErrorStateView(
@@ -213,8 +216,9 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
                 ),
               ),
             ),
-        ],
-      )),
+          ],
+        ),
+      ),
     );
   }
 
@@ -428,11 +432,11 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
           }),
         );
     if (kDebugMode) {
-      print('Upload photo response: ${response.data}');
+      debugPrint('Upload photo response: ${response.data}');
     }
     final data = response.data;
     if (data == null) {
-      if (kDebugMode) print('No data in response');
+      if (kDebugMode) debugPrint('No data in response');
       return null;
     }
     final possibleKeys = [
@@ -446,13 +450,13 @@ class _AdminWarehousesPageState extends ConsumerState<AdminWarehousesPage> {
       if (data.containsKey(key) && data[key] != null) {
         final url = data[key].toString();
         if (url.isNotEmpty) {
-          if (kDebugMode) print('$key from response: $url');
+          if (kDebugMode) debugPrint('$key from response: $url');
           return url;
         }
       }
     }
     if (kDebugMode) {
-      print('No imageUrl found in response. Keys: ${data.keys.toList()}');
+      debugPrint('No imageUrl found in response. Keys: ${data.keys.toList()}');
     }
     return null;
   }
@@ -1593,10 +1597,7 @@ class _WarehousePhotoPreview extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: child,
-      ),
+      child: AspectRatio(aspectRatio: 16 / 9, child: child),
     );
   }
 }

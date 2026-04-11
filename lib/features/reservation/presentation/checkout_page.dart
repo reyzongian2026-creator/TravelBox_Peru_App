@@ -23,6 +23,7 @@ import '../../../shared/widgets/payment_onboarding_guide.dart';
 import '../../../shared/widgets/payment_celebration_overlay.dart';
 import '../../payments/data/izipay_checkout_service.dart';
 import '../../payments/data/payment_repository.dart';
+import '../../../core/logger/app_logger.dart';
 import '../data/reservation_repository_impl.dart';
 import '../domain/reservation_repository.dart';
 import 'reservation_providers.dart';
@@ -78,7 +79,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
       final balance = await paymentRepo.getWalletBalance();
       if (mounted) setState(() => _walletBalance = balance);
     } catch (e) {
-      debugPrint('[CheckoutPage] Error loading wallet balance: $e');
+      AppLog.w('CheckoutPage', 'Error loading wallet balance', e);
     }
   }
 
@@ -842,7 +843,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         }
       });
     } catch (e) {
-      debugPrint('[CheckoutPage] Error validating promo code: $e');
+      AppLog.w('CheckoutPage', 'Error validating promo code', e);
       setState(() {
         _promoResult = PromoCodeResult(
           valid: false,
@@ -869,7 +870,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
     // Generate idempotency key to prevent duplicate payments
     final idempotencyKey =
         '${DateTime.now().millisecondsSinceEpoch}-${math.Random().nextInt(999999).toString().padLeft(6, '0')}';
-    debugPrint('[Checkout] idempotency=$idempotencyKey');
+    AppLog.d('Checkout', 'idempotency=$idempotencyKey');
 
     // Normalize phone early so onSaved fires
     _normalizedPhone ??= _customerPhoneController.text.replaceAll(
@@ -1465,9 +1466,10 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 : 'Checkout digital cancelado antes de confirmar el pago.',
           );
     } catch (error) {
-      debugPrint(
-        '[CheckoutPage] Failed to release aborted digital reservation '
-        '$reservationId: $error',
+      AppLog.e(
+        'CheckoutPage',
+        'Failed to release aborted digital reservation $reservationId',
+        error,
       );
     } finally {
       if (_activeCheckoutReservationId == reservationId) {
@@ -1962,7 +1964,7 @@ class _ManualTransferDialogState extends State<_ManualTransferDialog> {
       }
       Navigator.of(context).pop(_ManualTransferDialogResult.pending);
     } catch (e) {
-      debugPrint('[CheckoutPage] Error during manual transfer validation: $e');
+      AppLog.e('CheckoutPage', 'Error during manual transfer validation', e);
       if (mounted) {
         Navigator.of(context).pop(_ManualTransferDialogResult.pending);
       }
