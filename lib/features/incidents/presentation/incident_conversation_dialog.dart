@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/app_localizations_fixed.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/app_error_formatter.dart';
-import '../../../shared/utils/peru_time.dart';
 import '../../../shared/utils/incident_translation_service.dart';
+import '../../../shared/utils/peru_time.dart';
+import '../../../shared/widgets/app_smart_image.dart';
+import '../data/evidence_picker.dart';
 import '../data/incidents_repository.dart';
 
 final incidentMessagesProvider =
@@ -37,6 +41,9 @@ class _IncidentConversationDialogState
     extends ConsumerState<IncidentConversationDialog> {
   final _controller = TextEditingController();
   bool _sending = false;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
+  String? _selectedImageMimeType;
 
   bool get _canReply =>
       widget.allowReply && widget.status.trim().toUpperCase() == 'OPEN';
@@ -49,7 +56,9 @@ class _IncidentConversationDialogState
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsync = ref.watch(incidentMessagesProvider(widget.incidentId));
+    final messagesAsync = ref.watch(
+      incidentMessagesProvider(widget.incidentId),
+    );
     final theme = Theme.of(context);
 
     return Dialog(
@@ -75,7 +84,7 @@ class _IncidentConversationDialogState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Conversacion del ticket',
+                          context.l10n.t('incident_conversation_title'),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -103,15 +112,17 @@ class _IncidentConversationDialogState
                     }
                     return ListView.separated(
                       itemCount: messages.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      separatorBuilder: (_, index) =>
+                          const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final message = messages[index];
                         return _MessageBubble(message: message);
                       },
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stackTrace) => Center(
                     child: Text(
                       AppErrorFormatter.readable(
                         error,
@@ -125,23 +136,66 @@ class _IncidentConversationDialogState
               ),
               if (_canReply) ...[
                 const SizedBox(height: 12),
+                if (_selectedImageBytes != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(
+                            _selectedImageBytes!,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          onPressed: () => setState(() {
+                            _selectedImageBytes = null;
+                            _selectedImageName = null;
+                            _selectedImageMimeType = null;
+                          }),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black54,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(4),
+                            minimumSize: const Size(24, 24),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 TextField(
                   controller: _controller,
                   minLines: 2,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Responder incidencia',
-                    hintText: 'Escribe una respuesta clara para continuar el caso.',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.t('incident_reply_label'),
+                    hintText: context.l10n.t('incident_reply_hint'),
                   ),
                 ),
                 const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.icon(
-                    onPressed: _sending ? null : _sendReply,
-                    icon: const Icon(Icons.send_rounded),
-                    label: Text(_sending ? 'Enviando...' : 'Enviar respuesta'),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      onPressed: _sending ? null : _pickImage,
+                      icon: const Icon(Icons.image_outlined),
+                      tooltip: context.l10n.t('incident_select_image'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: _sending ? null : _sendReply,
+                      icon: const Icon(Icons.send_rounded),
+                      label: Text(
+                        _sending
+                            ? context.l10n.t('incident_sending')
+                            : context.l10n.t('incident_send_reply'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -151,9 +205,20 @@ class _IncidentConversationDialogState
     );
   }
 
+  Future<void> _pickImage() async {
+    final evidence = await pickEvidenceImage();
+    if (evidence != null && mounted) {
+      setState(() {
+        _selectedImageBytes = evidence.bytes;
+        _selectedImageName = evidence.filename;
+        _selectedImageMimeType = evidence.mimeType;
+      });
+    }
+  }
+
   Future<void> _sendReply() async {
     final message = _controller.text.trim();
-    if (message.isEmpty) {
+    if (message.isEmpty && _selectedImageBytes == null) {
       return;
     }
     setState(() => _sending = true);
@@ -164,16 +229,24 @@ class _IncidentConversationDialogState
         message: message,
         fallbackLanguage: session.locale.languageCode,
       );
-      await ref.read(incidentsRepositoryProvider).addIncidentMessage(
+      await ref
+          .read(incidentsRepositoryProvider)
+          .addIncidentMessage(
             incidentId: widget.incidentId,
             message: message,
             originalLanguage: sourceLanguage,
+            imageBytes: _selectedImageBytes,
+            imageFilename: _selectedImageName,
+            imageMimeType: _selectedImageMimeType,
           );
       _controller.clear();
+      _selectedImageBytes = null;
+      _selectedImageName = null;
+      _selectedImageMimeType = null;
       ref.invalidate(incidentMessagesProvider(widget.incidentId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Respuesta enviada correctamente.')),
+        SnackBar(content: Text(context.l10n.t('incident_reply_sent_success'))),
       );
     } catch (error) {
       if (!mounted) return;
@@ -182,7 +255,8 @@ class _IncidentConversationDialogState
           content: Text(
             AppErrorFormatter.readable(
               error,
-              (String key, {Map<String, dynamic>? params}) => context.l10n.t(key),
+              (String key, {Map<String, dynamic>? params}) =>
+                  context.l10n.t(key),
             ),
           ),
         ),
@@ -206,7 +280,11 @@ class _MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final label = (message.authorName?.trim().isNotEmpty ?? false)
         ? message.authorName!.trim()
-        : _roleLabel(message.authorRole);
+        : _roleLabel(message.authorRole, context);
+    final displayText = (message.textTranslated?.trim().isNotEmpty ?? false)
+        ? message.textTranslated!.trim()
+        : message.textOriginal.trim();
+    final hasImage = message.imageUrl != null && message.imageUrl!.isNotEmpty;
 
     return Align(
       alignment: isCustomer ? Alignment.centerLeft : Alignment.centerRight,
@@ -216,7 +294,9 @@ class _MessageBubble extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isCustomer
-                ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55)
+                ? theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.55,
+                  )
                 : theme.colorScheme.primary.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
@@ -246,12 +326,18 @@ class _MessageBubble extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                (message.textTranslated?.trim().isNotEmpty ?? false)
-                    ? message.textTranslated!.trim()
-                    : message.textOriginal.trim(),
-              ),
+              if (hasImage || displayText.isNotEmpty) const SizedBox(height: 8),
+              if (hasImage)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: AppSmartImage(
+                    source: message.imageUrl,
+                    height: 180,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              if (displayText.isNotEmpty) Text(displayText),
             ],
           ),
         ),
@@ -260,19 +346,19 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
-String _roleLabel(String rawRole) {
+String _roleLabel(String rawRole, BuildContext context) {
   switch (rawRole.trim().toUpperCase()) {
     case 'ADMIN':
-      return 'Administrador';
+      return context.l10n.t('incident_role_admin');
     case 'SUPPORT':
-      return 'Soporte';
+      return context.l10n.t('incident_role_support');
     case 'OPERATOR':
     case 'CITY_SUPERVISOR':
-      return 'Operaciones';
+      return context.l10n.t('incident_role_operations');
     case 'COURIER':
-      return 'Courier';
+      return context.l10n.t('incident_role_courier');
     case 'CLIENT':
     default:
-      return 'Cliente';
+      return context.l10n.t('incident_role_client');
   }
 }

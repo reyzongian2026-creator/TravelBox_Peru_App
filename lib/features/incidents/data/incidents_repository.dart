@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http_parser/http_parser.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/utils/app_exception.dart';
 
@@ -19,6 +22,9 @@ abstract class IncidentsRepository {
     required int incidentId,
     required String message,
     required String originalLanguage,
+    Uint8List? imageBytes,
+    String? imageFilename,
+    String? imageMimeType,
   });
 }
 
@@ -42,14 +48,14 @@ class CreateIncidentRequest {
   });
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'description': description,
-        'type': type,
-        'originalLanguage': originalLanguage,
-        if (reservationId != null) 'reservationId': reservationId,
-        if (warehouseId != null) 'warehouseId': warehouseId,
-        if (priority != null) 'priority': priority,
-      };
+    'title': title,
+    'description': description,
+    'type': type,
+    'originalLanguage': originalLanguage,
+    if (reservationId != null) 'reservationId': reservationId,
+    if (warehouseId != null) 'warehouseId': warehouseId,
+    if (priority != null) 'priority': priority,
+  };
 }
 
 class Incident {
@@ -110,9 +116,15 @@ class Incident {
       assignedToName: json['assignedToName']?.toString(),
       resolution: json['resolution']?.toString(),
       originalLanguage: json['originalLanguage']?.toString(),
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      resolvedAt: json['resolvedAt'] != null ? DateTime.tryParse(json['resolvedAt'].toString()) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'].toString()) : null,
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
+      resolvedAt: json['resolvedAt'] != null
+          ? DateTime.tryParse(json['resolvedAt'].toString())
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'].toString())
+          : null,
     );
   }
 }
@@ -126,6 +138,7 @@ class IncidentMessage {
   final String originalLanguage;
   final String textOriginal;
   final String? textTranslated;
+  final String? imageUrl;
   final DateTime createdAt;
 
   IncidentMessage({
@@ -137,6 +150,7 @@ class IncidentMessage {
     required this.originalLanguage,
     required this.textOriginal,
     this.textTranslated,
+    this.imageUrl,
     required this.createdAt,
   });
 
@@ -150,7 +164,10 @@ class IncidentMessage {
       originalLanguage: json['originalLanguage']?.toString() ?? 'es',
       textOriginal: json['textOriginal']?.toString() ?? '',
       textTranslated: json['textTranslated']?.toString(),
-      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      imageUrl: json['imageUrl']?.toString(),
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 }
@@ -182,10 +199,13 @@ class PagedResult<T> {
         [];
     final hasNext = json['hasNext'] as bool? ?? false;
     return PagedResult(
-      content: contentList.map((e) => fromJsonT(e as Map<String, dynamic>)).toList(),
+      content: contentList
+          .map((e) => fromJsonT(e as Map<String, dynamic>))
+          .toList(),
       page: (json['page'] as int?) ?? 0,
       size: (json['size'] as int?) ?? json['pageSize'] as int? ?? 20,
-      totalElements: (json['totalElements'] as int?) ?? json['total'] as int? ?? 0,
+      totalElements:
+          (json['totalElements'] as int?) ?? json['total'] as int? ?? 0,
       totalPages: (json['totalPages'] as int?) ?? json['pages'] as int? ?? 0,
       last: (json['last'] as bool?) ?? !hasNext,
     );
@@ -207,7 +227,9 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       final response = await _dio.get<List<dynamic>>('/incidents');
       final data = response.data;
       if (data == null) return [];
-      return data.map((e) => Incident.fromJson(e as Map<String, dynamic>)).toList();
+      return data
+          .map((e) => Incident.fromJson(e as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw AppException.fromDioError(e);
     } catch (e) {
@@ -262,7 +284,10 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.errCreateIncident, backendMessage: 'Failed to create incident');
+        throw AppException.withCode(
+          AppErrorCode.errCreateIncident,
+          backendMessage: 'Failed to create incident',
+        );
       }
       return Incident.fromJson(data);
     } on DioException catch (e) {
@@ -281,7 +306,10 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
       );
       final data = response.data;
       if (data == null) {
-        throw AppException.withCode(AppErrorCode.errUpdateFailed, backendMessage: 'Failed to resolve incident');
+        throw AppException.withCode(
+          AppErrorCode.errUpdateFailed,
+          backendMessage: 'Failed to resolve incident',
+        );
       }
       return Incident.fromJson(data);
     } on DioException catch (e) {
@@ -294,7 +322,9 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
   @override
   Future<List<IncidentMessage>> getIncidentMessages(int incidentId) async {
     try {
-      final response = await _dio.get<List<dynamic>>('/incidents/$incidentId/messages');
+      final response = await _dio.get<List<dynamic>>(
+        '/incidents/$incidentId/messages',
+      );
       final data = response.data;
       if (data == null) return [];
       return data
@@ -312,14 +342,26 @@ class IncidentsRepositoryImpl implements IncidentsRepository {
     required int incidentId,
     required String message,
     required String originalLanguage,
+    Uint8List? imageBytes,
+    String? imageFilename,
+    String? imageMimeType,
   }) async {
     try {
+      final formData = FormData.fromMap({
+        'message': message,
+        'originalLanguage': originalLanguage,
+        if (imageBytes != null && imageFilename != null)
+          'image': MultipartFile.fromBytes(
+            imageBytes,
+            filename: imageFilename,
+            contentType: imageMimeType != null
+                ? MediaType.parse(imageMimeType)
+                : null,
+          ),
+      });
       final response = await _dio.post<Map<String, dynamic>>(
         '/incidents/$incidentId/messages',
-        data: {
-          'message': message,
-          'originalLanguage': originalLanguage,
-        },
+        data: formData,
       );
       final data = response.data;
       if (data == null) {
