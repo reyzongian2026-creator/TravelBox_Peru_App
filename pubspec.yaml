@@ -18,7 +18,7 @@ dependencies:
   file_picker: ^10.3.3
   flare_flutter:
     path: third_party/flare_flutter
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.0.0
   flutter_map: ^8.2.2
   google_maps_flutter: ^2.10.0
   flutter_local_notifications: ^19.4.2
